@@ -75,9 +75,12 @@ function heatmap(season) {
 // Campaign ideas worked out from the figures: what is rising now, and what peaked next month last year.
 function ideas(d) {
   const out = [];
-  for (const p of d.topProblems) {
-    if (p.count >= 3 && p.count >= p.previous * 1.3) out.push(`<li><b>${esc(p.label)}</b> est en hausse (${fmt(p.previous)} → ${fmt(p.count)}) : c’est le moment d’en parler.</li>`);
-  }
+  // Only real rises (it was already looked for in the previous period), the three strongest.
+  const rising = d.topProblems
+    .filter((p) => p.previous >= 3 && p.count >= p.previous * 1.3)
+    .sort((a, b) => b.count / b.previous - a.count / a.previous)
+    .slice(0, 3);
+  for (const p of rising) out.push(`<li><b>${esc(p.label)}</b> est en forte hausse (${fmt(p.previous)} → ${fmt(p.count)}, +${Math.round((p.count / p.previous - 1) * 100)} %) : c’est le moment d’en parler.</li>`);
   // The first of the 12 months is next month, one year ago.
   if (d.seasonality.months.length) {
     const peak = d.seasonality.rows.map((r) => ({ label: r.label, n: r.counts[0] })).filter((r) => r.n > 0).sort((a, b) => b.n - a.n).slice(0, 3);
@@ -97,7 +100,7 @@ export function registerAnalyticsView(VIEWS, h) {
   const { api, pageHeader, canSeeAll } = h;
 
   VIEWS.analytics = async function analytics(el) {
-    const f = (h.state.filter.analytics ||= { months: 12, dealershipId: '' });
+    const f = (h.state.filter.analytics ||= { months: 3, dealershipId: '' });
     const [d, dealerships] = await Promise.all([
       api('GET', `/api/admin/analytics?months=${f.months}${f.dealershipId ? `&dealershipId=${f.dealershipId}` : ''}`),
       canSeeAll() ? api('GET', '/api/admin/dealerships') : Promise.resolve([]),

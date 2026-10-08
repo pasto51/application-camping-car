@@ -776,7 +776,7 @@
       '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail ci-dessus)') + '</label></section>' +
       '<section><h3>Mon code d’accès</h3><p class="sub">À garder : avec votre nom, il permet de retrouver l’application sur un autre téléphone.</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
       '<details class="cloud-more cloud-options"><summary>Autres options</summary>' +
-      '<p class="sub">L’application enregistre pour votre concession : vos coordonnées, votre véhicule, vos équipements, vos photos, vos demandes et messages. Ni votre VIN ni votre immatriculation.</p>' +
+      '<p class="sub">L’application enregistre pour votre concession : vos coordonnées, votre véhicule, vos équipements, vos photos, vos demandes et messages, et des statistiques anonymes d’utilisation (ce qui est cherché, sans savoir qui). Ni votre VIN ni votre immatriculation.</p>' +
       '<button class="btn alt" type="button" data-sp="update">Vérifier les mises à jour</button>' +
       '<button class="btn alt" type="button" data-sp="export">Télécharger mes données</button>' +
       '<a class="btn alt" href="/app/legal.html" target="_blank" rel="noopener">Confidentialité et mentions légales</a>' +
