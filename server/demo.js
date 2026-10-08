@@ -150,6 +150,8 @@ async function main() {
     }
     console.log(`Statistiques de test ajoutées : ${n} actions sur 12 mois pour les ${ids.length} concessions démo (recherches, problèmes, conseils, demandes au magasin, équipements).`);
     console.log('À voir dans le back-office : Statistiques (compte analyste@demo.test, ou administrateur).');
+    console.log(`Base de données : ${require('node:path').resolve(process.env.DATA_DIR || require('node:path').join(__dirname, '..', 'data'))}`);
+    console.log('Pensez à redémarrer le site (Web → Sites → Redémarrer) si vous venez de faire la mise à jour.');
     db.close();
     return;
   }

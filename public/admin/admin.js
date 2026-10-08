@@ -83,7 +83,8 @@ function renderLogin() {
     try {
       const res = await api('POST', '/api/admin/login', { email: f.get('email'), password: f.get('password'), remember: f.get('remember') === 'on' });
       setToken(res.token);
-      state.user = res.user;
+      // The full profile (version of the site, test mode…), not only what the login returns.
+      state.user = await api('GET', '/api/admin/me').catch(() => res.user);
       renderShell();
     } catch (err) {
       toast(err.message, 'error');
@@ -126,6 +127,7 @@ function renderShell() {
             ? '<small class="open-access">⚠️ Accès libre, sans mot de passe (mode test)</small>'
             : '<button class="btn small" id="logout">Se déconnecter</button>'
         }
+        ${state.user.appVersion ? `<small class="version">Version ${esc(state.user.appVersion.slice(0, 6))}</small>` : ''}
       </div>
     </aside>
     <main class="content" id="content"></main>

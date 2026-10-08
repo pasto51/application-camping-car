@@ -169,7 +169,7 @@ function register(router) {
     return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id, store_detached: storeDetached }) };
   });
 
-  router.get('/api/admin/me', (ctx) => ({ ...camel(auth(ctx)), openAccess: ctx.config.isOpenAccess() }));
+  router.get('/api/admin/me', (ctx) => ({ ...camel(auth(ctx)), openAccess: ctx.config.isOpenAccess(), appVersion: ctx.config.appVersion }));
 
   // ---- Statistics of use (« Statistiques ») : what customers look for, to decide the next campaigns ----
   // The administrator and the analyst see every dealership (or one); a dealership manager sees theirs.

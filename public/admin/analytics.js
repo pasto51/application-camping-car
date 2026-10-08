@@ -118,7 +118,7 @@ export function registerAnalyticsView(VIEWS, h) {
             : ''
         }
       </div>
-      ${empty ? '<div class="card warn-card">Pas encore de données pour cette période : elles arrivent dès que les clients utilisent l’application (recherches, diagnostics, conseils).</div>' : ''}
+      ${empty ? `<div class="card warn-card">Pas encore de données pour cette période${f.dealershipId ? ' et cette concession' : ''} : elles arrivent dès que les clients utilisent l’application (recherches, diagnostics, conseils).${canSeeAll() ? ' Pour voir la page avec des données de test : <code>node server/demo.js --stats</code> sur le serveur.' : ''}</div>` : ''}
       <div class="tiles">
         ${tile('Recherches', t.search || 0, p.search || 0)}
         ${tile('Problèmes consultés', t.diag || 0, p.diag || 0)}

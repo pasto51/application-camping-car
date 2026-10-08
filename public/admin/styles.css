@@ -250,3 +250,4 @@ tr.clickable:hover td { background: var(--bg); }
 .trend.up { color: var(--text); }
 .viz-ideas li { margin: .35rem 0; }
 @media (max-width: 700px) { .viz-hrow { grid-template-columns: 1fr auto; } .viz-htrack { grid-column: 1 / -1; order: 3; } }
+.me .version { opacity: .6; font-size: .72rem; margin-top: .4rem; }

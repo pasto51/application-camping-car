@@ -37,6 +37,10 @@ export function createApi(getToken, onUnauthorized) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       if (res.status === 401 && onUnauthorized) onUnauthorized();
+      // A page newer than the server: the site was updated (git pull) but not restarted.
+      if (res.status === 404 && data.error === 'Route inconnue') {
+        throw new ApiError(404, 'Le serveur n’est pas à jour : redémarrez le site (sur alwaysdata : Web → Sites → Redémarrer), puis rechargez la page.');
+      }
       throw new ApiError(res.status, data.error || `Erreur ${res.status}`);
     }
     return data;
