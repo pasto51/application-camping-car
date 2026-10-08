@@ -347,3 +347,53 @@ test('the access code can be read again by the dealership and the customer, and 
   const fresh = (await call('POST', `/api/admin/customers/${c.id}/recovery-code`, { token: admin, body: {} })).data;
   assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: admin })).data.accessCode, fresh.recoveryCode);
 });
+
+test('roles: salespeople see the dealership but manage their own customers; the manager reassigns', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const d = (await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Équipe', code: 'EQUIPE01' } })).data;
+  const mk = async (email, role, token = admin) => (await call('POST', '/api/admin/users', { token, body: { email, name: email.split('@')[0], password: 'motdepasse1', role, dealershipId: d.id } })).data;
+  await mk('chef@equipe.fr', 'dealer'); // old role name: becomes a manager
+  const chef = await login('chef@equipe.fr', 'motdepasse1');
+  assert.equal((await call('GET', '/api/admin/me', { token: chef })).data.role, 'manager');
+  const s1 = await mk('alice@equipe.fr', 'sales', chef);
+  const s2 = await mk('bruno@equipe.fr', 'sales', chef);
+  assert.equal((await call('POST', '/api/admin/users', { token: chef, body: { email: 'pirate@equipe.fr', password: 'motdepasse1', role: 'admin' } })).status, 403);
+  assert.ok((await call('GET', '/api/admin/users', { token: chef })).data.every((u) => u.dealershipId === d.id), 'a manager sees only their team');
+  const alice = await login('alice@equipe.fr', 'motdepasse1');
+  const bruno = await login('bruno@equipe.fr', 'motdepasse1');
+  assert.equal((await call('GET', '/api/admin/users', { token: alice })).status, 403);
+
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const c = (await call('POST', '/api/admin/customers', { token: alice, body: { vehicleId: catalog.vehicles[0].id, lastName: 'DeAlice', salespersonId: s2.id } })).data;
+  assert.equal(c.salespersonId, s1.id, 'a salesperson registers their own customers');
+  // Bruno sees the customer but cannot manage it
+  const seen = (await call('GET', '/api/admin/customers', { token: bruno })).data.find((x) => x.id === c.id);
+  assert.equal(seen.canManage, false);
+  assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: bruno })).data.accessCode, null);
+  assert.equal((await call('PUT', `/api/admin/customers/${c.id}`, { token: bruno, body: { phone: '06' } })).status, 403);
+  assert.equal((await call('POST', `/api/admin/customers/${c.id}/resend`, { token: bruno, body: {} })).status, 403);
+  assert.equal((await call('PUT', `/api/admin/customers/${c.id}`, { token: alice, body: { salespersonId: s2.id } })).status, 403, 'only the manager reassigns');
+  assert.equal((await call('GET', '/api/admin/customers?mine=1', { token: bruno })).data.length, 0);
+  // The customer's request: Bruno cannot answer it
+  // (a session through the handover: the restore endpoint is rate-limited and other tests already use it)
+  const ctoken = (await call('POST', '/api/handover', { body: { dealershipCode: 'EQUIPE01', vehicleId: catalog.vehicles[0].id, salespersonId: s1.id, customer: { lastName: 'Client2' } } })).data.token;
+  const req = (await call('POST', '/api/me/requests', { token: ctoken, body: { title: 'Fuite', message: 'Ça goutte' } })).data;
+  assert.equal((await call('PUT', `/api/admin/reports/${req.id}`, { token: bruno, body: { status: 'en_cours', message: 'Bonjour' } })).status, 403);
+  assert.equal((await call('PUT', `/api/admin/reports/${req.id}`, { token: alice, body: { status: 'en_cours', message: 'Bonjour' } })).status, 200);
+  // Alice's dashboard recap
+  const stats = (await call('GET', '/api/admin/stats', { token: alice })).data;
+  assert.equal(stats.mine.customers, 2);
+  assert.equal(stats.mine.recentReports[0].title, 'Fuite');
+  // The manager hands the customer to Bruno, then all of Bruno's customers back to Alice
+  assert.equal((await call('PUT', `/api/admin/customers/${c.id}`, { token: chef, body: { salespersonId: s2.id } })).status, 200);
+  assert.equal((await call('PUT', `/api/admin/customers/${c.id}`, { token: bruno, body: { phone: '0600000000' } })).status, 200);
+  assert.equal((await call('DELETE', `/api/admin/users/${s2.id}`, { token: chef })).status, 409, 'transfer before deleting');
+  assert.equal((await call('POST', `/api/admin/users/${s2.id}/transfer`, { token: chef, body: { toUserId: s1.id } })).data.moved, 1);
+  // The customer sees their advisor in the app
+  assert.equal((await call('GET', '/api/me', { token: ctoken })).data.salesperson.name, 'alice');
+  // Handover in the app with a chosen advisor
+  const dc = (await call('GET', '/api/dealerships/code/EQUIPE01')).data;
+  assert.deepEqual(dc.salespeople.map((p) => p.name).sort(), ['alice', 'bruno', 'chef']);
+  const h = (await call('POST', '/api/handover', { body: { dealershipCode: 'EQUIPE01', vehicleId: catalog.vehicles[0].id, salespersonId: s2.id, customer: { lastName: 'Main' } } })).data;
+  assert.equal(h.salesperson.name, 'bruno');
+});

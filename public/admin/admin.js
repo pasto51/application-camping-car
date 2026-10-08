@@ -41,6 +41,9 @@ function logout() {
 
 const root = document.getElementById('root');
 const isAdmin = () => state.user?.role === 'admin';
+// Responsable de concession (or administrator): reassigns customers, manages the team.
+const isManager = () => ['admin', 'manager', 'dealer'].includes(state.user?.role);
+const ROLE_LABELS = { admin: 'Administrateur', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial' };
 
 // ---------- Login ----------
 
@@ -81,7 +84,7 @@ function sections() {
     ['content', '📋', 'Contenus de l’appli', true],
     ['brands', '🏷️', 'Marques', isAdmin()],
     ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', true],
-    ['users', '🔑', 'Utilisateurs', isAdmin()],
+    ['users', '🔑', isAdmin() ? 'Utilisateurs' : 'Mon équipe', isManager()],
     ['settings', '⚙️', 'Paramètres', true],
   ];
   return all.filter((s) => s[3]);
@@ -96,7 +99,7 @@ function renderShell() {
         .join('')}</nav>
       <div class="me">
         <strong>${esc(state.user.name || state.user.email)}</strong>
-        <small>${isAdmin() ? 'Administrateur' : 'Concession'}</small>
+        <small>${esc(ROLE_LABELS[state.user.role] || 'Concession')}</small>
         ${
           state.user.openAccess
             ? '<small class="open-access">⚠️ Accès libre, sans mot de passe (mode test)</small>'
@@ -304,7 +307,23 @@ const VIEWS = {
           ]
         : []),
     ];
+    const m = s.mine || {};
+    const recap =
+      m.customers || state.user.role === 'sales'
+        ? `<div class="card recap"><h2>Mes clients (${m.customers || 0})</h2>
+        ${m.openReports ? `<p><a href="#reports">${m.openReports} demande${m.openReports > 1 ? 's' : ''} en cours</a> chez vos clients.</p>` : '<p class="muted">Aucune demande en cours chez vos clients.</p>'}
+        ${
+          (m.recentReports || []).length
+            ? `<h3>Leurs demandes des 30 derniers jours</h3><ul class="recap-list">${m.recentReports
+                .map((r) => `<li>${r.kind === 'piece' ? '🛒 ' : ''}<strong>${esc([r.firstName, r.lastName].filter(Boolean).join(' '))}</strong> : ${esc(r.title)} <span class="status ${esc(r.status)}">${STATUS[r.status]}</span> <small class="muted">${formatDate(r.updatedAt)}</small></li>`)
+                .join('')}</ul>`
+            : ''
+        }
+        ${(m.recentCustomers || []).length ? `<h3>Dernières mises en main</h3><p>${m.recentCustomers.map((c) => `${esc([c.firstName, c.lastName].filter(Boolean).join(' '))} <small class="muted">(${formatDate(c.handoverDate)})</small>`).join(' · ')}</p>` : ''}
+        <p><a href="#customers">Voir mes clients</a></p></div>`
+        : '';
     el.innerHTML = `${pageHeader('Tableau de bord')}
+      ${recap}
       <div class="tiles">${tiles.map(([label, n, link]) => `<a class="tile" href="#${link}"><strong>${n}</strong><span>${esc(label)}</span></a>`).join('')}</div>
       <div class="card">
         <h2>Fonctionnement</h2>
@@ -321,7 +340,7 @@ const VIEWS = {
     const status = state.filter.reportStatus ?? 'open';
     const [all, settings] = await Promise.all([api('GET', '/api/admin/reports'), api('GET', '/api/admin/settings').catch(() => null)]);
     const list = all.filter((r) =>
-      status === 'piece' ? r.kind === 'piece' && r.status !== 'resolu' : status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status
+      status === 'mine' ? r.salespersonId === state.user.id : status === 'piece' ? r.kind === 'piece' && r.status !== 'resolu' : status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status
     );
     const toAnswer = all.filter((r) => r.waitingForDealer).length;
     const mailWarning = settings && !settings.mail.ready
@@ -336,6 +355,7 @@ const VIEWS = {
         ['resolu', 'Clôturées'],
         ['all', 'Toutes'],
         ['piece', '🛒 Magasin (pièces)'],
+        ...(isAdmin() ? [] : [['mine', 'Mes clients']]),
       ]
         .map(([v, l]) => `<button class="chip ${status === v ? 'active' : ''}" data-act="filter" data-value="${v}">${l}</button>`)
         .join('')}</div>
@@ -345,7 +365,7 @@ const VIEWS = {
               .map(
                 (r) => `<div class="card report ${r.waitingForDealer ? 'waiting' : ''}">
             <div class="report-head">
-              <div>${r.kind === 'piece' ? '<span class="status piece">🛒 Magasin</span> ' : ''}<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
+              <div>${r.kind === 'piece' ? '<span class="status piece">🛒 Magasin</span> ' : ''}<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}${r.salespersonName ? ` · suivi par ${esc(r.salespersonName)}` : ''}</small></div>
               <span class="status ${esc(r.status)}">${STATUS[r.status]}</span>
             </div>
             ${r.part ? partCard(r) : ''}
@@ -359,7 +379,8 @@ const VIEWS = {
                 ? `<p class="closed-note">🔒 Demande clôturée${r.closedAt ? ` le ${formatDateTime(r.closedAt)}` : ''} : le client ne peut plus y répondre (il peut faire une nouvelle demande). Pour la rouvrir, choisissez « En cours ».</p>`
                 : ''
             }
-            <form class="reply-form" data-reply="${r.id}">
+            ${r.canManage ? '' : `<p class="closed-note">Client suivi par ${esc(r.salespersonName || 'un autre commercial')} : lecture seule.</p>`}
+            <form class="reply-form" data-reply="${r.id}" ${r.canManage ? '' : 'hidden'}>
               <textarea name="message" rows="2" placeholder="${r.status === 'resolu' ? 'Dernier message au client (facultatif)' : 'Votre réponse au client (il la reçoit dans son application)'}"></textarea>
               <div class="actions">
                 <select name="status">${Object.entries(STATUS).map(([v, l]) => `<option value="${v}" ${(r.status === 'nouveau' ? 'en_cours' : r.status) === v ? 'selected' : ''}>${v === 'resolu' ? 'Clôturer la demande' : l}</option>`).join('')}</select>
@@ -406,11 +427,14 @@ const VIEWS = {
 
   async customers(el) {
     const q = state.filter.customerQuery || '';
-    const list = await api('GET', `/api/admin/customers?q=${encodeURIComponent(q)}`);
+    // A salesperson starts on their own customers; everyone in the dealership can see all of them.
+    const mine = state.filter.customerMine ?? state.user.role === 'sales';
+    const list = await api('GET', `/api/admin/customers?q=${encodeURIComponent(q)}${mine ? '&mine=1' : ''}`);
     el.innerHTML = `${pageHeader('Clients', '<button class="btn primary" data-act="add">＋ Nouveau client</button>')}
-      <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, immatriculation, n° de cellule…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
+      ${isAdmin() ? '' : `<div class="filters"><button class="chip ${mine ? 'active' : ''}" data-act="mine" data-value="1">Mes clients</button><button class="chip ${mine ? '' : 'active'}" data-act="mine" data-value="0">Toute la concession</button></div>`}
+      <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, n° de cellule…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
       <div class="table-wrap"><table>
-        <thead><tr><th></th><th>Client</th><th>Véhicule</th><th>N° cellule</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Mise en main</th><th>Signal.</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Client</th><th>Véhicule</th><th>N° cellule</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Commercial</th><th>Mise en main</th><th>Signal.</th><th></th></tr></thead>
         <tbody>${list
           .map(
             (c) => `<tr>
@@ -419,6 +443,7 @@ const VIEWS = {
           <td>${esc(c.brandName)} ${esc(c.vehicleName)}</td>
           <td>${esc(c.cellNumber || '')}</td>
           ${isAdmin() ? `<td>${esc(c.dealershipName)}</td>` : ''}
+          <td>${c.salespersonName ? esc(c.salespersonName) : '<span class="muted">—</span>'}${c.salespersonId === state.user.id ? ' <span class="status resolu">moi</span>' : ''}</td>
           <td>${formatDate(c.handoverDate)}</td>
           <td>${c.openReports ? `<span class="status nouveau">${c.openReports}</span>` : ''}</td>
           <td class="row-actions"><button class="btn small" data-act="open" data-id="${c.id}">Ouvrir</button></td>
@@ -431,7 +456,14 @@ const VIEWS = {
       state.filter.customerQuery = new FormData(e.target).get('q');
       VIEWS.customers(el);
     };
-    bind(el, { open: (id) => customerDetail(el, id), add: () => newCustomer(el) });
+    bind(el, {
+      open: (id) => customerDetail(el, id),
+      add: () => newCustomer(el),
+      mine: (_, b) => {
+        state.filter.customerMine = b.dataset.value === '1';
+        VIEWS.customers(el);
+      },
+    });
   },
 
   async vehicles(el) {
@@ -560,7 +592,7 @@ const VIEWS = {
     const list = await api('GET', '/api/admin/dealerships');
     el.innerHTML = `${pageHeader(isAdmin() ? 'Concessions' : 'Ma concession', isAdmin() ? '<button class="btn primary" data-act="add">＋ Nouvelle concession</button>' : '')}
       <div class="table-wrap"><table>
-        <thead><tr><th>Concession</th><th>Code concession</th><th>Ville</th><th>Contact</th><th>Clients</th><th>État</th>${isAdmin() ? '<th></th>' : ''}</tr></thead>
+        <thead><tr><th>Concession</th><th>Code concession</th><th>Ville</th><th>Contact</th><th>Clients</th><th>État</th>${isManager() ? '<th></th>' : ''}</tr></thead>
         <tbody>${list
           .map(
             (d) => `<tr>
@@ -570,7 +602,7 @@ const VIEWS = {
           <td>${esc(d.phone || '')}<br><small>${esc(d.email || '')}</small></td>
           <td>${d.customerCount}</td>
           <td>${d.active ? '<span class="status resolu">Active</span>' : '<span class="status">Désactivée</span>'}</td>
-          ${isAdmin() ? `<td class="row-actions"><button class="btn small" data-act="edit" data-id="${d.id}">Modifier</button><button class="btn small danger" data-act="del" data-id="${d.id}">Supprimer</button></td>` : ''}
+          ${isManager() ? `<td class="row-actions"><button class="btn small" data-act="edit" data-id="${d.id}">Modifier</button>${isAdmin() ? `<button class="btn small danger" data-act="del" data-id="${d.id}">Supprimer</button>` : ''}</td>` : ''}
         </tr>`
           )
           .join('')}</tbody>
@@ -617,54 +649,74 @@ const VIEWS = {
 
   async users(el) {
     const [users, dealerships] = await Promise.all([api('GET', '/api/admin/users'), api('GET', '/api/admin/dealerships')]);
-    el.innerHTML = `${pageHeader('Utilisateurs du back-office', '<button class="btn primary" data-act="add">＋ Nouvel utilisateur</button>')}
+    el.innerHTML = `${pageHeader(isAdmin() ? 'Utilisateurs du back-office' : 'Mon équipe', '<button class="btn primary" data-act="add">＋ Nouveau compte</button>')}
       <div class="table-wrap"><table>
-        <thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Concession</th><th></th></tr></thead>
+        <thead><tr><th>Nom</th><th>Contact</th><th>Rôle</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Clients suivis</th><th></th></tr></thead>
         <tbody>${users
           .map(
             (u) => `<tr>
-          <td>${esc(u.name || '')}</td><td>${esc(u.email)}</td>
-          <td>${u.role === 'admin' ? 'Administrateur' : 'Concession'}</td>
-          <td>${esc(u.dealershipName || '')}</td>
+          <td><strong>${esc(u.name || '')}</strong></td><td>${esc(u.email)}${u.phone ? `<br><small>${esc(u.phone)}</small>` : ''}</td>
+          <td>${esc(ROLE_LABELS[u.role] || u.role)}</td>
+          ${isAdmin() ? `<td>${esc(u.dealershipName || '')}</td>` : ''}
+          <td>${u.role === 'admin' ? '' : u.customerCount}</td>
           <td class="row-actions"><button class="btn small" data-act="edit" data-id="${u.id}">Modifier</button>${
-            u.id !== state.user.id ? `<button class="btn small danger" data-act="del" data-id="${u.id}">Supprimer</button>` : ''
-          }</td>
+            u.customerCount ? `<button class="btn small" data-act="transfer" data-id="${u.id}">Transférer ses clients</button>` : ''
+          }${u.id !== state.user.id ? `<button class="btn small danger" data-act="del" data-id="${u.id}">Supprimer</button>` : ''}</td>
         </tr>`
           )
           .join('')}</tbody>
       </table></div>
-      <p class="muted">Administrateur : gère tout le catalogue (véhicules, problèmes, marques). Concession : voit uniquement ses clients et leurs signalements.</p>`;
+      <div class="card muted"><p><strong>Commercial</strong> : voit tous les clients et demandes de sa concession, mais ne gère que ses clients (fiche, code d’accès, réponses). Il n’est pas prévenu par e-mail : il retrouve le récap de ses clients sur son tableau de bord.</p>
+      <p><strong>Responsable de concession</strong> : gère tous les clients de la concession, les confie à un commercial ou les bascule de l’un à l’autre, gère l’équipe et la fiche de la concession. Il reçoit les e-mails des demandes clients.</p>
+      ${isAdmin() ? '<p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
+    const roles = [['sales', 'Commercial'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['admin', 'Administrateur']] : [])];
     const fields = (isNew) => [
-      { name: 'name', label: 'Nom' },
-      { name: 'email', label: 'E-mail', type: 'email', required: true },
-      { name: 'role', label: 'Rôle', type: 'select', options: [['dealer', 'Concession'], ['admin', 'Administrateur']] },
-      { name: 'dealershipId', label: 'Concession (rôle concession)', type: 'select', options: [['', '—'], ...dealerships.map((d) => [d.id, d.name])] },
+      { name: 'name', label: 'Nom (affiché au client pour un commercial)' },
+      { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
+      { name: 'phone', label: 'Téléphone (affiché au client)', type: 'tel' },
+      { name: 'role', label: 'Rôle', type: 'select', options: roles },
+      ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: [['', '—'], ...dealerships.map((d) => [d.id, d.name])] }] : []),
       { name: 'password', label: isNew ? 'Mot de passe' : 'Nouveau mot de passe (laisser vide pour ne pas changer)', type: 'password', required: isNew, attrs: 'minlength="8" autocomplete="new-password"' },
     ];
     bind(el, {
       add: () =>
         openForm({
-          title: 'Nouvel utilisateur',
+          title: 'Nouveau compte',
           fields: fields(true),
-          values: { role: 'dealer' },
+          values: { role: 'sales', dealershipId: dealerships[0]?.id },
           onSubmit: async (data) => {
             await api('POST', '/api/admin/users', data);
-            toast('Utilisateur créé');
+            toast('Compte créé');
             VIEWS.users(el);
           },
         }),
       edit: (id) =>
         openForm({
-          title: "Modifier l'utilisateur",
+          title: 'Modifier le compte',
           fields: fields(false),
-          values: users.find((x) => x.id === id),
+          values: { ...users.find((x) => x.id === id), role: users.find((x) => x.id === id).role === 'dealer' ? 'manager' : users.find((x) => x.id === id).role },
           onSubmit: async (data) => {
             await api('PUT', `/api/admin/users/${id}`, data);
-            toast('Utilisateur enregistré');
+            toast('Compte enregistré');
             VIEWS.users(el);
           },
         }),
-      del: (id) => confirmDelete('Supprimer cet utilisateur ?', () => api('DELETE', `/api/admin/users/${id}`)),
+      transfer: (id) => {
+        const from = users.find((x) => x.id === id);
+        const others = users.filter((u) => u.id !== id && u.role !== 'admin' && u.dealershipId === from.dealershipId);
+        openForm({
+          title: `Transférer les ${from.customerCount} clients de ${from.name || from.email}`,
+          submitLabel: 'Transférer',
+          fields: [{ name: 'toUserId', label: 'Vers', type: 'select', options: [['', '— Personne (clients sans commercial) —'], ...others.map((u) => [u.id, `${u.name || u.email} (${ROLE_LABELS[u.role]})`])] }],
+          values: { toUserId: others[0]?.id || '' },
+          onSubmit: async (data) => {
+            const r = await api('POST', `/api/admin/users/${id}/transfer`, { toUserId: data.toUserId || null });
+            toast(`${r.moved} client${r.moved > 1 ? 's' : ''} transféré${r.moved > 1 ? 's' : ''}`);
+            VIEWS.users(el);
+          },
+        });
+      },
+      del: (id) => confirmDelete('Supprimer ce compte ?', () => api('DELETE', `/api/admin/users/${id}`)),
     });
   },
 
@@ -790,7 +842,11 @@ function partCard(r) {
 }
 
 async function newCustomer(el) {
-  const [{ vehicles }, dealerships] = await Promise.all([loadCatalog(), isAdmin() ? api('GET', '/api/admin/dealerships') : Promise.resolve([])]);
+  const [{ vehicles }, dealerships, team] = await Promise.all([
+    loadCatalog(),
+    isAdmin() ? api('GET', '/api/admin/dealerships') : Promise.resolve([]),
+    isManager() ? api('GET', '/api/admin/salespeople') : Promise.resolve([]),
+  ]);
   const active = vehicles.filter((v) => v.active);
   if (!active.length) return toast('Créez d’abord un véhicule (rubrique Véhicules)', 'error');
   openForm({
@@ -800,6 +856,9 @@ async function newCustomer(el) {
     fields: [
       { name: 'vehicleId', label: 'Véhicule', type: 'select', required: true, options: active.map((v) => [v.id, `${v.brandName} — ${v.name}${v.modelYear ? ' ' + v.modelYear : ''}`]) },
       ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', required: true, options: dealerships.map((d) => [d.id, d.name]) }] : []),
+      ...(isManager()
+        ? [{ name: 'salespersonId', label: 'Commercial qui suit ce client', type: 'select', options: [['', isAdmin() ? '— Aucun —' : '— Moi —'], ...team.map((u) => [u.id, `${u.name || u.email}${isAdmin() && u.dealershipId ? '' : ''}`])], hint: isAdmin() ? 'Il doit appartenir à la concession choisie.' : '' }]
+        : []),
       { name: 'firstName', label: 'Prénom' },
       { name: 'lastName', label: 'Nom', required: true, hint: 'Le client le saisit avec son code d’accès.' },
       { name: 'email', label: 'E-mail', type: 'email' },
@@ -861,13 +920,14 @@ async function customerDetail(el, id) {
     loadCatalog(),
     api('GET', '/api/admin/dealerships'),
   ]);
+  const team = c.canReassign ? await api('GET', `/api/admin/salespeople?dealershipId=${c.dealershipId}`) : [];
   el.innerHTML = `${pageHeader(
     [c.firstName, c.lastName].filter(Boolean).join(' '),
     `<button class="btn" data-act="back">← Retour</button>
-     <button class="btn" data-act="edit">Modifier</button>
-     <button class="btn" data-act="recovery">Nouveau code d’accès</button>
+     ${c.canManage ? '<button class="btn" data-act="edit">Modifier</button><button class="btn" data-act="recovery">Nouveau code d’accès</button>' : ''}
      ${isAdmin() ? '<button class="btn danger" data-act="del">Supprimer</button>' : ''}`
   )}
+    ${c.canManage ? '' : `<div class="card warn-card">Ce client est suivi par ${esc(c.salespersonName || 'un autre commercial')} : vous pouvez consulter sa fiche, mais pas la modifier. Le responsable de la concession peut vous le confier.</div>`}
     <div class="detail-grid">
       <div class="card">
         <dl class="facts">
@@ -877,6 +937,11 @@ async function customerDetail(el, id) {
           <div><dt>VIN</dt><dd class="muted">Conservé seulement sur le téléphone du client</dd></div>
           <div><dt>Mise en main</dt><dd>${formatDate(c.handoverDate)}</dd></div>
           <div><dt>Concession</dt><dd>${esc(c.dealershipName)}</dd></div>
+          <div><dt>Commercial</dt><dd>${
+            c.canReassign
+              ? `<select data-salesperson><option value="">— Aucun —</option>${team.map((u) => `<option value="${u.id}" ${u.id === c.salespersonId ? 'selected' : ''}>${esc(u.name || u.email)}</option>`).join('')}</select>`
+              : esc(c.salespersonName || '—')
+          }</dd></div>
           <div><dt>E-mail</dt><dd>${esc(c.email || '—')}${c.email && c.emailNotify === 0 ? ' <small class="muted">(ne veut pas recevoir les réponses par e-mail)</small>' : ''}</dd></div>
           <div><dt>Téléphone</dt><dd>${esc(c.phone || '—')}</dd></div>
           <div><dt>Code d’accès</dt><dd>${
@@ -899,8 +964,8 @@ async function customerDetail(el, id) {
       </div>
     </div>
     <div class="card">
-      <h2>Équipements cochés (${c.equipmentOwned ? c.equipmentOwned.length : 'liste de série'})</h2>
-      <p class="muted">${esc((c.equipmentOwned || []).join(' · ') || 'Le client n’a pas encore modifié la liste de série.')}</p>
+      <h2>Équipements cochés (${c.equipmentOwned ? c.equipmentOwned.length : 'liste du véhicule'})</h2>
+      <p class="muted">${esc((c.equipmentOwned || []).join(' · ') || 'Le client n’a pas encore modifié la liste pré-cochée de son véhicule.')}</p>
     </div>
     <div class="card">
       <h2>Demandes (${c.reports.length})</h2>
@@ -912,6 +977,15 @@ async function customerDetail(el, id) {
           : '<p class="muted">Aucune demande.</p>'
       }
     </div>`;
+  el.querySelector('[data-salesperson]')?.addEventListener('change', async (e) => {
+    try {
+      await api('PUT', `/api/admin/customers/${id}`, { salespersonId: e.target.value || null });
+      toast(e.target.value ? `Client confié à ${e.target.selectedOptions[0].textContent}` : 'Client sans commercial');
+    } catch (err) {
+      toast(err.message, 'error');
+      customerDetail(el, id);
+    }
+  });
   bind(el, {
     copycode: async () => {
       try {

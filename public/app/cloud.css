@@ -90,3 +90,5 @@
 .cloud-space form .btn{margin-top:6px}
 .cloud-code{font:800 26px/1.2 ui-monospace,monospace;letter-spacing:.06em;text-align:center;padding:12px;border:2px dashed var(--line,#d5e2e1);border-radius:12px;margin:4px 0;user-select:all}
 .cloud-photos .cloud-photo-btn{display:block;height:auto;min-height:0;flex:none;padding:12px 14px}
+.cloud-advisor{margin:4px 0;font-size:15px}
+.cloud-advisor a{color:var(--accent);font-weight:600;text-decoration:none}

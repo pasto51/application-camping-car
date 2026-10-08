@@ -368,6 +368,10 @@
         '<label class="eyebrow" for="c_last">Nom *</label><input class="search" id="c_last" name="lastName" required autocomplete="off">' +
         '<label class="eyebrow" for="c_tel">Téléphone</label><input class="search" id="c_tel" name="phone" type="tel" autocomplete="off">' +
         '<label class="eyebrow" for="c_mail">E-mail</label><input class="search" id="c_mail" name="email" type="email" autocomplete="off">' +
+        ((f.dealership && f.dealership.salespeople && f.dealership.salespeople.length)
+          ? '<label class="eyebrow" for="c_sales">Conseiller du client</label><select class="search" id="c_sales" name="salespersonId"><option value="">— Choisir —</option>' +
+            f.dealership.salespeople.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('') + '</select>'
+          : '') +
         '<label class="eyebrow" for="c_vin">Numéro de série (VIN)</label><input class="search" id="c_vin" name="vin" autocapitalize="characters" autocomplete="off" placeholder="17 caractères"><small class="sub">Gardé uniquement sur ce téléphone, jamais sur nos serveurs.</small>' +
         '<label class="eyebrow" for="c_date">Date de mise en main</label><input class="search" id="c_date" name="handoverDate" type="date" value="' + today + '">' +
         '<button class="btn">Créer le compte du client</button></form>' +
@@ -418,8 +422,8 @@
         .catch(function (err) { done(); toast(err.message); });
     }
     if (form.dataset.f === 'client') {
-      var customer = {}; Object.keys(data).forEach(function (k) { if (k !== 'vin') customer[k] = data[k]; }); // the VIN stays on the phone
-      api('POST', '/api/handover', { dealershipCode: flow.code, vehicleId: flow.vehicleId, customer: customer })
+      var customer = {}; Object.keys(data).forEach(function (k) { if (k !== 'vin' && k !== 'salespersonId') customer[k] = data[k]; }); // the VIN stays on the phone
+      api('POST', '/api/handover', { dealershipCode: flow.code, vehicleId: flow.vehicleId, salespersonId: data.salespersonId || null, customer: customer })
         .then(function (res) {
           startSession(res);
           // The handover checklist starts with the customer's name and VIN.
@@ -444,7 +448,7 @@
 
   function startSession(res) {
     clearLocal();
-    session = { token: res.token, customer: res.customer, vehicle: res.vehicle, dealership: res.dealership };
+    session = { token: res.token, customer: res.customer, vehicle: res.vehicle, dealership: res.dealership, salesperson: res.salesperson || null };
     saveSession();
     applyState(res.state);
   }
@@ -464,7 +468,7 @@
     var online = Promise.all([api('GET', '/api/app/data'), api('GET', '/api/me')]).then(function (r) {
       DATA = r[0];
       lsSet(DATA_KEY, JSON.stringify(DATA));
-      session.customer = r[1].customer; session.vehicle = r[1].vehicle; session.dealership = r[1].dealership; saveSession();
+      session.customer = r[1].customer; session.vehicle = r[1].vehicle; session.dealership = r[1].dealership; session.salesperson = r[1].salesperson || null; saveSession();
       applyState(r[1].state);
     });
     return online
@@ -673,8 +677,16 @@
     var status = n ? (navigator.onLine ? 'Sauvegarde en cours…' : 'Hors connexion : ' + n + ' modification' + (n > 1 ? 's' : '') + ' en attente, envoyée' + (n > 1 ? 's' : '') + ' au retour du réseau.')
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
     el.innerHTML = '<p class="eyebrow">Mon espace client</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
-      (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p><p class="sub">' + esc(status) + '</p>' +
+      (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p>' + advisorHtml() + '<p class="sub">' + esc(status) + '</p>' +
       '<div class="btns"><button class="btn" data-acc="part" type="button">🛒 Demander une pièce</button><button class="btn alt" data-acc="space" type="button">👤 Mon espace client</button></div>';
+  }
+
+  // The customer's salesperson at the dealership, with one-touch call and e-mail.
+  function advisorHtml() {
+    var p = session && session.salesperson; if (!p) return '';
+    return '<p class="cloud-advisor">Votre conseiller : <b>' + esc(p.name || p.email) + '</b>' +
+      (p.phone ? ' · <a href="tel:' + esc(String(p.phone).replace(/[^\d+]/g, '')) + '">📞 ' + esc(p.phone) + '</a>' : '') +
+      (p.email ? ' · <a href="mailto:' + esc(p.email) + '">✉️ E-mail</a>' : '') + '</p>';
   }
 
   // ---------- Client space: my details, my vehicle, my code, notifications, my data ----------
@@ -694,6 +706,7 @@
     var m = document.createElement('div');
     m.className = 'cloud-modal cloud-sheet cloud-space';
     m.innerHTML = '<div class="card"><div class="cloud-space-head"><p class="eyebrow">Mon espace client</p><button type="button" class="lnk" data-sp="close">Fermer ✕</button></div>' +
+      (session.salesperson ? '<section><h3>Mon conseiller</h3>' + advisorHtml() + '</section>' : '') +
       '<form data-spf="me"><h3>Mes informations</h3>' +
       '<label class="eyebrow">Prénom</label><input class="search" name="firstName" maxlength="100" value="' + esc(c.firstName || '') + '">' +
       '<label class="eyebrow">Nom</label><input class="search" value="' + esc(c.lastName || '') + '" disabled><small class="sub">Votre nom sert à retrouver votre compte avec votre code : demandez à votre concession pour le changer.</small>' +

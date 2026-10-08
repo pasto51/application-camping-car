@@ -71,7 +71,7 @@ function register(router) {
     const payload = verifyToken(header.startsWith('Bearer ') ? header.slice(7) : '', ctx.config.secret);
     let user;
     if (payload) {
-      user = ctx.db.prepare('SELECT id, email, name, role, dealership_id FROM admins WHERE id = ?').get(payload.sub);
+      user = ctx.db.prepare('SELECT id, email, name, role, dealership_id, phone FROM admins WHERE id = ?').get(payload.sub);
       if (!user) throw new HttpError(401, 'Compte supprimé');
     } else if (ctx.config.isOpenAccess()) {
       user = ctx.db.prepare("SELECT id, email, name, role, dealership_id FROM admins WHERE role = 'admin' ORDER BY id LIMIT 1").get();
@@ -87,7 +87,36 @@ function register(router) {
     return user;
   }
 
-  // Dealers only see their own dealership's customers and reports.
+  // Roles: admin (everything) ; manager, « responsable de concession » (their dealership: customers, team, reassignments) ;
+  // sales, « commercial » (sees their dealership, manages only their own customers).
+  const ROLES = ['admin', 'manager', 'sales'];
+  const isManager = (user) => user.role === 'admin' || user.role === 'manager';
+
+  function managerOnly(ctx) {
+    const user = auth(ctx);
+    if (!isManager(user)) throw new HttpError(403, 'Réservé au responsable de la concession');
+    return user;
+  }
+
+  // May this user change this customer (details, access code, answers to their requests)?
+  function canManage(user, customer) {
+    if (user.role === 'admin') return true;
+    if (customer.dealership_id !== user.dealership_id) return false;
+    return user.role === 'manager' || customer.salesperson_id === user.id;
+  }
+  function requireManage(user, customer) {
+    if (!canManage(user, customer)) throw new HttpError(403, 'Ce client est suivi par un autre commercial : demandez au responsable de vous le confier.');
+  }
+
+  // A salesperson that can follow customers of this dealership (or null).
+  function salespersonFor(db, id, dealershipId) {
+    if (id === undefined || id === null || id === '') return null;
+    const s = db.prepare("SELECT id FROM admins WHERE id = ? AND dealership_id = ? AND role IN ('manager', 'sales')").get(Number(id), dealershipId);
+    if (!s) throw new HttpError(400, 'Commercial inconnu pour cette concession');
+    return s.id;
+  }
+
+  // Everyone in a dealership sees all of its customers and reports.
   function scope(user, column) {
     return user.role === 'admin' ? { sql: '1 = 1', args: [] } : { sql: `${column} = ?`, args: [user.dealership_id ?? -1] };
   }
@@ -125,6 +154,22 @@ function register(router) {
       customers: count(`SELECT COUNT(*) AS n FROM customers c WHERE ${c.sql}`, c.args),
       openReports: count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.status != 'resolu' AND ${c.sql}`, c.args),
       contentVersion: Number(getSetting(db, 'content_version', '0')),
+      // « Mes clients » recap, for whoever follows customers (no e-mail is sent to salespeople).
+      mine: {
+        customers: count('SELECT COUNT(*) AS n FROM customers WHERE salesperson_id = ?', [user.id]),
+        openReports: count("SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id WHERE c.salesperson_id = ? AND r.status != 'resolu'", [user.id]),
+        recentReports: camelAll(
+          db
+            .prepare(
+              `SELECT r.id, r.title, r.status, r.kind, r.updated_at, c.id AS customer_id, c.first_name, c.last_name FROM reports r JOIN customers c ON c.id = r.customer_id
+               WHERE c.salesperson_id = ? AND r.created_at >= datetime('now', '-30 days') ORDER BY r.updated_at DESC LIMIT 8`
+            )
+            .all(user.id)
+        ),
+        recentCustomers: camelAll(
+          db.prepare('SELECT id, first_name, last_name, handover_date FROM customers WHERE salesperson_id = ? ORDER BY id DESC LIMIT 5').all(user.id)
+        ),
+      },
     };
   });
 
@@ -657,9 +702,13 @@ function register(router) {
   });
 
   router.put('/api/admin/dealerships/:id', (ctx) => {
-    adminOnly(ctx);
-    const { db, body, params } = ctx;
+    const user = managerOnly(ctx);
+    const { params } = ctx;
+    const db = ctx.db;
     const d = getOr404(db, 'dealerships', params.id, 'Concession');
+    if (user.role !== 'admin' && d.id !== user.dealership_id) throw new HttpError(403, 'Réservé à votre concession');
+    // The code and the active state stay with the administrator.
+    const body = user.role === 'admin' ? ctx.body : { ...ctx.body, code: undefined, active: undefined };
     db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, store_email = ?, hours = ?, website = ?, logo_url = ?, active = ? WHERE id = ?').run(
       body.name === undefined ? d.name : reqStr(body.name, 'Nom de la concession', 120),
       body.code === undefined ? d.code : dealershipCode(db, body.code, d.id),
@@ -690,9 +739,10 @@ function register(router) {
 
   const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.cell_number, c.vehicle_year, c.email_notify, v.model_year,
       c.handover_date, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
-      d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
+      d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name, c.salesperson_id, s.name AS salesperson_name, s.email AS salesperson_email,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
     FROM customers c
+    LEFT JOIN admins s ON s.id = c.salesperson_id
     JOIN dealerships d ON d.id = c.dealership_id
     JOIN vehicles v ON v.id = c.vehicle_id
     JOIN brands b ON b.id = v.brand_id`;
@@ -714,7 +764,24 @@ function register(router) {
       where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.cell_number LIKE ?)");
       args.push(...Array(4).fill(`%${q}%`));
     }
-    return camelAll(ctx.db.prepare(`${CUSTOMER_SELECT} WHERE ${where.join(' AND ')} ORDER BY c.id DESC LIMIT 500`).all(...args));
+    if (ctx.query.get('mine') === '1') {
+      where.push('c.salesperson_id = ?');
+      args.push(user.id);
+    }
+    return ctx.db
+      .prepare(`${CUSTOMER_SELECT} WHERE ${where.join(' AND ')} ORDER BY c.id DESC LIMIT 500`)
+      .all(...args)
+      .map((c) => ({ ...camel(c), canManage: canManage(user, c) }));
+  });
+
+  // The dealership's team, to pick or change a customer's salesperson.
+  router.get('/api/admin/salespeople', (ctx) => {
+    const user = auth(ctx);
+    const dealershipId = user.role === 'admin' ? optInt(ctx.query.get('dealershipId')) : user.dealership_id;
+    const where = dealershipId ? 'AND dealership_id = ?' : '';
+    return camelAll(
+      ctx.db.prepare(`SELECT id, name, email, role, dealership_id FROM admins WHERE role IN ('manager', 'sales') ${where} ORDER BY name, email`).all(...(dealershipId ? [dealershipId] : []))
+    );
   });
 
   // Customer registered from the back-office (instead of the handover in the app): the access code is issued right away.
@@ -730,6 +797,8 @@ function register(router) {
     const lastName = reqStr(body.lastName, 'Nom du client', 100);
     const email = optEmail(body.email);
     if (body.sendEmail && !email) throw new HttpError(400, 'Indiquez l’e-mail du client pour lui envoyer son accès');
+    // A salesperson registers their own customers; the manager (or the administrator) picks who follows them.
+    const salespersonId = user.role === 'sales' ? user.id : salespersonFor(db, body.salespersonId, dealershipId) ?? (user.role === 'manager' ? user.id : null);
     const core = randomCode(8);
     const now = new Date();
     const expires = new Date(now);
@@ -754,7 +823,7 @@ function register(router) {
         expires.toISOString()
       );
     const accessCode = formatAccessCode(readProfile(vehicle).codePrefix, core);
-    db.prepare('UPDATE customers SET access_code_enc = ? WHERE id = ?').run(sealText(accessCode, ctx.config.secret), lastInsertRowid);
+    db.prepare('UPDATE customers SET access_code_enc = ?, salesperson_id = ? WHERE id = ?').run(sealText(accessCode, ctx.config.secret), salespersonId, lastInsertRowid);
     const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
     // Single-use link that opens the app already signed in (to send by e-mail or SMS).
     const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
@@ -765,8 +834,9 @@ function register(router) {
 
   // Sends the current access code again (no new code): e-mail with the « Ouvrir mon application » button, or a link to copy.
   router.post('/api/admin/customers/:id/resend', async (ctx) => {
-    auth(ctx);
+    const user = auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
+    requireManage(user, customer);
     const row = ctx.db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id);
     const accessCode = row.access_code_enc ? openText(row.access_code_enc, ctx.config.secret) : null;
     if (!accessCode) throw new HttpError(409, 'Ce code a été créé avant que l’appli ne puisse le réafficher : générez un nouveau code d’accès.');
@@ -780,12 +850,16 @@ function register(router) {
   });
 
   router.get('/api/admin/customers/:id', (ctx) => {
-    auth(ctx);
+    const user = auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
     const enc = ctx.db.prepare('SELECT access_code_enc FROM customers WHERE id = ?').get(customer.id).access_code_enc;
+    const mine = canManage(user, customer);
     return {
       ...camel(customer),
-      accessCode: enc ? openText(enc, ctx.config.secret) : null,
+      canManage: mine,
+      canReassign: isManager(user),
+      // The code is shown to whoever may send it to the customer.
+      accessCode: mine && enc ? openText(enc, ctx.config.secret) : null,
       ...customerStateSummary(ctx.db, customer.id),
       reports: camelAll(ctx.db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id)),
     };
@@ -795,6 +869,7 @@ function register(router) {
     const user = auth(ctx);
     const { db, body } = ctx;
     const customer = getCustomerScoped(ctx, ctx.params.id);
+    requireManage(user, customer);
     const vehicleId = pick(optInt(body.vehicleId), customer.vehicle_id);
     if (!db.prepare('SELECT id FROM vehicles WHERE id = ?').get(vehicleId)) throw new HttpError(400, 'Véhicule inconnu');
     let dealershipId = customer.dealership_id;
@@ -817,14 +892,20 @@ function register(router) {
       pick(optStr(body.handoverDate, 10), customer.handover_date),
       customer.id
     );
+    // Only the manager (or the administrator) moves a customer from one salesperson to another.
+    if (body.salespersonId !== undefined && Number(body.salespersonId || 0) !== (customer.salesperson_id || 0)) {
+      if (!isManager(user)) throw new HttpError(403, 'Seul le responsable de la concession peut changer le commercial d’un client');
+      db.prepare('UPDATE customers SET salesperson_id = ? WHERE id = ?').run(salespersonFor(db, body.salespersonId, dealershipId), customer.id);
+    }
     return camel(getCustomerScoped(ctx, customer.id));
   });
 
   // Issues a new recovery code (e.g. the customer lost theirs) and signs out their devices.
   // Issues a new access code (lost code, renewal) valid 2 years; phones already signed in stay signed in.
   router.post('/api/admin/customers/:id/recovery-code', async (ctx) => {
-    auth(ctx);
+    const user = auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
+    requireManage(user, customer);
     const core = randomCode(8);
     const now = new Date();
     const expires = new Date(now);
@@ -864,16 +945,21 @@ function register(router) {
       args.push(status);
     }
     if (ctx.query.get('kind') === 'piece') where.push("r.kind = 'piece'");
+    if (ctx.query.get('mine') === '1') {
+      where.push('c.salesperson_id = ?');
+      args.push(user.id);
+    }
     const list = camelAll(
       ctx.db
         .prepare(
-          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.cell_number, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
+          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.cell_number, c.salesperson_id, c.dealership_id AS customer_dealership_id, s.name AS salesperson_name, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
              p.title AS problem_title
            FROM reports r
            JOIN customers c ON c.id = r.customer_id
            JOIN dealerships d ON d.id = c.dealership_id
            JOIN vehicles v ON v.id = c.vehicle_id
            JOIN brands b ON b.id = v.brand_id
+           LEFT JOIN admins s ON s.id = c.salesperson_id
            LEFT JOIN problems p ON p.id = r.problem_id
            WHERE ${where.join(' AND ')} ORDER BY r.updated_at DESC, r.id DESC LIMIT 500`
         )
@@ -884,6 +970,7 @@ function register(router) {
     for (const r of list) {
       r.messages = msgs.filter((m) => m.reportId === r.id);
       r.part = r.part ? JSON.parse(r.part) : null;
+      r.canManage = canManage(user, { dealership_id: r.customerDealershipId, salesperson_id: r.salespersonId });
       // The customer wrote last: the dealership owes an answer.
       r.waitingForDealer = r.status !== 'resolu' && (r.messages.length ? r.messages[r.messages.length - 1].author === 'client' : r.status === 'nouveau');
     }
@@ -894,8 +981,9 @@ function register(router) {
     const user = auth(ctx);
     const { db, body } = ctx;
     const s = scope(user, 'c.dealership_id');
-    const report = db.prepare(`SELECT r.* FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.id = ? AND ${s.sql}`).get(Number(ctx.params.id), ...s.args);
+    const report = db.prepare(`SELECT r.*, c.dealership_id, c.salesperson_id FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.id = ? AND ${s.sql}`).get(Number(ctx.params.id), ...s.args);
     if (!report) throw new HttpError(404, 'Demande introuvable');
+    requireManage(user, report);
     const status = pick(optStr(body.status, 20), report.status);
     if (!STATUSES.includes(status)) throw new HttpError(400, 'Statut invalide');
     // A reply is a new message in the conversation; the customer is notified.
@@ -916,21 +1004,37 @@ function register(router) {
 
   // ---- Back-office users ----
 
+  // ---- Team: the administrator manages everyone, a manager the team of their dealership ----
+
+  const USER_SELECT = `SELECT a.id, a.email, a.name, a.phone, a.role, a.dealership_id, a.created_at, d.name AS dealership_name,
+      (SELECT COUNT(*) FROM customers c WHERE c.salesperson_id = a.id) AS customer_count
+    FROM admins a LEFT JOIN dealerships d ON d.id = a.dealership_id`;
+
   router.get('/api/admin/users', (ctx) => {
-    adminOnly(ctx);
-    return camelAll(
-      ctx.db.prepare('SELECT a.id, a.email, a.name, a.role, a.dealership_id, a.created_at, d.name AS dealership_name FROM admins a LEFT JOIN dealerships d ON d.id = a.dealership_id ORDER BY a.email').all()
-    );
+    const me = managerOnly(ctx);
+    const rows = me.role === 'admin'
+      ? ctx.db.prepare(`${USER_SELECT} ORDER BY d.name, a.name, a.email`).all()
+      : ctx.db.prepare(`${USER_SELECT} WHERE a.dealership_id = ? AND a.role != 'admin' ORDER BY a.name, a.email`).all(me.dealership_id);
+    return camelAll(rows);
   });
 
-  function userFields(db, body, current = {}) {
-    const role = pick(optStr(body.role, 10), current.role ?? 'dealer');
-    if (!['admin', 'dealer'].includes(role)) throw new HttpError(400, 'Rôle invalide');
-    const dealershipId = role === 'dealer' ? pick(optInt(body.dealershipId), current.dealership_id ?? null) : null;
-    if (role === 'dealer' && (!dealershipId || !db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId))) {
-      throw new HttpError(400, 'Un compte concession doit être rattaché à une concession');
+  function userFields(db, me, body, current = {}) {
+    let role = pick(optStr(body.role, 10), current.role ?? 'sales');
+    if (role === 'dealer') role = 'manager';
+    if (!ROLES.includes(role)) throw new HttpError(400, 'Rôle invalide');
+    if (me.role !== 'admin' && role === 'admin') throw new HttpError(403, 'Seul un administrateur peut créer un administrateur');
+    // A manager's team always belongs to their dealership.
+    const dealershipId = role === 'admin' ? null : me.role === 'admin' ? pick(optInt(body.dealershipId), current.dealership_id ?? null) : me.dealership_id;
+    if (role !== 'admin' && (!dealershipId || !db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId))) {
+      throw new HttpError(400, 'Un compte de concession doit être rattaché à une concession');
     }
-    return { role, dealershipId, name: pick(optStr(body.name, 100), current.name ?? null) };
+    return { role, dealershipId, name: pick(optStr(body.name, 100), current.name ?? null), phone: body.phone === undefined ? current.phone ?? null : optStr(body.phone, 40) };
+  }
+
+  function teamMember(ctx, me, id) {
+    const user = getOr404(ctx.db, 'admins', id, 'Utilisateur');
+    if (me.role !== 'admin' && (user.role === 'admin' || user.dealership_id !== me.dealership_id)) throw new HttpError(404, 'Utilisateur introuvable');
+    return user;
   }
 
   function checkPassword(password) {
@@ -939,35 +1043,50 @@ function register(router) {
   }
 
   router.post('/api/admin/users', (ctx) => {
-    adminOnly(ctx);
+    const me = managerOnly(ctx);
     const { db, body } = ctx;
     const email = optEmail(body.email);
     if (!email) throw new HttpError(400, 'E-mail obligatoire');
     if (db.prepare('SELECT id FROM admins WHERE email = ?').get(email)) throw new HttpError(409, 'Un compte existe déjà avec cet e-mail');
-    const f = userFields(db, body);
+    const f = userFields(db, me, body);
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO admins (email, name, password_hash, role, dealership_id) VALUES (?, ?, ?, ?, ?)')
-      .run(email, f.name, hashPassword(checkPassword(body.password)), f.role, f.dealershipId);
-    return camel(db.prepare('SELECT id, email, name, role, dealership_id FROM admins WHERE id = ?').get(lastInsertRowid));
+      .prepare('INSERT INTO admins (email, name, phone, password_hash, role, dealership_id) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(email, f.name, f.phone, hashPassword(checkPassword(body.password)), f.role, f.dealershipId);
+    return camel(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(lastInsertRowid));
   });
 
   router.put('/api/admin/users/:id', (ctx) => {
-    const me = adminOnly(ctx);
+    const me = managerOnly(ctx);
     const { db, body } = ctx;
-    const user = getOr404(db, 'admins', ctx.params.id, 'Utilisateur');
-    const f = userFields(db, body, user);
-    if (user.id === me.id && f.role !== 'admin') throw new HttpError(400, 'Vous ne pouvez pas retirer votre propre rôle administrateur');
+    const user = teamMember(ctx, me, ctx.params.id);
+    const f = userFields(db, me, body, user);
+    if (user.id === me.id && f.role !== me.role) throw new HttpError(400, 'Vous ne pouvez pas changer votre propre rôle');
     const email = pick(optEmail(body.email), user.email);
     if (db.prepare('SELECT id FROM admins WHERE email = ? AND id != ?').get(email, user.id)) throw new HttpError(409, 'Un compte existe déjà avec cet e-mail');
     const hash = body.password ? hashPassword(checkPassword(body.password)) : user.password_hash;
-    db.prepare('UPDATE admins SET email = ?, name = ?, role = ?, dealership_id = ?, password_hash = ? WHERE id = ?').run(email, f.name, f.role, f.dealershipId, hash, user.id);
-    return camel(db.prepare('SELECT id, email, name, role, dealership_id FROM admins WHERE id = ?').get(user.id));
+    db.prepare('UPDATE admins SET email = ?, name = ?, phone = ?, role = ?, dealership_id = ?, password_hash = ? WHERE id = ?').run(email, f.name, f.phone, f.role, f.dealershipId, hash, user.id);
+    // Moved to another dealership: their customers stay where they are, without a salesperson.
+    if (f.dealershipId !== user.dealership_id) db.prepare('UPDATE customers SET salesperson_id = NULL WHERE salesperson_id = ? AND dealership_id != ?').run(user.id, f.dealershipId ?? -1);
+    return camel(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(user.id));
+  });
+
+  // Hands all the customers of one salesperson to another (holidays, departure…).
+  router.post('/api/admin/users/:id/transfer', (ctx) => {
+    const me = managerOnly(ctx);
+    const from = teamMember(ctx, me, ctx.params.id);
+    const to = ctx.body.toUserId ? teamMember(ctx, me, ctx.body.toUserId) : null;
+    if (to && (to.role === 'admin' || to.dealership_id !== from.dealership_id)) throw new HttpError(400, 'Choisissez un commercial de la même concession');
+    const { changes } = ctx.db.prepare('UPDATE customers SET salesperson_id = ? WHERE salesperson_id = ?').run(to ? to.id : null, from.id);
+    return { moved: Number(changes) };
   });
 
   router.delete('/api/admin/users/:id', (ctx) => {
-    const me = adminOnly(ctx);
-    const user = getOr404(ctx.db, 'admins', ctx.params.id, 'Utilisateur');
+    const me = managerOnly(ctx);
+    const user = teamMember(ctx, me, ctx.params.id);
     if (user.id === me.id) throw new HttpError(400, 'Vous ne pouvez pas supprimer votre propre compte');
+    const n = ctx.db.prepare('SELECT COUNT(*) AS n FROM customers WHERE salesperson_id = ?').get(user.id).n;
+    if (n && !ctx.query.get('force')) throw new HttpError(409, `${n} client(s) sont suivis par ce compte : transférez-les d’abord à un autre commercial.`);
+    ctx.db.prepare('UPDATE customers SET salesperson_id = NULL WHERE salesperson_id = ?').run(user.id);
     ctx.db.prepare('DELETE FROM admins WHERE id = ?').run(user.id);
     return { ok: true };
   });

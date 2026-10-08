@@ -52,7 +52,11 @@ Le **code d'accès** est conservé chiffré : la fiche client du back-office l'a
 - **Concessions** : code concession, téléphone, horaires et logo, affichés dans l'application.
 - **Clients → ＋ Nouveau client** : enregistrer un client sans passer par la mise en main dans l'appli. Le code d'accès est créé tout de suite, avec un lien qui ouvre l'appli déjà connectée (à copier, à envoyer par SMS, ou par e-mail de bienvenue automatique).
 - **Clients** : fiche du client avec ses photos, équipements, modèles notés et l'état de la mise en main ; génération d'un nouveau code d'accès.
-- **Comptes** : *administrateur* (tout) ou *concession* (ses clients et ses demandes uniquement).
+- **Rôles** :
+  - *Administrateur* : tout (catalogue, concessions, utilisateurs).
+  - *Responsable de concession* : tous les clients et demandes de sa concession ; confie un client à un commercial ou le bascule (fiche client → Commercial) ; gère son équipe (Mon équipe), y compris « Transférer ses clients » ; modifie la fiche de sa concession (sauf le code). Reçoit les e-mails des demandes.
+  - *Commercial* : voit tous les clients et demandes de sa concession, mais ne gère que les siens (fiche, code d'accès, réponses). Pas d'e-mail : un récap « Mes clients » sur son tableau de bord.
+- **Commercial du client** : choisi à la mise en main dans l'appli (« Conseiller du client ») ou à la création dans le back-office. Le client voit son conseiller (nom, téléphone, e-mail) sur l'accueil et dans son espace client. Les anciens comptes « concession » deviennent responsables de concession.
 
 ### Mises à jour à distance
 - **Contenu** : chaque enregistrement dans le back-office est publié. L'application le reçoit à sa prochaine ouverture, ou propose « Mettre à jour ».

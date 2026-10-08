@@ -34,6 +34,11 @@ function register(router) {
     return row;
   }
 
+  // The dealership's team, to choose the customer's salesperson at the handover (names only).
+  function salespeopleOf(db, dealershipId) {
+    return camelAll(db.prepare("SELECT id, name, email FROM admins WHERE dealership_id = ? AND role IN ('manager', 'sales') ORDER BY name, email").all(dealershipId)).map((s) => ({ id: s.id, name: s.name || s.email.split('@')[0] }));
+  }
+
   function findActiveVehicle(db, vehicleId) {
     const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ? AND active = 1').get(vehicleId);
     if (!vehicle) throw new HttpError(404, 'Véhicule introuvable');
@@ -71,7 +76,9 @@ function register(router) {
       .get(customer.vehicle_id);
     const dealership = db.prepare('SELECT id, name, city, phone, email FROM dealerships WHERE id = ?').get(customer.dealership_id);
     const { recovery_hash, vin, plate, access_code_enc, ...publicCustomer } = customer;
+    const salesperson = customer.salesperson_id ? db.prepare('SELECT name, email, phone FROM admins WHERE id = ?').get(customer.salesperson_id) : null;
     return {
+      salesperson: salesperson ? camel(salesperson) : null,
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       customer: camel(publicCustomer),
       vehicle: camel(vehicle),
@@ -131,7 +138,10 @@ function register(router) {
     vehicles: camelAll(db.prepare('SELECT id, brand_id, name, model_year, photo_url FROM vehicles WHERE active = 1 ORDER BY sort, name').all()),
   }));
 
-  router.get('/api/dealerships/code/:code', ({ db, params, ip }) => camel(findDealershipByCode(db, params.code, ip)));
+  router.get('/api/dealerships/code/:code', ({ db, params, ip }) => {
+    const d = findDealershipByCode(db, params.code, ip);
+    return { ...camel(d), salespeople: salespeopleOf(db, d.id) };
+  });
 
   // Handover ("mise en main"): the dealership enters its code, picks brand + vehicle, fills in the customer.
   router.post('/api/handover', ({ db, body, ip }) => {
@@ -140,6 +150,7 @@ function register(router) {
     findActiveVehicle(db, vehicleId);
     const c = body.customer || {};
     const lastName = reqStr(c.lastName, 'Nom du client', 100);
+    const salesperson = body.salespersonId ? db.prepare("SELECT id FROM admins WHERE id = ? AND dealership_id = ? AND role IN ('manager', 'sales')").get(Number(body.salespersonId), dealership.id) : null;
     return transaction(db, () => {
       const { lastInsertRowid } = db
         .prepare(
@@ -159,6 +170,7 @@ function register(router) {
           // No usable code until the dealership validates the handover in the app.
           sha256(randomToken())
         );
+      if (salesperson) db.prepare('UPDATE customers SET salesperson_id = ? WHERE id = ?').run(salesperson.id, lastInsertRowid);
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
       return { token: createSession(db, customer.id), ...session(db, customer) };
     });

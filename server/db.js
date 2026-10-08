@@ -55,8 +55,9 @@ CREATE TABLE IF NOT EXISTS admins (
   email TEXT NOT NULL UNIQUE,
   name TEXT,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'dealer')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales')),
   dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
+  phone TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -217,6 +218,8 @@ const ADDED_COLUMNS = [
   ['dealerships', 'store_email', 'TEXT'],
   ['customers', 'access_code_enc', 'TEXT'],
   ['customers', 'email_notify', 'INTEGER DEFAULT 1'],
+  ['customers', 'salesperson_id', 'INTEGER'], // the dealership's salesperson in charge (admins.id)
+  ['admins', 'phone', 'TEXT'],
 ];
 
 // The VIN is never kept on the server: it stays on the customer's phone (see public/app/cloud.js).
@@ -231,7 +234,34 @@ function stripVin(value) {
   }
 }
 
+// Roles: admin (everything), manager (« responsable de concession »: their dealership), sales (« commercial »: sees the
+// dealership, manages their own customers). The first version had a single « dealer » role: those accounts become managers.
+function migrateRoles(db) {
+  const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'admins'").get()?.sql || '';
+  if (!sql.includes("'dealer'")) return;
+  const cols = db.prepare('PRAGMA table_info(admins)').all().map((c) => c.name);
+  db.exec('PRAGMA foreign_keys = OFF');
+  transaction(db, () => {
+    db.exec(`CREATE TABLE admins_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales')),
+      dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
+      phone TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+    db.exec(`INSERT INTO admins_new (id, email, name, password_hash, role, dealership_id, phone, created_at)
+      SELECT id, email, name, password_hash, CASE role WHEN 'dealer' THEN 'manager' ELSE role END, dealership_id, ${cols.includes('phone') ? 'phone' : 'NULL'}, created_at FROM admins`);
+    db.exec('DROP TABLE admins');
+    db.exec('ALTER TABLE admins_new RENAME TO admins');
+  });
+  db.exec('PRAGMA foreign_keys = ON');
+}
+
 function migrate(db) {
+  migrateRoles(db);
   for (const [table, column, type] of ADDED_COLUMNS) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);

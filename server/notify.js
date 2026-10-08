@@ -38,9 +38,10 @@ async function mail(db, to, subject, text, log, extra = {}) {
   }
 }
 
+// The dealership's address and its managers. Salespeople get no e-mail: they see a recap of their customers in the back-office.
 function dealershipRecipients(db, dealershipId) {
   const d = db.prepare('SELECT email FROM dealerships WHERE id = ?').get(dealershipId);
-  const users = db.prepare("SELECT email FROM admins WHERE role = 'dealer' AND dealership_id = ?").all(dealershipId).map((u) => u.email);
+  const users = db.prepare("SELECT email FROM admins WHERE dealership_id = ? AND role = 'manager'").all(dealershipId).map((u) => u.email);
   const copy = mailConfig(db).copy;
   return [...new Set([d?.email, ...users, copy].filter(Boolean))];
 }
