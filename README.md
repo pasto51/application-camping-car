@@ -35,7 +35,8 @@ Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique �
 - **Diagnostics (pannes)** : les 56 entrées (environ 2 000 fins de parcours) se présentent sous forme d'**organigramme modifiable** : questions, réponses, fin de parcours avec cause, geste, produit, sécurité, rendez-vous. Un mode avancé (JSON) est aussi disponible.
 - **Équipements** : les 122 équipements du catalogue (nom, rubrique, de série, zone du plan, explication, conseil).
 - **Contenus de l'appli** : listes Arrivée et Départ, rappels d'entretien, motifs de rendez-vous, mission « Préparer le départ », réglages avancés.
-- **Véhicules → Profil appli et photos** : nom affiché, dimensions, poids, équipements en plus de la série, types connus, **photo de chaque équipement** et plan vu du dessus.
+- **Véhicules → Profil appli et photos** : nom affiché, dimensions, poids, équipements pré-cochés (aucun « de série » imposé), types connus, **photo de chaque équipement** et plan vu du dessus.
+- **Relevé sur téléphone** (`/releve`) : dans le véhicule, on choisit le modèle, on **coche les équipements** d'un doigt et on **prend leurs photos** avec l'appareil du téléphone. Chaque geste est enregistré tout de suite ; sans réseau, l'envoi attend et repart seul. On peut aussi y créer un véhicule ou un nouvel équipement. Réservé aux administrateurs.
 - **Concessions** : code concession, téléphone, horaires et logo, affichés dans l'application.
 - **Clients** : fiche du client avec ses photos, équipements, modèles notés et l'état de la mise en main ; génération d'un nouveau code d'accès.
 - **Comptes** : *administrateur* (tout) ou *concession* (ses clients et ses demandes uniquement).

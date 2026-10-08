@@ -93,8 +93,8 @@ function createApp(options = {}) {
       res.writeHead(302, { Location: '/app/' });
       return res.end();
     }
-    if (p === '/admin') {
-      res.writeHead(302, { Location: '/admin/' });
+    if (p === '/admin' || p === '/admin/releve' || p === '/releve' || p === '/releve/') {
+      res.writeHead(302, { Location: p.includes('releve') ? '/admin/releve/' : '/admin/' });
       return res.end();
     }
     if (p.startsWith('/uploads/')) {

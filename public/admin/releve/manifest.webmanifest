@@ -1,0 +1,10 @@
+{
+  "name": "Relevé véhicule",
+  "short_name": "Relevé",
+  "start_url": "/admin/releve/",
+  "scope": "/admin/releve/",
+  "display": "standalone",
+  "background_color": "#f4f3ef",
+  "theme_color": "#1d3557",
+  "icons": [{ "src": "/admin/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

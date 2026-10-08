@@ -424,7 +424,8 @@ const VIEWS = {
     const { brands, vehicles } = await loadCatalog();
     const brandFilter = state.filter.vehicleBrand || '';
     const list = vehicles.filter((v) => !brandFilter || v.brandId === Number(brandFilter));
-    el.innerHTML = `${pageHeader('Véhicules', '<button class="btn primary" data-act="add">＋ Nouveau véhicule</button>')}
+    el.innerHTML = `${pageHeader('Véhicules', '<a class="btn" href="/admin/releve/" target="_blank" rel="noopener">📱 Relevé sur téléphone</a><button class="btn primary" data-act="add">＋ Nouveau véhicule</button>')}
+      <p class="muted">Astuce : sur votre téléphone, ouvrez <strong>${esc(location.host)}/releve</strong> dans le véhicule pour cocher les équipements et prendre les photos sur place.</p>
       <div class="filters"><button class="chip ${!brandFilter ? 'active' : ''}" data-act="brand" data-value="">Toutes les marques</button>${brands
         .map((b) => `<button class="chip ${String(b.id) === String(brandFilter) ? 'active' : ''}" data-act="brand" data-value="${b.id}">${esc(b.name)}</button>`)
         .join('')}</div>
