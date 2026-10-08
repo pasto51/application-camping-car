@@ -13,7 +13,8 @@ const KINDS = {
   pneus: { label: 'Pneus (contrôle ou remplacement)' },
   autre: { label: 'Autre intervention' },
 };
-const SOON_DAYS = 45; // shown, and notified, this many days before the date
+const SOON_DAYS = 45; // shown in the home banner this many days before the date
+const NOTIFY_DAYS = 15; // notified on the phone this many days before the date
 
 const iso = (d) => d.toISOString().slice(0, 10);
 const day = (s) => new Date(`${s}T12:00:00Z`);
@@ -70,4 +71,4 @@ function entretienOf(db, customer, today) {
   };
 }
 
-module.exports = { KINDS, dueItems, entretienOf, logOf, SOON_DAYS };
+module.exports = { KINDS, dueItems, entretienOf, logOf, SOON_DAYS, NOTIFY_DAYS };

@@ -363,6 +363,10 @@ async function main() {
     logbook('Martine', [['revision', 14, 'Garage près de chez moi'], ['pneus', 20, '4 pneus neufs']]),
     logbook('Bernard', [['etanch', 13, null], ['gaz', 30, 'Détendeur changé']]),
   ]);
+  // Weighings noted in the app (« Poids du véhicule »): Isabelle's rear axle is over its limit, Henri is fine.
+  const weighings = (who, w) => call('PUT', '/api/me/state/cdb_wt', { value: JSON.stringify({ opt: {}, eav: 1850, ear: 2000, ...w }) }, C[who].token);
+  await weighings('Isabelle', { bag: 180, pes: [{ d: day(1), t: 3460, av: 1420, ar: 2040, n: 'Pont-bascule, départ en vacances, 4 vélos' }, { d: day(5), t: 3310, av: 1440, ar: 1870, n: 'Déchetterie' }] });
+  await weighings('Henri', { pes: [{ d: day(2), t: 3240, av: 1450, ar: 1790, n: 'Pont-bascule de la coopérative' }] });
   await call('PUT', '/api/me/info', { marketing: true }, C.Paul.token);
   await call('PUT', '/api/me/info', { marketing: true }, C.Isabelle.token);
   await call('PUT', '/api/me/info', { marketing: false }, C.Martine.token);

@@ -502,7 +502,7 @@ export function registerCatalogViews(VIEWS, h) {
     const v = vehicles.find((x) => x.id === vehicleId);
     const photoOf = Object.fromEntries(profile.photos.map((p) => [p.id, p.url]));
     const eqName = Object.fromEntries(equipment.map((q) => [q.id, q.name]));
-    const W = { ptac: 'PTAC (kg)', mom: 'Masse en ordre de marche (kg)', pax: 'Passagers', eau: 'Eau propre (L)', gaz: 'Gaz (kg)', bag: 'Bagages (kg)' };
+    const W = { ptac: 'PTAC (kg)', mom: 'Masse en ordre de marche (kg)', pax: 'Passagers', eau: 'Eau propre (L)', gaz: 'Gaz (kg)', bag: 'Bagages (kg)', eav: 'Charge max. essieu avant (kg, 0 = inconnue)', ear: 'Charge max. essieu arrière (kg, 0 = inconnue)' };
     el.innerHTML = `${pageHeader(`Profil appli : ${v.brandName} ${v.name}`, `<button class="btn" data-act="back">← Véhicules</button><a class="btn" href="/admin/releve/#v=${vehicleId}" target="_blank" rel="noopener">📱 Relevé sur téléphone</a><button class="btn primary" data-act="edit">Modifier le profil</button>`)}
       <div class="detail-grid">
         <div class="card">

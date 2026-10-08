@@ -125,7 +125,7 @@ Tests : `npm test`
 
 ## Tâches quotidiennes
 
-Le serveur fait aussi chaque jour : les **rappels d'entretien** (notification sur le téléphone des clients 45 jours avant une échéance : étanchéité, révision, contrôle gaz, chauffage, hivernage, remise en route ; calculées depuis la mise en main et le carnet d'entretien que le client tient dans l'appli) et un **e-mail par service** (SAV, magasin) listant les demandes **sans réponse depuis plus de 48 h**.
+Le serveur fait aussi chaque jour : les **rappels d'entretien** (notification sur le téléphone des clients 15 jours avant une échéance : étanchéité, révision, contrôle gaz, chauffage, hivernage, remise en route ; calculées depuis la mise en main et le carnet d'entretien que le client tient dans l'appli) et un **e-mail par service** (SAV, magasin) listant les demandes **sans réponse depuis plus de 48 h**.
 
 ## Mise en ligne (cloud)
 

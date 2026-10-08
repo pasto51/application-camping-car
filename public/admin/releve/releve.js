@@ -536,6 +536,8 @@ const WEIGHTS = [
   ['eau', 'Eau propre au départ (L)', 'Litres d’eau propre que le client emporte en général.', 30],
   ['gaz', 'Gaz au départ (kg)', 'Laissez 0 si la masse en ordre de marche inclut déjà le gaz.', 0],
   ['bag', 'Bagages (kg)', 'Valeur de départ du calcul de charge.', 100],
+  ['eav', 'Charge maximale essieu avant (kg)', 'Plaque constructeur (montant de porte) ou certificat de conformité. Laissez vide si inconnue.', 0, true],
+  ['ear', 'Charge maximale essieu arrière (kg)', 'Même endroit. Sert au client à vérifier ses pesées essieu par essieu. Laissez vide si inconnue.', 0, true],
 ];
 
 // Accepts "2,90", "2.9" or "290" (cm) and returns metres.
@@ -747,12 +749,12 @@ const STEPS = [
     title: 'Les poids',
     html: ({ profile }) =>
       WEIGHTS.map(
-        ([k, label, hint]) => `<label>${esc(label)}<input name="${k}" inputmode="numeric" value="${esc(profile.weights[k] ?? '')}"><span class="hint">${esc(hint)}</span></label>`
+        ([k, label, hint, , optional]) => `<label>${esc(label)}<input name="${k}" inputmode="numeric" value="${esc(optional && !profile.weights[k] ? '' : profile.weights[k] ?? '')}"><span class="hint">${esc(hint)}</span></label>`
       ).join(''),
     save: async ({ v, profile }, f) => {
       const weights = {};
-      for (const [k, label] of WEIGHTS) {
-        const n = numOrNull(f.get(k));
+      for (const [k, label, , , optional] of WEIGHTS) {
+        const n = optional && !String(f.get(k) ?? '').trim() ? 0 : numOrNull(f.get(k));
         if (n === null) throw new Error(`${label} : nombre attendu`);
         weights[k] = n;
       }

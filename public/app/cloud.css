@@ -134,8 +134,19 @@
 .cloud-ask-btns{display:flex;gap:8px}
 .cloud-ask-btns .btn{flex:1;min-height:46px;font-size:16px}
 /* Maintenance coming up, on the home screen, and the logbook */
+.cloud-ent{margin:0 0 12px}
+.cloud-entd{background:var(--soft);border-radius:14px;padding:0 12px}
+.cloud-entd summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:52px;cursor:pointer}
+.cloud-entd summary::-webkit-details-marker{display:none}
+.cloud-entd-ic{font-size:20px}
+.cloud-entd-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.cloud-entd-t b{font-size:16px}
+.cloud-entd-t span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cloud-entd.late .cloud-entd-t b{color:var(--warn)}
+.cloud-entd-go{font-size:22px;color:var(--muted);transition:transform .2s}
+.cloud-entd[open] .cloud-entd-go{transform:rotate(90deg)}
+.cloud-entd[open]{padding-bottom:6px}
 .cloud-ent-item{border-top:1px solid var(--line);padding:10px 0}
-.cloud-ent-item:first-of-type{border-top:0}
 .cloud-ent-item p{margin:0 0 8px;font-size:17px;line-height:1.35}
 .cloud-ent-item.late b{color:var(--warn)}
 .cloud-ent-btns{display:flex;gap:8px}

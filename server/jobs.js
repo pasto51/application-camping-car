@@ -6,7 +6,7 @@
 
 const { getSetting, setSetting } = require('./db');
 const { backupNow } = require('./backup');
-const { dueItems, logOf } = require('./entretien');
+const { dueItems, logOf, NOTIFY_DAYS } = require('./entretien');
 const { SERVICES, serviceEmail, OVERDUE_SQL, WAITING_SINCE } = require('./services');
 
 const TASKS = [];
@@ -21,16 +21,17 @@ daily('sauvegarde', (app) => {
   return `sauvegarde ${b.name} (${Math.round(b.size / 1024)} Ko)`;
 });
 
-// Maintenance reminders: one notification on the phone for each date coming within 45 days (or already passed),
+// Maintenance reminders: one notification on the phone for each date coming within 15 days (or already passed),
 // at most one per customer and per day. Only customers who allowed notifications receive them.
 daily('rappels', async (app) => {
   const { db, notify } = app;
   const today = new Date().toISOString().slice(0, 10);
+  const limit = new Date(Date.now() + NOTIFY_DAYS * 86400000).toISOString().slice(0, 10);
   const customers = db.prepare('SELECT DISTINCT c.* FROM customers c JOIN push_subscriptions p ON p.customer_id = c.id').all();
   let sent = 0;
   for (const c of customers) {
     const item = dueItems(c, logOf(db, c.id), today).find(
-      (i) => i.state !== 'later' && !db.prepare('SELECT 1 FROM reminder_sent WHERE customer_id = ? AND kind = ? AND due = ?').get(c.id, i.kind, i.due)
+      (i) => i.due <= limit && !db.prepare('SELECT 1 FROM reminder_sent WHERE customer_id = ? AND kind = ? AND due = ?').get(c.id, i.kind, i.due)
     );
     if (!item) continue;
     const date = new Date(`${item.due}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });

@@ -694,7 +694,7 @@
     }
     home.insertBefore(req, home.firstChild); home.appendChild(acc);
     // Maintenance coming up (or late), near the top of the home screen.
-    var ent = document.createElement('div'); ent.id = 'cloudent'; ent.className = 'card cloud-ent'; ent.hidden = true;
+    var ent = document.createElement('div'); ent.id = 'cloudent'; ent.className = 'cloud-ent'; ent.hidden = true;
     home.insertBefore(ent, req.nextSibling);
     ent.addEventListener('click', function (e) {
       var b = e.target.closest('[data-ent-done]'); if (!b) return;
@@ -721,16 +721,23 @@
   function addLog(body) {
     return api('POST', '/api/me/entretien', body).then(function (r) { ENT = r; renderEntretien(); return r; }).catch(function (err) { toast(err.message); throw err; });
   }
+  // A discreet banner « Entretien à prévoir » on the home screen; touched, it opens the details and the buttons.
   function renderEntretien() {
     var el = document.getElementById('cloudent'); if (!el || !ENT) return;
     var due = ENT.items.filter(function (i) { return i.state !== 'later'; }).slice(0, 3);
     el.hidden = !due.length;
-    el.innerHTML = '<p class="eyebrow">Entretien à prévoir</p>' + due.map(function (i) {
-      return '<div class="cloud-ent-item' + (i.state === 'late' ? ' late' : '') + '"><p><b>' + esc(i.label) + '</b><br><span class="sub">' +
-        (i.state === 'late' ? 'Prévu le ' + esc(fmtDay(i.due)) + ' : à faire dès que possible' : 'À faire avant le ' + esc(fmtDay(i.due))) + '</span></p>' +
-        '<div class="cloud-ent-btns"><button class="btn" type="button" data-rdv="' + esc(i.rdv) + '" data-ctx="' + esc('Rappel : ' + i.label + ' à prévoir (le ' + fmtDay(i.due) + ').') + '">Prendre rendez-vous</button>' +
-        '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
-    }).join('');
+    if (!due.length) return;
+    var was = el.querySelector('details'), open = was && was.open;
+    var late = due.some(function (i) { return i.state === 'late'; });
+    el.innerHTML = '<details class="cloud-entd' + (late ? ' late' : '') + '"' + (open ? ' open' : '') + '><summary>' +
+      '<span class="cloud-entd-ic" aria-hidden="true">🔧</span><span class="cloud-entd-t"><b>Entretien à prévoir</b><span>' +
+      esc(due.map(function (i) { return i.label; }).join(' · ')) + '</span></span><span class="cloud-entd-go" aria-hidden="true">›</span></summary>' +
+      due.map(function (i) {
+        return '<div class="cloud-ent-item' + (i.state === 'late' ? ' late' : '') + '"><p><b>' + esc(i.label) + '</b><br><span class="sub">' +
+          (i.state === 'late' ? 'Prévu le ' + esc(fmtDay(i.due)) + ' : à faire dès que possible' : 'À faire avant le ' + esc(fmtDay(i.due))) + '</span></p>' +
+          '<div class="cloud-ent-btns"><button class="btn" type="button" data-rdv="' + esc(i.rdv) + '" data-ctx="' + esc('Rappel : ' + i.label + ' à prévoir (le ' + fmtDay(i.due) + ').') + '">Prendre rendez-vous</button>' +
+          '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
+      }).join('') + '</details>';
   }
   function carnetHtml() {
     if (!ENT) return '<p class="sub">Chargement…</p>';
