@@ -167,7 +167,43 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
     return pushed;
   }
 
-  return { customerWrote, dealershipAnswered, push };
+  // Account created from the back-office: the customer gets their access code and a button that opens the app signed in.
+  async function welcome({ customer, code, url }) {
+    if (!customer.email) return false;
+    const d = db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id) || {};
+    const name = d.name || 'Votre concession';
+    const vehicle = db.prepare('SELECT v.name, b.name AS brand FROM vehicles v JOIN brands b ON b.id = v.brand_id WHERE v.id = ?').get(customer.vehicle_id);
+    const what = [vehicle?.brand, vehicle?.name].filter(Boolean).join(' ');
+    const hello = `Bonjour${customer.first_name ? ' ' + customer.first_name : ''},`;
+    const html = emailHtml({
+      dealer: { name, phone: d.phone, hours: d.hours, website: d.website },
+      intro: `${escHtml(hello)}<br><b>${escHtml(name)}</b> vous a ouvert votre application <b>Compagnon de bord</b>${what ? ` pour votre ${escHtml(what)}` : ''} : prise en main, équipements, dépannages pas à pas et contact avec l’atelier.`,
+      quote: `Votre code d’accès : ${code}`,
+      button: 'Ouvrir mon application',
+      url,
+      note: `Le bouton fonctionne une seule fois, pendant 14 jours. Ensuite, ou sur un autre téléphone, choisissez « J’ai déjà un code d’accès » et saisissez votre nom (${escHtml(customer.last_name)}) et ce code. Sur téléphone, ajoutez l’application à l’écran d’accueil pour la retrouver facilement.`,
+      footer: 'E-mail envoyé par l’application Compagnon de bord.',
+    });
+    const plain = [
+      hello,
+      '',
+      `${name} vous a ouvert votre application Compagnon de bord${what ? ` pour votre ${what}` : ''}.`,
+      '',
+      `Ouvrir mon application : ${url}`,
+      `Votre code d’accès : ${code} (avec votre nom : ${customer.last_name})`,
+      '',
+      'Le lien fonctionne une seule fois, pendant 14 jours. Ensuite, choisissez « J’ai déjà un code d’accès » dans l’application.',
+      '',
+      [name, d.phone, d.hours, d.website].filter(Boolean).join(' · '),
+    ].join('\n');
+    return mail(db, [customer.email], `${name} : votre application Compagnon de bord`, plain, log, {
+      html,
+      fromName: `${name} via Compagnon de bord`,
+      replyTo: d.email || mailConfig(db).copy || undefined,
+    });
+  }
+
+  return { customerWrote, dealershipAnswered, welcome, push };
 }
 
 module.exports = { createNotifier, mailConfig, mailReady, emailHtml };

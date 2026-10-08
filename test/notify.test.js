@@ -197,4 +197,15 @@ test('conversation: dealership is e-mailed, customer gets push + e-mail, website
   await call('PUT', `/api/admin/reports/${req.id}`, { token: admin, body: { status: 'en_cours' } });
   assert.equal((await call('POST', `/api/me/requests/${req.id}/messages`, { token, body: { body: 'Merci' } })).status, 200);
   assert.equal((await call('GET', '/api/me/requests', { token })).data.find((r) => r.id === req.id).closedAt, null);
+
+  // Customer registered from the back-office: welcome e-mail with the code and the app button
+  await waitFor(() => smtp.mails.length === 6);
+  const created = (await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: catalog.vehicles[0].id, dealershipId: 1, firstName: 'Léa', lastName: 'Roux', email: 'lea@client.fr', sendEmail: true } })).data;
+  assert.equal(created.emailSent, true);
+  await waitFor(() => smtp.mails.length === 7);
+  assert.deepEqual(smtp.mails[6].rcpt, ['lea@client.fr']);
+  const welcome = smtp.mails[6].data.split(/--cdb-[0-9a-f]+/);
+  const welcomeHtml = Buffer.from(welcome.find((x) => x.includes('text/html')).split('\n\n').slice(1).join('').replace(/\s/g, ''), 'base64').toString();
+  assert.match(welcomeHtml, /Ouvrir mon application/);
+  assert.ok(welcomeHtml.includes(created.accessCode));
 });

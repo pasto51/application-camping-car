@@ -393,7 +393,7 @@ const VIEWS = {
   async customers(el) {
     const q = state.filter.customerQuery || '';
     const list = await api('GET', `/api/admin/customers?q=${encodeURIComponent(q)}`);
-    el.innerHTML = `${pageHeader('Clients')}
+    el.innerHTML = `${pageHeader('Clients', '<button class="btn primary" data-act="add">＋ Nouveau client</button>')}
       <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, immatriculation, VIN…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
       <div class="table-wrap"><table>
         <thead><tr><th></th><th>Client</th><th>Véhicule</th><th>Immat.</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Mise en main</th><th>Signal.</th><th></th></tr></thead>
@@ -417,7 +417,7 @@ const VIEWS = {
       state.filter.customerQuery = new FormData(e.target).get('q');
       VIEWS.customers(el);
     };
-    bind(el, { open: (id) => customerDetail(el, id) });
+    bind(el, { open: (id) => customerDetail(el, id), add: () => newCustomer(el) });
   },
 
   async vehicles(el) {
@@ -746,6 +746,73 @@ const VIEWS = {
 
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin });
 
+// Registers a customer from the back-office (instead of the handover in the app) and hands over their access.
+async function newCustomer(el) {
+  const [{ vehicles }, dealerships] = await Promise.all([loadCatalog(), isAdmin() ? api('GET', '/api/admin/dealerships') : Promise.resolve([])]);
+  const active = vehicles.filter((v) => v.active);
+  if (!active.length) return toast('Créez d’abord un véhicule (rubrique Véhicules)', 'error');
+  openForm({
+    title: 'Nouveau client',
+    submitLabel: 'Enregistrer le client',
+    values: { handoverDate: new Date().toISOString().slice(0, 10), sendEmail: true, dealershipId: dealerships[0]?.id },
+    fields: [
+      { name: 'vehicleId', label: 'Véhicule', type: 'select', required: true, options: active.map((v) => [v.id, `${v.brandName} — ${v.name}${v.modelYear ? ' ' + v.modelYear : ''}`]) },
+      ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', required: true, options: dealerships.map((d) => [d.id, d.name]) }] : []),
+      { name: 'firstName', label: 'Prénom' },
+      { name: 'lastName', label: 'Nom', required: true, hint: 'Le client le saisit avec son code d’accès.' },
+      { name: 'email', label: 'E-mail', type: 'email' },
+      { name: 'phone', label: 'Téléphone', type: 'tel' },
+      { name: 'plate', label: 'Immatriculation' },
+      { name: 'vin', label: 'VIN (numéro de série)' },
+      { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
+      { name: 'sendEmail', label: 'Envoyer au client son code d’accès et un bouton « Ouvrir mon application » par e-mail', type: 'checkbox', full: true },
+    ],
+    onSubmit: async (data) => {
+      const c = await api('POST', '/api/admin/customers', data);
+      showAccess(c, c.accessCode, () => customerDetail(el, c.id));
+    },
+  });
+}
+
+// Shows a customer's access code and app link, ready to copy, text or e-mail.
+function showAccess(c, code, onClose) {
+  const dialog = document.createElement('dialog');
+  const name = [c.firstName, c.lastName].filter(Boolean).join(' ');
+  const sms = `Bonjour${c.firstName ? ' ' + c.firstName : ''}, voici votre application Compagnon de bord : ${c.appLink}\nVotre code d’accès : ${code} (avec votre nom : ${c.lastName})`;
+  const phone = String(c.phone || '').replace(/[^\d+]/g, '');
+  dialog.innerHTML = `<form method="dialog" class="dialog-form">
+    <header><h2>Accès de ${esc(name)}</h2><button class="icon" aria-label="Fermer">✕</button></header>
+    <div class="access-box">
+      ${c.emailSent ? `<p class="ok-note">✅ E-mail envoyé à ${esc(c.email)}.</p>` : c.sendEmail === false || !c.email ? '' : '<p class="warn-note">⚠️ L’e-mail n’a pas pu partir : vérifiez Paramètres → Envoi des e-mails, ou transmettez le code ci-dessous.</p>'}
+      <p class="muted">Code d’accès à transmettre au client (valable jusqu’au ${formatDate(c.expiresAt)}). Dans l’application : « J’ai déjà un code d’accès », puis son nom <strong>${esc(c.lastName)}</strong> et ce code.</p>
+      <p class="big-code">${esc(code)}</p>
+      <label>Lien qui ouvre l’application déjà connectée <small class="hint">(une seule fois, pendant 14 jours)</small>
+        <span class="copy-row"><input readonly value="${esc(c.appLink)}"><button type="button" class="btn" data-copy>Copier</button></span></label>
+      <div class="actions">
+        ${phone ? `<a class="btn" href="sms:${esc(phone)}?&body=${encodeURIComponent(sms)}">📱 Envoyer par SMS</a>` : ''}
+        <button type="button" class="btn" data-copy-all>Copier le message pour le client</button>
+      </div>
+    </div>
+    <footer><button class="btn primary">Terminé</button></footer>
+  </form>`;
+  document.body.appendChild(dialog);
+  const copy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Copié');
+    } catch {
+      prompt('Copiez ce texte :', text);
+    }
+  };
+  dialog.querySelector('[data-copy]').onclick = () => copy(c.appLink);
+  dialog.querySelector('[data-copy-all]').onclick = () => copy(sms);
+  dialog.addEventListener('close', () => {
+    dialog.remove();
+    onClose?.();
+  });
+  dialog.showModal();
+}
+
 async function customerDetail(el, id) {
   const [c, { vehicles }, dealerships] = await Promise.all([
     api('GET', `/api/admin/customers/${id}`),
@@ -821,10 +888,10 @@ async function customerDetail(el, id) {
       }),
     recovery: async () => {
       if (!confirm('Générer un nouveau code d’accès (code perdu ou renouvellement) ? L’ancien code ne fonctionnera plus.')) return;
+      const sendEmail = !!c.email && confirm(`Envoyer aussi le nouveau code et le bouton « Ouvrir mon application » par e-mail à ${c.email} ?`);
       try {
-        const { recoveryCode, expiresAt } = await api('POST', `/api/admin/customers/${id}/recovery-code`);
-        alert(`Nouveau code d’accès à transmettre au client (valable jusqu’au ${formatDate(expiresAt)}) :\n\n${recoveryCode}`);
-        customerDetail(el, id);
+        const res = await api('POST', `/api/admin/customers/${id}/recovery-code`, { sendEmail });
+        showAccess({ ...c, ...res, sendEmail }, res.recoveryCode, () => customerDetail(el, id));
       } catch (err) {
         toast(err.message, 'error');
       }

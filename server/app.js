@@ -79,6 +79,7 @@ function createApp(options = {}) {
       query: url.searchParams,
       ip: req.socket.remoteAddress || 'unknown',
       notify,
+      createLoginLink,
       // Public address of the site, for links in e-mails (the host may sit behind an HTTPS proxy).
       origin: `${String(req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http')).split(',')[0]}://${String(req.headers['x-forwarded-host'] || req.headers.host).split(',')[0]}`,
     };

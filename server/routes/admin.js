@@ -652,6 +652,51 @@ function register(router) {
     return camelAll(ctx.db.prepare(`${CUSTOMER_SELECT} WHERE ${where.join(' AND ')} ORDER BY c.id DESC LIMIT 500`).all(...args));
   });
 
+  // Customer registered from the back-office (instead of the handover in the app): the access code is issued right away.
+  router.post('/api/admin/customers', async (ctx) => {
+    const user = auth(ctx);
+    const { db, body } = ctx;
+    const vehicleId = reqInt(body.vehicleId, 'Véhicule');
+    const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(vehicleId);
+    if (!vehicle) throw new HttpError(400, 'Véhicule inconnu');
+    let dealershipId = user.dealership_id;
+    if (user.role === 'admin') dealershipId = reqInt(body.dealershipId, 'Concession');
+    if (!dealershipId || !db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId)) throw new HttpError(400, 'Concession inconnue');
+    const lastName = reqStr(body.lastName, 'Nom du client', 100);
+    const email = optEmail(body.email);
+    if (body.sendEmail && !email) throw new HttpError(400, 'Indiquez l’e-mail du client pour lui envoyer son accès');
+    const core = randomCode(8);
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setFullYear(expires.getFullYear() + 2);
+    const { lastInsertRowid } = db
+      .prepare(
+        `INSERT INTO customers (dealership_id, vehicle_id, first_name, last_name, email, phone, plate, vin, handover_date, recovery_hash, access_code_at, access_expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        dealershipId,
+        vehicleId,
+        optStr(body.firstName, 100),
+        lastName,
+        email,
+        optStr(body.phone, 40),
+        optStr(body.plate, 20),
+        optStr(body.vin, 40),
+        optStr(body.handoverDate, 10) || now.toISOString().slice(0, 10),
+        sha256(core),
+        now.toISOString(),
+        expires.toISOString()
+      );
+    const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
+    const accessCode = formatAccessCode(readProfile(vehicle).codePrefix, core);
+    // Single-use link that opens the app already signed in (to send by e-mail or SMS).
+    const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
+    let emailSent = false;
+    if (body.sendEmail) emailSent = await ctx.notify.welcome({ customer, code: accessCode, url: appLink });
+    return { ...camel(getCustomerScoped(ctx, customer.id)), accessCode, appLink, emailSent, expiresAt: expires.toISOString().slice(0, 10) };
+  });
+
   router.get('/api/admin/customers/:id', (ctx) => {
     auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
@@ -693,7 +738,7 @@ function register(router) {
 
   // Issues a new recovery code (e.g. the customer lost theirs) and signs out their devices.
   // Issues a new access code (lost code, renewal) valid 2 years; phones already signed in stay signed in.
-  router.post('/api/admin/customers/:id/recovery-code', (ctx) => {
+  router.post('/api/admin/customers/:id/recovery-code', async (ctx) => {
     auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
     const core = randomCode(8);
@@ -704,7 +749,14 @@ function register(router) {
       .prepare('UPDATE customers SET recovery_hash = ?, access_code_at = ?, access_expires_at = ? WHERE id = ?')
       .run(sha256(core), now.toISOString(), expires.toISOString(), customer.id);
     const vehicle = ctx.db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
-    return { recoveryCode: formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core), expiresAt: expires.toISOString().slice(0, 10) };
+    const recoveryCode = formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core);
+    const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
+    let emailSent = false;
+    if (ctx.body.sendEmail) {
+      if (!customer.email) throw new HttpError(400, 'Ce client n’a pas d’e-mail');
+      emailSent = await ctx.notify.welcome({ customer: ctx.db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id), code: recoveryCode, url: appLink });
+    }
+    return { recoveryCode, accessCode: recoveryCode, appLink, emailSent, expiresAt: expires.toISOString().slice(0, 10) };
   });
 
   router.delete('/api/admin/customers/:id', (ctx) => {

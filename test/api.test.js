@@ -214,3 +214,31 @@ test('open access mode opens the back-office without a password', async () => {
   fs.rmSync(flag);
   assert.equal((await call('GET', '/api/admin/me')).status, 401);
 });
+
+test('a customer registered from the back-office gets a working access code and app link', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const v114 = catalog.vehicles.find((v) => v.name === 'V114');
+  const dealership = (await call('GET', '/api/admin/dealerships', { token: admin })).data[0];
+  assert.equal((await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: v114.id, dealershipId: dealership.id } })).status, 400);
+  assert.equal((await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: v114.id, dealershipId: dealership.id, lastName: 'Bureau', sendEmail: true } })).status, 400);
+  const res = await call('POST', '/api/admin/customers', {
+    token: admin,
+    body: { vehicleId: v114.id, dealershipId: dealership.id, firstName: 'Paul', lastName: 'Bureau', plate: 'AB-123-CD' },
+  });
+  assert.equal(res.status, 200);
+  assert.match(res.data.accessCode, /^V114-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+  assert.equal(res.data.dealershipName, dealership.name);
+  // The code restores the account in the app
+  const restored = await call('POST', '/api/restore', { body: { lastName: 'bureau', code: res.data.accessCode } });
+  assert.equal(restored.status, 200);
+  assert.equal(restored.data.customer.plate, 'AB-123-CD');
+  // The link opens it once
+  const token = new URL(res.data.appLink).searchParams.get('lien');
+  assert.equal((await call('POST', '/api/link', { body: { token } })).status, 200);
+  assert.equal((await call('POST', '/api/link', { body: { token } })).status, 410);
+  // A new code replaces the old one
+  const again = await call('POST', `/api/admin/customers/${res.data.id}/recovery-code`, { token: admin, body: {} });
+  assert.equal((await call('POST', '/api/restore', { body: { lastName: 'Bureau', code: res.data.accessCode } })).status, 404);
+  assert.equal((await call('POST', '/api/restore', { body: { lastName: 'Bureau', code: again.data.recoveryCode } })).status, 200);
+});

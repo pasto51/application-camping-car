@@ -38,6 +38,7 @@ Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique �
 - **Véhicules → Profil appli et photos** : nom affiché, dimensions, poids, équipements pré-cochés (aucun « de série » imposé), types connus, **photo de chaque équipement** et plan vu du dessus.
 - **Relevé sur téléphone** (`/releve`) : dans le véhicule, on choisit le modèle. Pour un véhicule neuf, une **fiche guidée** s'ouvre d'abord, une question par écran : nom, photo d'ensemble, hauteur et longueur, poids (PTAC…), types d'équipements (chauffage, frigo, WC…), puis récapitulatif. Elle se rouvre avec le bouton « 📝 Fiche ». Ensuite on **coche les équipements** d'un doigt et on **prend leurs photos** avec l'appareil du téléphone. Chaque geste est enregistré tout de suite ; sans réseau, l'envoi attend et repart seul. On peut aussi y créer un véhicule ou un nouvel équipement. Réservé aux administrateurs.
 - **Concessions** : code concession, téléphone, horaires et logo, affichés dans l'application.
+- **Clients → ＋ Nouveau client** : enregistrer un client sans passer par la mise en main dans l'appli. Le code d'accès est créé tout de suite, avec un lien qui ouvre l'appli déjà connectée (à copier, à envoyer par SMS, ou par e-mail de bienvenue automatique).
 - **Clients** : fiche du client avec ses photos, équipements, modèles notés et l'état de la mise en main ; génération d'un nouveau code d'accès.
 - **Comptes** : *administrateur* (tout) ou *concession* (ses clients et ses demandes uniquement).
 
