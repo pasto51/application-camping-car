@@ -168,15 +168,23 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
     const label = `${esc(f.label)}${f.required ? ' *' : ''}`;
     const hint = f.hint ? `<small class="hint">${esc(f.hint)}</small>` : '';
     const cls = f.full || ['textarea', 'image', 'specs'].includes(f.type) ? 'full' : '';
+    // Hidden for some values of another field (e.g. no dealership for an administrator, editor or analyst).
+    const hide = f.hideIf ? `data-hide-if="${f.hideIf[0]}" data-hide-values="${esc(f.hideIf[1].join(','))}"` : '';
     switch (f.type) {
       case 'textarea':
         return `<label class="${cls}">${label}<textarea name="${f.name}" rows="${f.rows || 5}" ${req}>${esc(v ?? '')}</textarea>${hint}</label>`;
       case 'select':
-        return `<label class="${cls}">${label}<select name="${f.name}" ${req}>${f.options
+        return `<label class="${cls}" ${hide}>${label}<select name="${f.name}" ${req}>${f.options
           .map(([val, text]) => `<option value="${esc(val)}" ${String(v ?? '') === String(val) ? 'selected' : ''}>${esc(text)}</option>`)
           .join('')}</select>${hint}</label>`;
       case 'checkbox':
         return `<label class="check ${cls}"><input type="checkbox" name="${f.name}" ${v ? 'checked' : ''}> ${label}</label>`;
+      case 'checks': {
+        // Several choices among a list (e.g. the dealerships followed by an analyst).
+        const on = new Set((Array.isArray(v) ? v : []).map(String));
+        return `<div class="field full" ${f.showIf ? `data-show-if="${f.showIf[0]}" data-show-value="${esc(f.showIf[1])}"` : ''}><span class="label">${label}</span>
+          <div class="checks">${f.options.length ? f.options.map(([val, text]) => `<label class="check"><input type="checkbox" name="${f.name}" value="${esc(val)}" ${on.has(String(val)) ? 'checked' : ''}> ${esc(text)}</label>`).join('') : '<span class="muted">Aucune concession.</span>'}</div>${hint}</div>`;
+      }
       case 'image':
         return `<div class="field full"><span class="label">${label}</span>
           <div class="image-field" data-image="${f.name}">
@@ -247,6 +255,18 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
   };
   dialog.querySelectorAll('[data-close]').forEach((b) => (b.onclick = close));
   dialog.addEventListener('cancel', close);
+  // Fields shown only for one value of another field (e.g. the dealerships followed, for an analyst).
+  const toggles = () =>
+    dialog.querySelectorAll('[data-show-if]').forEach((el) => {
+      const ctl = dialog.querySelector(`[name="${el.dataset.showIf}"]`);
+      el.hidden = !ctl || ctl.value !== el.dataset.showValue;
+    }) ||
+    dialog.querySelectorAll('[data-hide-if]').forEach((el) => {
+      const ctl = dialog.querySelector(`[name="${el.dataset.hideIf}"]`);
+      el.hidden = !!ctl && el.dataset.hideValues.split(',').includes(ctl.value);
+    });
+  dialog.addEventListener('change', toggles);
+  toggles();
 
   dialog.querySelector('form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -259,6 +279,8 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
         data[f.name] = specs[f.name].filter((s) => s.label?.trim() && s.value?.trim());
       } else if (f.type === 'checkbox') {
         data[f.name] = form.elements[f.name].checked;
+      } else if (f.type === 'checks') {
+        data[f.name] = [...form.querySelectorAll(`input[name="${f.name}"]:checked`)].map((x) => Number(x.value) || x.value);
       } else {
         const val = form.elements[f.name].value;
         if (f.type === 'password' && !val) continue;
@@ -732,7 +754,7 @@ const VIEWS = {
       <p><strong>SAV / atelier</strong> : voit les demandes de la concession, répond à celles du SAV (rendez-vous, soucis, pièces sous garantie) et peut les transférer au magasin.</p>
       <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que ses demandes, et pas les clients de la concession.</p>
       <p><strong>Responsable de concession</strong> : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession), sans recevoir d’e-mails.</p>
-      ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Analyste (statistiques)</strong> : voit seulement les statistiques d’utilisation de l’appli (recherches, problèmes, produits conseillés, saisonnalité, équipements) de toutes les concessions, pour préparer les campagnes. Le responsable de concession voit aussi les statistiques de sa concession.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
+      ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Analyste (statistiques)</strong> : voit seulement les statistiques d’utilisation de l’appli (recherches, problèmes, produits conseillés, saisonnalité, équipements) de toutes les concessions, ou seulement de celles qu’on lui coche (groupement de concessions), pour préparer les campagnes. Le responsable de concession voit aussi les statistiques de sa concession.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
     // Filtering happens in the page: typing does not reload the list nor lose the cursor.
     const render = () => {
       const q = norm(f.q);
@@ -966,7 +988,7 @@ function userRow(u, { showDealership }) {
   return `<tr>
     <td><strong>${esc(u.name || '')}</strong></td><td>${esc(u.email)}${u.phone ? `<br><small>${esc(u.phone)}</small>` : ''}</td>
     <td>${esc(ROLE_LABELS[u.role] || u.role)}</td>
-    ${showDealership ? `<td>${u.dealershipId ? `<button class="lnk" data-act="dealer" data-id="${u.dealershipId}">${esc(u.dealershipName || '')}</button>` : '<span class="muted">—</span>'}</td>` : ''}
+    ${showDealership ? `<td>${u.dealershipId ? `<button class="lnk" data-act="dealer" data-id="${u.dealershipId}">${esc(u.dealershipName || '')}</button>` : u.role === 'analytics' ? `<span class="muted">${u.dealershipIds?.length ? `${u.dealershipIds.length} concession${u.dealershipIds.length > 1 ? 's' : ''} suivie${u.dealershipIds.length > 1 ? 's' : ''}` : 'Toutes les concessions'}</span>` : '<span class="muted">—</span>'}</td>` : ''}
     <td>${['admin', 'editor', 'analytics'].includes(u.role) ? '' : u.customerCount}</td>
     <td class="row-actions"><button class="btn small" data-act="edit" data-id="${u.id}">Modifier</button>${
       u.customerCount ? `<button class="btn small" data-act="transfer" data-id="${u.id}">Transférer ses clients</button>` : ''
@@ -982,7 +1004,10 @@ function userActions(users, dealerships, reload, { dealershipId } = {}) {
     { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
     { name: 'phone', label: 'Téléphone (affiché au client)', type: 'tel' },
     { name: 'role', label: 'Rôle', type: 'select', options: roles },
-    ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: [['', '—'], ...dealerships.map((d) => [d.id, d.name])], hint: 'Sans objet pour un administrateur ou un éditeur de contenu.' }] : []),
+    ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: [['', '—'], ...dealerships.map((d) => [d.id, d.name])], hideIf: ['role', ['admin', 'editor', 'analytics']] }] : []),
+    ...(isAdmin()
+      ? [{ name: 'dealershipIds', label: 'Concessions suivies par l’analyste', type: 'checks', showIf: ['role', 'analytics'], options: dealerships.map((d) => [d.id, d.name]), hint: 'Pour un groupement de concessions : cochez celles qu’il peut suivre. Rien de coché : toutes les concessions.' }]
+      : []),
     { name: 'password', label: isNew ? 'Mot de passe' : 'Nouveau mot de passe (laisser vide pour ne pas changer)', type: 'password', required: isNew, attrs: 'minlength="8" autocomplete="new-password"' },
   ];
   return {

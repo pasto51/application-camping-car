@@ -101,20 +101,19 @@ export function registerAnalyticsView(VIEWS, h) {
 
   VIEWS.analytics = async function analytics(el) {
     const f = (h.state.filter.analytics ||= { months: 3, dealershipId: '' });
-    const [d, dealerships] = await Promise.all([
-      api('GET', `/api/admin/analytics?months=${f.months}${f.dealershipId ? `&dealershipId=${f.dealershipId}` : ''}`),
-      canSeeAll() ? api('GET', '/api/admin/dealerships') : Promise.resolve([]),
-    ]);
+    const d = await api('GET', `/api/admin/analytics?months=${f.months}${f.dealershipId ? `&dealershipId=${f.dealershipId}` : ''}`);
+    const dealerships = d.dealerships || [];
     const t = d.totals, p = d.prevTotals;
     const askRate = t.result ? Math.round(((t.shop || 0) / t.result) * 100) : 0;
     const empty = !Object.values(t).some(Boolean);
     el.innerHTML = `${pageHeader('Statistiques')}
       <p class="muted">Ce que vos clients cherchent dans l’application, sans savoir qui : pour choisir vos prochaines campagnes. Comparaison avec la période précédente de même durée.</p>
+      ${d.followed ? `<p><strong>Concessions suivies :</strong> ${d.followed.map(esc).join(', ')}</p>` : ''}
       <div class="filter-bar">
         ${[3, 6, 12, 24].map((m) => `<button class="chip ${f.months === m ? 'active' : ''}" data-act="months" data-value="${m}">${m} mois</button>`).join('')}
         ${
-          canSeeAll()
-            ? `<select data-dealer><option value="">Toutes les concessions</option>${dealerships.map((x) => `<option value="${x.id}" ${String(f.dealershipId) === String(x.id) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`
+          canSeeAll() && dealerships.length > 1
+            ? `<select data-dealer><option value="">${d.followed ? 'Toutes les concessions suivies' : 'Toutes les concessions'}</option>${dealerships.map((x) => `<option value="${x.id}" ${String(f.dealershipId) === String(x.id) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`
             : ''
         }
       </div>

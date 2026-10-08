@@ -237,6 +237,8 @@ const ADDED_COLUMNS = [
   ['customers', 'email_notify', 'INTEGER DEFAULT 1'],
   ['customers', 'salesperson_id', 'INTEGER'], // the dealership's salesperson in charge (admins.id)
   ['admins', 'phone', 'TEXT'],
+  // Analyst of a group of dealerships: the dealerships they follow (JSON list), none = all.
+  ['admins', 'dealership_ids', 'TEXT'],
   // After-sales (SAV) and store (magasin) of each dealership: who handles which request.
   ['dealerships', 'sav_email', 'TEXT'],
   ['dealerships', 'sav_phone', 'TEXT'],

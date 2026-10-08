@@ -470,6 +470,27 @@ test('content editor: edits the app contents, not the customers, the requests or
   assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: chef })).data.warrantyExtEnd, null);
 });
 
+test('analyst of a group of dealerships: sees only the dealerships they follow', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const a = (await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Groupe A', code: 'GROUPEA1' } })).data;
+  const b = (await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Hors groupe', code: 'HORSGRP1' } })).data;
+  app.db.prepare("INSERT INTO usage_events (month, kind, item, dealership_id) VALUES (strftime('%Y-%m', 'now'), 'diag', 'p_buee', ?), (strftime('%Y-%m', 'now'), 'diag', 'p_buee', ?), (strftime('%Y-%m', 'now'), 'diag', 'p_gaz', ?)").run(a.id, a.id, b.id);
+  const u = (await call('POST', '/api/admin/users', { token: admin, body: { email: 'groupe@test.fr', password: 'motdepasse1', role: 'analytics', dealershipIds: [a.id, 999999] } })).data;
+  assert.deepEqual(u.dealershipIds, [a.id], 'unknown dealerships are dropped');
+  const group = await login('groupe@test.fr', 'motdepasse1');
+  const d = (await call('GET', '/api/admin/analytics?months=3', { token: group })).data;
+  assert.equal(d.totals.diag, 2);
+  assert.deepEqual(d.followed, ['Groupe A']);
+  assert.deepEqual(d.dealerships.map((x) => x.id), [a.id]);
+  // Asking for a dealership outside the group gives the group only
+  assert.equal((await call('GET', `/api/admin/analytics?months=3&dealershipId=${b.id}`, { token: group })).data.totals.diag, 2);
+  // Following nothing: all the dealerships
+  await call('PUT', `/api/admin/users/${u.id}`, { token: admin, body: { dealershipIds: [] } });
+  const all = (await call('GET', '/api/admin/analytics?months=3', { token: group })).data;
+  assert.ok(all.totals.diag >= 3);
+  assert.equal(all.followed, null);
+});
+
 test('« rester connecté » gives a 15-day session, otherwise 12 hours', async () => {
   const exp = (t) => JSON.parse(Buffer.from(t.split('.')[0], 'base64url').toString()).exp - Date.now() / 1000;
   const long = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123', remember: true } })).data.token;

@@ -260,11 +260,14 @@ async function main() {
     ['vannes', 'sales', 'Gwen Tanguy', 'gwen.vannes'],
     [null, 'editor', 'Éditrice de contenu', 'editeur'],
     [null, 'analytics', 'Analyste marketing', 'analyste'],
+    [null, 'analytics', 'Analyste Groupement Ouest', 'analyste.ouest', null, ['nantes', 'rennes']],
   ];
   const accounts = [];
-  for (const [key, role, name, login, phone] of ACCOUNTS) {
+  for (const [key, role, name, login, phone, follows] of ACCOUNTS) {
     const email = `${login}@demo.test`;
-    const u = await call('POST', '/api/admin/users', { email, name, phone, role, password: PASSWORD, dealershipId: key ? D[key].id : null });
+    // An analyst of a group of dealers follows only some dealerships.
+    const dealershipIds = follows ? follows.map((k) => D[k].id) : undefined;
+    const u = await call('POST', '/api/admin/users', { email, name, phone, role, password: PASSWORD, dealershipId: key ? D[key].id : null, dealershipIds });
     if (key) D[key].staff[login.split('.')[0]] = u;
     accounts.push({ key, role, name, email, id: u.id });
   }
@@ -383,7 +386,7 @@ async function main() {
     console.log(` ${d.name}  (code concession ${d.code} — ${d.situation})`);
     for (const a of accounts.filter((x) => x.key === d.key)) console.log(`    ${ROLE[a.role].padEnd(12)} ${a.name.padEnd(26)} ${a.email}`);
   }
-  console.log(`\n Sans concession :\n    ${ROLE.editor.padEnd(12)} ${'Éditrice de contenu'.padEnd(26)} editeur@demo.test\n    ${ROLE.analytics.padEnd(12)} ${'Analyste marketing'.padEnd(26)} analyste@demo.test   (page Statistiques : ${statsCount} actions sur 12 mois)`);
+  console.log(`\n Sans concession :\n    ${ROLE.editor.padEnd(12)} ${'Éditrice de contenu'.padEnd(26)} editeur@demo.test\n    ${ROLE.analytics.padEnd(12)} ${'Analyste marketing'.padEnd(26)} analyste@demo.test   (page Statistiques : ${statsCount} actions sur 12 mois)\n    ${ROLE.analytics.padEnd(12)} ${'Analyste Groupement Ouest'.padEnd(26)} analyste.ouest@demo.test   (seulement Nantes et Rennes)`);
   console.log(`\n${line}\n ESPACES CLIENTS : ouvrez le lien (une seule fois), ou dans l'appli « J'ai déjà un compte » avec le nom et le code.\n Un seul client à la fois par navigateur : ouvrir un autre lien change de client.\n${line}`);
   for (const c of out) {
     console.log(`\n ${c.first} ${c.last} — ${c.dealer.name.replace('DÉMO – ', '')} — ${c.note}${c.sales ? ` — commercial : ${c.dealer.staff[c.sales].name}` : ''}`);

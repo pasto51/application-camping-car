@@ -39,7 +39,7 @@ Mot de passe de tous les comptes démo : `demo1234`. Les liens clients ne serven
    - **SAV** puis **Magasin** : chacun traite ses demandes, répond et transfère à l'autre service avec un motif.
    - **Commercial** (Julien) : ses clients et le récap de leurs demandes, sans e-mails inutiles.
    - Fiche client : **Modifier la garantie**, renvoyer le code d'accès.
-   - **Statistiques** (compte `analyste@demo.test`, ou le responsable pour sa concession) : ce que les clients cherchent, la saisonnalité (buée et froid l'hiver, chaleur l'été), les produits conseillés et demandés, et des **idées de campagne** calculées toutes seules.
+   - **Statistiques** (compte `analyste@demo.test`, ou le responsable pour sa concession) : ce que les clients cherchent, la saisonnalité (buée et froid l'hiver, chaleur l'été), les produits conseillés et demandés, et des **idées de campagne** calculées toutes seules. Pour un **groupement de concessions** : `analyste.ouest@demo.test` ne voit que Nantes et Rennes.
 3. **Les arguments à montrer**
    - **Magasin détaché** (concession de Rennes) : il ne voit que ses demandes et pas les clients de la concession ; la concession ne voit pas ses demandes.
    - **Garantie** : la demande va automatiquement au bon service.

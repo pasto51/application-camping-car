@@ -73,7 +73,7 @@ function register(router) {
     let user;
     if (payload) {
       user = ctx.db
-        .prepare('SELECT id, email, name, role, dealership_id, phone, (SELECT store_detached FROM dealerships d WHERE d.id = admins.dealership_id) AS store_detached FROM admins WHERE id = ?')
+        .prepare('SELECT id, email, name, role, dealership_id, dealership_ids, phone, (SELECT store_detached FROM dealerships d WHERE d.id = admins.dealership_id) AS store_detached FROM admins WHERE id = ?')
         .get(payload.sub);
       if (!user) throw new HttpError(401, 'Compte supprimé');
     } else if (ctx.config.isOpenAccess()) {
@@ -178,7 +178,11 @@ function register(router) {
     if (!['admin', 'analytics', 'manager'].includes(user.role)) throw new HttpError(403, 'Réservé à l’administrateur et à l’analyste');
     const { db } = ctx;
     const months = [3, 6, 12, 24].includes(Number(ctx.query.get('months'))) ? Number(ctx.query.get('months')) : 12;
-    const dealershipId = user.role === 'manager' ? user.dealership_id ?? -1 : optInt(ctx.query.get('dealershipId'));
+    // Which dealerships this account may look at: its own (manager), those it follows (analyst of a group), or all.
+    const allowed = user.role === 'manager' ? [user.dealership_id ?? -1] : user.role === 'analytics' ? followedIds(user) : null;
+    const asked = optInt(ctx.query.get('dealershipId'));
+    const dealershipId = user.role === 'manager' ? user.dealership_id ?? -1 : asked && (!allowed || allowed.includes(asked)) ? asked : null;
+    const scopeIds = dealershipId ? [dealershipId] : allowed;
     const monthAgo = (n) => {
       const d = new Date();
       d.setUTCDate(1);
@@ -188,8 +192,8 @@ function register(router) {
     const list = (n) => Array.from({ length: n }, (_, i) => monthAgo(n - 1 - i));
     const from = monthAgo(months - 1);
     const prevFrom = monthAgo(2 * months - 1);
-    const scopeSql = dealershipId ? ' AND dealership_id = ?' : '';
-    const scopeArgs = dealershipId ? [dealershipId] : [];
+    const scopeSql = scopeIds ? ` AND dealership_id IN (${scopeIds.map(() => '?').join(', ')})` : '';
+    const scopeArgs = scopeIds || [];
     const rows = (sql, ...args) => db.prepare(sql).all(...args);
     const inRange = `month >= ? ${scopeSql}`;
     const inPrev = `month >= ? AND month < ? ${scopeSql}`;
@@ -250,7 +254,7 @@ function register(router) {
     const eqNames = new Map(rows('SELECT id, data FROM equipment').map((r) => [r.id, JSON.parse(r.data).name]));
     const profiles = new Map(rows('SELECT id, profile FROM vehicles').map((v) => [v.id, (() => { try { return JSON.parse(v.profile || '{}').equipment || []; } catch { return []; } })()]));
     const owners = new Map();
-    const customers = rows(`SELECT c.id, c.vehicle_id, s.value AS own FROM customers c LEFT JOIN customer_state s ON s.customer_id = c.id AND s.key = 'cdb_own' ${dealershipId ? 'WHERE c.dealership_id = ?' : ''}`, ...scopeArgs);
+    const customers = rows(`SELECT c.id, c.vehicle_id, s.value AS own FROM customers c LEFT JOIN customer_state s ON s.customer_id = c.id AND s.key = 'cdb_own' ${scopeIds ? `WHERE c.dealership_id IN (${scopeIds.map(() => '?').join(', ')})` : ''}`, ...scopeArgs);
     for (const c of customers) {
       let ids = profiles.get(c.vehicle_id) || [];
       try {
@@ -266,9 +270,15 @@ function register(router) {
       .slice(0, 25);
 
     const vehicleTypes = rows(`SELECT COALESCE(vehicle_type, 'inconnu') AS type, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND ${inRange} GROUP BY type ORDER BY n DESC`, from, ...scopeArgs);
+    // The dealerships offered in the filter (names only): those followed, or all for the administrator.
+    const choices = user.role === 'manager' ? [] : allowed
+      ? rows(`SELECT id, name FROM dealerships WHERE id IN (${allowed.map(() => '?').join(', ')}) ORDER BY name`, ...allowed)
+      : rows('SELECT id, name FROM dealerships ORDER BY name');
     return {
       months,
       dealershipId: dealershipId || null,
+      dealerships: choices,
+      followed: allowed && user.role === 'analytics' ? choices.map((d) => d.name) : null,
       customers: customers.length,
       totals,
       prevTotals,
@@ -1220,7 +1230,7 @@ function register(router) {
 
   // ---- Team: the administrator manages everyone, a manager the team of their dealership ----
 
-  const USER_SELECT = `SELECT a.id, a.email, a.name, a.phone, a.role, a.dealership_id, a.created_at, d.name AS dealership_name,
+  const USER_SELECT = `SELECT a.id, a.email, a.name, a.phone, a.role, a.dealership_id, a.dealership_ids, a.created_at, d.name AS dealership_name,
       (SELECT COUNT(*) FROM customers c WHERE c.salesperson_id = a.id) AS customer_count
     FROM admins a LEFT JOIN dealerships d ON d.id = a.dealership_id`;
 
@@ -1229,7 +1239,7 @@ function register(router) {
     const rows = me.role === 'admin'
       ? ctx.db.prepare(`${USER_SELECT} ORDER BY d.name, a.name, a.email`).all()
       : ctx.db.prepare(`${USER_SELECT} WHERE a.dealership_id = ? AND a.role != 'admin' ORDER BY a.name, a.email`).all(me.dealership_id);
-    return camelAll(rows);
+    return rows.map(userOut);
   });
 
   function userFields(db, me, body, current = {}) {
@@ -1243,8 +1253,29 @@ function register(router) {
     if (!global && (!dealershipId || !db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId))) {
       throw new HttpError(400, 'Un compte de concession doit être rattaché à une concession');
     }
-    return { role, dealershipId, name: pick(optStr(body.name, 100), current.name ?? null), phone: body.phone === undefined ? current.phone ?? null : optStr(body.phone, 40) };
+    // An analyst can follow only some dealerships (a group of dealers); none = all of them.
+    let dealershipIds = null;
+    if (role === 'analytics') {
+      const ids = body.dealershipIds === undefined ? followedIds(current) || [] : Array.isArray(body.dealershipIds) ? body.dealershipIds : [];
+      const known = ids.map(Number).filter((id) => Number.isInteger(id) && db.prepare('SELECT id FROM dealerships WHERE id = ?').get(id));
+      dealershipIds = known.length ? JSON.stringify([...new Set(known)]) : null;
+    }
+    return { role, dealershipId, dealershipIds, name: pick(optStr(body.name, 100), current.name ?? null), phone: body.phone === undefined ? current.phone ?? null : optStr(body.phone, 40) };
   }
+
+  // Dealerships followed by an analyst (null: all).
+  function followedIds(user) {
+    try {
+      const ids = JSON.parse(user?.dealership_ids || 'null');
+      return Array.isArray(ids) && ids.length ? ids : null;
+    } catch {
+      return null;
+    }
+  }
+  const userOut = (row) => {
+    const { dealershipIds, ...rest } = camel(row);
+    return { ...rest, dealershipIds: followedIds(row) || [] };
+  };
 
   function teamMember(ctx, me, id) {
     const user = getOr404(ctx.db, 'admins', id, 'Utilisateur');
@@ -1265,9 +1296,9 @@ function register(router) {
     if (db.prepare('SELECT id FROM admins WHERE email = ?').get(email)) throw new HttpError(409, 'Un compte existe déjà avec cet e-mail');
     const f = userFields(db, me, body);
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO admins (email, name, phone, password_hash, role, dealership_id) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(email, f.name, f.phone, hashPassword(checkPassword(body.password)), f.role, f.dealershipId);
-    return camel(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(lastInsertRowid));
+      .prepare('INSERT INTO admins (email, name, phone, password_hash, role, dealership_id, dealership_ids) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(email, f.name, f.phone, hashPassword(checkPassword(body.password)), f.role, f.dealershipId, f.dealershipIds);
+    return userOut(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(lastInsertRowid));
   });
 
   router.put('/api/admin/users/:id', (ctx) => {
@@ -1279,10 +1310,10 @@ function register(router) {
     const email = pick(optEmail(body.email), user.email);
     if (db.prepare('SELECT id FROM admins WHERE email = ? AND id != ?').get(email, user.id)) throw new HttpError(409, 'Un compte existe déjà avec cet e-mail');
     const hash = body.password ? hashPassword(checkPassword(body.password)) : user.password_hash;
-    db.prepare('UPDATE admins SET email = ?, name = ?, phone = ?, role = ?, dealership_id = ?, password_hash = ? WHERE id = ?').run(email, f.name, f.phone, f.role, f.dealershipId, hash, user.id);
+    db.prepare('UPDATE admins SET email = ?, name = ?, phone = ?, role = ?, dealership_id = ?, dealership_ids = ?, password_hash = ? WHERE id = ?').run(email, f.name, f.phone, f.role, f.dealershipId, f.dealershipIds, hash, user.id);
     // Moved to another dealership: their customers stay where they are, without a salesperson.
     if (f.dealershipId !== user.dealership_id) db.prepare('UPDATE customers SET salesperson_id = NULL WHERE salesperson_id = ? AND dealership_id != ?').run(user.id, f.dealershipId ?? -1);
-    return camel(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(user.id));
+    return userOut(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(user.id));
   });
 
   // Hands all the customers of one salesperson to another (holidays, departure…).
