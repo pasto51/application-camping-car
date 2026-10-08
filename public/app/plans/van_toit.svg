@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" font-family="Helvetica, Arial, sans-serif">
+  <!-- Plan schématique « Toit relevable et banquette-lit » (van) vu du dessus, cabine à droite, porte d'entrée en bas. Généré par tools/make-plans.js. -->
+  <rect width="800" height="360" fill="#f3f7f6"/>
+  <g fill="#3d5a60"><rect x="150" y="34" width="70" height="18" rx="6"/><rect x="150" y="308" width="70" height="18" rx="6"/><rect x="590" y="34" width="70" height="18" rx="6"/><rect x="590" y="308" width="70" height="18" rx="6"/></g>
+  <path d="M124 46 H690 C735 46 772 62 782 110 V250 C772 298 735 314 690 314 H124 A14 14 0 0 1 110 300 V60 A14 14 0 0 1 124 46 Z" fill="#fff" stroke="#0c2b33" stroke-width="4"/>
+  <path d="M752 104 C768 140 768 220 752 256" fill="none" stroke="#7fb6bd" stroke-width="10" stroke-linecap="round"/>
+  <g fill="#dff1ef" stroke="#0a7c82" stroke-width="2"><rect x="650" y="98" width="58" height="62" rx="14"/><rect x="650" y="200" width="58" height="62" rx="14"/></g>
+  <rect x="122" y="58" width="84" height="244" rx="8" fill="#dff1ef" stroke="#0a7c82" stroke-width="2"/>
+  <rect x="230" y="58" width="260" height="48" rx="8" fill="#fdf3e3" stroke="#b7791f" stroke-width="2"/><rect x="244" y="67" width="40" height="30" rx="6" fill="#fff" stroke="#b7791f" stroke-width="2"/><circle cx="428" cy="82" r="10" fill="none" stroke="#b7791f" stroke-width="2"/><circle cx="460" cy="82" r="10" fill="none" stroke="#b7791f" stroke-width="2"/>
+  <rect x="320" y="196" width="90" height="60" rx="8" fill="#fff" stroke="#9bbcc0" stroke-width="2"/>
+  <rect x="214" y="70" width="410" height="220" rx="16" fill="none" stroke="#0a7c82" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <text x="420" y="186" font-size="13" fill="#5f7d82" text-anchor="middle">toit relevable</text>
+  <rect x="550" y="306" width="78" height="16" fill="#f3f7f6"/><line x1="550" y1="314" x2="628" y2="314" stroke="#0a7c82" stroke-width="4" stroke-dasharray="10 6"/>
+</svg>

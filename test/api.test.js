@@ -253,7 +253,7 @@ test('vehicle type: plan, equipment of that type only, zone and name chosen for 
     body: { type: 'profile', equipment: ['velos', 'garage'], labels: { velos: 'Porte-vélos 3 places', garage: '' }, spotOverrides: { velos: 'ext' } },
   });
   const p = (await call('GET', `/api/admin/vehicles/${v.id}/profile`, { token: admin })).data;
-  assert.equal(p.plan.planUrl, '/app/plans/profile.svg');
+  assert.equal(p.plan.planUrl, '/app/plans/pr_central.svg');
   assert.ok(p.plan.spots.some((s) => s.id === 'gar'));
   assert.equal(p.defaultSpots.velos, 'arr');
   assert.equal(p.defaultSpots.bouteille, 'ext', 'gas locker outside on a coachbuilt');
@@ -267,7 +267,7 @@ test('vehicle type: plan, equipment of that type only, zone and name chosen for 
   assert.equal(eq.velos.name, 'Porte-vélos 3 places');
   assert.equal(eq.velos.spot, 'ext');
   assert.equal(eq.garage.spot, 'gar');
-  assert.equal(data.vehicle.planUrl, '/app/plans/profile.svg');
+  assert.equal(data.vehicle.planUrl, '/app/plans/pr_central.svg');
   assert.ok(data.config.HIDDEN_EQ.porte, 'no sliding side door on a profilé');
   assert.ok(!data.config.HIDDEN_EQ.porte_cell);
   const spotIds = new Set(data.vehicle.spots.map((s) => s.id));
@@ -281,4 +281,27 @@ test('vehicle type: plan, equipment of that type only, zone and name chosen for 
   assert.equal(lant.name, 'Lanterneau du salon');
   // Types on an equipment
   assert.deepEqual((await call('PUT', '/api/admin/equipment/lant', { token: admin, body: { types: ['van', 'nope'] } })).data.types, ['van']);
+});
+
+test('a few words find the layout and the equipment they name', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const r = (await call('POST', '/api/admin/layouts/match', { token: admin, body: { type: 'compact', text: 'penderie arrière, lit pavillon, cuisine et table' } })).data;
+  assert.equal(r.results[0].id, 'cp_sdb_ar');
+  assert.ok(r.results[0].matched.includes('penderie arrière'));
+  assert.deepEqual(r.equipment.map((q) => q.id).sort(), ['evier', 'frigo', 'pavillon', 'penderie', 'rechaud', 'table'].sort());
+  // The type can come from the words; « soute » of a fourgon
+  assert.equal((await call('POST', '/api/admin/layouts/match', { token: admin, body: { text: 'capucine, lits superposés' } })).data.results[0].id, 'ca_superp');
+  const fg = (await call('POST', '/api/admin/layouts/match', { token: admin, body: { type: 'fourgon', text: 'lits jumeaux, garage' } })).data;
+  assert.equal(fg.results[0].id, 'fg_jumeaux');
+  assert.ok(fg.equipment.some((q) => q.id === 'soute') && !fg.equipment.some((q) => q.id === 'garage'));
+  assert.equal((await call('POST', '/api/admin/layouts/match', { token: admin, body: { type: 'van', text: 'toit relevable, sans douche' } })).data.results[0].id, 'van_toit');
+  // Choosing a layout sets the type and the plan
+  const brands = (await call('GET', '/api/admin/brands', { token: admin })).data;
+  const v = (await call('POST', '/api/admin/vehicles', { token: admin, body: { brandId: brands[0].id, name: 'Compact test' } })).data;
+  assert.equal((await call('PUT', `/api/admin/vehicles/${v.id}/profile`, { token: admin, body: { layout: 'nope' } })).status, 400);
+  await call('PUT', `/api/admin/vehicles/${v.id}/profile`, { token: admin, body: { layout: 'cp_sdb_ar', equipment: ['penderie'] } });
+  const p = (await call('GET', `/api/admin/vehicles/${v.id}/profile`, { token: admin })).data;
+  assert.equal(p.type, 'compact');
+  assert.equal(p.plan.planUrl, '/app/plans/cp_sdb_ar.svg');
+  assert.equal(p.defaultSpots.penderie, 'pend');
 });

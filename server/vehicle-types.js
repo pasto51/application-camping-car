@@ -3,7 +3,7 @@
 // Vehicle types (silhouettes): which equipment exists on each, where it sits on the plan, and the default plan.
 // Plans and zones are drawn by tools/make-plans.js.
 
-const PLAN_SPOTS = require('./seed/plans.json');
+const PLANS = require('./seed/plans.json'); // { types: {type: default layout}, layouts: {id: {type, name, desc, features, spotDefaults, spots}} }
 
 const TYPES = [
   { id: 'van', name: 'Van', hint: 'Fourgon court, jusqu’à 5,40 m environ, porte latérale coulissante' },
@@ -21,7 +21,7 @@ const BIG_CELLS = ['profile', 'integral', 'capucine'];
 const REAR_BED = ['van', 'fourgon', 'profile', 'integral', 'capucine'];
 
 // Where an equipment goes when the vehicle's plan has no such zone.
-const SPOT_FALLBACK = { pav: 'cab', cap: 'cab', gar: 'lit', sal: 'lit', lit: 'sal' };
+const SPOT_FALLBACK = { pav: ['cab'], cap: ['cab'], gar: ['lit'], sal: ['lit'], lit: ['sal', 'pend'], pend: ['lit', 'sal'] };
 
 // Default zones that differ by silhouette (gas locker outside on a coachbuilt, garage instead of the van boot…).
 const CELL_SPOTS = { bouteille: 'ext', coffre_gaz: 'ext', gazext: 'ext', soute: 'gar', gaine_soute: 'gar' };
@@ -36,15 +36,25 @@ function isApplicable(q, type) {
   return !type || !Array.isArray(q.types) || !q.types.length || q.types.includes(type);
 }
 
-function typeSpots(type) {
-  return PLAN_SPOTS[type] ? PLAN_SPOTS[type].map((s) => ({ ...s })) : [];
+// Layout ("implantation") of a vehicle: the one chosen for it, else the usual one of its type.
+function layoutOf(profile) {
+  const L = PLANS.layouts[profile.layout];
+  if (L && (!profile.type || L.type === profile.type)) return { id: profile.layout, ...L };
+  const id = PLANS.types[profile.type];
+  return id ? { id, ...PLANS.layouts[id] } : null;
 }
 
-// Plan shown for a vehicle: its own drawing and zones if it has some, else those of its type.
+// Plan shown for a vehicle: its own drawing and zones if it has some, else those of its layout.
 function vehiclePlan(profile) {
-  const spots = Array.isArray(profile.spots) && profile.spots.length ? profile.spots : typeSpots(profile.type);
-  const planUrl = profile.planUrl || (PLAN_SPOTS[profile.type] && !(profile.spots || []).length ? `/app/plans/${profile.type}.svg` : spots.length ? '/app/plan-van.svg' : null);
-  return { spots, planUrl };
+  const own = Array.isArray(profile.spots) && profile.spots.length ? profile.spots : null;
+  const L = layoutOf(profile);
+  const spots = own || (L ? L.spots.map((x) => ({ ...x })) : []);
+  const planUrl = profile.planUrl || (!own && L ? `/app/plans/${L.id}.svg` : spots.length ? '/app/plan-van.svg' : null);
+  return { spots, planUrl, layout: own ? null : L?.id || null };
+}
+
+function layoutList() {
+  return Object.entries(PLANS.layouts).map(([id, L]) => ({ id, type: L.type, name: L.name, desc: L.desc, features: L.features, planUrl: `/app/plans/${id}.svg` }));
 }
 
 // Zone of an equipment on this vehicle: the vehicle's own choice, else the default for its type, else the catalogue's.
@@ -53,11 +63,10 @@ function effectiveSpot(q, profile, spots) {
   const ids = new Set(spots.map((s) => s.id));
   const own = profile.spotOverrides || {};
   if (Object.prototype.hasOwnProperty.call(own, q.id)) return own[q.id] && ids.has(own[q.id]) ? own[q.id] : null;
-  const spot = TYPE_SPOTS[profile.type]?.[q.id] ?? q.spot;
+  const spot = layoutOf(profile)?.spotDefaults?.[q.id] ?? TYPE_SPOTS[profile.type]?.[q.id] ?? q.spot;
   if (!spot) return null;
   if (ids.has(spot)) return spot;
-  const alt = SPOT_FALLBACK[spot];
-  return alt && ids.has(alt) ? alt : null;
+  return (SPOT_FALLBACK[spot] || []).find((alt) => ids.has(alt)) || null;
 }
 
 // Catalogue additions so that every silhouette is covered, and the types each existing equipment applies to.
@@ -136,4 +145,4 @@ const NEW_EQUIPMENT = [
   q('coffre_fort', 'secu', 'Coffre-fort', null, [], 'Petit coffre fixé à la structure, pour les papiers et objets de valeur.', 'Notez le code ailleurs que dans le véhicule.', 'coffre fort'),
 ];
 
-module.exports = { TYPES, TYPE_IDS, isApplicable, typeSpots, vehiclePlan, effectiveSpot, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS, NEW_EQUIPMENT };
+module.exports = { TYPES, TYPE_IDS, isApplicable, vehiclePlan, layoutOf, layoutList, PLANS, effectiveSpot, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS, NEW_EQUIPMENT };

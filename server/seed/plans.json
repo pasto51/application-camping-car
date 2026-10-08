@@ -1,525 +1,1531 @@
 {
- "van": [
-  {
-   "id": "cab",
-   "n": 1,
-   "x": 712,
-   "y": 180,
-   "name": "Cabine"
+ "types": {
+  "van": "van_trans",
+  "fourgon": "fg_trans",
+  "compact": "cp_salon_ar",
+  "profile": "pr_central",
+  "integral": "in_central",
+  "capucine": "ca_trans"
+ },
+ "layouts": {
+  "van_trans": {
+   "type": "van",
+   "name": "Lit transversal arrière",
+   "desc": "Lit en travers à l’arrière, salle d’eau, cuisine face à la porte, dinette avec sièges pivotants.",
+   "features": [
+    "lit_trans",
+    "sdb",
+    "cuisine",
+    "dinette"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 712,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "din",
+     "x": 540,
+     "y": 100,
+     "name": "Salon et dinette",
+     "n": 2
+    },
+    {
+     "id": "cui",
+     "x": 430,
+     "y": 284,
+     "name": "Cuisine",
+     "n": 3
+    },
+    {
+     "id": "sdb",
+     "x": 340,
+     "y": 104,
+     "name": "Salle d'eau",
+     "n": 4
+    },
+    {
+     "id": "toit",
+     "x": 385,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 5
+    },
+    {
+     "id": "ent",
+     "x": 588,
+     "y": 288,
+     "name": "Entrée",
+     "n": 6
+    },
+    {
+     "id": "lit",
+     "x": 200,
+     "y": 180,
+     "name": "Lit transversal arrière",
+     "n": 7
+    },
+    {
+     "id": "tech",
+     "x": 470,
+     "y": 172,
+     "name": "Sous la banquette (technique)",
+     "n": 8
+    },
+    {
+     "id": "ext",
+     "x": 588,
+     "y": 340,
+     "name": "Extérieur, côté porte",
+     "n": 9
+    },
+    {
+     "id": "extb",
+     "x": 440,
+     "y": 20,
+     "name": "Extérieur, côté opposé",
+     "n": 10
+    },
+    {
+     "id": "arr",
+     "x": 70,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 11
+    }
+   ]
   },
-  {
-   "id": "din",
-   "n": 2,
-   "x": 540,
-   "y": 100,
-   "name": "Salon et dinette"
+  "van_toit": {
+   "type": "van",
+   "name": "Toit relevable et banquette-lit",
+   "desc": "Banquette arrière transformable en lit, cuisine latérale, couchage dans le toit relevable, sans salle d’eau.",
+   "features": [
+    "toit_rel",
+    "banquette_lit",
+    "cuisine",
+    "dinette",
+    "sans_sdb"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 712,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "din",
+     "x": 365,
+     "y": 226,
+     "name": "Table",
+     "n": 2
+    },
+    {
+     "id": "cui",
+     "x": 360,
+     "y": 82,
+     "name": "Cuisine",
+     "n": 3
+    },
+    {
+     "id": "toit",
+     "x": 480,
+     "y": 150,
+     "name": "Toit relevable et couchage",
+     "n": 4
+    },
+    {
+     "id": "ent",
+     "x": 588,
+     "y": 288,
+     "name": "Entrée",
+     "n": 5
+    },
+    {
+     "id": "lit",
+     "x": 164,
+     "y": 180,
+     "name": "Banquette-lit arrière",
+     "n": 6
+    },
+    {
+     "id": "tech",
+     "x": 164,
+     "y": 88,
+     "name": "Sous la banquette (technique)",
+     "n": 7
+    },
+    {
+     "id": "ext",
+     "x": 588,
+     "y": 340,
+     "name": "Extérieur, côté porte",
+     "n": 8
+    },
+    {
+     "id": "extb",
+     "x": 440,
+     "y": 20,
+     "name": "Extérieur, côté opposé",
+     "n": 9
+    },
+    {
+     "id": "arr",
+     "x": 70,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 10
+    }
+   ]
   },
-  {
-   "id": "cui",
-   "n": 3,
-   "x": 430,
-   "y": 284,
-   "name": "Cuisine"
+  "fg_trans": {
+   "type": "fourgon",
+   "name": "Lit transversal arrière",
+   "desc": "Grand lit en travers au-dessus de la soute, salle d’eau, cuisine, dinette (fourgon 5,99 à 6,36 m).",
+   "features": [
+    "lit_trans",
+    "soute",
+    "sdb",
+    "cuisine",
+    "dinette"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 712,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 100,
+     "name": "Salon et dinette",
+     "n": 2
+    },
+    {
+     "id": "cui",
+     "x": 440,
+     "y": 284,
+     "name": "Cuisine",
+     "n": 3
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 104,
+     "name": "Salle d'eau",
+     "n": 4
+    },
+    {
+     "id": "toit",
+     "x": 345,
+     "y": 206,
+     "name": "Toit et aération",
+     "n": 5
+    },
+    {
+     "id": "ent",
+     "x": 593,
+     "y": 288,
+     "name": "Entrée",
+     "n": 6
+    },
+    {
+     "id": "lit",
+     "x": 172,
+     "y": 180,
+     "name": "Lit arrière et soute",
+     "n": 7
+    },
+    {
+     "id": "tech",
+     "x": 476,
+     "y": 172,
+     "name": "Sous la banquette (technique)",
+     "n": 8
+    },
+    {
+     "id": "ext",
+     "x": 593,
+     "y": 340,
+     "name": "Extérieur, côté porte",
+     "n": 9
+    },
+    {
+     "id": "extb",
+     "x": 495,
+     "y": 20,
+     "name": "Extérieur, côté opposé",
+     "n": 10
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 11
+    }
+   ]
   },
-  {
-   "id": "sdb",
-   "n": 4,
-   "x": 340,
-   "y": 104,
-   "name": "Salle d'eau"
+  "fg_jumeaux": {
+   "type": "fourgon",
+   "name": "Lits jumeaux arrière",
+   "desc": "Deux lits le long des parois, soute dessous, salle d’eau, cuisine, dinette (fourgon 6,36 m).",
+   "features": [
+    "lits_jum",
+    "soute",
+    "sdb",
+    "cuisine",
+    "dinette"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 712,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 100,
+     "name": "Salon et dinette",
+     "n": 2
+    },
+    {
+     "id": "cui",
+     "x": 445,
+     "y": 284,
+     "name": "Cuisine",
+     "n": 3
+    },
+    {
+     "id": "sdb",
+     "x": 345,
+     "y": 104,
+     "name": "Salle d'eau",
+     "n": 4
+    },
+    {
+     "id": "toit",
+     "x": 350,
+     "y": 204,
+     "name": "Toit et aération",
+     "n": 5
+    },
+    {
+     "id": "ent",
+     "x": 593,
+     "y": 288,
+     "name": "Entrée",
+     "n": 6
+    },
+    {
+     "id": "lit",
+     "x": 190,
+     "y": 98,
+     "name": "Lits jumeaux et soute",
+     "n": 7
+    },
+    {
+     "id": "tech",
+     "x": 476,
+     "y": 172,
+     "name": "Sous la banquette (technique)",
+     "n": 8
+    },
+    {
+     "id": "ext",
+     "x": 593,
+     "y": 340,
+     "name": "Extérieur, côté porte",
+     "n": 9
+    },
+    {
+     "id": "extb",
+     "x": 495,
+     "y": 20,
+     "name": "Extérieur, côté opposé",
+     "n": 10
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 11
+    }
+   ]
   },
-  {
-   "id": "toit",
-   "n": 5,
-   "x": 385,
-   "y": 198,
-   "name": "Toit et aération"
+  "cp_salon_ar": {
+   "type": "compact",
+   "name": "Salon arrière et lit de pavillon",
+   "desc": "Salon en U à l’arrière, salle d’eau et cuisine au milieu, lit de pavillon à l’avant.",
+   "features": [
+    "salon_ar",
+    "pavillon",
+    "sdb",
+    "cuisine",
+    "dinette"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 600,
+     "y": 212,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "sal",
+     "x": 112,
+     "y": 180,
+     "name": "Salon arrière",
+     "n": 8
+    },
+    {
+     "id": "tech",
+     "x": 186,
+     "y": 86,
+     "name": "Sous la banquette (technique)",
+     "n": 9
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 10
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 11
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 12
+    }
+   ]
   },
-  {
-   "id": "ent",
-   "n": 6,
-   "x": 588,
-   "y": 288,
-   "name": "Entrée"
+  "cp_cuisine_ar": {
+   "type": "compact",
+   "name": "Cuisine arrière et lit de pavillon",
+   "desc": "Cuisine en L à l’arrière, salle d’eau au milieu, salon face-à-face et lit de pavillon à l’avant.",
+   "features": [
+    "cuisine_ar",
+    "cuisine",
+    "pavillon",
+    "sdb",
+    "dinette",
+    "face"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 600,
+     "y": 212,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 117,
+     "y": 220,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "tech",
+     "x": 210,
+     "y": 100,
+     "name": "Sous la banquette (technique)",
+     "n": 8
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 9
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 10
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 11
+    }
+   ]
   },
-  {
-   "id": "lit",
-   "n": 7,
-   "x": 200,
-   "y": 180,
-   "name": "Lit arrière et soute"
+  "cp_sdb_ar": {
+   "type": "compact",
+   "name": "Salle d’eau et penderie arrière, lit de pavillon",
+   "desc": "Salle d’eau toute largeur et penderie à l’arrière, cuisine au milieu, salon et lit de pavillon à l’avant.",
+   "features": [
+    "sdb_ar",
+    "sdb",
+    "penderie_ar",
+    "penderie",
+    "pavillon",
+    "cuisine",
+    "dinette",
+    "face"
+   ],
+   "spotDefaults": {
+    "penderie": "pend"
+   },
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 600,
+     "y": 212,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 140,
+     "y": 200,
+     "name": "Salle d'eau arrière",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 395,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "pend",
+     "x": 231,
+     "y": 112,
+     "name": "Penderie arrière",
+     "n": 8
+    },
+    {
+     "id": "tech",
+     "x": 228,
+     "y": 262,
+     "name": "Sous la banquette (technique)",
+     "n": 9
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 10
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 11
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 12
+    }
+   ]
   },
-  {
-   "id": "tech",
-   "n": 8,
-   "x": 470,
-   "y": 172,
-   "name": "Sous la banquette (technique)"
+  "pr_central": {
+   "type": "profile",
+   "name": "Lit central et garage",
+   "desc": "Lit central accessible des deux côtés au-dessus du garage, salle d’eau, cuisine, salon (lit de pavillon possible).",
+   "features": [
+    "lit_central",
+    "garage",
+    "penderie",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "pavillon?"
+   ],
+   "spotDefaults": {
+    "penderie": "lit"
+   },
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 600,
+     "y": 212,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 196,
+     "y": 140,
+     "name": "Lit central",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 196,
+     "y": 224,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
   },
-  {
-   "id": "ext",
-   "n": 9,
-   "x": 588,
-   "y": 340,
-   "name": "Extérieur, côté porte"
+  "pr_jumeaux": {
+   "type": "profile",
+   "name": "Lits jumeaux et garage",
+   "desc": "Deux lits le long des parois au-dessus du garage, salle d’eau, cuisine, salon (lit de pavillon possible).",
+   "features": [
+    "lits_jum",
+    "garage",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "pavillon?"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 600,
+     "y": 212,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 190,
+     "y": 94,
+     "name": "Lits jumeaux",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 169,
+     "y": 162,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
   },
-  {
-   "id": "extb",
-   "n": 10,
-   "x": 440,
-   "y": 20,
-   "name": "Extérieur, côté opposé"
+  "pr_trans": {
+   "type": "profile",
+   "name": "Lit transversal et garage",
+   "desc": "Lit en travers au-dessus du garage, salle d’eau, cuisine, salon (lit de pavillon possible).",
+   "features": [
+    "lit_trans",
+    "garage",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "pavillon?"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 600,
+     "y": 212,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 169,
+     "y": 140,
+     "name": "Lit transversal arrière",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 169,
+     "y": 236,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
   },
-  {
-   "id": "arr",
-   "n": 11,
-   "x": 70,
-   "y": 180,
-   "name": "Arrière du véhicule (extérieur)"
+  "in_central": {
+   "type": "integral",
+   "name": "Lit central et garage",
+   "desc": "Lit central au-dessus du garage, salle d’eau, cuisine, salon et lit de pavillon au-dessus de la cabine.",
+   "features": [
+    "lit_central",
+    "garage",
+    "penderie",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "pavillon"
+   ],
+   "spotDefaults": {
+    "penderie": "lit"
+   },
+   "spots": [
+    {
+     "id": "cab",
+     "x": 722,
+     "y": 200,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 636,
+     "y": 118,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 196,
+     "y": 140,
+     "name": "Lit central",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 196,
+     "y": 224,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 420,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
+  },
+  "in_jumeaux": {
+   "type": "integral",
+   "name": "Lits jumeaux et garage",
+   "desc": "Lits jumeaux au-dessus du garage, salle d’eau, cuisine, salon et lit de pavillon au-dessus de la cabine.",
+   "features": [
+    "lits_jum",
+    "garage",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "pavillon"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 722,
+     "y": 200,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 636,
+     "y": 118,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 190,
+     "y": 94,
+     "name": "Lits jumeaux",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 169,
+     "y": 162,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 420,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
+  },
+  "in_trans": {
+   "type": "integral",
+   "name": "Lit transversal et garage",
+   "desc": "Lit en travers au-dessus du garage, salle d’eau, cuisine, salon et lit de pavillon au-dessus de la cabine.",
+   "features": [
+    "lit_trans",
+    "garage",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "pavillon"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 722,
+     "y": 200,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 636,
+     "y": 118,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 169,
+     "y": 140,
+     "name": "Lit transversal arrière",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 169,
+     "y": 236,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 420,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
+  },
+  "ca_superp": {
+   "type": "capucine",
+   "name": "Lits superposés et capucine",
+   "desc": "Lits superposés et banquette à l’arrière, salle d’eau, cuisine, dinette et grand lit de capucine : idéal en famille.",
+   "features": [
+    "superp",
+    "capucine",
+    "sdb",
+    "cuisine",
+    "dinette",
+    "face",
+    "famille"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 200,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "cap",
+     "x": 660,
+     "y": 108,
+     "name": "Capucine (au-dessus de la cabine)",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 170,
+     "y": 107,
+     "name": "Lits superposés",
+     "n": 8
+    },
+    {
+     "id": "sal",
+     "x": 140,
+     "y": 212,
+     "name": "Banquette arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 210,
+     "y": 276,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
+  },
+  "ca_trans": {
+   "type": "capucine",
+   "name": "Lit transversal, garage et capucine",
+   "desc": "Lit en travers au-dessus du garage, salle d’eau, cuisine, dinette et lit de capucine.",
+   "features": [
+    "lit_trans",
+    "garage",
+    "capucine",
+    "sdb",
+    "cuisine",
+    "dinette"
+   ],
+   "spotDefaults": {},
+   "spots": [
+    {
+     "id": "cab",
+     "x": 718,
+     "y": 200,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "cap",
+     "x": 660,
+     "y": 108,
+     "name": "Capucine (au-dessus de la cabine)",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 552,
+     "y": 98,
+     "name": "Salon et dinette",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 365,
+     "y": 288,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 335,
+     "y": 100,
+     "name": "Salle d'eau",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 390,
+     "y": 198,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 526,
+     "y": 292,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "lit",
+     "x": 169,
+     "y": 140,
+     "name": "Lit transversal arrière",
+     "n": 8
+    },
+    {
+     "id": "gar",
+     "x": 169,
+     "y": 236,
+     "name": "Garage arrière",
+     "n": 9
+    },
+    {
+     "id": "tech",
+     "x": 474,
+     "y": 190,
+     "name": "Sous la banquette (technique)",
+     "n": 10
+    },
+    {
+     "id": "ext",
+     "x": 526,
+     "y": 344,
+     "name": "Extérieur, côté porte",
+     "n": 11
+    },
+    {
+     "id": "extb",
+     "x": 400,
+     "y": 16,
+     "name": "Extérieur, côté opposé",
+     "n": 12
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 13
+    }
+   ]
   }
- ],
- "fourgon": [
-  {
-   "id": "cab",
-   "n": 1,
-   "x": 712,
-   "y": 180,
-   "name": "Cabine"
-  },
-  {
-   "id": "din",
-   "n": 2,
-   "x": 552,
-   "y": 100,
-   "name": "Salon et dinette"
-  },
-  {
-   "id": "cui",
-   "n": 3,
-   "x": 440,
-   "y": 284,
-   "name": "Cuisine"
-  },
-  {
-   "id": "sdb",
-   "n": 4,
-   "x": 335,
-   "y": 104,
-   "name": "Salle d'eau"
-  },
-  {
-   "id": "toit",
-   "n": 5,
-   "x": 345,
-   "y": 206,
-   "name": "Toit et aération"
-  },
-  {
-   "id": "ent",
-   "n": 6,
-   "x": 593,
-   "y": 288,
-   "name": "Entrée"
-  },
-  {
-   "id": "lit",
-   "n": 7,
-   "x": 172,
-   "y": 180,
-   "name": "Lit arrière et soute"
-  },
-  {
-   "id": "tech",
-   "n": 8,
-   "x": 476,
-   "y": 172,
-   "name": "Sous la banquette (technique)"
-  },
-  {
-   "id": "ext",
-   "n": 9,
-   "x": 593,
-   "y": 340,
-   "name": "Extérieur, côté porte"
-  },
-  {
-   "id": "extb",
-   "n": 10,
-   "x": 495,
-   "y": 20,
-   "name": "Extérieur, côté opposé"
-  },
-  {
-   "id": "arr",
-   "n": 11,
-   "x": 36,
-   "y": 180,
-   "name": "Arrière du véhicule (extérieur)"
-  }
- ],
- "compact": [
-  {
-   "id": "cab",
-   "n": 1,
-   "x": 715,
-   "y": 180,
-   "name": "Cabine"
-  },
-  {
-   "id": "pav",
-   "n": 2,
-   "x": 590,
-   "y": 212,
-   "name": "Lit de pavillon"
-  },
-  {
-   "id": "din",
-   "n": 3,
-   "x": 532,
-   "y": 98,
-   "name": "Salon et dinette"
-  },
-  {
-   "id": "cui",
-   "n": 4,
-   "x": 345,
-   "y": 288,
-   "name": "Cuisine"
-  },
-  {
-   "id": "sdb",
-   "n": 5,
-   "x": 315,
-   "y": 100,
-   "name": "Salle d'eau"
-  },
-  {
-   "id": "toit",
-   "n": 6,
-   "x": 390,
-   "y": 198,
-   "name": "Toit et aération"
-  },
-  {
-   "id": "ent",
-   "n": 7,
-   "x": 506,
-   "y": 292,
-   "name": "Entrée"
-  },
-  {
-   "id": "sal",
-   "n": 8,
-   "x": 112,
-   "y": 180,
-   "name": "Salon arrière"
-  },
-  {
-   "id": "tech",
-   "n": 9,
-   "x": 186,
-   "y": 88,
-   "name": "Sous la banquette (technique)"
-  },
-  {
-   "id": "ext",
-   "n": 10,
-   "x": 506,
-   "y": 344,
-   "name": "Extérieur, côté porte"
-  },
-  {
-   "id": "extb",
-   "n": 11,
-   "x": 400,
-   "y": 16,
-   "name": "Extérieur, côté opposé"
-  },
-  {
-   "id": "arr",
-   "n": 12,
-   "x": 36,
-   "y": 180,
-   "name": "Arrière du véhicule (extérieur)"
-  }
- ],
- "profile": [
-  {
-   "id": "cab",
-   "n": 1,
-   "x": 718,
-   "y": 180,
-   "name": "Cabine"
-  },
-  {
-   "id": "pav",
-   "n": 2,
-   "x": 600,
-   "y": 212,
-   "name": "Lit de pavillon"
-  },
-  {
-   "id": "din",
-   "n": 3,
-   "x": 552,
-   "y": 98,
-   "name": "Salon et dinette"
-  },
-  {
-   "id": "cui",
-   "n": 4,
-   "x": 365,
-   "y": 288,
-   "name": "Cuisine"
-  },
-  {
-   "id": "sdb",
-   "n": 5,
-   "x": 335,
-   "y": 100,
-   "name": "Salle d'eau"
-  },
-  {
-   "id": "toit",
-   "n": 6,
-   "x": 390,
-   "y": 198,
-   "name": "Toit et aération"
-  },
-  {
-   "id": "ent",
-   "n": 7,
-   "x": 526,
-   "y": 292,
-   "name": "Entrée"
-  },
-  {
-   "id": "lit",
-   "n": 8,
-   "x": 169,
-   "y": 128,
-   "name": "Chambre arrière"
-  },
-  {
-   "id": "gar",
-   "n": 9,
-   "x": 169,
-   "y": 236,
-   "name": "Garage arrière"
-  },
-  {
-   "id": "tech",
-   "n": 10,
-   "x": 474,
-   "y": 190,
-   "name": "Sous la banquette (technique)"
-  },
-  {
-   "id": "ext",
-   "n": 11,
-   "x": 526,
-   "y": 344,
-   "name": "Extérieur, côté porte"
-  },
-  {
-   "id": "extb",
-   "n": 12,
-   "x": 400,
-   "y": 16,
-   "name": "Extérieur, côté opposé"
-  },
-  {
-   "id": "arr",
-   "n": 13,
-   "x": 36,
-   "y": 180,
-   "name": "Arrière du véhicule (extérieur)"
-  }
- ],
- "integral": [
-  {
-   "id": "cab",
-   "n": 1,
-   "x": 722,
-   "y": 200,
-   "name": "Cabine"
-  },
-  {
-   "id": "pav",
-   "n": 2,
-   "x": 636,
-   "y": 118,
-   "name": "Lit de pavillon"
-  },
-  {
-   "id": "din",
-   "n": 3,
-   "x": 540,
-   "y": 98,
-   "name": "Salon et dinette"
-  },
-  {
-   "id": "cui",
-   "n": 4,
-   "x": 365,
-   "y": 288,
-   "name": "Cuisine"
-  },
-  {
-   "id": "sdb",
-   "n": 5,
-   "x": 335,
-   "y": 100,
-   "name": "Salle d'eau"
-  },
-  {
-   "id": "toit",
-   "n": 6,
-   "x": 390,
-   "y": 198,
-   "name": "Toit et aération"
-  },
-  {
-   "id": "ent",
-   "n": 7,
-   "x": 526,
-   "y": 292,
-   "name": "Entrée"
-  },
-  {
-   "id": "lit",
-   "n": 8,
-   "x": 169,
-   "y": 128,
-   "name": "Chambre arrière"
-  },
-  {
-   "id": "gar",
-   "n": 9,
-   "x": 169,
-   "y": 236,
-   "name": "Garage arrière"
-  },
-  {
-   "id": "tech",
-   "n": 10,
-   "x": 474,
-   "y": 190,
-   "name": "Sous la banquette (technique)"
-  },
-  {
-   "id": "ext",
-   "n": 11,
-   "x": 526,
-   "y": 344,
-   "name": "Extérieur, côté porte"
-  },
-  {
-   "id": "extb",
-   "n": 12,
-   "x": 420,
-   "y": 16,
-   "name": "Extérieur, côté opposé"
-  },
-  {
-   "id": "arr",
-   "n": 13,
-   "x": 36,
-   "y": 180,
-   "name": "Arrière du véhicule (extérieur)"
-  }
- ],
- "capucine": [
-  {
-   "id": "cab",
-   "n": 1,
-   "x": 718,
-   "y": 200,
-   "name": "Cabine"
-  },
-  {
-   "id": "cap",
-   "n": 2,
-   "x": 660,
-   "y": 108,
-   "name": "Capucine (au-dessus de la cabine)"
-  },
-  {
-   "id": "din",
-   "n": 3,
-   "x": 545,
-   "y": 98,
-   "name": "Salon et dinette"
-  },
-  {
-   "id": "cui",
-   "n": 4,
-   "x": 365,
-   "y": 288,
-   "name": "Cuisine"
-  },
-  {
-   "id": "sdb",
-   "n": 5,
-   "x": 335,
-   "y": 100,
-   "name": "Salle d'eau"
-  },
-  {
-   "id": "toit",
-   "n": 6,
-   "x": 390,
-   "y": 198,
-   "name": "Toit et aération"
-  },
-  {
-   "id": "ent",
-   "n": 7,
-   "x": 526,
-   "y": 292,
-   "name": "Entrée"
-  },
-  {
-   "id": "lit",
-   "n": 8,
-   "x": 169,
-   "y": 128,
-   "name": "Chambre arrière"
-  },
-  {
-   "id": "gar",
-   "n": 9,
-   "x": 169,
-   "y": 236,
-   "name": "Garage arrière"
-  },
-  {
-   "id": "tech",
-   "n": 10,
-   "x": 474,
-   "y": 190,
-   "name": "Sous la banquette (technique)"
-  },
-  {
-   "id": "ext",
-   "n": 11,
-   "x": 526,
-   "y": 344,
-   "name": "Extérieur, côté porte"
-  },
-  {
-   "id": "extb",
-   "n": 12,
-   "x": 400,
-   "y": 16,
-   "name": "Extérieur, côté opposé"
-  },
-  {
-   "id": "arr",
-   "n": 13,
-   "x": 36,
-   "y": 180,
-   "name": "Arrière du véhicule (extérieur)"
-  }
- ]
+ }
 }

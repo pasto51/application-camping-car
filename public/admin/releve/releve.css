@@ -150,3 +150,15 @@ fieldset.choice legend { font-weight: 700; padding: 0 6px; }
 .zbtn b { display: inline-block; min-width: 1.6em; color: var(--accent); }
 .zbtn.sel { border-color: #e8590c; background: color-mix(in srgb, #e8590c 10%, var(--card)); }
 dialog { max-height: 92vh; overflow-y: auto; }
+
+/* Layout (plan) choice */
+textarea { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .8rem; width: 100%; resize: vertical; }
+.layouts { display: flex; flex-direction: column; gap: 10px; }
+.layout-card { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px; border: 2px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text); cursor: pointer; position: relative; }
+.layout-card:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+.layout-card input { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; accent-color: var(--accent); }
+.layout-card img { width: 100%; aspect-ratio: 800 / 360; border-radius: 8px; background: #f3f7f6; }
+.layout-card strong { display: block; font-size: 1rem; padding-right: 30px; }
+.layout-card small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
+.layout-card small.ok-l { color: var(--ok); font-weight: 600; }
+.layout-card small.ko-l { color: var(--danger); font-weight: 600; }

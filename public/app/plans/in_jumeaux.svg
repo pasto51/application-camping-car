@@ -1,16 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" font-family="Helvetica, Arial, sans-serif">
-  <!-- Plan schématique « Lit transversal, garage et capucine » (capucine) vu du dessus, cabine à droite, porte d'entrée en bas. Généré par tools/make-plans.js. -->
+  <!-- Plan schématique « Lits jumeaux et garage » (integral) vu du dessus, cabine à droite, porte d'entrée en bas. Généré par tools/make-plans.js. -->
   <rect width="800" height="360" fill="#f3f7f6"/>
   <g fill="#3d5a60"><rect x="170" y="18" width="70" height="18" rx="6"/><rect x="170" y="322" width="70" height="18" rx="6"/><rect x="640" y="18" width="70" height="18" rx="6"/><rect x="640" y="322" width="70" height="18" rx="6"/></g>
-  <path d="M640 80 H700 C742 80 772 96 782 130 V230 C772 264 742 280 700 280 H640" fill="#fff" stroke="#0c2b33" stroke-width="4"/><rect x="70" y="36" width="570" height="288" rx="18" fill="#fff" stroke="#0c2b33" stroke-width="4"/>
-  <path d="M752 104 C768 140 768 220 752 256" fill="none" stroke="#7fb6bd" stroke-width="10" stroke-linecap="round"/>
-  <g fill="#dff1ef" stroke="#0a7c82" stroke-width="2"><rect x="665" y="98" width="58" height="62" rx="14"/><rect x="665" y="200" width="58" height="62" rx="14"/></g>
-  <rect x="590" y="50" width="200" height="260" rx="40" fill="#0a7c82" fill-opacity=".07" stroke="#0a7c82" stroke-width="2.5" stroke-dasharray="8 6"/>
-  <text x="690" y="300" font-size="13" fill="#5f7d82" text-anchor="middle">capucine</text>
-  <rect x="84" y="52" width="170" height="256" rx="8" fill="#e9f3f2" stroke="#0a7c82" stroke-width="2"/>
-  <rect x="96" y="62" width="68" height="34" rx="10" fill="#fff" stroke="#9bbcc0" stroke-width="2"/>
-  <rect x="174" y="62" width="68" height="34" rx="10" fill="#fff" stroke="#9bbcc0" stroke-width="2"/>
-  <text x="169" y="300" font-size="13" fill="#5f7d82" text-anchor="middle">garage dessous</text>
+  <path d="M88 36 H700 C752 36 780 70 784 120 V240 C780 290 752 324 700 324 H88 A18 18 0 0 1 70 306 V54 A18 18 0 0 1 88 36 Z" fill="#fff" stroke="#0c2b33" stroke-width="4"/>
+  <path d="M742 70 C774 110 774 250 742 290" fill="none" stroke="#7fb6bd" stroke-width="12" stroke-linecap="round"/>
+  <g fill="#dff1ef" stroke="#0a7c82" stroke-width="2"><rect x="668" y="98" width="58" height="62" rx="14"/><rect x="668" y="200" width="58" height="62" rx="14"/></g>
+  <line x1="676" y1="36" x2="736" y2="36" stroke="#0a7c82" stroke-width="4" stroke-dasharray="10 6"/>
+  <rect x="560" y="44" width="200" height="272" rx="10" fill="none" stroke="#0a7c82" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <text x="660" y="172" font-size="13" fill="#5f7d82" text-anchor="middle">lit de pavillon</text>
+  <rect x="84" y="52" width="170" height="84" rx="8" fill="#e9f3f2" stroke="#0a7c82" stroke-width="2"/>
+  <rect x="94" y="62" width="38" height="64" rx="10" fill="#fff" stroke="#9bbcc0" stroke-width="2"/>
+  <rect x="84" y="224" width="170" height="84" rx="8" fill="#e9f3f2" stroke="#0a7c82" stroke-width="2"/>
+  <rect x="94" y="234" width="38" height="64" rx="10" fill="#fff" stroke="#9bbcc0" stroke-width="2"/>
+  <text x="169" y="186" font-size="13" fill="#5f7d82" text-anchor="middle">garage dessous</text>
   <rect x="270" y="50" width="130" height="100" rx="8" fill="#eef4fb" stroke="#0a7c82" stroke-width="2"/><rect x="280" y="60" width="55" height="80" rx="10" fill="#fff" stroke="#9bbcc0" stroke-width="2"/><ellipse cx="374" cy="100" rx="16" ry="21" fill="#fff" stroke="#9bbcc0" stroke-width="2"/>
   <rect x="355" y="172" width="70" height="52" rx="10" fill="none" stroke="#0a7c82" stroke-width="2.5" stroke-dasharray="8 6"/>
   <rect x="270" y="264" width="200" height="48" rx="8" fill="#fdf3e3" stroke="#b7791f" stroke-width="2"/><rect x="284" y="273" width="40" height="30" rx="6" fill="#fff" stroke="#b7791f" stroke-width="2"/><circle cx="408" cy="288" r="10" fill="none" stroke="#b7791f" stroke-width="2"/><circle cx="440" cy="288" r="10" fill="none" stroke="#b7791f" stroke-width="2"/>

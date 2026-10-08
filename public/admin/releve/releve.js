@@ -492,7 +492,8 @@ async function openWizard(id, step = 0) {
   if (!v) return renderVehicles();
   store.set(LAST_KEY, String(id));
   history.replaceState(null, '', `#v=${id}`);
-  const W = { v, profile, brands, types: profile.types || [], variants: config.VARIANTS || {}, photo: v.photoUrl || null };
+  const layouts = await api('GET', '/api/admin/layouts');
+  const W = { v, profile, brands, layouts, types: profile.types || [], variants: config.VARIANTS || {}, photo: v.photoUrl || null };
   showStep(W, step);
 }
 
@@ -547,11 +548,77 @@ const STEPS = [
           <img src="/app/plans/${esc(t.id)}.svg" alt=""><span><strong>${esc(t.name)}</strong><small>${esc(t.hint)}</small></span></label>`
         )
         .join('')}</div>`,
-    save: async ({ v, profile }, f) => {
+    save: async (W, f) => {
+      const { v, profile } = W;
       const type = f.get('type') || '';
       if (!type) throw new Error('Choisissez le type de véhicule (ou passez cette étape)');
+      if (profile.type !== type) {
+        profile.layout = '';
+        W.match = null;
+        W.layoutPick = null;
+      }
       profile.type = type;
-      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { type });
+      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { type, ...(profile.layout ? {} : { layout: '' }) });
+    },
+  },
+  {
+    title: 'Ce qu’il y a dedans',
+    html: (W) => {
+      const { profile } = W;
+      const m = W.match;
+      const pick = W.layoutPick ?? profile.layout ?? m?.results[0]?.id ?? '';
+      const cards = (list) =>
+        list
+          .map(
+            (L) => `<label class="layout-card"><input type="radio" name="layout" value="${esc(L.id)}" ${pick === L.id ? 'checked' : ''}>
+            <img src="${esc(L.planUrl)}" alt=""><span><strong>${esc(L.name)}</strong><small>${esc(L.desc)}</small>
+            ${L.matched?.length ? `<small class="ok-l">✓ ${esc(L.matched.join(' · '))}</small>` : ''}${L.missing?.length ? `<small class="ko-l">✗ ${esc(L.missing.join(' · '))}</small>` : ''}</span></label>`
+          )
+          .join('');
+      return `<p class="muted" style="margin:0">Décrivez l’intérieur en quelques mots : l’appli trouve le bon plan et coche ce que vous citez.</p>
+        <label>En quelques mots<textarea name="words" rows="2" placeholder="ex : penderie arrière, lit pavillon, cuisine et table">${esc(W.words || '')}</textarea></label>
+        <button type="button" class="btn block" data-find>🔎 Trouver le plan</button>
+        ${
+          m
+            ? `${m.understood.length ? `<p class="muted" style="margin:0">Compris : <strong>${esc(m.understood.join(', '))}</strong>${m.refused.length ? ` · sans ${esc(m.refused.join(', '))}` : ''}</p>` : '<p class="muted" style="margin:0">Je n’ai reconnu aucun mot : choisissez le plan dans la liste.</p>'}
+              <div class="layouts">${cards(m.results)}</div>
+              ${
+                m.equipment.length
+                  ? `<fieldset class="choice"><legend>Je coche aussi</legend>${m.equipment
+                      .map((q) => `<label class="opt"><input type="checkbox" name="eq" value="${esc(q.id)}" checked><span>${esc(q.name)}</span></label>`)
+                      .join('')}</fieldset>`
+                  : ''
+              }`
+            : `<div class="layouts">${cards(W.layouts.filter((L) => !profile.type || L.type === profile.type))}</div>`
+        }`;
+    },
+    bind: (W, el) => {
+      el.querySelector('[data-find]').onclick = async () => {
+        W.words = el.querySelector('[name=words]').value;
+        try {
+          W.match = await api('POST', '/api/admin/layouts/match', { text: W.words, type: W.profile.type || null });
+          W.layoutPick = W.match.results[0]?.id;
+          showStep(W, W.step);
+        } catch (err) {
+          toast(err.message, 'error');
+        }
+      };
+      el.querySelectorAll('[name=layout]').forEach((r) => (r.onchange = () => (W.layoutPick = r.value)));
+      el.querySelector('[name=words]').onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          el.querySelector('[data-find]').click();
+        }
+      };
+    },
+    save: async (W, f) => {
+      const layout = f.get('layout');
+      if (!layout) throw new Error('Choisissez un plan (ou passez cette étape)');
+      const add = f.getAll('eq');
+      const body = { layout };
+      if (add.length) body.equipment = [...new Set([...(W.profile.equipment || []), ...add])];
+      W.profile = await api('PUT', `/api/admin/vehicles/${W.v.id}/profile`, body).then((p) => ({ ...W.profile, ...p }));
+      if (add.length) toast(`${add.length} équipement${add.length > 1 ? 's' : ''} coché${add.length > 1 ? 's' : ''}`);
     },
   },
   {
@@ -636,6 +703,7 @@ const STEPS = [
         <dl>
           <div><dt>Nom complet</dt><dd>${esc(profile.fullName || v.name)}</dd></div>
           <div><dt>Type</dt><dd>${esc(W.types.find((t) => t.id === profile.type)?.name || '—')}</dd></div>
+          <div><dt>Plan</dt><dd>${esc(W.layouts.find((L) => L.id === profile.layout)?.name || '—')}</dd></div>
           <div><dt>Accueil de l’appli</dt><dd>${esc(profile.heroPrefix)} <strong>${esc(profile.heroName)}</strong></dd></div>
           <div><dt>Hauteur · longueur</dt><dd>${profile.model.h ? `${Number(profile.model.h).toFixed(2).replace('.', ',')} m` : '—'} · ${profile.model.l ? `${Number(profile.model.l).toFixed(2).replace('.', ',')} m` : '—'}</dd></div>
           <div><dt>PTAC · ordre de marche</dt><dd>${esc(profile.weights.ptac)} kg · ${esc(profile.weights.mom)} kg</dd></div>

@@ -491,12 +491,13 @@ export function registerCatalogViews(VIEWS, h) {
   // ---------- Vehicle profile and photos ----------
 
   VIEWS.vehicleProfile = async (el, vehicleId, back) => {
-    const [vehicles, profile, equipment, config, cats] = await Promise.all([
+    const [vehicles, profile, equipment, config, cats, layouts] = await Promise.all([
       api('GET', '/api/admin/vehicles'),
       api('GET', `/api/admin/vehicles/${vehicleId}/profile`),
       api('GET', '/api/admin/equipment'),
       api('GET', '/api/admin/catalog/config').then((r) => r.value),
       api('GET', '/api/admin/catalog/cats').then((r) => r.value),
+      api('GET', '/api/admin/layouts'),
     ]);
     const v = vehicles.find((x) => x.id === vehicleId);
     const photoOf = Object.fromEntries(profile.photos.map((p) => [p.id, p.url]));
@@ -510,6 +511,7 @@ export function registerCatalogViews(VIEWS, h) {
             <div><dt>Accueil</dt><dd>${esc(profile.heroPrefix)} <strong>${esc(profile.heroName)}</strong></dd></div>
             <div><dt>Nom complet</dt><dd>${esc(profile.fullName)}</dd></div>
             <div><dt>Type</dt><dd>${esc(typesLabel(profile.type ? [profile.type] : []).replace('Tous', '—'))}</dd></div>
+            <div><dt>Plan</dt><dd>${esc(layouts.find((L) => L.id === profile.plan.layout)?.name || (profile.planUrl ? 'Plan importé' : '—'))}</dd></div>
             <div><dt>Longueur / hauteur</dt><dd>${esc(profile.model.l)} m / ${esc(profile.model.h)} m</dd></div>
             <div><dt>Préfixe des codes clients</dt><dd>${esc(profile.codePrefix)}</dd></div>
             ${Object.entries(W).map(([k, l]) => `<div><dt>${esc(l)}</dt><dd>${esc(profile.weights[k])}</dd></div>`).join('')}
@@ -616,6 +618,13 @@ export function registerCatalogViews(VIEWS, h) {
           },
           fields: [
             { name: 'type', label: 'Type de véhicule', type: 'select', options: [['', '— Non précisé —'], ...VEHICLE_TYPES] },
+            {
+              name: 'layout',
+              label: 'Plan (implantation)',
+              type: 'select',
+              hint: 'Choisir un plan règle aussi le type.',
+              options: [['', '— Plan habituel du type —'], ...layouts.map((L) => [L.id, `${typesLabel([L.type])} : ${L.name}`])],
+            },
             { name: 'heroPrefix', label: 'Accueil : mot avant le nom (ex : Van)' },
             { name: 'heroName', label: 'Accueil : nom (ex : V114)' },
             { name: 'fullName', label: 'Nom complet (ex : Challenger V114 Road Edition 2027)', full: true },
@@ -629,7 +638,8 @@ export function registerCatalogViews(VIEWS, h) {
             const vars = {};
             Object.keys(config.VARIANTS || {}).forEach((k) => data[`var_${k}`] && (vars[k] = data[`var_${k}`]));
             await api('PUT', `/api/admin/vehicles/${vehicleId}/profile`, {
-              type: data.type,
+              type: data.layout ? undefined : data.type,
+              layout: data.layout,
               heroPrefix: data.heroPrefix,
               heroName: data.heroName,
               fullName: data.fullName,

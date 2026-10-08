@@ -6,7 +6,8 @@ const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, ran
 const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
 const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
-const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot } = require('../vehicle-types');
+const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
+const { matchLayouts } = require('../layouts');
 const { mailConfig, mailReady } = require('../notify');
 const { sendMail } = require('../mailer');
 
@@ -511,6 +512,27 @@ function register(router) {
     return n;
   }
 
+  // Layouts ("implantations") and their plans; the best ones for a few words typed in the relevé.
+  router.get('/api/admin/layouts', (ctx) => {
+    auth(ctx);
+    return layoutList();
+  });
+
+  router.post('/api/admin/layouts/match', (ctx) => {
+    auth(ctx);
+    const text = optStr(ctx.body.text, 500) || '';
+    const type = TYPE_IDS.includes(ctx.body.type) ? ctx.body.type : null;
+    const found = matchLayouts(text, type);
+    const results = found.results.slice(0, 4);
+    // Equipment named in the words, as it exists on the best layout's type (« garage » of a fourgon is its « soute »).
+    const forType = results[0]?.type || type;
+    const catalog = new Map(ctx.db.prepare('SELECT id, data FROM equipment').all().map((r) => [r.id, JSON.parse(r.data)]));
+    const equipment = [...new Set(found.equipment.map((id) => (id === 'garage' && forType && !isApplicable(catalog.get(id) || {}, forType) ? 'soute' : id)))]
+      .filter((id) => catalog.has(id) && isApplicable(catalog.get(id), forType))
+      .map((id) => ({ id, name: catalog.get(id).name }));
+    return { ...found, results, equipment };
+  });
+
   router.put('/api/admin/vehicles/:id/profile', (ctx) => {
     adminOnly(ctx);
     const { db, body, uploads } = ctx;
@@ -540,6 +562,12 @@ function register(router) {
     if (body.type !== undefined) {
       if (body.type && !TYPE_IDS.includes(body.type)) throw new HttpError(400, 'Type de véhicule inconnu');
       next.type = body.type || '';
+    }
+    if (body.layout !== undefined) {
+      const L = PLANS.layouts[body.layout];
+      if (body.layout && !L) throw new HttpError(400, 'Implantation inconnue');
+      next.layout = body.layout || '';
+      if (L) next.type = L.type;
     }
     if (body.labels !== undefined) {
       if (!body.labels || typeof body.labels !== 'object' || Array.isArray(body.labels)) throw new HttpError(400, 'Format invalide');
