@@ -1,4 +1,5 @@
 // Usage : BASE=http://localhost:3000 N=500 node tools/simulate-diagnostics.js   (Playwright requis)
+//         ONLY=g_groupe,h_store … : seulement ces diagnostics
 // 500 simulations de parcours de diagnostic, jouées dans la vraie appli (navigateur).
 // Pour chaque simulation : une panne réelle est tirée (une fin de parcours), le client simulé décrit son souci,
 // répond aux questions comme si c'était cette panne, et l'on vérifie la conclusion affichée.
@@ -43,8 +44,10 @@ function leavesOf(d) {
   const baseVars = DATA.vehicle.vars;
 
   // Scenarios: half drawn per diagnostic (each entry gets its share), half per end point (weight of big flowcharts)
-  const trees = DATA.diagnostics.filter((d) => d.tree && !d.elim);
-  const elims = DATA.diagnostics.filter((d) => d.elim);
+  const ONLY = (process.env.ONLY || '').split(',').filter(Boolean);
+  const wanted = (d) => !ONLY.length || ONLY.includes(d.id);
+  const trees = DATA.diagnostics.filter((d) => d.tree && !d.elim && wanted(d));
+  const elims = DATA.diagnostics.filter((d) => d.elim && wanted(d));
   const all = trees.flatMap((d) => leavesOf(d).map((x) => ({ d, ...x })));
   const scenarios = [];
   for (let i = 0; i < N; i++) {

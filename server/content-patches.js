@@ -6,6 +6,7 @@
 
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
+const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
 
 const PATCHES = [
   {
@@ -100,6 +101,40 @@ const PATCHES = [
         q.types = after;
         db.prepare('UPDATE equipment SET data = ? WHERE id = ?').run(JSON.stringify(q), id);
         changed++;
+      }
+      return changed;
+    },
+  },
+  {
+    // Written from the composition of the equipment (spare-parts catalogue): generator, bike rack, store parts that wear.
+    // A diagnostic already there (same id) and store answers already there are left as they are.
+    key: '2026-10-11-pieces-groupe-porte-velos-store',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of NEW_DIAGNOSTICS) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get('h_store');
+      if (row) {
+        const store = JSON.parse(row.data);
+        const root = store.tree;
+        let added = 0;
+        if (root && Array.isArray(root.o) && Array.isArray(root.n)) {
+          for (const b of STORE_BRANCHES) {
+            if (root.o.includes(b.option)) continue;
+            root.o.push(b.option);
+            root.n.push(JSON.parse(JSON.stringify(b.node)));
+            store.kw = `${store.kw || ''} ${b.option} ${b.kw}`.trim();
+            added++;
+          }
+        }
+        if (added) {
+          db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(store), 'h_store');
+          changed += added;
+        }
       }
       return changed;
     },

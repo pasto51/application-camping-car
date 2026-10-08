@@ -52,7 +52,7 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   assert.ok(v114 && v114.photoUrl, 'V114 with its photo');
   const admin = await login('admin@test.fr', 'motdepasse123');
   const diags = (await call('GET', '/api/admin/diagnostics', { token: admin })).data;
-  assert.equal(diags.length, 56);
+  assert.equal(diags.length, 58);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
   assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 188);
 
@@ -75,7 +75,10 @@ test('handover, app data, cloud save of the app storage and restore on another p
   // Data the app runs on
   const { data } = await call('GET', '/api/app/data', { token });
   assert.equal(data.equipment.length, 188);
-  assert.equal(data.diagnostics.length, 56);
+  assert.equal(data.diagnostics.length, 58);
+  // Written from the spare-parts catalogue: generator, bike rack, and the store parts that wear
+  assert.ok(data.diagnostics.some((x) => x.id === 'g_groupe' && x.eq === 'groupe'));
+  assert.ok(data.diagnostics.find((x) => x.id === 'h_store').tree.o.includes('La manivelle tourne dans le vide ou ne s’emboîte plus'));
   assert.equal(data.vehicle.heroName, 'V114');
   assert.equal(data.vehicle.photos.length, 53);
   assert.ok(data.vehicle.photos.every((p) => p.url.startsWith('/uploads/')));
