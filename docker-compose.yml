@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      SECRET: ${SECRET:?Définissez SECRET (chaîne aléatoire longue)}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@camping-car.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Définissez ADMIN_PASSWORD}
+    volumes:
+      - app-data:/data
+volumes:
+  app-data:

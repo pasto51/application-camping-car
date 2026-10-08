@@ -1,0 +1,15 @@
+{
+  "name": "Mon Camping-Car",
+  "short_name": "Camping-Car",
+  "description": "Votre camping-car au quotidien : fiche véhicule, dépannage, photos et contact concession.",
+  "lang": "fr",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f4ef",
+  "theme_color": "#1d3557",
+  "icons": [
+    { "src": "/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

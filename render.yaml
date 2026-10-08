@@ -1,0 +1,20 @@
+# Déploiement en un clic sur Render (https://render.com) : New > Blueprint > ce dépôt.
+services:
+  - type: web
+    name: application-camping-car
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/config
+    envVars:
+      - key: SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 5

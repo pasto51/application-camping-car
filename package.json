@@ -1,0 +1,16 @@
+{
+  "name": "application-camping-car",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application camping-car : appli client (PWA), back-office concessions et API cloud",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning server/index.js",
+    "dev": "node --no-warnings=ExperimentalWarning --watch server/index.js",
+    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js"
+  },
+  "license": "UNLICENSED"
+}
