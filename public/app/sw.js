@@ -3,7 +3,7 @@
 const VERSION = '__APP_VERSION__';
 const SHELL_CACHE = `shell-${VERSION}`;
 const PHOTO_CACHE = 'photos-v1';
-const SHELL = ['/app/', '/app/app.js', '/app/styles.css', '/app/manifest.webmanifest', '/app/icon.svg', '/shared/common.js'];
+const SHELL = ['/app/', '/app/compagnon.js', '/app/cloud.js', '/app/cloud.css', '/app/manifest.webmanifest', '/app/icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)));

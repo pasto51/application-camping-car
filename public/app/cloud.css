@@ -1,0 +1,30 @@
+/* Compagnon de bord : écrans de mise en main et éléments ajoutés par la liaison cloud. */
+.cloud-device{margin-bottom:0}
+.cloud-loading{max-width:430px;margin:40vh auto 0;text-align:center;color:var(--muted)}
+.cloud-hero .hero-name{font-size:34px}
+.cloud-steps{display:flex;gap:6px;list-style:none;margin:0;padding:0;counter-reset:s}
+.cloud-steps li{flex:1;text-align:center;font-size:12px;color:var(--muted);padding-top:6px;border-top:4px solid var(--line);counter-increment:s}
+.cloud-steps li::before{content:counter(s) ". "}
+.cloud-steps li.done{border-color:var(--soft)}
+.cloud-steps li.cur{border-color:var(--accent);color:var(--ink);font-weight:700}
+.cloud-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cloud-brand{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:18px 10px;border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.cloud-brand img{max-height:56px;max-width:100%;object-fit:contain}
+.cloud-brand strong{font-family:var(--font-display);font-size:19px}
+.cloud-initial{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--brand);color:#fff;font-family:var(--font-display);font-size:26px;font-weight:700}
+.cloud-vehicle{display:flex;align-items:center;gap:12px;padding:8px}
+.cloud-vehicle img,.cloud-ph{width:96px;height:64px;object-fit:cover;border-radius:10px;background:var(--soft);display:grid;place-items:center;font-size:28px;flex:none}
+.search.code{text-transform:uppercase;letter-spacing:.12em;font-weight:700;text-align:center;font-size:19px}
+.cloud-block{display:flex;flex-direction:column;gap:10px}
+.cloud-block[hidden]{display:none}
+.cloud-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.cloud-status{font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--soft);white-space:nowrap}
+.cloud-status.resolu{background:var(--ok-bg);color:var(--ok)}
+.cloud-status.en_cours{background:var(--warn-bg);color:var(--warn)}
+.cloud-modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
+.cloud-modal .card{width:min(400px,100%);gap:10px}
+.cloud-banner{position:sticky;top:0;z-index:40;max-width:430px;margin:0 auto 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:15px}
+.cloud-banner button{border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:700;padding:8px 12px;flex:none}
+.cloud-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;max-width:calc(100% - 32px);background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:15px;text-align:center}
+.cloud-toast[hidden]{display:none}
+#device[hidden]{display:none}

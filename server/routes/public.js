@@ -3,9 +3,23 @@
 const { HttpError } = require('../http');
 const { transaction, getSetting } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter } = require('../auth');
-const { camel, camelAll, optStr, reqStr, reqInt, optInt, optEmail, optDate, pick } = require('../util');
+const { appData, readProfile } = require('../catalog');
+const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
-const MAX_REPORT_PHOTOS = 6;
+// Storage keys of the Compagnon de bord app that are saved in the cloud.
+const STATE_KEYS = new Set(['cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand']);
+const PHOTO_KEYS = new Set(['cdb_uph', 'cdb_photo']);
+const MAX_STATE_BYTES = 30 * 1024 * 1024;
+const ACCESS_YEARS = 2;
+
+// Access codes look like "V114-ABCD-EFGH"; only the 8 random characters are checked.
+function codeCore(code) {
+  return normalizeCode(code).slice(-8);
+}
+
+function formatAccessCode(prefix, core) {
+  return `${normalizeCode(prefix) || 'CDB'}-${core.slice(0, 4)}-${core.slice(4)}`;
+}
 
 function register(router) {
   const codeLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
@@ -21,7 +35,7 @@ function register(router) {
   }
 
   function findActiveVehicle(db, vehicleId) {
-    const vehicle = db.prepare('SELECT id FROM vehicles WHERE id = ? AND active = 1').get(vehicleId);
+    const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ? AND active = 1').get(vehicleId);
     if (!vehicle) throw new HttpError(404, 'Véhicule introuvable');
     return vehicle;
   }
@@ -39,42 +53,69 @@ function register(router) {
     const row = ctx.db
       .prepare('SELECT c.* FROM customer_sessions s JOIN customers c ON c.id = s.customer_id WHERE s.token_hash = ?')
       .get(sha256(token));
-    if (!row) throw new HttpError(401, 'Session expirée, reconnectez-vous');
+    if (!row) throw new HttpError(401, 'Session expirée, utilisez votre code d’accès');
     ctx.tokenHash = sha256(token);
     return row;
   }
 
-  function profile(db, customer) {
+  function readState(db, customerId) {
+    const out = {};
+    for (const r of db.prepare('SELECT key, value FROM customer_state WHERE customer_id = ?').all(customerId)) out[r.key] = r.value;
+    return out;
+  }
+
+  // Profile + saved state: what the app needs on this phone.
+  function session(db, customer) {
     const vehicle = db
-      .prepare('SELECT v.*, b.name AS brand_name, b.logo_url AS brand_logo_url, b.color AS brand_color FROM vehicles v JOIN brands b ON b.id = v.brand_id WHERE v.id = ?')
+      .prepare('SELECT v.id, v.name, v.model_year, b.name AS brand_name FROM vehicles v JOIN brands b ON b.id = v.brand_id WHERE v.id = ?')
       .get(customer.vehicle_id);
     const dealership = db.prepare('SELECT id, name, city, phone, email FROM dealerships WHERE id = ?').get(customer.dealership_id);
-    const problems = db
-      .prepare(
-        `SELECT * FROM problems
-         WHERE vehicle_id = ? OR (vehicle_id IS NULL AND (brand_id IS NULL OR brand_id = ?))
-         ORDER BY category, sort, title`
-      )
-      .all(customer.vehicle_id, vehicle ? vehicle.brand_id : -1);
-    const photos = db.prepare('SELECT id, url, caption, created_at FROM customer_photos WHERE customer_id = ? ORDER BY id DESC').all(customer.id);
-    const notes = db.prepare('SELECT problem_id, note, updated_at FROM customer_notes WHERE customer_id = ?').all(customer.id);
-    const reports = db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id);
     const { recovery_hash, ...publicCustomer } = customer;
     return {
       contentVersion: Number(getSetting(db, 'content_version', '0')),
-      announcement: getSetting(db, 'announcement', null),
       customer: camel(publicCustomer),
       vehicle: camel(vehicle),
       dealership: camel(dealership),
-      problems: camelAll(problems),
-      photos: camelAll(photos),
-      notes: camelAll(notes),
-      reports: camelAll(reports),
+      state: readState(db, customer.id),
     };
   }
 
-  function touchCustomer(db, id) {
-    db.prepare("UPDATE customers SET updated_at = datetime('now') WHERE id = ?").run(id);
+  // Photos arrive as data URLs inside the app's storage: they are stored as files and replaced by their URL.
+  function storePhotos(uploads, key, value, previous) {
+    const urlsOf = (v) => {
+      if (v == null) return [];
+      if (key === 'cdb_photo') return [v];
+      const obj = JSON.parse(v || '{}');
+      return Object.values(obj && typeof obj === 'object' ? obj : {});
+    };
+    // A photo URL is accepted only if it was already this customer's: nobody can claim (and later delete) another file.
+    const owned = new Set(urlsOf(previous));
+    const resolve = (v) => {
+      if (typeof v !== 'string') return null;
+      if (v.startsWith('data:')) return uploads.saveDataUrl(v);
+      return owned.has(v) ? v : null;
+    };
+    let next = value;
+    if (key === 'cdb_photo') {
+      next = value == null ? null : resolve(value);
+    } else if (value != null) {
+      let obj;
+      try {
+        obj = JSON.parse(value);
+      } catch {
+        throw new HttpError(400, 'Données invalides');
+      }
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new HttpError(400, 'Données invalides');
+      for (const [id, v] of Object.entries(obj)) {
+        const url = resolve(v);
+        if (url) obj[id] = url;
+        else delete obj[id];
+      }
+      next = JSON.stringify(obj);
+    }
+    const kept = new Set(urlsOf(next));
+    for (const url of urlsOf(previous)) if (!kept.has(url)) uploads.remove(url);
+    return next;
   }
 
   // ---- Public, no session ----
@@ -82,14 +123,12 @@ function register(router) {
   router.get('/api/config', ({ db, config }) => ({
     appVersion: config.appVersion,
     contentVersion: Number(getSetting(db, 'content_version', '0')),
-    announcement: getSetting(db, 'announcement', null),
   }));
 
-  // Brands and active vehicles, used by the dealership during the handover.
+  // Brands and active vehicles, for the dealership during the handover.
   router.get('/api/catalog', ({ db }) => ({
-    contentVersion: Number(getSetting(db, 'content_version', '0')),
-    brands: camelAll(db.prepare('SELECT * FROM brands ORDER BY sort, name').all()),
-    vehicles: camelAll(db.prepare('SELECT * FROM vehicles WHERE active = 1 ORDER BY sort, name').all()),
+    brands: camelAll(db.prepare('SELECT id, name, logo_url, color FROM brands ORDER BY sort, name').all()),
+    vehicles: camelAll(db.prepare('SELECT id, brand_id, name, model_year, photo_url FROM vehicles WHERE active = 1 ORDER BY sort, name').all()),
   }));
 
   router.get('/api/dealerships/code/:code', ({ db, params, ip }) => camel(findDealershipByCode(db, params.code, ip)));
@@ -100,11 +139,7 @@ function register(router) {
     const vehicleId = reqInt(body.vehicleId, 'Véhicule');
     findActiveVehicle(db, vehicleId);
     const c = body.customer || {};
-    const firstName = optStr(c.firstName, 100);
     const lastName = reqStr(c.lastName, 'Nom du client', 100);
-    const email = optEmail(c.email);
-    const recoveryCode = randomCode(8);
-
     return transaction(db, () => {
       const { lastInsertRowid } = db
         .prepare(
@@ -114,137 +149,105 @@ function register(router) {
         .run(
           dealership.id,
           vehicleId,
-          firstName,
+          optStr(c.firstName, 100),
           lastName,
-          email,
+          optEmail(c.email),
           optStr(c.phone, 40),
           optStr(c.plate, 20),
           optStr(c.vin, 40),
           optDate(c.handoverDate) || new Date().toISOString().slice(0, 10),
-          sha256(recoveryCode)
+          // No usable code until the dealership validates the handover in the app.
+          sha256(randomToken())
         );
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
-      const token = createSession(db, customer.id);
-      return { token, recoveryCode, ...profile(db, customer) };
+      return { token: createSession(db, customer.id), ...session(db, customer) };
     });
   });
 
-  // Restores the customer's data on a new phone with the recovery code given at handover.
+  // Restores the customer's data on another phone with their name and access code.
   router.post('/api/restore', ({ db, body, ip }) => {
     if (restoreLimiter(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
-    const code = normalizeCode(body.recoveryCode);
+    const core = codeCore(body.code);
     const lastName = reqStr(body.lastName, 'Nom', 100);
-    if (!code) throw new HttpError(400, 'Code de récupération obligatoire');
-    const customer = db
-      .prepare('SELECT * FROM customers WHERE recovery_hash = ? AND lower(last_name) = lower(?)')
-      .get(sha256(code), lastName);
+    if (core.length !== 8) throw new HttpError(400, 'Code d’accès incomplet');
+    const customer = db.prepare('SELECT * FROM customers WHERE recovery_hash = ? AND lower(last_name) = lower(?)').get(sha256(core), lastName);
     if (!customer) throw new HttpError(404, 'Aucun compte ne correspond à ce nom et ce code');
-    const token = createSession(db, customer.id);
-    return { token, ...profile(db, customer) };
+    return { token: createSession(db, customer.id), ...session(db, customer) };
   });
 
   // ---- Customer session ----
 
-  router.get('/api/me', (ctx) => profile(ctx.db, requireCustomer(ctx)));
+  router.get('/api/me', (ctx) => session(ctx.db, requireCustomer(ctx)));
 
-  router.patch('/api/me', (ctx) => {
+  // Catalogue + vehicle profile + dealership: the data the app runs on.
+  router.get('/api/app/data', (ctx) => {
     const customer = requireCustomer(ctx);
-    const { db, body, uploads } = ctx;
-    const cover = uploads.resolveImage(body.coverPhoto, customer.cover_photo_url);
-    db.prepare(
-      `UPDATE customers SET first_name = ?, last_name = ?, email = ?, phone = ?, plate = ?, vin = ?, cover_photo_url = ?,
-       updated_at = datetime('now') WHERE id = ?`
-    ).run(
-      pick(optStr(body.firstName, 100), customer.first_name),
-      pick(body.lastName === undefined ? undefined : reqStr(body.lastName, 'Nom', 100), customer.last_name),
-      pick(optEmail(body.email), customer.email),
-      pick(optStr(body.phone, 40), customer.phone),
-      pick(optStr(body.plate, 20), customer.plate),
-      pick(optStr(body.vin, 40), customer.vin),
-      cover,
-      customer.id
-    );
-    return profile(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id));
+    return {
+      contentVersion: Number(getSetting(ctx.db, 'content_version', '0')),
+      announcement: getSetting(ctx.db, 'announcement', null),
+      ...appData(ctx.db, { vehicleId: customer.vehicle_id, dealershipId: customer.dealership_id }),
+    };
   });
 
-  // Changing vehicle needs a dealership code, like the original handover.
-  router.put('/api/me/vehicle', (ctx) => {
+  // Saves one storage key of the app; returns the stored value (photos replaced by their URL).
+  router.put('/api/me/state/:key', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const { db, params, body, uploads } = ctx;
+    if (!STATE_KEYS.has(params.key)) throw new HttpError(400, 'Donnée inconnue');
+    const value = body.value == null ? null : String(body.value);
+    if (value && value.length > MAX_STATE_BYTES) throw new HttpError(413, 'Données trop volumineuses');
+    const previous = db.prepare('SELECT value FROM customer_state WHERE customer_id = ? AND key = ?').get(customer.id, params.key)?.value ?? null;
+    const stored = PHOTO_KEYS.has(params.key) ? storePhotos(uploads, params.key, value, previous) : value;
+    if (stored == null) {
+      db.prepare('DELETE FROM customer_state WHERE customer_id = ? AND key = ?').run(customer.id, params.key);
+    } else {
+      db.prepare(
+        `INSERT INTO customer_state (customer_id, key, value) VALUES (?, ?, ?)
+         ON CONFLICT(customer_id, key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`
+      ).run(customer.id, params.key, stored);
+    }
+    db.prepare("UPDATE customers SET updated_at = datetime('now') WHERE id = ?").run(customer.id);
+    return { key: params.key, value: stored };
+  });
+
+  // End of the handover checklist: the dealership confirms with its code, the customer receives their access code.
+  router.post('/api/me/access-code', (ctx) => {
     const customer = requireCustomer(ctx);
     const { db, body, ip } = ctx;
     const dealership = findDealershipByCode(db, body.dealershipCode, ip);
-    const vehicleId = reqInt(body.vehicleId, 'Véhicule');
-    findActiveVehicle(db, vehicleId);
-    db.prepare("UPDATE customers SET vehicle_id = ?, dealership_id = ?, updated_at = datetime('now') WHERE id = ?").run(
-      vehicleId,
-      dealership.id,
-      customer.id
-    );
-    return profile(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id));
+    if (dealership.id !== customer.dealership_id) throw new HttpError(403, 'Ce code ne correspond pas à la concession de ce client');
+    const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
+    const core = randomCode(8);
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setFullYear(expires.getFullYear() + ACCESS_YEARS);
+    db.prepare(
+      `UPDATE customers SET recovery_hash = ?, access_code_at = ?, access_expires_at = ?, first_name = COALESCE(?, first_name), vin = COALESCE(?, vin),
+       updated_at = datetime('now') WHERE id = ?`
+    ).run(sha256(core), now.toISOString(), expires.toISOString(), optStr(body.firstName, 100), optStr(body.vin, 40), customer.id);
+    return {
+      code: formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core),
+      date: now.toLocaleDateString('fr-FR'),
+      expiresAt: expires.toISOString().slice(0, 10),
+    };
   });
 
-  router.post('/api/me/photos', (ctx) => {
+  // Workshop appointment request or problem, sent to the dealership.
+  router.post('/api/me/requests', (ctx) => {
     const customer = requireCustomer(ctx);
-    const url = ctx.uploads.saveDataUrl(ctx.body.image);
-    const { lastInsertRowid } = ctx.db
-      .prepare('INSERT INTO customer_photos (customer_id, url, caption) VALUES (?, ?, ?)')
-      .run(customer.id, url, optStr(ctx.body.caption, 200));
-    touchCustomer(ctx.db, customer.id);
-    return camel(ctx.db.prepare('SELECT id, url, caption, created_at FROM customer_photos WHERE id = ?').get(lastInsertRowid));
-  });
-
-  router.patch('/api/me/photos/:id', (ctx) => {
-    const customer = requireCustomer(ctx);
-    const photo = ctx.db.prepare('SELECT * FROM customer_photos WHERE id = ? AND customer_id = ?').get(Number(ctx.params.id), customer.id);
-    if (!photo) throw new HttpError(404, 'Photo introuvable');
-    const url = ctx.body.image ? ctx.uploads.resolveImage(ctx.body.image, photo.url) : photo.url;
-    ctx.db.prepare('UPDATE customer_photos SET url = ?, caption = ? WHERE id = ?').run(url, pick(optStr(ctx.body.caption, 200), photo.caption), photo.id);
-    touchCustomer(ctx.db, customer.id);
-    return camel(ctx.db.prepare('SELECT id, url, caption, created_at FROM customer_photos WHERE id = ?').get(photo.id));
-  });
-
-  router.delete('/api/me/photos/:id', (ctx) => {
-    const customer = requireCustomer(ctx);
-    const photo = ctx.db.prepare('SELECT * FROM customer_photos WHERE id = ? AND customer_id = ?').get(Number(ctx.params.id), customer.id);
-    if (!photo) throw new HttpError(404, 'Photo introuvable');
-    ctx.db.prepare('DELETE FROM customer_photos WHERE id = ?').run(photo.id);
-    ctx.uploads.remove(photo.url);
-    touchCustomer(ctx.db, customer.id);
-    return { ok: true };
-  });
-
-  // Personal note attached to a troubleshooting sheet; an empty note deletes it.
-  router.put('/api/me/notes/:problemId', (ctx) => {
-    const customer = requireCustomer(ctx);
-    const problemId = Number(ctx.params.problemId);
-    if (!ctx.db.prepare('SELECT id FROM problems WHERE id = ?').get(problemId)) throw new HttpError(404, 'Fiche introuvable');
-    const note = optStr(ctx.body.note, 2000);
-    if (note) {
-      ctx.db
-        .prepare(
-          `INSERT INTO customer_notes (customer_id, problem_id, note) VALUES (?, ?, ?)
-           ON CONFLICT(customer_id, problem_id) DO UPDATE SET note = excluded.note, updated_at = datetime('now')`
-        )
-        .run(customer.id, problemId, note);
-    } else {
-      ctx.db.prepare('DELETE FROM customer_notes WHERE customer_id = ? AND problem_id = ?').run(customer.id, problemId);
-    }
-    touchCustomer(ctx.db, customer.id);
-    return { ok: true, note: note || null };
-  });
-
-  // Problem report sent to the dealership, with optional photos.
-  router.post('/api/me/reports', (ctx) => {
-    const customer = requireCustomer(ctx);
-    const { db, body, uploads } = ctx;
-    const title = reqStr(body.title, 'Titre', 150);
-    const problemId = optInt(body.problemId) || null;
-    if (problemId && !db.prepare('SELECT id FROM problems WHERE id = ?').get(problemId)) throw new HttpError(404, 'Fiche introuvable');
-    const images = Array.isArray(body.photos) ? body.photos.slice(0, MAX_REPORT_PHOTOS) : [];
-    const urls = images.map((img) => uploads.saveDataUrl(img));
+    const { db, body } = ctx;
+    const title = reqStr(body.title, 'Motif', 150);
+    const parts = [optStr(body.message, 4000), body.period ? `Délai souhaité : ${optStr(body.period, 50)}` : null, body.phone ? `Téléphone : ${optStr(body.phone, 40)}` : null];
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO reports (customer_id, problem_id, title, description, photos) VALUES (?, ?, ?, ?, ?)')
-      .run(customer.id, problemId, title, optStr(body.description, 4000), JSON.stringify(urls));
+      .prepare('INSERT INTO reports (customer_id, title, description) VALUES (?, ?, ?)')
+      .run(customer.id, title, parts.filter(Boolean).join('\n\n'));
+    if (body.phone && !customer.phone) db.prepare('UPDATE customers SET phone = ? WHERE id = ?').run(optStr(body.phone, 40), customer.id);
     return camel(db.prepare('SELECT * FROM reports WHERE id = ?').get(lastInsertRowid));
+  });
+
+  router.get('/api/me/requests', (ctx) => {
+    const customer = requireCustomer(ctx);
+    return camelAll(ctx.db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id));
   });
 
   router.post('/api/me/logout', (ctx) => {
@@ -253,7 +256,7 @@ function register(router) {
     return { ok: true };
   });
 
-  // Right to erasure: removes the customer, their sessions, notes, reports and photo files.
+  // Right to erasure: removes the customer, their sessions, saved data and photo files.
   router.delete('/api/me', (ctx) => {
     const customer = requireCustomer(ctx);
     deleteCustomer(ctx.db, ctx.uploads, customer.id);
@@ -261,10 +264,26 @@ function register(router) {
   });
 }
 
+// Photo URLs kept in a customer's saved state.
+function statePhotoUrls(db, customerId) {
+  const urls = [];
+  for (const r of db.prepare("SELECT key, value FROM customer_state WHERE customer_id = ? AND key IN ('cdb_uph', 'cdb_photo')").all(customerId)) {
+    if (r.key === 'cdb_photo') urls.push(r.value);
+    else {
+      try {
+        urls.push(...Object.values(JSON.parse(r.value || '{}')));
+      } catch {
+        /* ignore malformed */
+      }
+    }
+  }
+  return urls.filter((u) => typeof u === 'string' && u.startsWith('/uploads/'));
+}
+
 function deleteCustomer(db, uploads, customerId) {
   const customer = db.prepare('SELECT cover_photo_url FROM customers WHERE id = ?').get(customerId);
   if (!customer) return false;
-  const files = [customer.cover_photo_url];
+  const files = [customer.cover_photo_url, ...statePhotoUrls(db, customerId)];
   for (const p of db.prepare('SELECT url FROM customer_photos WHERE customer_id = ?').all(customerId)) files.push(p.url);
   for (const r of db.prepare('SELECT photos FROM reports WHERE customer_id = ?').all(customerId)) files.push(...JSON.parse(r.photos || '[]'));
   db.prepare('DELETE FROM customers WHERE id = ?').run(customerId);
@@ -272,4 +291,4 @@ function deleteCustomer(db, uploads, customerId) {
   return true;
 }
 
-module.exports = { register, deleteCustomer };
+module.exports = { register, deleteCustomer, statePhotoUrls, formatAccessCode };

@@ -8,6 +8,7 @@ const { openDatabase } = require('./db');
 const { createUploadStore } = require('./uploads');
 const { HttpError, createRouter, readJsonBody, sendJson, serveStatic } = require('./http');
 const { seed } = require('./seed');
+const { seedCatalog } = require('./catalog');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 
@@ -41,6 +42,7 @@ function createApp(options = {}) {
   const log = options.log || console.log;
 
   seed(db, { adminEmail: options.adminEmail ?? process.env.ADMIN_EMAIL, adminPassword: options.adminPassword ?? process.env.ADMIN_PASSWORD, log });
+  seedCatalog(db, uploads, log);
 
   const router = createRouter();
   publicRoutes.register(router);
@@ -64,7 +66,7 @@ function createApp(options = {}) {
     };
     let result;
     for (const handler of found.route.handlers) result = await handler(ctx);
-    sendJson(res, 200, result ?? { ok: true });
+    sendJson(res, 200, result ?? { ok: true }, req);
   }
 
   function handleStatic(req, res, url) {

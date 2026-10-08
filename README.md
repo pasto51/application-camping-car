@@ -1,91 +1,104 @@
-# Application Camping-Car
+# Compagnon de bord, version cloud
 
-Plateforme cloud pour les concessions et leurs clients camping-caristes. Elle comprend trois parties, servies par un seul serveur :
+L'application **Compagnon de bord** (V48 : mise en main, gestes du quotidien, « C'est quoi, ça ? », équipements, poids et charge, diagnostic de pannes, rendez-vous atelier, mission) est branchée sur un serveur cloud. Un back-office permet de tout modifier à distance.
 
 | Partie | URL | Pour qui |
 |---|---|---|
-| **Application client** (PWA installable sur téléphone) | `/app/` | Le client, avec la concession lors de la mise en main |
+| **Application client** (installable sur téléphone) | `/app/` | Le client, avec la concession lors de la mise en main |
 | **Back-office** (navigateur, PC ou tablette) | `/admin/` | Administrateurs et concessions |
 | **API cloud** + stockage des photos | `/api/…`, `/uploads/…` | Les deux interfaces |
 
-Marques au lancement : **Challenger** et **Randger**. D'autres marques s'ajoutent depuis le back-office.
+Marques au lancement : **Challenger** (avec le **V114 Road Edition 2027** complet) et **Randger**. Ajoutez les véhicules Randger depuis le back-office.
 
 ## Fonctionnement
 
-### Mise en main (application client)
-1. La concession ouvre l'application sur le téléphone du client, puis touche **« Mise en main par la concession »**.
-2. Elle saisit son **code concession**, vérifié en ligne.
-3. Elle choisit la **marque** (Challenger / Randger), puis le **véhicule** de cette marque.
-4. Elle renseigne le client (nom, téléphone, immatriculation, VIN, date).
-5. L'application affiche un **code de récupération**. Il permet au client de retrouver toutes ses données sur un autre téléphone (écran « J'ai déjà un compte »).
+### Mise en main (dans l'application)
+1. La concession ouvre l'application sur le téléphone du client et touche **« Mise en main par la concession »**.
+2. Elle saisit son **code concession**, choisit la **marque**, puis le **véhicule**.
+3. Elle renseigne le client : prénom, nom, téléphone, e-mail, immatriculation, VIN.
+4. L'application s'ouvre sur l'**Espace concession**. La concession y vérifie chaque point avec le client : équipements cochés, poids, dimensions, points oubliés, explications.
+5. **« Valider et générer le code »** redemande le code concession, puis affiche le **code d'accès du client** (ex. `V114-ABCD-EFGH`, valable 2 ans). Avec son nom, ce code lui permet de retrouver ses données sur un autre téléphone (« J'ai déjà un code d'accès »).
 
-### Ce que le client retrouve dans l'application
-- **Véhicule** : photo (il peut la remplacer par la sienne), caractéristiques, description, contact de la concession.
-- **Dépannage** : fiches problème → solution, avec recherche et catégories, filtrées pour son véhicule. Il peut ajouter une **note personnelle** à chaque fiche.
-- **Photos** : galerie personnelle (appareil photo ou galerie). Chaque photo peut être légendée, remplacée ou supprimée.
-- **Signaler** : envoi d'un problème à sa concession, avec photos. Il suit le statut et lit la réponse de la concession.
-- **Profil** : modifier ses informations, changer de véhicule (code concession requis), supprimer son compte.
+### Ce qui est sauvegardé dans le cloud
+Tout ce que le client enregistre dans l'application : équipements cochés ou ajoutés, **photos** (véhicule et équipements, modifiables), modèles et numéros de série, types d'équipements, poids et mesures, avancement de la mise en main. La sauvegarde est automatique. Hors connexion, l'application continue de fonctionner et envoie les modifications au retour du réseau.
 
-Toutes ces données sont **sauvegardées dans le cloud** et rattachées au client. L'application garde aussi une copie sur le téléphone pour fonctionner **hors connexion**, par exemple en zone blanche.
+Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique « Demandes clients ». La réponse de la concession s'affiche dans l'application.
 
 ### Back-office
-- **Administrateur** : véhicules (photo, caractéristiques, activation), fiches problèmes (une fiche peut concerner tous les véhicules, une marque ou un seul modèle), marques (logo, couleur de l'appli), concessions et leurs codes, utilisateurs, message diffusé dans l'application.
-- **Compte concession** : ne voit que **ses** clients et leurs signalements. Il peut y répondre, modifier une fiche client et générer un nouveau code de récupération.
+- **Diagnostics (pannes)** : les 56 entrées (environ 2 000 fins de parcours) se présentent sous forme d'**organigramme modifiable** : questions, réponses, fin de parcours avec cause, geste, produit, sécurité, rendez-vous. Un mode avancé (JSON) est aussi disponible.
+- **Équipements** : les 122 équipements du catalogue (nom, rubrique, de série, zone du plan, explication, conseil).
+- **Contenus de l'appli** : listes Arrivée et Départ, rappels d'entretien, motifs de rendez-vous, mission « Préparer le départ », réglages avancés.
+- **Véhicules → Profil appli et photos** : nom affiché, dimensions, poids, équipements en plus de la série, types connus, **photo de chaque équipement** et plan vu du dessus.
+- **Concessions** : code concession, téléphone, horaires et logo, affichés dans l'application.
+- **Clients** : fiche du client avec ses photos, équipements, modèles notés et l'état de la mise en main ; génération d'un nouveau code d'accès.
+- **Comptes** : *administrateur* (tout) ou *concession* (ses clients et ses demandes uniquement).
 
 ### Mises à jour à distance
-- **Contenu** (véhicules, fiches, photos, message) : publié dès l'enregistrement dans le back-office. L'application le recharge à chaque ouverture.
-- **Application** : à chaque déploiement du serveur, le *service worker* détecte la nouvelle version. Le client voit « Nouvelle version disponible → Mettre à jour ». Il n'y a rien à republier sur les stores.
+- **Contenu** : chaque enregistrement dans le back-office est publié. L'application le reçoit à sa prochaine ouverture, ou propose « Mettre à jour ».
+- **Application** : à chaque déploiement du serveur, le *service worker* détecte la nouvelle version et le client voit « Mettre à jour ». Rien à republier sur les stores.
+
+## Importer une nouvelle version de l'application (V49…)
+
+Le moteur de l'application est généré à partir du fichier HTML unique fourni par son créateur :
+
+```bash
+python3 tools/import-compagnon.py chemin/vers/compagnon-de-bord.html
+```
+
+L'outil sépare le code des données. Il produit `public/app/index.html`, `public/app/compagnon.js`, ainsi que `server/seed/compagnon.json` et les photos de `server/seed/photos/`. Il vérifie chaque point de découpe et s'arrête avec un message clair si la structure du fichier a changé.
+
+Les données du serveur ne sont initialisées qu'**au premier démarrage**. Ensuite, c'est le back-office qui fait foi : un nouvel import met à jour le moteur, sans écraser les contenus déjà modifiés en ligne.
+
+Les décisions produit et le vocabulaire imposé sont dans [docs/compagnon-v48/](docs/compagnon-v48/). À lire avant d'écrire du contenu.
 
 ## Démarrage local
 
 Prérequis : **Node.js 22.5 ou plus récent**. Aucune dépendance npm : le projet n'utilise que la base SQLite intégrée à Node.
 
 ```bash
-cp .env.example .env   # optionnel
 ADMIN_EMAIL=admin@exemple.fr ADMIN_PASSWORD=motdepasse123 npm start
 ```
 
 - Application client : http://localhost:3000/app/ (code concession de démonstration : `DEMO2026`)
 - Back-office : http://localhost:3000/admin/
 
-Si `ADMIN_PASSWORD` n'est pas fourni au premier lancement, un mot de passe aléatoire est généré et affiché dans les logs.
-
 Tests : `npm test`
 
 ## Mise en ligne (cloud)
 
-L'application est un conteneur Docker unique. Les données (base SQLite et photos) sont stockées dans le dossier `DATA_DIR`, qui doit être un **volume persistant**.
+Les données (base SQLite et photos) sont dans le dossier `DATA_DIR`, qui doit être **persistant**.
 
 | Variable | Rôle |
 |---|---|
-| `SECRET` | Clé de signature des sessions du back-office (longue chaîne aléatoire) |
+| `SECRET` | Clé de signature des sessions du back-office (sinon, générée dans `DATA_DIR`) |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Premier compte administrateur, créé au premier démarrage |
-| `DATA_DIR` | Dossier persistant (`/data` dans le conteneur) |
+| `DATA_DIR` | Dossier persistant (`./data` par défaut, `/data` dans Docker) |
 | `PORT` | Port HTTP (3000 par défaut) |
 
-- **alwaysdata (gratuit, guide pas à pas)** : voir [docs/HEBERGEMENT-ALWAYSDATA.md](docs/HEBERGEMENT-ALWAYSDATA.md).
-- **Render** : *New → Blueprint* sur ce dépôt (`render.yaml` fourni, disque persistant inclus).
-- **Serveur / VPS** : `SECRET=… ADMIN_PASSWORD=… docker compose up -d`, derrière un reverse proxy HTTPS (Caddy, Nginx…).
-- **Fly.io, Railway, Scaleway…** : utiliser le `Dockerfile` et monter un volume sur `/data`.
+- **alwaysdata (gratuit, guide pas à pas)** : [docs/HEBERGEMENT-ALWAYSDATA.md](docs/HEBERGEMENT-ALWAYSDATA.md)
+- **Render** : *New → Blueprint* sur ce dépôt (`render.yaml`)
+- **Serveur / VPS** : `docker compose up -d`, derrière un HTTPS
 
-⚠️ Le **HTTPS est obligatoire** en production : l'installation de la PWA et l'appareil photo ne fonctionnent pas sans.
+Mot de passe perdu : `node server/reset-admin.js email@exemple.fr NouveauMotDePasse`.
+Accès libre au back-office pour les tests : créer le fichier `data/acces-libre`, qui ouvre le back-office sans mot de passe. Supprimez-le avant d'y mettre de vraies données.
 
-**Sauvegardes** : copier régulièrement le dossier `/data` (`app.db` et `uploads/`).
+**Sauvegardes** : copiez régulièrement le dossier de données (`app.db` et `uploads/`).
 
 ## Structure
 
 ```
 server/
   app.js            serveur HTTP, fichiers statiques, version de l'appli
-  db.js             schéma SQLite
-  seed.js           données initiales (Challenger, Randger, fiches types, concession démo)
-  routes/public.js  API de l'application client (mise en main, profil, photos, notes, signalements)
+  db.js             schéma SQLite et migrations
+  catalog.js        catalogue Compagnon de bord, profil des véhicules, données envoyées à l'appli
+  seed.js           marques et concession de démonstration
+  seed/             données et photos extraites de l'appli V48 (premier démarrage)
+  routes/public.js  API de l'application (mise en main, code d'accès, sauvegarde, demandes)
   routes/admin.js   API du back-office
 public/
-  app/              application client (PWA + service worker)
-  admin/            back-office
-  shared/           utilitaires communs (API, compression des photos)
+  app/              application client : moteur Compagnon de bord + cloud.js (liaison cloud) + service worker
+  admin/            back-office (catalog.js : diagnostics, équipements, contenus, profil véhicule)
+tools/
+  import-compagnon.py  import d'une nouvelle version de l'appli
 test/               tests de l'API
 ```
-
-Les photos sont redimensionnées sur le téléphone (1600 px max, en JPEG) avant l'envoi, pour économiser le forfait mobile.

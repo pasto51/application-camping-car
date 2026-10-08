@@ -4,10 +4,46 @@ const { HttpError } = require('../http');
 const { bumpContentVersion, getSetting, setSetting } = require('../db');
 const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter } = require('../auth');
 const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick } = require('../util');
-const { deleteCustomer } = require('./public');
+const { deleteCustomer, formatAccessCode } = require('./public');
+const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
 
 const SEVERITIES = ['info', 'attention', 'urgent'];
 const STATUSES = ['nouveau', 'en_cours', 'resolu'];
+
+// What the app saved for a customer, summarised for the back-office.
+function customerStateSummary(db, customerId) {
+  const state = {};
+  for (const r of db.prepare('SELECT key, value, updated_at FROM customer_state WHERE customer_id = ?').all(customerId)) {
+    state[r.key] = { value: r.value, updatedAt: r.updated_at };
+  }
+  const parse = (k, fallback) => {
+    try {
+      return state[k] ? JSON.parse(state[k].value) ?? fallback : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const names = {};
+  for (const r of db.prepare('SELECT id, data FROM equipment').all()) names[r.id] = JSON.parse(r.data).name;
+  for (const q of parse('cdb_ueq', [])) if (q && q.id) names[q.id] = q.name;
+  const photos = Object.entries(parse('cdb_uph', {}))
+    .filter(([, url]) => typeof url === 'string')
+    .map(([id, url]) => ({ id, name: names[id] || id, url }));
+  if (state.cdb_photo?.value) photos.unshift({ id: 'vehicule', name: 'Photo du véhicule', url: state.cdb_photo.value });
+  const own = parse('cdb_own', null);
+  const hand = parse('cdb_hand', {});
+  const mods = parse('cdb_mod', {});
+  return {
+    photos,
+    equipmentOwned: own ? Object.keys(own).filter((k) => own[k]).map((id) => names[id] || id) : null,
+    customEquipment: parse('cdb_ueq', []).map((q) => q.name),
+    models: Object.entries(mods)
+      .filter(([, m]) => m && (m.name || m.ref))
+      .map(([id, m]) => ({ id, name: names[id] || id, model: m.name || '', ref: m.ref || '' })),
+    handover: { steps: Object.keys(hand.steps || {}).filter((k) => hand.steps[k]).length, validatedOn: hand.date || null },
+    stateUpdatedAt: Object.values(state).map((s) => s.updatedAt).sort().pop() || null,
+  };
+}
 
 function register(router) {
   const loginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
@@ -65,7 +101,8 @@ function register(router) {
     return {
       brands: count('SELECT COUNT(*) AS n FROM brands'),
       vehicles: count('SELECT COUNT(*) AS n FROM vehicles'),
-      problems: count('SELECT COUNT(*) AS n FROM problems'),
+      equipment: count('SELECT COUNT(*) AS n FROM equipment'),
+      diagnostics: count('SELECT COUNT(*) AS n FROM diagnostics'),
       dealerships: count('SELECT COUNT(*) AS n FROM dealerships'),
       customers: count(`SELECT COUNT(*) AS n FROM customers c WHERE ${c.sql}`, c.args),
       openReports: count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.status != 'resolu' AND ${c.sql}`, c.args),
@@ -200,79 +237,263 @@ function register(router) {
     return { ok: true };
   });
 
-  // ---- Problems (troubleshooting sheets) ----
-  // Scope: vehicle_id set -> that vehicle only; brand_id only -> whole brand; neither -> all vehicles.
+  // ---- Compagnon de bord : catalogue (équipements, diagnostics, listes, réglages) ----
 
-  router.get('/api/admin/problems', (ctx) => {
-    auth(ctx);
-    return camelAll(
-      ctx.db
-        .prepare(
-          `SELECT p.*, b.name AS brand_name, v.name AS vehicle_name FROM problems p
-           LEFT JOIN brands b ON b.id = p.brand_id LEFT JOIN vehicles v ON v.id = p.vehicle_id
-           ORDER BY p.category, p.sort, p.title`
-        )
-        .all()
-    );
-  });
+  const DIAG_CATS = ['eau', 'elec', 'gaz', 'chauf', 'frigo', 'wc', 'hum', 'ext'];
 
-  function problemFields(db, body, current = {}) {
-    let vehicleId = pick(optInt(body.vehicleId), current.vehicle_id ?? null);
-    let brandId = pick(optInt(body.brandId), current.brand_id ?? null);
-    if (vehicleId) {
-      const v = db.prepare('SELECT brand_id FROM vehicles WHERE id = ?').get(vehicleId);
-      if (!v) throw new HttpError(400, 'Véhicule inconnu');
-      brandId = v.brand_id;
-    } else if (brandId && !db.prepare('SELECT id FROM brands WHERE id = ?').get(brandId)) {
-      throw new HttpError(400, 'Marque inconnue');
-    }
-    const severity = pick(optStr(body.severity, 20), current.severity ?? 'info');
-    if (!SEVERITIES.includes(severity)) throw new HttpError(400, 'Gravité invalide');
-    return {
-      brandId,
-      vehicleId,
-      category: pick(optStr(body.category, 80), current.category ?? 'Général') || 'Général',
-      title: body.title === undefined ? current.title : reqStr(body.title, 'Titre', 200),
-      symptoms: pick(optStr(body.symptoms, 5000), current.symptoms ?? null),
-      solution: pick(optStr(body.solution, 10000), current.solution ?? null),
-      severity,
-      sort: pick(optInt(body.sort), current.sort ?? 0) ?? 0,
-    };
+  function slugId(text) {
+    return String(text || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 40);
   }
 
-  router.post('/api/admin/problems', (ctx) => {
-    adminOnly(ctx);
-    const { db, body, uploads } = ctx;
-    const f = problemFields(db, body);
-    if (!f.title) throw new HttpError(400, 'Titre obligatoire');
-    const photo = uploads.resolveImage(body.photo, null);
-    const { lastInsertRowid } = db
-      .prepare('INSERT INTO problems (brand_id, vehicle_id, category, title, symptoms, solution, photo_url, severity, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(f.brandId, f.vehicleId, f.category, f.title, f.symptoms, f.solution, photo, f.severity, f.sort);
-    bumpContentVersion(db);
-    return camel(getOr404(db, 'problems', lastInsertRowid, 'Fiche'));
+  function uniqueId(db, table, base) {
+    let id = base || 'element';
+    for (let i = 2; db.prepare(`SELECT 1 FROM ${table} WHERE id = ?`).get(id); i++) id = `${base}_${i}`;
+    return id;
+  }
+
+  function equipmentFields(db, body, current = {}) {
+    const cats = (getCatalogValue(db, 'cats') || []).map((c) => c[0]);
+    const cat = pick(optStr(body.cat, 20), current.cat);
+    if (!cat || (cats.length && !cats.includes(cat))) throw new HttpError(400, 'Rubrique inconnue');
+    return {
+      ...current,
+      cat,
+      name: body.name === undefined ? current.name : reqStr(body.name, 'Nom', 120),
+      base: body.base === undefined ? !!current.base : !!body.base,
+      spot: body.spot === undefined ? current.spot ?? null : optStr(body.spot, 20) || null,
+      text: pick(optStr(body.text, 2000), current.text ?? '') ?? '',
+      tip: pick(optStr(body.tip, 1000), current.tip ?? '') ?? '',
+      kw: pick(optStr(body.kw, 500), current.kw ?? '') ?? '',
+    };
+  }
+  router.get('/api/admin/equipment', (ctx) => {
+    auth(ctx);
+    return ctx.db.prepare('SELECT sort, data FROM equipment ORDER BY sort, id').all().map((r) => ({ ...JSON.parse(r.data), sort: r.sort }));
   });
 
-  router.put('/api/admin/problems/:id', (ctx) => {
+  router.post('/api/admin/equipment', (ctx) => {
     adminOnly(ctx);
-    const { db, body, uploads, params } = ctx;
-    const problem = getOr404(db, 'problems', params.id, 'Fiche');
-    const f = problemFields(db, body, problem);
-    db.prepare(
-      `UPDATE problems SET brand_id = ?, vehicle_id = ?, category = ?, title = ?, symptoms = ?, solution = ?, photo_url = ?, severity = ?, sort = ?,
-       updated_at = datetime('now') WHERE id = ?`
-    ).run(f.brandId, f.vehicleId, f.category, f.title, f.symptoms, f.solution, uploads.resolveImage(body.photo, problem.photo_url), f.severity, f.sort, problem.id);
-    bumpContentVersion(db);
-    return camel(getOr404(db, 'problems', problem.id, 'Fiche'));
+    const f = equipmentFields(ctx.db, ctx.body);
+    if (!f.name) throw new HttpError(400, 'Nom obligatoire');
+    const id = uniqueId(ctx.db, 'equipment', slugId(ctx.body.id) || slugId(f.name));
+    const sort = ctx.db.prepare('SELECT COALESCE(MAX(sort), 0) + 1 AS n FROM equipment').get().n;
+    const data = { id, ...f, img: '' };
+    ctx.db.prepare('INSERT INTO equipment (id, sort, data) VALUES (?, ?, ?)').run(id, sort, JSON.stringify(data));
+    bumpContentVersion(ctx.db);
+    return data;
   });
 
-  router.delete('/api/admin/problems/:id', (ctx) => {
+  router.put('/api/admin/equipment/:id', (ctx) => {
     adminOnly(ctx);
-    const problem = getOr404(ctx.db, 'problems', ctx.params.id, 'Fiche');
-    ctx.db.prepare('DELETE FROM problems WHERE id = ?').run(problem.id);
-    ctx.uploads.remove(problem.photo_url);
+    const row = ctx.db.prepare('SELECT data FROM equipment WHERE id = ?').get(ctx.params.id);
+    if (!row) throw new HttpError(404, 'Équipement introuvable');
+    const data = { ...equipmentFields(ctx.db, ctx.body, JSON.parse(row.data)), id: ctx.params.id };
+    ctx.db.prepare('UPDATE equipment SET data = ? WHERE id = ?').run(JSON.stringify(data), ctx.params.id);
+    bumpContentVersion(ctx.db);
+    return data;
+  });
+
+  router.delete('/api/admin/equipment/:id', (ctx) => {
+    adminOnly(ctx);
+    const used = ctx.db.prepare("SELECT COUNT(*) AS n FROM diagnostics WHERE json_extract(data, '$.eq') = ?").get(ctx.params.id).n;
+    if (used) throw new HttpError(409, `Impossible : ${used} diagnostic(s) sont rattachés à cet équipement`);
+    if (!ctx.db.prepare('DELETE FROM equipment WHERE id = ?').run(ctx.params.id).changes) throw new HttpError(404, 'Équipement introuvable');
     bumpContentVersion(ctx.db);
     return { ok: true };
+  });
+
+  // A question has a text (t), answers (o) and one follow-up per answer (n); a leaf names the cause.
+  function validateTree(node, depth = 0) {
+    if (depth > 80) throw new HttpError(400, 'Arbre trop profond');
+    if (!node || typeof node !== 'object' || Array.isArray(node)) throw new HttpError(400, 'Étape de diagnostic invalide');
+    if (Array.isArray(node.o) || Array.isArray(node.n) || node.t !== undefined) {
+      if (typeof node.t !== 'string' || !node.t.trim()) throw new HttpError(400, 'Une question n’a pas de texte');
+      if (!Array.isArray(node.o) || !Array.isArray(node.n) || !node.o.length || node.o.length !== node.n.length) {
+        throw new HttpError(400, `La question « ${node.t.slice(0, 60)} » doit avoir autant de suites que de réponses`);
+      }
+      node.o.forEach((o) => {
+        if (typeof o !== 'string' || !o.trim()) throw new HttpError(400, `Une réponse de « ${node.t.slice(0, 60)} » est vide`);
+      });
+      node.n.forEach((n) => validateTree(n, depth + 1));
+    } else if (typeof node.cause !== 'string') {
+      throw new HttpError(400, 'Une fin de parcours n’a pas de cause');
+    }
+  }
+
+  function countLeaves(node) {
+    if (!node || typeof node !== 'object') return 0;
+    return Array.isArray(node.n) ? node.n.reduce((a, n) => a + countLeaves(n), 0) : 1;
+  }
+
+  function diagnosticFields(db, body, current = {}) {
+    const cat = pick(optStr(body.cat, 20), current.cat);
+    if (!DIAG_CATS.includes(cat)) throw new HttpError(400, 'Rubrique de diagnostic inconnue');
+    const data = {
+      ...current,
+      cat,
+      label: body.label === undefined ? current.label : reqStr(body.label, 'Titre', 200),
+      eq: body.eq === undefined ? current.eq ?? null : optStr(body.eq, 40) || null,
+      kw: pick(optStr(body.kw, 2000), current.kw ?? '') ?? '',
+    };
+    if (body.urgent !== undefined) {
+      if (body.urgent) data.urgent = true;
+      else delete data.urgent;
+    }
+    if (body.tree !== undefined) {
+      validateTree(body.tree);
+      data.tree = body.tree;
+    }
+    if (!data.tree && !data.elim) throw new HttpError(400, 'Le diagnostic doit contenir au moins une étape');
+    if (data.eq && !db.prepare('SELECT 1 FROM equipment WHERE id = ?').get(data.eq)) throw new HttpError(400, 'Équipement inconnu');
+    return data;
+  }
+
+  router.get('/api/admin/diagnostics', (ctx) => {
+    auth(ctx);
+    return ctx.db
+      .prepare('SELECT id, sort, data, updated_at FROM diagnostics ORDER BY sort, id')
+      .all()
+      .map((r) => {
+        const d = JSON.parse(r.data);
+        return { id: d.id, sort: r.sort, label: d.label, cat: d.cat, eq: d.eq || null, urgent: !!d.urgent, elim: !!d.elim, leaves: countLeaves(d.tree), updatedAt: r.updated_at };
+      });
+  });
+
+  router.get('/api/admin/diagnostics/:id', (ctx) => {
+    auth(ctx);
+    const row = ctx.db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(ctx.params.id);
+    if (!row) throw new HttpError(404, 'Diagnostic introuvable');
+    return JSON.parse(row.data);
+  });
+
+  router.post('/api/admin/diagnostics', (ctx) => {
+    adminOnly(ctx);
+    const body = { tree: { t: 'Première vérification : est-ce réglé ?', o: ['Oui, c’est réglé', 'Non'], n: [{ cause: '', geste: '', prod: '' }, { cause: 'Rien n’a réglé le problème.', geste: 'Passez à l’atelier.', prod: 'Aucun produit : passez à l’atelier', rdv: 'atelier' }] }, ...ctx.body };
+    const data = diagnosticFields(ctx.db, body);
+    data.id = uniqueId(ctx.db, 'diagnostics', slugId(ctx.body.id) || 'd_' + slugId(data.label).slice(0, 30));
+    const sort = ctx.db.prepare('SELECT COALESCE(MAX(sort), 0) + 1 AS n FROM diagnostics').get().n;
+    ctx.db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(data.id, sort, JSON.stringify(data));
+    bumpContentVersion(ctx.db);
+    return data;
+  });
+
+  router.put('/api/admin/diagnostics/:id', (ctx) => {
+    adminOnly(ctx);
+    const row = ctx.db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(ctx.params.id);
+    if (!row) throw new HttpError(404, 'Diagnostic introuvable');
+    const data = { ...diagnosticFields(ctx.db, ctx.body, JSON.parse(row.data)), id: ctx.params.id };
+    ctx.db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(data), ctx.params.id);
+    bumpContentVersion(ctx.db);
+    return data;
+  });
+
+  router.delete('/api/admin/diagnostics/:id', (ctx) => {
+    adminOnly(ctx);
+    if (!ctx.db.prepare('DELETE FROM diagnostics WHERE id = ?').run(ctx.params.id).changes) throw new HttpError(404, 'Diagnostic introuvable');
+    bumpContentVersion(ctx.db);
+    return { ok: true };
+  });
+
+  // Lists (arrival/departure), reminders, workshop reasons, game steps, equipment sections, settings.
+  router.get('/api/admin/catalog/:key', (ctx) => {
+    auth(ctx);
+    if (!CATALOG_KEYS.includes(ctx.params.key)) throw new HttpError(404, 'Rubrique inconnue');
+    return { key: ctx.params.key, value: getCatalogValue(ctx.db, ctx.params.key) };
+  });
+
+  router.put('/api/admin/catalog/:key', (ctx) => {
+    adminOnly(ctx);
+    const { key } = ctx.params;
+    if (!CATALOG_KEYS.includes(key)) throw new HttpError(404, 'Rubrique inconnue');
+    const value = ctx.body.value;
+    const expectArray = ['reminders', 'motifs', 'steps', 'cats'].includes(key);
+    if (expectArray ? !Array.isArray(value) : !value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new HttpError(400, 'Format invalide');
+    }
+    if (key === 'lists') {
+      for (const [k, list] of Object.entries(value)) {
+        if (!list || !Array.isArray(list.items) || list.items.some((i) => typeof i !== 'string')) throw new HttpError(400, `Liste « ${k} » invalide`);
+      }
+    }
+    const json = JSON.stringify(value);
+    if (json.length > 2 * 1024 * 1024) throw new HttpError(413, 'Trop volumineux');
+    ctx.db
+      .prepare("INSERT INTO catalog (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')")
+      .run(key, json);
+    bumpContentVersion(ctx.db);
+    return { key, value };
+  });
+
+  // ---- Vehicle profile: what the app shows for this model (dimensions, weights, plan, equipment photos) ----
+
+  router.get('/api/admin/vehicles/:id/profile', (ctx) => {
+    auth(ctx);
+    const vehicle = getOr404(ctx.db, 'vehicles', ctx.params.id, 'Véhicule');
+    return readProfile(vehicle);
+  });
+
+  function num(value, fallback, label) {
+    if (value === undefined || value === '' || value === null) return fallback;
+    const n = Number(String(value).replace(',', '.'));
+    if (!Number.isFinite(n) || n < 0) throw new HttpError(400, `${label} invalide`);
+    return n;
+  }
+
+  router.put('/api/admin/vehicles/:id/profile', (ctx) => {
+    adminOnly(ctx);
+    const { db, body, uploads } = ctx;
+    const vehicle = getOr404(db, 'vehicles', ctx.params.id, 'Véhicule');
+    const p = readProfile(vehicle);
+    const w = body.weights || {};
+    const next = {
+      ...p,
+      heroPrefix: pick(optStr(body.heroPrefix, 30), p.heroPrefix) ?? '',
+      heroName: pick(optStr(body.heroName, 60), p.heroName) ?? '',
+      fullName: pick(optStr(body.fullName, 120), p.fullName) ?? '',
+      codePrefix: body.codePrefix === undefined ? p.codePrefix : normalizeCode(body.codePrefix).slice(0, 8) || 'CDB',
+      model: body.model ? { l: num(body.model.l, p.model.l, 'Longueur'), h: num(body.model.h, p.model.h, 'Hauteur') } : p.model,
+      weights: Object.fromEntries(Object.entries(p.weights).map(([k, v]) => [k, num(w[k], v, 'Poids')])),
+    };
+    for (const key of ['extra', 'spots']) {
+      if (body[key] !== undefined) {
+        if (!Array.isArray(body[key])) throw new HttpError(400, 'Format invalide');
+        next[key] = body[key];
+      }
+    }
+    for (const key of ['vars', 'spotOverrides']) {
+      if (body[key] !== undefined) {
+        if (!body[key] || typeof body[key] !== 'object' || Array.isArray(body[key])) throw new HttpError(400, 'Format invalide');
+        next[key] = body[key];
+      }
+    }
+    if (body.plan !== undefined) next.planUrl = uploads.resolveImage(body.plan, p.planUrl);
+    db.prepare("UPDATE vehicles SET profile = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(next), vehicle.id);
+    bumpContentVersion(db);
+    return next;
+  });
+
+  // Photo of one equipment on this vehicle ("C'est quoi, ça ?"); null removes it.
+  router.put('/api/admin/vehicles/:id/photos/:equipmentId', (ctx) => {
+    adminOnly(ctx);
+    const { db, uploads, params, body } = ctx;
+    const vehicle = getOr404(db, 'vehicles', params.id, 'Véhicule');
+    if (!db.prepare('SELECT 1 FROM equipment WHERE id = ?').get(params.equipmentId)) throw new HttpError(404, 'Équipement introuvable');
+    const p = readProfile(vehicle);
+    const i = p.photos.findIndex((x) => x.id === params.equipmentId);
+    const current = i >= 0 ? p.photos[i].url : null;
+    const url = uploads.resolveImage(body.image ?? null, current);
+    if (url && i >= 0) p.photos[i].url = url;
+    else if (url) p.photos.push({ id: params.equipmentId, url });
+    else if (i >= 0) p.photos.splice(i, 1);
+    db.prepare("UPDATE vehicles SET profile = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(p), vehicle.id);
+    bumpContentVersion(db);
+    return { id: params.equipmentId, url };
   });
 
   // ---- Dealerships ----
@@ -299,8 +520,18 @@ function register(router) {
     const { db, body } = ctx;
     const code = dealershipCode(db, body.code || randomCode(6));
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO dealerships (name, code, city, phone, email, active) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(reqStr(body.name, 'Nom de la concession', 120), code, optStr(body.city, 80), optStr(body.phone, 40), optEmail(body.email), bool01(body.active, 1));
+      .prepare('INSERT INTO dealerships (name, code, city, phone, email, hours, logo_url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(
+        reqStr(body.name, 'Nom de la concession', 120),
+        code,
+        optStr(body.city, 80),
+        optStr(body.phone, 40),
+        optEmail(body.email),
+        optStr(body.hours, 200),
+        ctx.uploads.resolveImage(body.logo, null),
+        bool01(body.active, 1)
+      );
+    bumpContentVersion(db);
     return camel(getOr404(db, 'dealerships', lastInsertRowid, 'Concession'));
   });
 
@@ -308,15 +539,18 @@ function register(router) {
     adminOnly(ctx);
     const { db, body, params } = ctx;
     const d = getOr404(db, 'dealerships', params.id, 'Concession');
-    db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, active = ? WHERE id = ?').run(
+    db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, hours = ?, logo_url = ?, active = ? WHERE id = ?').run(
       body.name === undefined ? d.name : reqStr(body.name, 'Nom de la concession', 120),
       body.code === undefined ? d.code : dealershipCode(db, body.code, d.id),
       pick(optStr(body.city, 80), d.city),
       pick(optStr(body.phone, 40), d.phone),
       pick(optEmail(body.email), d.email),
+      pick(optStr(body.hours, 200), d.hours),
+      ctx.uploads.resolveImage(body.logo, d.logo_url),
       bool01(body.active, d.active),
       d.id
     );
+    bumpContentVersion(db);
     return camel(getOr404(db, 'dealerships', d.id, 'Concession'));
   });
 
@@ -332,7 +566,7 @@ function register(router) {
   // ---- Customers ----
 
   const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.plate, c.vin,
-      c.handover_date, c.cover_photo_url, c.created_at, c.updated_at,
+      c.handover_date, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
       d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
     FROM customers c
@@ -365,10 +599,7 @@ function register(router) {
     const customer = getCustomerScoped(ctx, ctx.params.id);
     return {
       ...camel(customer),
-      photos: camelAll(ctx.db.prepare('SELECT * FROM customer_photos WHERE customer_id = ? ORDER BY id DESC').all(customer.id)),
-      notes: camelAll(
-        ctx.db.prepare('SELECT n.*, p.title AS problem_title FROM customer_notes n JOIN problems p ON p.id = n.problem_id WHERE n.customer_id = ?').all(customer.id)
-      ),
+      ...customerStateSummary(ctx.db, customer.id),
       reports: camelAll(ctx.db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id)),
     };
   });
@@ -403,13 +634,19 @@ function register(router) {
   });
 
   // Issues a new recovery code (e.g. the customer lost theirs) and signs out their devices.
+  // Issues a new access code (lost code, renewal) valid 2 years; phones already signed in stay signed in.
   router.post('/api/admin/customers/:id/recovery-code', (ctx) => {
     auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
-    const code = randomCode(8);
-    ctx.db.prepare('UPDATE customers SET recovery_hash = ? WHERE id = ?').run(sha256(code), customer.id);
-    ctx.db.prepare('DELETE FROM customer_sessions WHERE customer_id = ?').run(customer.id);
-    return { recoveryCode: code };
+    const core = randomCode(8);
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setFullYear(expires.getFullYear() + 2);
+    ctx.db
+      .prepare('UPDATE customers SET recovery_hash = ?, access_code_at = ?, access_expires_at = ? WHERE id = ?')
+      .run(sha256(core), now.toISOString(), expires.toISOString(), customer.id);
+    const vehicle = ctx.db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
+    return { recoveryCode: formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core), expiresAt: expires.toISOString().slice(0, 10) };
   });
 
   router.delete('/api/admin/customers/:id', (ctx) => {

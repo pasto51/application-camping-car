@@ -1,14 +1,14 @@
 {
-  "name": "Mon Camping-Car",
-  "short_name": "Camping-Car",
-  "description": "Votre camping-car au quotidien : fiche véhicule, dépannage, photos et contact concession.",
+  "name": "Compagnon de bord",
+  "short_name": "Compagnon",
+  "description": "Votre camping-car expliqué : gestes du quotidien, équipements, poids, diagnostic de pannes et rendez-vous atelier.",
   "lang": "fr",
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f6f4ef",
-  "theme_color": "#1d3557",
+  "background_color": "#f3f7f6",
+  "theme_color": "#0a7c82",
   "icons": [
     { "src": "/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

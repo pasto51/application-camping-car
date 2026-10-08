@@ -117,6 +117,36 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 
+-- Compagnon de bord: catalogue shared by every vehicle, edited in the back-office.
+CREATE TABLE IF NOT EXISTS equipment (
+  id TEXT PRIMARY KEY,
+  sort INTEGER NOT NULL DEFAULT 0,
+  data TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS diagnostics (
+  id TEXT PRIMARY KEY,
+  sort INTEGER NOT NULL DEFAULT 0,
+  data TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Other catalogue blocks (lists, reminders, motifs, steps, cats, config), one JSON document each.
+CREATE TABLE IF NOT EXISTS catalog (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Everything the app keeps for a customer (equipment checked, photos, weights, handover…), by storage key.
+CREATE TABLE IF NOT EXISTS customer_state (
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
+  value TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (customer_id, key)
+);
+
 CREATE INDEX IF NOT EXISTS idx_vehicles_brand ON vehicles(brand_id);
 CREATE INDEX IF NOT EXISTS idx_problems_scope ON problems(brand_id, vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_customers_dealership ON customers(dealership_id);
@@ -129,6 +159,7 @@ function openDatabase(file) {
   const db = new DatabaseSync(file);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   db.exec(SCHEMA);
+  migrate(db);
   // Optional fields that were not sent arrive as undefined: store them as NULL.
   const prepare = db.prepare.bind(db);
   db.prepare = (sql) => {
@@ -141,6 +172,22 @@ function openDatabase(file) {
     };
   };
   return db;
+}
+
+// Columns added after the first release: added in place so existing databases keep their data.
+const ADDED_COLUMNS = [
+  ['vehicles', 'profile', 'TEXT'],
+  ['dealerships', 'hours', 'TEXT'],
+  ['dealerships', 'logo_url', 'TEXT'],
+  ['customers', 'access_code_at', 'TEXT'],
+  ['customers', 'access_expires_at', 'TEXT'],
+];
+
+function migrate(db) {
+  for (const [table, column, type] of ADDED_COLUMNS) {
+    const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
+    if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
 }
 
 // Wraps fn in a transaction; rolls back if it throws.

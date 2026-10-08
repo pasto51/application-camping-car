@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const zlib = require('node:zlib');
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -74,13 +75,16 @@ function readJsonBody(req, limitBytes) {
   });
 }
 
-function sendJson(res, status, data) {
-  const body = JSON.stringify(data);
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(body),
-    'Cache-Control': 'no-store',
-  });
+// Large answers (the app catalogue is about 1 MB) are compressed when the client accepts it.
+function sendJson(res, status, data, req) {
+  let body = Buffer.from(JSON.stringify(data));
+  const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', Vary: 'Accept-Encoding' };
+  if (body.length > 2048 && req && /\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
+    body = zlib.gzipSync(body);
+    headers['Content-Encoding'] = 'gzip';
+  }
+  headers['Content-Length'] = body.length;
+  res.writeHead(status, headers);
   res.end(body);
 }
 

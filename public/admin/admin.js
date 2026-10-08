@@ -1,4 +1,5 @@
 import { esc, multiline, formatDate, createApi, pickImage, toast } from '/shared/common.js';
+import { registerCatalogViews } from '/admin/catalog.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -67,10 +68,12 @@ function renderLogin() {
 function sections() {
   const all = [
     ['dashboard', '📊', 'Tableau de bord', true],
-    ['reports', '💬', 'Signalements', true],
+    ['reports', '💬', 'Demandes clients', true],
     ['customers', '👥', 'Clients', true],
     ['vehicles', '🚐', 'Véhicules', isAdmin()],
-    ['problems', '🛠️', 'Problèmes / dépannage', isAdmin()],
+    ['diagnostics', '🛠️', 'Diagnostics (pannes)', true],
+    ['equipment', '🧰', 'Équipements', true],
+    ['content', '📋', 'Contenus de l’appli', true],
     ['brands', '🏷️', 'Marques', isAdmin()],
     ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', true],
     ['users', '🔑', 'Utilisateurs', isAdmin()],
@@ -107,6 +110,7 @@ async function showSection(id) {
   state.section = id;
   root.querySelectorAll('.sidebar a').forEach((a) => a.classList.toggle('active', a.dataset.section === id));
   const content = document.getElementById('content');
+  content.oninput = content.onchange = content.onclick = null;
   content.innerHTML = '<p class="muted">Chargement…</p>';
   try {
     await VIEWS[id](content);
@@ -283,12 +287,13 @@ const VIEWS = {
   async dashboard(el) {
     const s = await api('GET', '/api/admin/stats');
     const tiles = [
-      ['Signalements ouverts', s.openReports, 'reports'],
+      ['Demandes à traiter', s.openReports, 'reports'],
       ['Clients', s.customers, 'customers'],
+      ['Diagnostics', s.diagnostics, 'diagnostics'],
+      ['Équipements', s.equipment, 'equipment'],
       ...(isAdmin()
         ? [
             ['Véhicules', s.vehicles, 'vehicles'],
-            ['Fiches dépannage', s.problems, 'problems'],
             ['Marques', s.brands, 'brands'],
             ['Concessions', s.dealerships, 'dealerships'],
           ]
@@ -299,9 +304,9 @@ const VIEWS = {
       <div class="card">
         <h2>Fonctionnement</h2>
         <ul>
-          <li>Toute modification des véhicules, marques ou fiches de dépannage est <strong>immédiatement visible</strong> dans l'application des clients (version du contenu : ${s.contentVersion}).</li>
-          <li>La mise en main se fait dans l'application du client : la concession saisit son <strong>code concession</strong>, choisit la <strong>marque</strong> puis le <strong>véhicule</strong>.</li>
-          <li>Les photos, notes et signalements des clients sont sauvegardés dans le cloud et visibles ici.</li>
+          <li>Toute modification des véhicules, équipements, diagnostics ou contenus est <strong>publiée dans l'application des clients</strong> : ils la reçoivent à la prochaine ouverture (version du contenu : ${s.contentVersion}).</li>
+          <li>Mise en main : dans l'application du client, la concession saisit son <strong>code concession</strong>, choisit la <strong>marque</strong> puis le <strong>véhicule</strong>, coche les équipements, vérifie chaque point, puis génère le <strong>code d'accès</strong> du client (valable 2 ans).</li>
+          <li>Tout ce que le client enregistre (équipements cochés, photos, modèles, poids…) est sauvegardé dans le cloud. Ses demandes de rendez-vous arrivent dans « Demandes clients ».</li>
           <li>Application client : <a href="/app/" target="_blank">${esc(location.origin)}/app/</a></li>
         </ul>
       </div>`;
@@ -311,7 +316,7 @@ const VIEWS = {
     const status = state.filter.reportStatus ?? 'open';
     const all = await api('GET', '/api/admin/reports');
     const list = all.filter((r) => (status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status));
-    el.innerHTML = `${pageHeader('Signalements clients')}
+    el.innerHTML = `${pageHeader('Demandes clients (rendez-vous atelier)')}
       <div class="filters">${[
         ['open', 'À traiter'],
         ['nouveau', 'Nouveaux'],
@@ -417,7 +422,7 @@ const VIEWS = {
           <td>${esc(v.modelYear || '')}</td>
           <td>${v.customerCount}</td>
           <td>${v.active ? '<span class="status resolu">Actif</span>' : '<span class="status">Masqué</span>'}</td>
-          <td class="row-actions"><button class="btn small" data-act="edit" data-id="${v.id}">Modifier</button><button class="btn small danger" data-act="del" data-id="${v.id}">Supprimer</button></td>
+          <td class="row-actions"><button class="btn small primary" data-act="profile" data-id="${v.id}">Profil appli et photos</button><button class="btn small" data-act="edit" data-id="${v.id}">Modifier</button><button class="btn small danger" data-act="del" data-id="${v.id}">Supprimer</button></td>
         </tr>`
           )
           .join('')}</tbody>
@@ -462,89 +467,8 @@ const VIEWS = {
           },
         });
       },
-      del: (id) => confirmDelete('Supprimer ce véhicule et ses fiches spécifiques ?', () => api('DELETE', `/api/admin/vehicles/${id}`)),
-    });
-  },
-
-  async problems(el) {
-    const [{ brands, vehicles }, problems] = await Promise.all([loadCatalog(), api('GET', '/api/admin/problems')]);
-    const q = (state.filter.problemQuery || '').toLowerCase();
-    const list = problems.filter((p) => !q || [p.title, p.category, p.symptoms, p.solution].some((t) => (t || '').toLowerCase().includes(q)));
-    const scope = (p) => (p.vehicleName ? `🚐 ${p.brandName} ${p.vehicleName}` : p.brandName ? `🏷️ Toute la gamme ${p.brandName}` : '🌍 Tous les véhicules');
-    el.innerHTML = `${pageHeader('Problèmes / fiches de dépannage', '<button class="btn primary" data-act="add">＋ Nouvelle fiche</button>')}
-      <form class="search-bar" id="problem-search"><input name="q" type="search" placeholder="Rechercher une fiche…" value="${esc(state.filter.problemQuery || '')}"><button class="btn">Filtrer</button></form>
-      <div class="table-wrap"><table>
-        <thead><tr><th></th><th>Titre</th><th>Catégorie</th><th>Concerne</th><th>Gravité</th><th></th></tr></thead>
-        <tbody>${list
-          .map(
-            (p) => `<tr>
-          <td>${thumb(p.photoUrl)}</td>
-          <td><strong>${esc(p.title)}</strong></td>
-          <td>${esc(p.category)}</td>
-          <td>${esc(scope(p))}</td>
-          <td><span class="sev ${esc(p.severity)}">${esc(SEVERITY[p.severity])}</span></td>
-          <td class="row-actions"><button class="btn small" data-act="edit" data-id="${p.id}">Modifier</button><button class="btn small danger" data-act="del" data-id="${p.id}">Supprimer</button></td>
-        </tr>`
-          )
-          .join('')}</tbody>
-      </table>${list.length ? '' : '<p class="muted">Aucune fiche.</p>'}</div>`;
-
-    const categories = [...new Set(problems.map((p) => p.category))];
-    const scopeOptions = [
-      ['all', '🌍 Tous les véhicules'],
-      ...brands.map((b) => [`b${b.id}`, `🏷️ Toute la gamme ${b.name}`]),
-      ...vehicles.map((v) => [`v${v.id}`, `🚐 ${v.brandName} — ${v.name}`]),
-    ];
-    const fields = [
-      { name: 'title', label: 'Titre du problème', required: true, full: true },
-      { name: 'category', label: 'Catégorie', hint: `Existantes : ${categories.join(', ') || '—'}`, attrs: 'list="categories"' },
-      { name: 'scope', label: 'Concerne', type: 'select', options: scopeOptions },
-      { name: 'severity', label: 'Gravité', type: 'select', options: Object.entries(SEVERITY) },
-      { name: 'sort', label: "Ordre d'affichage", type: 'number' },
-      { name: 'symptoms', label: 'Symptômes', type: 'textarea', rows: 3 },
-      { name: 'solution', label: 'Solution (une étape par ligne)', type: 'textarea', rows: 8 },
-      { name: 'photo', label: 'Photo / schéma', type: 'image' },
-    ];
-    const extra = `<datalist id="categories">${categories.map((c) => `<option value="${esc(c)}">`).join('')}</datalist>`;
-    const toBody = ({ scope: s, ...data }) => ({
-      ...data,
-      brandId: s.startsWith('b') ? Number(s.slice(1)) : null,
-      vehicleId: s.startsWith('v') ? Number(s.slice(1)) : null,
-    });
-
-    el.querySelector('#problem-search').onsubmit = (e) => {
-      e.preventDefault();
-      state.filter.problemQuery = new FormData(e.target).get('q');
-      VIEWS.problems(el);
-    };
-    bind(el, {
-      add: () =>
-        openForm({
-          title: 'Nouvelle fiche de dépannage',
-          fields,
-          extra,
-          values: { scope: 'all', severity: 'info', sort: 0 },
-          onSubmit: async (data) => {
-            await api('POST', '/api/admin/problems', toBody(data));
-            toast('Fiche créée');
-            VIEWS.problems(el);
-          },
-        }),
-      edit: (id) => {
-        const p = problems.find((x) => x.id === id);
-        openForm({
-          title: 'Modifier la fiche',
-          fields,
-          extra,
-          values: { ...p, photo: p.photoUrl, scope: p.vehicleId ? `v${p.vehicleId}` : p.brandId ? `b${p.brandId}` : 'all' },
-          onSubmit: async (data) => {
-            await api('PUT', `/api/admin/problems/${id}`, toBody(data));
-            toast('Fiche enregistrée');
-            VIEWS.problems(el);
-          },
-        });
-      },
-      del: (id) => confirmDelete('Supprimer cette fiche ?', () => api('DELETE', `/api/admin/problems/${id}`)),
+      profile: (id) => VIEWS.vehicleProfile(el, id, () => VIEWS.vehicles(el)),
+      del: (id) => confirmDelete('Supprimer ce véhicule ?', () => api('DELETE', `/api/admin/vehicles/${id}`)),
     });
   },
 
@@ -626,6 +550,8 @@ const VIEWS = {
       { name: 'city', label: 'Ville' },
       { name: 'phone', label: 'Téléphone', type: 'tel' },
       { name: 'email', label: 'E-mail', type: 'email' },
+      { name: 'hours', label: 'Horaires affichés dans l’appli', full: true },
+      { name: 'logo', label: 'Logo de la concession (affiché dans l’appli)', type: 'image' },
       { name: 'active', label: 'Active (le code fonctionne)', type: 'checkbox' },
     ];
     bind(el, {
@@ -644,7 +570,7 @@ const VIEWS = {
         openForm({
           title: 'Modifier la concession',
           fields,
-          values: list.find((x) => x.id === id),
+          values: { ...list.find((x) => x.id === id), logo: list.find((x) => x.id === id).logoUrl },
           onSubmit: async (data) => {
             await api('PUT', `/api/admin/dealerships/${id}`, data);
             toast('Concession enregistrée');
@@ -750,6 +676,8 @@ const VIEWS = {
   },
 };
 
+registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin });
+
 async function customerDetail(el, id) {
   const [c, { vehicles }, dealerships] = await Promise.all([
     api('GET', `/api/admin/customers/${id}`),
@@ -760,12 +688,11 @@ async function customerDetail(el, id) {
     [c.firstName, c.lastName].filter(Boolean).join(' '),
     `<button class="btn" data-act="back">← Retour</button>
      <button class="btn" data-act="edit">Modifier</button>
-     <button class="btn" data-act="recovery">Nouveau code de récupération</button>
+     <button class="btn" data-act="recovery">Nouveau code d’accès</button>
      ${isAdmin() ? '<button class="btn danger" data-act="del">Supprimer</button>' : ''}`
   )}
     <div class="detail-grid">
       <div class="card">
-        ${c.coverPhotoUrl ? `<img class="cover" src="${esc(c.coverPhotoUrl)}" alt="">` : ''}
         <dl class="facts">
           <div><dt>Véhicule</dt><dd>${esc(c.brandName)} ${esc(c.vehicleName)}</dd></div>
           <div><dt>Immatriculation</dt><dd>${esc(c.plate || '—')}</dd></div>
@@ -774,24 +701,31 @@ async function customerDetail(el, id) {
           <div><dt>Concession</dt><dd>${esc(c.dealershipName)}</dd></div>
           <div><dt>E-mail</dt><dd>${esc(c.email || '—')}</dd></div>
           <div><dt>Téléphone</dt><dd>${esc(c.phone || '—')}</dd></div>
-          <div><dt>Dernière activité</dt><dd>${formatDate(c.updatedAt)}</dd></div>
+          <div><dt>Code d’accès</dt><dd>${c.accessExpiresAt ? `valable jusqu’au ${formatDate(c.accessExpiresAt.slice(0, 10))}` : 'pas encore généré'}</dd></div>
+          <div><dt>Contrôle de mise en main</dt><dd>${c.handover.steps}/5 points${c.handover.validatedOn ? ` · validée le ${esc(c.handover.validatedOn)}` : ''}</dd></div>
+          <div><dt>Dernière sauvegarde de l’appli</dt><dd>${c.stateUpdatedAt ? formatDate(c.stateUpdatedAt) : '—'}</dd></div>
         </dl>
       </div>
       <div class="card">
         <h2>Photos du client (${c.photos.length})</h2>
-        ${c.photos.length ? `<div class="photos">${c.photos.map((p) => `<a href="${esc(p.url)}" target="_blank" title="${esc(p.caption || '')}"><img src="${esc(p.url)}" alt=""></a>`).join('')}</div>` : '<p class="muted">Aucune photo.</p>'}
-        <h2>Notes personnelles (${c.notes.length})</h2>
-        ${c.notes.length ? `<ul>${c.notes.map((n) => `<li><strong>${esc(n.problemTitle)}</strong> : ${esc(n.note)}</li>`).join('')}</ul>` : '<p class="muted">Aucune note.</p>'}
+        ${c.photos.length ? `<div class="photos">${c.photos.map((p) => `<a href="${esc(p.url)}" target="_blank" title="${esc(p.name)}"><img src="${esc(p.url)}" alt=""></a>`).join('')}</div>` : '<p class="muted">Aucune photo.</p>'}
+        <h2>Modèles et numéros notés (${c.models.length})</h2>
+        ${c.models.length ? `<ul>${c.models.map((m) => `<li><strong>${esc(m.name)}</strong> : ${esc([m.model, m.ref && 'réf. ' + m.ref].filter(Boolean).join(', '))}</li>`).join('')}</ul>` : '<p class="muted">Aucun.</p>'}
+        ${c.customEquipment.length ? `<h2>Équipements ajoutés par le client</h2><p>${esc(c.customEquipment.join(', '))}</p>` : ''}
       </div>
     </div>
     <div class="card">
-      <h2>Signalements (${c.reports.length})</h2>
+      <h2>Équipements cochés (${c.equipmentOwned ? c.equipmentOwned.length : 'liste de série'})</h2>
+      <p class="muted">${esc((c.equipmentOwned || []).join(' · ') || 'Le client n’a pas encore modifié la liste de série.')}</p>
+    </div>
+    <div class="card">
+      <h2>Demandes (${c.reports.length})</h2>
       ${
         c.reports.length
           ? c.reports
               .map((r) => `<div class="report-line"><span class="status ${esc(r.status)}">${STATUS[r.status]}</span> <strong>${esc(r.title)}</strong> <small class="muted">${formatDate(r.createdAt)}</small></div>`)
               .join('')
-          : '<p class="muted">Aucun signalement.</p>'
+          : '<p class="muted">Aucune demande.</p>'
       }
     </div>`;
   bind(el, {
@@ -818,16 +752,17 @@ async function customerDetail(el, id) {
         },
       }),
     recovery: async () => {
-      if (!confirm('Générer un nouveau code ? Le client sera déconnecté de ses téléphones et devra utiliser ce nouveau code.')) return;
+      if (!confirm('Générer un nouveau code d’accès (code perdu ou renouvellement) ? L’ancien code ne fonctionnera plus.')) return;
       try {
-        const { recoveryCode } = await api('POST', `/api/admin/customers/${id}/recovery-code`);
-        alert(`Nouveau code de récupération à transmettre au client :\n\n${recoveryCode}`);
+        const { recoveryCode, expiresAt } = await api('POST', `/api/admin/customers/${id}/recovery-code`);
+        alert(`Nouveau code d’accès à transmettre au client (valable jusqu’au ${formatDate(expiresAt)}) :\n\n${recoveryCode}`);
+        customerDetail(el, id);
       } catch (err) {
         toast(err.message, 'error');
       }
     },
     del: () =>
-      confirmDelete('Supprimer définitivement ce client et toutes ses données (photos, notes, signalements) ?', async () => {
+      confirmDelete('Supprimer définitivement ce client et toutes ses données (photos, équipements, demandes) ?', async () => {
         await api('DELETE', `/api/admin/customers/${id}`);
         state.section = 'customers';
       }),
