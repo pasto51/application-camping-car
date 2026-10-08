@@ -56,9 +56,10 @@ Le **code d'accès** est conservé chiffré : la fiche client du back-office l'a
   - rendez-vous atelier et soucis (étanchéité, gaz, révision…) → **SAV** ;
   - pièce ou remplacement d'équipement **sous garantie ou extension** → **SAV** ; hors garantie → **magasin** ;
   - accessoire ou consommable → **magasin**.
-  La garantie se saisit à la mise en main (fin de garantie, proposée d'après la garantie habituelle de la concession, et extension) ou dans la fiche client. Chaque service reçoit les e-mails de ses demandes et peut **transférer** une demande à l'autre avec un motif. Le client voit « 📞 SAV / atelier » et « 📞 Magasin » sur l'accueil et dans son espace client.
+  La garantie se saisit à la mise en main (fin de garantie, proposée d'après la garantie habituelle de la concession, et extension) ou dans la fiche client du back-office (bouton « Modifier la garantie », pour le responsable de concession et le commercial du client, en cas d'erreur à la livraison). Chaque service reçoit les e-mails de ses demandes et peut **transférer** une demande à l'autre avec un motif. Le client voit « 📞 SAV / atelier » et « 📞 Magasin » sur l'accueil et dans son espace client.
 - **Rôles** :
   - *Administrateur* : tout (catalogue, concessions, utilisateurs).
+  - *Éditeur de contenu* (compte créé par l'administrateur, sans concession) : modifie les contenus de l'appli — diagnostics et organigrammes, équipements, listes, véhicules, marques, photos et relevé, message / campagne affiché dans l'appli. Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes, ne supprime pas de véhicule et ne touche pas aux réglages des e-mails.
   - *Responsable de concession* : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession sauf le code), sans recevoir d'e-mails ; confie ou bascule les clients entre commerciaux.
   - *SAV / atelier* et *Magasin* : voient les demandes et répondent à celles de leur service.
   - *Commercial* : gère ses clients et fait les mises en main ; ne traite pas les demandes (pas de menu Demandes, pas d'e-mail) mais en voit le récap sur son tableau de bord.

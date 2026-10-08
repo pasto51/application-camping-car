@@ -42,8 +42,11 @@ function logout() {
 const root = document.getElementById('root');
 const isAdmin = () => state.user?.role === 'admin';
 // Responsable de concession (or administrator): reassigns customers, manages the team.
+// Content editor: diagnostics, equipment, lists, vehicles and photos, announcement — no customers, requests or dealerships.
+const isEditor = () => state.user?.role === 'editor';
+const canEditContent = () => isAdmin() || isEditor();
 const isManager = () => ['admin', 'manager', 'dealer'].includes(state.user?.role);
-const ROLE_LABELS = { admin: 'Administrateur', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
+const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur de contenu', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
 const SERVICE_LABELS = { sav: '🛠️ SAV', magasin: '🛒 Magasin' };
 // The service a SAV or store account works for (requests shown first).
 const myService = () => ({ sav: 'sav', store: 'magasin' })[state.user?.role] || '';
@@ -79,15 +82,15 @@ function renderLogin() {
 
 function sections() {
   const all = [
-    ['dashboard', '📊', 'Tableau de bord', true],
-    ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales'],
-    ['customers', '👥', 'Clients', true],
-    ['vehicles', '🚐', 'Véhicules', isAdmin()],
+    ['dashboard', '📊', 'Tableau de bord', !isEditor()],
+    ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales' && !isEditor()],
+    ['customers', '👥', 'Clients', !isEditor()],
+    ['vehicles', '🚐', 'Véhicules', canEditContent()],
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', true],
     ['equipment', '🧰', 'Équipements', true],
     ['content', '📋', 'Contenus de l’appli', true],
-    ['brands', '🏷️', 'Marques', isAdmin()],
-    ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', true],
+    ['brands', '🏷️', 'Marques', canEditContent()],
+    ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor()],
     ['users', '🔑', isAdmin() ? 'Utilisateurs' : 'Mon équipe', isManager()],
     ['settings', '⚙️', 'Paramètres', true],
   ];
@@ -118,7 +121,7 @@ function renderShell() {
 }
 
 async function showSection(id) {
-  if (!sections().some((s) => s[0] === id)) id = 'dashboard';
+  if (!sections().some((s) => s[0] === id)) id = sections()[0][0];
   state.section = id;
   root.querySelectorAll('.sidebar a').forEach((a) => a.classList.toggle('active', a.dataset.section === id));
   const content = document.getElementById('content');
@@ -515,7 +518,7 @@ const VIEWS = {
           <td>${esc(v.modelYear || '')}</td>
           <td>${v.customerCount}</td>
           <td>${v.active ? '<span class="status resolu">Actif</span>' : '<span class="status">Masqué</span>'}</td>
-          <td class="row-actions"><button class="btn small primary" data-act="profile" data-id="${v.id}">Profil appli et photos</button><button class="btn small" data-act="edit" data-id="${v.id}">Modifier</button><button class="btn small danger" data-act="del" data-id="${v.id}">Supprimer</button></td>
+          <td class="row-actions"><button class="btn small primary" data-act="profile" data-id="${v.id}">Profil appli et photos</button><button class="btn small" data-act="edit" data-id="${v.id}">Modifier</button>${isAdmin() ? `<button class="btn small danger" data-act="del" data-id="${v.id}">Supprimer</button>` : ''}</td>
         </tr>`
           )
           .join('')}</tbody>
@@ -577,7 +580,7 @@ const VIEWS = {
           <td><strong>${esc(b.name)}</strong></td>
           <td>${b.color ? `<span class="swatch" style="background:${esc(b.color)}"></span> ${esc(b.color)}` : ''}</td>
           <td>${b.vehicleCount}</td>
-          <td class="row-actions"><button class="btn small" data-act="edit" data-id="${b.id}">Modifier</button><button class="btn small danger" data-act="del" data-id="${b.id}">Supprimer</button></td>
+          <td class="row-actions"><button class="btn small" data-act="edit" data-id="${b.id}">Modifier</button>${isAdmin() ? `<button class="btn small danger" data-act="del" data-id="${b.id}">Supprimer</button>` : ''}</td>
         </tr>`
           )
           .join('')}</tbody>
@@ -707,8 +710,8 @@ const VIEWS = {
       <p><strong>SAV / atelier</strong> : voit les demandes de la concession, répond à celles du SAV (rendez-vous, soucis, pièces sous garantie) et peut les transférer au magasin.</p>
       <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que les siennes.</p>
       <p><strong>Responsable de concession</strong> : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession), sans recevoir d’e-mails.</p>
-      ${isAdmin() ? '<p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
-    const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['admin', 'Administrateur']] : [])];
+      ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
+    const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['editor', 'Éditeur de contenu'], ['admin', 'Administrateur']] : [])];
     const fields = (isNew) => [
       { name: 'name', label: 'Nom (affiché au client pour un commercial)' },
       { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
@@ -763,7 +766,7 @@ const VIEWS = {
     const s = await api('GET', '/api/admin/settings');
     el.innerHTML = `${pageHeader('Paramètres')}
       ${
-        isAdmin()
+        canEditContent()
           ? `<form class="card form" id="announce-form">
         <h2>Message affiché dans l'application</h2>
         <p class="muted">Ex : rappel d'entretien, campagne de rappel, horaires d'été. Laisser vide pour ne rien afficher.</p>
@@ -850,7 +853,7 @@ const VIEWS = {
   },
 };
 
-registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin });
+registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin, canEditContent });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.
 const NEEDS = { piece: 'Pièce détachée', remplacement: 'Remplacement de l’équipement', accessoire: 'Accessoire ou consommable' };
@@ -980,9 +983,11 @@ async function customerDetail(el, id) {
           <div><dt>Mise en main</dt><dd>${formatDate(c.handoverDate)}</dd></div>
           <div><dt>Garantie</dt><dd>${
             c.warranty?.until
-              ? `${c.warranty.active ? '🛡️ ' : ''}${c.warranty.active ? 'Sous ' : 'Terminée : '}${c.warranty.extended ? 'extension ' : 'garantie '}${c.warranty.active ? 'jusqu’au ' : 'le '}${formatDate(c.warranty.until)}<br><small class="muted">Pendant la garantie, ses demandes de pièces vont au SAV ; ensuite au magasin.</small>`
+              ? `${c.warranty.active ? '🛡️ ' : ''}${c.warranty.active ? 'Sous ' : 'Terminée : '}${c.warranty.extended ? 'extension ' : 'garantie '}${c.warranty.active ? 'jusqu’au ' : 'le '}${formatDate(c.warranty.extended || !c.warranty.active ? c.warranty.until : c.warranty.end || c.warranty.until)}${
+                  c.warranty.extEnd && !c.warranty.extended && c.warranty.active ? `<br>puis extension jusqu’au ${formatDate(c.warranty.extEnd)}` : ''
+                }<br><small class="muted">Pendant la garantie, ses demandes de pièces vont au SAV ; ensuite au magasin.</small>`
               : '—'
-          }</dd></div>
+          }${c.canManage ? '<br><button class="btn small" data-act="warranty">Modifier la garantie</button>' : ''}</dd></div>
           <div><dt>Concession</dt><dd>${esc(c.dealershipName)}</dd></div>
           <div><dt>Commercial</dt><dd>${
             c.canReassign
@@ -1052,6 +1057,21 @@ async function customerDetail(el, id) {
       }
     },
     back: () => VIEWS.customers(el),
+    warranty: () =>
+      openForm({
+        title: 'Modifier la garantie',
+        values: c,
+        fields: [
+          { name: 'warrantyEnd', label: 'Fin de garantie', type: 'date', hint: 'Vide : garantie habituelle de la concession à partir de la mise en main.' },
+          { name: 'warrantyExtEnd', label: 'Extension de garantie jusqu’au', type: 'date', hint: 'Vide : pas d’extension.' },
+          { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
+        ],
+        onSubmit: async (data) => {
+          await api('PUT', `/api/admin/customers/${id}`, data);
+          toast('Garantie enregistrée');
+          customerDetail(el, id);
+        },
+      }),
     edit: () =>
       openForm({
         title: 'Modifier le client',

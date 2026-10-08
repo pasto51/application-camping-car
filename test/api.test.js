@@ -413,6 +413,39 @@ test('roles: salespeople see the dealership but manage their own customers; the 
   assert.equal(app2.dealer.store.phone, '05 00 00 00 00');
 });
 
+test('content editor: edits the app contents, not the customers, the requests or the accounts', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const d = (await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Édition', code: 'EDITION1' } })).data;
+  const ed = (await call('POST', '/api/admin/users', { token: admin, body: { email: 'edit@test.fr', password: 'motdepasse1', role: 'editor', dealershipId: d.id } })).data;
+  assert.equal(ed.dealershipId, null, 'not tied to a dealership');
+  const editor = await login('edit@test.fr', 'motdepasse1');
+  assert.equal((await call('PUT', '/api/admin/equipment/frigo', { token: editor, body: { tip: 'Dégivrez-le.' } })).status, 200);
+  assert.equal((await call('PUT', '/api/admin/settings', { token: editor, body: { announcement: 'Campagne gaz' } })).data.announcement, 'Campagne gaz');
+  assert.equal((await call('PUT', '/api/admin/settings', { token: editor, body: { mail: { host: 'x' } } })).status, 403);
+  assert.equal((await call('POST', '/api/admin/users', { token: editor, body: { email: 'x@test.fr', password: 'motdepasse1', role: 'sales', dealershipId: d.id } })).status, 403);
+  assert.deepEqual((await call('GET', '/api/admin/customers', { token: editor })).data, []);
+  assert.equal((await call('GET', '/api/admin/reports', { token: editor })).data.length, 0);
+  const { data: catalog } = await call('GET', '/api/catalog');
+  assert.equal((await call('POST', '/api/admin/customers', { token: editor, body: { vehicleId: catalog.vehicles[0].id, lastName: 'X' } })).status, 400);
+  assert.equal((await call('DELETE', `/api/admin/vehicles/${catalog.vehicles[0].id}`, { token: editor })).status, 403);
+  // A manager cannot create or touch an editor account
+  await call('POST', '/api/admin/users', { token: admin, body: { email: 'chef@edition.fr', password: 'motdepasse1', role: 'manager', dealershipId: d.id } });
+  const chef = await login('chef@edition.fr', 'motdepasse1');
+  assert.equal((await call('POST', '/api/admin/users', { token: chef, body: { email: 'y@test.fr', password: 'motdepasse1', role: 'editor' } })).status, 403);
+  assert.equal((await call('DELETE', `/api/admin/users/${ed.id}`, { token: chef })).status, 404);
+  assert.equal((await call('PUT', '/api/admin/equipment/frigo', { token: chef, body: { tip: 'x' } })).status, 403);
+  // The manager and the salesperson fix the warranty from the back-office
+  const s = (await call('POST', '/api/admin/users', { token: chef, body: { email: 'vend@edition.fr', password: 'motdepasse1', role: 'sales' } })).data;
+  const sales = await login('vend@edition.fr', 'motdepasse1');
+  const c = (await call('POST', '/api/admin/customers', { token: sales, body: { vehicleId: catalog.vehicles[0].id, lastName: 'Garanti', handoverDate: '2026-01-10' } })).data;
+  assert.equal(c.salespersonId, s.id);
+  const w = (await call('PUT', `/api/admin/customers/${c.id}`, { token: sales, body: { warrantyEnd: '2029-01-10', warrantyExtEnd: '2031-01-10' } })).data;
+  assert.equal(w.warrantyEnd, '2029-01-10');
+  assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: chef })).data.warranty.until, '2031-01-10');
+  assert.equal((await call('PUT', `/api/admin/customers/${c.id}`, { token: chef, body: { warrantyEnd: '', warrantyExtEnd: '' } })).status, 200);
+  assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: chef })).data.warrantyExtEnd, null);
+});
+
 test('« rester connecté » gives a 15-day session, otherwise 12 hours', async () => {
   const exp = (t) => JSON.parse(Buffer.from(t.split('.')[0], 'base64url').toString()).exp - Date.now() / 1000;
   const long = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123', remember: true } })).data.token;

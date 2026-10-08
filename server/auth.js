@@ -65,7 +65,13 @@ function verifyToken(token, secret) {
 // Fixed-window limiter kept in memory; enough for a single instance.
 function createRateLimiter({ windowMs, max }) {
   const hits = new Map();
-  return function isLimited(key) {
+  // Already over the limit, without counting this call (to count only failed attempts).
+  isLimited.reached = (key) => {
+    const entry = hits.get(key);
+    return !!entry && entry.reset >= Date.now() && entry.count >= max;
+  };
+  return isLimited;
+  function isLimited(key) {
     const now = Date.now();
     const entry = hits.get(key);
     if (!entry || entry.reset < now) {
@@ -77,7 +83,7 @@ function createRateLimiter({ windowMs, max }) {
     }
     entry.count += 1;
     return entry.count > max;
-  };
+  }
 }
 
 // Reversible encryption (AES-256-GCM) of short secrets the dealership must be able to read again (the customer's access code).

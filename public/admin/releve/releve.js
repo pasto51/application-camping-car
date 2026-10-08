@@ -960,8 +960,8 @@ async function start() {
   } catch {
     return renderLogin();
   }
-  if (me.role !== 'admin') {
-    root.innerHTML = `<div class="login"><div class="card stack"><h1>Réservé à l’administrateur</h1>
+  if (me.role !== 'admin' && me.role !== 'editor') {
+    root.innerHTML = `<div class="login"><div class="card stack"><h1>Réservé à l’administrateur et à l’éditeur de contenu</h1>
       <p class="muted" style="margin:0">Les équipements et photos des modèles sont gérés par l’administrateur. La concession ajuste ensuite les équipements de chaque client lors de la mise en main.</p>
       <a class="btn block" href="/admin/">Retour au back-office</a></div></div>`;
     return;

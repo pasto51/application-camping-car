@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS admins (
   email TEXT NOT NULL UNIQUE,
   name TEXT,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales', 'sav', 'store')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'manager', 'sales', 'sav', 'store')),
   dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
   phone TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -248,11 +248,12 @@ function stripVin(value) {
 }
 
 // Roles: admin (everything), manager (« responsable de concession »: their dealership), sales (« commercial »: their own
-// customers), sav (after-sales / workshop) and store (« magasin »: parts and products). The first version had a single
+// customers), sav (after-sales / workshop), store (« magasin »: parts and products) and editor (« éditeur de contenu »:
+// diagnostics, equipment, app contents, vehicles and their photos, announcements; no customer data). The first version had a single
 // « dealer » role: those accounts become managers. The CHECK constraint changes, so the table is rebuilt once.
 function migrateRoles(db) {
   const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'admins'").get()?.sql || '';
-  if (sql.includes("'store'")) return;
+  if (sql.includes("'editor'")) return;
   const cols = db.prepare('PRAGMA table_info(admins)').all().map((c) => c.name);
   db.exec('PRAGMA foreign_keys = OFF');
   transaction(db, () => {
@@ -261,7 +262,7 @@ function migrateRoles(db) {
       email TEXT NOT NULL UNIQUE,
       name TEXT,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales', 'sav', 'store')),
+      role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'manager', 'sales', 'sav', 'store')),
       dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
       phone TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))

@@ -90,7 +90,14 @@ function register(router) {
 
   // Roles: admin (everything) ; manager, « responsable de concession » (their dealership: customers, team, reassignments) ;
   // sales, « commercial » (sees their dealership, manages only their own customers).
-  const ROLES = ['admin', 'manager', 'sales', 'sav', 'store'];
+  const ROLES = ['admin', 'editor', 'manager', 'sales', 'sav', 'store'];
+
+  // Content editor: the app's contents (diagnostics, equipment, lists, vehicles and photos, announcement), not the business data.
+  function contentOnly(ctx) {
+    const user = auth(ctx);
+    if (user.role !== 'admin' && user.role !== 'editor') throw new HttpError(403, 'Réservé à l’administrateur et à l’éditeur de contenu');
+    return user;
+  }
   const SERVICE_OF_ROLE = { sav: 'sav', store: 'magasin' };
 
   // Customer requests: the SAV and the store see those of their dealership and answer their own; a detached store is
@@ -146,10 +153,14 @@ function register(router) {
   // ---- Session ----
 
   router.post('/api/admin/login', ({ db, body, config, ip }) => {
-    if (loginLimiter(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
+    // Only wrong passwords count: a whole team logging in from the dealership's connection is not blocked.
+    if (loginLimiter.reached(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
     const email = String(body.email || '').trim().toLowerCase();
     const user = db.prepare('SELECT * FROM admins WHERE email = ?').get(email);
-    if (!user || !verifyPassword(body.password || '', user.password_hash)) throw new HttpError(401, 'Identifiants incorrects');
+    if (!user || !verifyPassword(body.password || '', user.password_hash)) {
+      loginLimiter(ip);
+      throw new HttpError(401, 'Identifiants incorrects');
+    }
     // « Rester connecté » : 15 days on this device; otherwise the session ends after 12 hours.
     const token = signToken({ sub: user.id, role: user.role }, config.secret, body.remember ? 60 * 60 * 24 * 15 : 60 * 60 * 12);
     return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id }) };
@@ -211,8 +222,9 @@ function register(router) {
   });
 
   router.put('/api/admin/settings', (ctx) => {
-    adminOnly(ctx);
+    const user = contentOnly(ctx);
     const { db, body } = ctx;
+    if (body.mail && user.role !== 'admin') throw new HttpError(403, 'Réservé aux administrateurs');
     if (body.announcement !== undefined) {
       setSetting(db, 'announcement', optStr(body.announcement, 500));
       bumpContentVersion(db);
@@ -252,7 +264,7 @@ function register(router) {
   });
 
   router.post('/api/admin/brands', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { db, body, uploads } = ctx;
     const name = reqStr(body.name, 'Nom de la marque', 80);
     if (db.prepare('SELECT id FROM brands WHERE lower(name) = lower(?)').get(name)) throw new HttpError(409, 'Cette marque existe déjà');
@@ -265,7 +277,7 @@ function register(router) {
   });
 
   router.put('/api/admin/brands/:id', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { db, body, uploads, params } = ctx;
     const brand = getOr404(db, 'brands', params.id, 'Marque');
     const name = body.name === undefined ? brand.name : reqStr(body.name, 'Nom de la marque', 80);
@@ -321,7 +333,7 @@ function register(router) {
   }
 
   router.post('/api/admin/vehicles', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { db, body, uploads } = ctx;
     const f = vehicleFields(db, body);
     if (!f.name) throw new HttpError(400, 'Nom du véhicule obligatoire');
@@ -334,7 +346,7 @@ function register(router) {
   });
 
   router.put('/api/admin/vehicles/:id', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { db, body, uploads, params } = ctx;
     const vehicle = getOr404(db, 'vehicles', params.id, 'Véhicule');
     const f = vehicleFields(db, body, vehicle);
@@ -399,7 +411,7 @@ function register(router) {
   });
 
   router.post('/api/admin/equipment', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const f = equipmentFields(ctx.db, ctx.body);
     if (!f.name) throw new HttpError(400, 'Nom obligatoire');
     const id = uniqueId(ctx.db, 'equipment', slugId(ctx.body.id) || slugId(f.name));
@@ -411,7 +423,7 @@ function register(router) {
   });
 
   router.put('/api/admin/equipment/:id', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const row = ctx.db.prepare('SELECT data FROM equipment WHERE id = ?').get(ctx.params.id);
     if (!row) throw new HttpError(404, 'Équipement introuvable');
     const data = { ...equipmentFields(ctx.db, ctx.body, JSON.parse(row.data)), id: ctx.params.id };
@@ -421,7 +433,7 @@ function register(router) {
   });
 
   router.delete('/api/admin/equipment/:id', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const used = ctx.db.prepare("SELECT COUNT(*) AS n FROM diagnostics WHERE json_extract(data, '$.eq') = ?").get(ctx.params.id).n;
     if (used) throw new HttpError(409, `Impossible : ${used} diagnostic(s) sont rattachés à cet équipement`);
     if (!ctx.db.prepare('DELETE FROM equipment WHERE id = ?').run(ctx.params.id).changes) throw new HttpError(404, 'Équipement introuvable');
@@ -494,7 +506,7 @@ function register(router) {
   });
 
   router.post('/api/admin/diagnostics', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const body = { tree: { t: 'Première vérification : est-ce réglé ?', o: ['Oui, c’est réglé', 'Non'], n: [{ cause: '', geste: '', prod: '' }, { cause: 'Rien n’a réglé le problème.', geste: 'Passez à l’atelier.', prod: 'Aucun produit : passez à l’atelier', rdv: 'atelier' }] }, ...ctx.body };
     const data = diagnosticFields(ctx.db, body);
     data.id = uniqueId(ctx.db, 'diagnostics', slugId(ctx.body.id) || 'd_' + slugId(data.label).slice(0, 30));
@@ -505,7 +517,7 @@ function register(router) {
   });
 
   router.put('/api/admin/diagnostics/:id', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const row = ctx.db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(ctx.params.id);
     if (!row) throw new HttpError(404, 'Diagnostic introuvable');
     const data = { ...diagnosticFields(ctx.db, ctx.body, JSON.parse(row.data)), id: ctx.params.id };
@@ -515,7 +527,7 @@ function register(router) {
   });
 
   router.delete('/api/admin/diagnostics/:id', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     if (!ctx.db.prepare('DELETE FROM diagnostics WHERE id = ?').run(ctx.params.id).changes) throw new HttpError(404, 'Diagnostic introuvable');
     bumpContentVersion(ctx.db);
     return { ok: true };
@@ -529,7 +541,7 @@ function register(router) {
   });
 
   router.put('/api/admin/catalog/:key', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { key } = ctx.params;
     if (!CATALOG_KEYS.includes(key)) throw new HttpError(404, 'Rubrique inconnue');
     const value = ctx.body.value;
@@ -600,7 +612,7 @@ function register(router) {
   });
 
   router.put('/api/admin/vehicles/:id/profile', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { db, body, uploads } = ctx;
     const vehicle = getOr404(db, 'vehicles', ctx.params.id, 'Véhicule');
     const p = readProfile(vehicle);
@@ -665,7 +677,7 @@ function register(router) {
 
   // Photo of one equipment on this vehicle ("C'est quoi, ça ?"); null removes it.
   router.put('/api/admin/vehicles/:id/photos/:equipmentId', (ctx) => {
-    adminOnly(ctx);
+    contentOnly(ctx);
     const { db, uploads, params, body } = ctx;
     const vehicle = getOr404(db, 'vehicles', params.id, 'Véhicule');
     if (!db.prepare('SELECT 1 FROM equipment WHERE id = ?').get(params.equipmentId)) throw new HttpError(404, 'Équipement introuvable');
@@ -1094,10 +1106,11 @@ function register(router) {
     let role = pick(optStr(body.role, 10), current.role ?? 'sales');
     if (role === 'dealer') role = 'manager';
     if (!ROLES.includes(role)) throw new HttpError(400, 'Rôle invalide');
-    if (me.role !== 'admin' && role === 'admin') throw new HttpError(403, 'Seul un administrateur peut créer un administrateur');
-    // A manager's team always belongs to their dealership.
-    const dealershipId = role === 'admin' ? null : me.role === 'admin' ? pick(optInt(body.dealershipId), current.dealership_id ?? null) : me.dealership_id;
-    if (role !== 'admin' && (!dealershipId || !db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId))) {
+    const global = role === 'admin' || role === 'editor';
+    if (me.role !== 'admin' && global) throw new HttpError(403, 'Seul un administrateur peut créer ce compte');
+    // A manager's team always belongs to their dealership; the administrator and content editors belong to none.
+    const dealershipId = global ? null : me.role === 'admin' ? pick(optInt(body.dealershipId), current.dealership_id ?? null) : me.dealership_id;
+    if (!global && (!dealershipId || !db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId))) {
       throw new HttpError(400, 'Un compte de concession doit être rattaché à une concession');
     }
     return { role, dealershipId, name: pick(optStr(body.name, 100), current.name ?? null), phone: body.phone === undefined ? current.phone ?? null : optStr(body.phone, 40) };
@@ -1105,7 +1118,7 @@ function register(router) {
 
   function teamMember(ctx, me, id) {
     const user = getOr404(ctx.db, 'admins', id, 'Utilisateur');
-    if (me.role !== 'admin' && (user.role === 'admin' || user.dealership_id !== me.dealership_id)) throw new HttpError(404, 'Utilisateur introuvable');
+    if (me.role !== 'admin' && (user.role === 'admin' || user.role === 'editor' || user.dealership_id !== me.dealership_id)) throw new HttpError(404, 'Utilisateur introuvable');
     return user;
   }
 

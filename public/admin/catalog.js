@@ -20,7 +20,7 @@ const LEAF_FIELDS = [
 ];
 
 export function registerCatalogViews(VIEWS, h) {
-  const { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin } = h;
+  const { api, openForm, pageHeader, bind, confirmDelete, thumb, canEditContent } = h;
   const state = { diagFilter: '', diagCat: '', eqFilter: '', eqCat: '' };
 
   // ---------- Equipment ----------
@@ -40,7 +40,7 @@ export function registerCatalogViews(VIEWS, h) {
     const catName = Object.fromEntries(cats);
     const q = state.eqFilter.toLowerCase();
     const shown = list.filter((x) => (!state.eqCat || x.cat === state.eqCat) && (!q || [x.name, x.text, x.kw, x.id].some((t) => (t || '').toLowerCase().includes(q))));
-    el.innerHTML = `${pageHeader(`Équipements (${list.length})`, isAdmin() ? '<button class="btn primary" data-act="add">＋ Nouvel équipement</button>' : '')}
+    el.innerHTML = `${pageHeader(`Équipements (${list.length})`, canEditContent() ? '<button class="btn primary" data-act="add">＋ Nouvel équipement</button>' : '')}
       <p class="muted">Le catalogue commun à tous les véhicules. Ce qui est pré-coché, et les photos, se règlent pour chaque véhicule (Véhicules → Profil appli et photos).</p>
       <form class="search-bar" id="eq-search"><input name="q" type="search" placeholder="Chercher : Truma, frigo, marchepied…" value="${esc(state.eqFilter)}"><button class="btn">Filtrer</button></form>
       <div class="filters"><button class="chip ${!state.eqCat ? 'active' : ''}" data-act="cat" data-value="">Toutes</button>${cats
@@ -55,7 +55,7 @@ export function registerCatalogViews(VIEWS, h) {
           <td>${esc(catName[x.cat] || x.cat)}</td>
           <td><small>${esc(typesLabel(x.types))}</small></td>
           <td>${esc(x.spot || '')}</td>
-          <td class="row-actions">${isAdmin() ? `<button class="btn small" data-act="edit" data-key="${esc(x.id)}">Modifier</button><button class="btn small danger" data-act="del" data-key="${esc(x.id)}">Supprimer</button>` : ''}</td>
+          <td class="row-actions">${canEditContent() ? `<button class="btn small" data-act="edit" data-key="${esc(x.id)}">Modifier</button><button class="btn small danger" data-act="del" data-key="${esc(x.id)}">Supprimer</button>` : ''}</td>
         </tr>`
           )
           .join('')}</tbody></table>${shown.length ? '' : '<p class="muted">Aucun équipement.</p>'}</div>`;
@@ -122,7 +122,7 @@ export function registerCatalogViews(VIEWS, h) {
     const q = state.diagFilter.toLowerCase();
     const shown = list.filter((d) => (!state.diagCat || d.cat === state.diagCat) && (!q || [d.label, d.id, d.eq].some((t) => (t || '').toLowerCase().includes(q))));
     const total = list.reduce((a, d) => a + d.leaves, 0);
-    el.innerHTML = `${pageHeader(`Diagnostics (${list.length} entrées, ${total} fins de parcours)`, isAdmin() ? '<button class="btn primary" data-act="add">＋ Nouveau diagnostic</button>' : '')}
+    el.innerHTML = `${pageHeader(`Diagnostics (${list.length} entrées, ${total} fins de parcours)`, canEditContent() ? '<button class="btn primary" data-act="add">＋ Nouveau diagnostic</button>' : '')}
       <p class="muted">Chaque diagnostic est un organigramme : le client vérifie une chose à la fois, du plus simple au plus rare. Chaque fin de parcours nomme <strong>une seule cause</strong>, ou envoie à l’atelier.</p>
       <form class="search-bar" id="diag-search"><input name="q" type="search" placeholder="Chercher : frigo, Truma, toilettes…" value="${esc(state.diagFilter)}"><button class="btn">Filtrer</button></form>
       <div class="filters"><button class="chip ${!state.diagCat ? 'active' : ''}" data-act="cat" data-value="">Toutes</button>${DIAG_CATS.map(
@@ -179,7 +179,7 @@ export function registerCatalogViews(VIEWS, h) {
       api('GET', '/api/admin/equipment'),
       api('GET', '/api/admin/catalog/motifs').then((r) => r.value || []),
     ]);
-    const canEdit = isAdmin();
+    const canEdit = canEditContent();
     let dirty = false;
     const rdvOptions = [['', '— Pas de rendez-vous —'], ...motifs.filter((m) => m.id !== 'souci').map((m) => [m.id, m.t]), ['atelier', 'Atelier (souci)']];
 
@@ -375,29 +375,29 @@ export function registerCatalogViews(VIEWS, h) {
 
   VIEWS.content = async (el) => {
     const [lists, reminders, motifs, steps] = await Promise.all(['lists', 'reminders', 'motifs', 'steps'].map((k) => api('GET', `/api/admin/catalog/${k}`).then((r) => r.value)));
-    const ro = isAdmin() ? '' : 'readonly';
+    const ro = canEditContent() ? '' : 'readonly';
     const listCard = (key, title) => `<form class="card form" data-list="${key}">
         <h2>${esc(title)}</h2>
         <label>Une étape par ligne<textarea name="items" rows="${(lists[key]?.items.length || 4) + 2}" ${ro}>${esc((lists[key]?.items || []).join('\n'))}</textarea></label>
         <label>Note affichée sous la liste<input name="note" value="${esc(lists[key]?.note || '')}" ${ro}></label>
-        ${isAdmin() ? '<button class="btn primary">Enregistrer</button>' : ''}
+        ${canEditContent() ? '<button class="btn primary">Enregistrer</button>' : ''}
       </form>`;
     el.innerHTML = `${pageHeader('Contenus de l’appli')}
       <p class="muted">Ces textes apparaissent dans l’écran « Gestes du quotidien », les rappels, les rendez-vous atelier et la mission « Préparer le départ ».</p>
       <div class="detail-grid">${listCard('arrivee', 'Liste « Arrivée »')}${listCard('depart', 'Liste « Départ »')}</div>
       <div class="card"><h2>Rappels d’entretien (${reminders.length})</h2>
         <div class="table-wrap"><table><thead><tr><th>Rappel</th><th>Quand</th><th>Motif de rendez-vous</th><th></th></tr></thead><tbody>
-        ${reminders.map((r, i) => `<tr><td>${esc(r.t)}</td><td>${esc(r.w)}</td><td>${esc(r.m || '')}</td><td class="row-actions">${isAdmin() ? `<button class="btn small" data-act="rem" data-id="${i}">Modifier</button>` : ''}</td></tr>`).join('')}
+        ${reminders.map((r, i) => `<tr><td>${esc(r.t)}</td><td>${esc(r.w)}</td><td>${esc(r.m || '')}</td><td class="row-actions">${canEditContent() ? `<button class="btn small" data-act="rem" data-id="${i}">Modifier</button>` : ''}</td></tr>`).join('')}
         </tbody></table></div></div>
       <div class="card"><h2>Motifs de rendez-vous atelier (${motifs.length})</h2>
         <div class="table-wrap"><table><thead><tr><th>Motif</th><th>Explication</th><th></th></tr></thead><tbody>
-        ${motifs.map((m, i) => `<tr><td><strong>${esc(m.t)}</strong><br><small class="muted">${esc(m.id)}</small></td><td>${esc(m.why || '')}</td><td class="row-actions">${isAdmin() ? `<button class="btn small" data-act="motif" data-id="${i}">Modifier</button>` : ''}</td></tr>`).join('')}
+        ${motifs.map((m, i) => `<tr><td><strong>${esc(m.t)}</strong><br><small class="muted">${esc(m.id)}</small></td><td>${esc(m.why || '')}</td><td class="row-actions">${canEditContent() ? `<button class="btn small" data-act="motif" data-id="${i}">Modifier</button>` : ''}</td></tr>`).join('')}
         </tbody></table></div></div>
       <div class="card"><h2>Mission « Préparer le départ » (${steps.length} étapes, dans l’ordre)</h2>
         <div class="table-wrap"><table><thead><tr><th>#</th><th>Geste</th><th>Pourquoi</th><th></th></tr></thead><tbody>
-        ${steps.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.t)}</td><td>${esc(s.why)}</td><td class="row-actions">${isAdmin() ? `<button class="btn small" data-act="step" data-id="${i}">Modifier</button>` : ''}</td></tr>`).join('')}
+        ${steps.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.t)}</td><td>${esc(s.why)}</td><td class="row-actions">${canEditContent() ? `<button class="btn small" data-act="step" data-id="${i}">Modifier</button>` : ''}</td></tr>`).join('')}
         </tbody></table></div></div>
-      ${isAdmin() ? '<div class="card"><h2>Réglages avancés</h2><p class="muted">Variantes (types de frigo, chauffage…), équipements implicites, poids des accessoires, dépassements : à modifier avec précaution.</p><div class="actions"><button class="btn" data-act="config">Modifier les réglages (JSON)</button></div></div>' : ''}`;
+      ${canEditContent() ? '<div class="card"><h2>Réglages avancés</h2><p class="muted">Variantes (types de frigo, chauffage…), équipements implicites, poids des accessoires, dépassements : à modifier avec précaution.</p><div class="actions"><button class="btn" data-act="config">Modifier les réglages (JSON)</button></div></div>' : ''}`;
 
     el.querySelectorAll('[data-list]').forEach((f) => {
       f.onsubmit = async (e) => {
