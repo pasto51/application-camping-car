@@ -200,11 +200,43 @@ window.startCompagnon = function(DATA){
       var v = dimVal(id); if(v>0 && (!best || v>best.v)) best = {v:v,n:d.n};
     });
     var tot = base + (best ? best.v/100 : 0);
-    return '<div class="dim"><span class="k">'+icon+k+'</span><span class="v">'+fm(tot)+'</span><span class="d">'+(best ? 'Base '+fm(base)+' + <b>'+best.v+' cm</b> ('+esc(best.n)+', la plus grande mesure)' : 'Base '+fm(base)+', sans équipement ajouté')+'</span></div>';
+    return '<button type="button" class="dim'+(dimOpen===key?' on':'')+'" data-dimk="'+key+'" aria-expanded="'+(dimOpen===key)+'"><span class="k">'+icon+k+'</span><span class="v">'+fm(tot)+'</span><span class="d">'+(best ? 'Base '+fm(base)+' + <b>'+best.v+' cm</b> ('+esc(best.n)+', la plus grande mesure)' : 'Base '+fm(base)+', sans équipement ajouté')+'</span><span class="dimgo">Voir et ajuster ›</span></button>';
+  }
+  var dimOpen = null;
+  // What adds to the length (or height): each piece of equipment checked, with its size, adjustable to the real one.
+  function renderDimPanel(){
+    var p = $("#dimpanel"); if(!p) return;
+    p.hidden = !dimOpen; if(!dimOpen) return;
+    var key = dimOpen, base = key==="l" ? MODEL.l : MODEL.h;
+    var ids = Object.keys(DIMS).filter(function(id){return DIMS[id].t===key && own[id]});
+    var h = '<p class="eyebrow">'+(key==="l"?"Ce qui dépasse à l'arrière":"Ce qui dépasse du toit")+'</p>' +
+      '<div class="ln"><span>'+(key==="l"?"Longueur":"Hauteur")+' du véhicule, sans équipement</span><b>'+fm(base)+'</b></div>';
+    if(ids.length){
+      h += ids.map(function(id){
+        return '<div class="fld dimfld"><label for="dp_'+id+'">'+esc((eqById(id)||{name:DIMS[id].n}).name)+'</label><span class="dimin"><input id="dp_'+id+'" type="number" inputmode="numeric" min="0" max="300" step="1" data-dp="'+id+'" value="'+dimVal(id)+'"> cm</span></div>';
+      }).join("") + '<p class="sub">Mesurez sur votre véhicule et corrigez si besoin. Seul l\'équipement qui dépasse le plus compte : '+(key==="l"?"un porte-vélos et une boule d'attelage ne s'additionnent pas.":"une antenne et un coffre de toit ne s'additionnent pas.")+'</p>';
+    } else h += '<p class="sub">Aucun équipement coché ne dépasse. Un porte-vélos, une boule d\'attelage, une antenne ou un coffre de toit se cochent dans « Mes équipements ».</p>';
+    h += '<button class="lnk" type="button" data-go="equip">Mes équipements</button>';
+    p.innerHTML = h;
   }
   function renderDims(){
     if(typeof renderHomeLoad==="function") renderHomeLoad();
     var el = $("#dims"); if(!el) return;
+    if(!$("#dimpanel")){
+      var pn = document.createElement("div"); pn.id = "dimpanel"; pn.className = "card dimpanel"; pn.hidden = true;
+      el.parentNode.insertBefore(pn, el.nextSibling);
+      el.addEventListener("click",function(e){
+        var b = e.target.closest("[data-dimk]"); if(!b) return;
+        dimOpen = dimOpen===b.dataset.dimk ? null : b.dataset.dimk; renderDims(); renderDimPanel();
+      });
+      pn.addEventListener("input",function(e){
+        var id = e.target.dataset.dp; if(!id) return;
+        var n = parseFloat(e.target.value);
+        if(isNaN(n) || n<0) delete dimv[id]; else dimv[id] = Math.min(300,Math.round(n));
+        lsSet("cdb_dim",JSON.stringify(dimv)); renderDims();
+        var di = $("#di_"+id); if(di) di.value = dimVal(id);
+      });
+    }
     var ar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
     el.innerHTML = dimCell("Longueur", ar+'<path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>', MODEL.l, "l") +
                    dimCell("Hauteur", ar+'<path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/></svg>', MODEL.h, "h");
@@ -221,7 +253,9 @@ window.startCompagnon = function(DATA){
   function waff(){return Array.isArray(wt.aff) ? wt.aff : []}
   var AFF_IDEAS = [["Vélo",15],["Vélo électrique",25],["Valises et vêtements",40],["Nourriture et boissons",30],["Vaisselle et ustensiles",15],["Table et chaises de camping",12],["Barbecue ou plancha",10],["Câbles, cales et outils",15],["Jeux et affaires de plage",10],["Chien",20]];
   function loadCalc(){
-    var opts = Object.keys(WT).filter(function(id){return own[id]}).map(function(id){return {id:id,n:eqById(id).name,kg:wopt(id)}});
+    var FACT = {}; (DATA.vehicle.equipment||[]).forEach(function(i){FACT[i] = true});
+    var inc = Object.keys(WT).filter(function(id){return own[id] && FACT[id] && eqById(id)}).map(function(id){return eqById(id).name});
+    var opts = Object.keys(WT).filter(function(id){return own[id] && !FACT[id]}).map(function(id){return {id:id,n:eqById(id).name,kg:wopt(id)}});
     var optSum = opts.reduce(function(a,o){return a+o.kg},0);
     var lines = [
       {n:"Masse en ordre de marche (carte grise)",kg:wv("mom")},
@@ -234,7 +268,7 @@ window.startCompagnon = function(DATA){
     ];
     var total = lines.reduce(function(a,l){return a+l.kg},0), ptac = wv("ptac"), rest = ptac - total;
     var st = rest < 0 ? "bad" : (rest < 100 ? "warn" : "ok");
-    return {opts:opts,lines:lines,total:total,ptac:ptac,rest:rest,st:st,pct:Math.max(0,Math.min(100,ptac?total/ptac*100:0))};
+    return {inc:inc,opts:opts,lines:lines,total:total,ptac:ptac,rest:rest,st:st,pct:Math.max(0,Math.min(100,ptac?total/ptac*100:0))};
   }
   function kg(n){return Math.round(n).toLocaleString("fr-FR")+" kg"}
   function stText(c){
@@ -270,7 +304,8 @@ window.startCompagnon = function(DATA){
       '<h3 class="sech">Équipements ajoutés</h3>';
     if(c.opts.length){
       h += '<div class="card">'+c.opts.map(function(o){return fld("wo_"+o.id,esc(o.n),o.kg,"kg","")}).join("")+'<small class="picnote">Poids d\'exemple, à remplacer par ceux de la facture ou de la fiche technique. Tout ce qui est ajouté après la sortie d\'usine réduit la charge utile. Les équipements de série sont déjà dans la masse en ordre de marche.</small></div>';
-    } else h += '<div class="empty"><p>Aucun équipement lourd coché. Les options de la liste « Mes équipements » ajoutent ici leur poids.</p><button class="btn" data-go="equip">Mes équipements</button></div>';
+    } else h += '<div class="empty"><p>Aucun équipement ajouté depuis la livraison. Ce que vous ajoutez dans « Mes équipements » (porte-vélos, panneau solaire…) compte ici son poids.</p><button class="btn" data-go="equip">Mes équipements</button></div>';
+    if(c.inc.length) h += '<p class="sub">Déjà compris dans la masse en ordre de marche (présents sur le véhicule à la livraison) : '+esc(c.inc.join(", "))+'.</p>';
     h += '<h3 class="sech">Détail du calcul</h3><div class="card" id="wlines"></div><p class="sub">Estimation à partir de ce que vous avez noté. Dépasser le PTAC est interdit.</p><details class="cat"><summary><span>À savoir sur le poids</span></summary><div class="card"><small class="picnote">Les essieux comptent aussi : le total peut être bon alors qu’un essieu dépasse sa limite, par exemple avec une charge lourde à l’arrière (vélos, soute). Répartissez les charges lourdes.<br><br>Permis B : jusqu’à 3,5 t de PTAC. Au-delà, il faut un permis poids lourd (C1 jusqu’à 7,5 t). Surcharger reste interdit avec n’importe quel permis.<br><br>Remorque : le PTRA figure en F.3 de la carte grise (case vide : pas d’attelage autorisé). Au-delà de 3,5 t de PTRA, 80 km/h sur route et 90 km/h sur autoroute.</small></div></details><p class="wtiny">Pour un poids exact : un pont-bascule, par exemple dans une coopérative agricole.</p>';
     $("#weightbody").innerHTML = h;
     renderAff();
@@ -390,7 +425,7 @@ window.startCompagnon = function(DATA){
     var id = e.target.dataset.di; if(!id) return;
     var n = parseFloat(e.target.value);
     if(isNaN(n) || n<0) delete dimv[id]; else dimv[id] = Math.min(300,Math.round(n));
-    lsSet("cdb_dim",JSON.stringify(dimv)); renderDims();
+    lsSet("cdb_dim",JSON.stringify(dimv)); renderDims(); renderDimPanel();
   });
   $("#eqlist").addEventListener("click",function(e){
     var b = e.target.closest("[data-vv]"); if(!b) return;

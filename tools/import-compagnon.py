@@ -270,6 +270,7 @@ def main():
         ".lc-more{font-size:15px;font-weight:700;color:var(--accent)}\n"
         ".lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#waff .btn{flex:none;width:100%}.wtiny{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0}\n"
         ".affrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.affrow:first-of-type{border-top:0}.affchk{flex:1;display:flex;align-items:center;gap:10px;font-size:16px;min-height:44px}.affchk input{width:24px;height:24px;accent-color:var(--accent);flex:none}.affrow .dimin input{width:70px}\n"
+        "button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.dim.on{outline:3px solid var(--accent)}.dimgo{font-size:13px;font-weight:700;color:var(--accent);margin-top:4px}.dimpanel{margin-top:10px}.dimfld .dimin input{width:80px}\n"
         ".affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}")
     head = replace_once(head, ".dlogo.sm{", ".dlogo.img{background:var(--panel);border:1px solid var(--line);overflow:hidden}.dlogo img{width:100%;height:100%;object-fit:contain}\n.dlogo.sm{")
 
@@ -374,6 +375,61 @@ def main():
     renderAff();
     renderWeightSummary();''')
 
+    # ---- Length and height: touch the figure to see which equipment adds to it, and adjust each size ----
+    s = replace_once(s, '''    return '<div class="dim"><span class="k">'+icon+k+'</span>''', '''    return '<button type="button" class="dim'+(dimOpen===key?' on':'')+'" data-dimk="'+key+'" aria-expanded="'+(dimOpen===key)+'"><span class="k">'+icon+k+'</span>''')
+    s = replace_once(s, ''''Base '+fm(base)+', sans équipement ajouté')+'</span></div>';
+  }''', r''''Base '+fm(base)+', sans équipement ajouté')+'</span><span class="dimgo">Voir et ajuster ›</span></button>';
+  }
+  var dimOpen = null;
+  // What adds to the length (or height): each piece of equipment checked, with its size, adjustable to the real one.
+  function renderDimPanel(){
+    var p = $("#dimpanel"); if(!p) return;
+    p.hidden = !dimOpen; if(!dimOpen) return;
+    var key = dimOpen, base = key==="l" ? MODEL.l : MODEL.h;
+    var ids = Object.keys(DIMS).filter(function(id){return DIMS[id].t===key && own[id]});
+    var h = '<p class="eyebrow">'+(key==="l"?"Ce qui dépasse à l'arrière":"Ce qui dépasse du toit")+'</p>' +
+      '<div class="ln"><span>'+(key==="l"?"Longueur":"Hauteur")+' du véhicule, sans équipement</span><b>'+fm(base)+'</b></div>';
+    if(ids.length){
+      h += ids.map(function(id){
+        return '<div class="fld dimfld"><label for="dp_'+id+'">'+esc((eqById(id)||{name:DIMS[id].n}).name)+'</label><span class="dimin"><input id="dp_'+id+'" type="number" inputmode="numeric" min="0" max="300" step="1" data-dp="'+id+'" value="'+dimVal(id)+'"> cm</span></div>';
+      }).join("") + '<p class="sub">Mesurez sur votre véhicule et corrigez si besoin. Seul l\'équipement qui dépasse le plus compte : '+(key==="l"?"un porte-vélos et une boule d'attelage ne s'additionnent pas.":"une antenne et un coffre de toit ne s'additionnent pas.")+'</p>';
+    } else h += '<p class="sub">Aucun équipement coché ne dépasse. Un porte-vélos, une boule d\'attelage, une antenne ou un coffre de toit se cochent dans « Mes équipements ».</p>';
+    h += '<button class="lnk" type="button" data-go="equip">Mes équipements</button>';
+    p.innerHTML = h;
+  }''')
+    s = replace_once(s, '''  function renderDims(){
+    if(typeof renderHomeLoad==="function") renderHomeLoad();
+    var el = $("#dims"); if(!el) return;''', '''  function renderDims(){
+    if(typeof renderHomeLoad==="function") renderHomeLoad();
+    var el = $("#dims"); if(!el) return;
+    if(!$("#dimpanel")){
+      var pn = document.createElement("div"); pn.id = "dimpanel"; pn.className = "card dimpanel"; pn.hidden = true;
+      el.parentNode.insertBefore(pn, el.nextSibling);
+      el.addEventListener("click",function(e){
+        var b = e.target.closest("[data-dimk]"); if(!b) return;
+        dimOpen = dimOpen===b.dataset.dimk ? null : b.dataset.dimk; renderDims(); renderDimPanel();
+      });
+      pn.addEventListener("input",function(e){
+        var id = e.target.dataset.dp; if(!id) return;
+        var n = parseFloat(e.target.value);
+        if(isNaN(n) || n<0) delete dimv[id]; else dimv[id] = Math.min(300,Math.round(n));
+        lsSet("cdb_dim",JSON.stringify(dimv)); renderDims();
+        var di = $("#di_"+id); if(di) di.value = dimVal(id);
+      });
+    }''')
+    # Changing a size in « Mes équipements » or checking a piece of equipment keeps the panel up to date.
+    s = replace_once(s, '''    lsSet("cdb_dim",JSON.stringify(dimv)); renderDims();
+  });''', '''    lsSet("cdb_dim",JSON.stringify(dimv)); renderDims(); renderDimPanel();
+  });''')
+
+    # ---- Weight: equipment fitted on the vehicle at the start (checked in the back-office) is already in the mass ----
+    # Only what is added afterwards (at the handover or by the customer) adds its weight.
+    s = replace_once(s, 'var opts = Object.keys(WT).filter(function(id){return own[id]}).map(', 'var FACT = {}; (DATA.vehicle.equipment||[]).forEach(function(i){FACT[i] = true});\n    var inc = Object.keys(WT).filter(function(id){return own[id] && FACT[id] && eqById(id)}).map(function(id){return eqById(id).name});\n    var opts = Object.keys(WT).filter(function(id){return own[id] && !FACT[id]}).map(')
+    s = replace_once(s, 'return {opts:opts,lines:lines,', 'return {inc:inc,opts:opts,lines:lines,')
+    s = replace_once(s, '<div class="empty"><p>Aucun équipement lourd coché. Les options de la liste « Mes équipements » ajoutent ici leur poids.</p>',
+        '<div class="empty"><p>Aucun équipement ajouté depuis la livraison. Ce que vous ajoutez dans « Mes équipements » (porte-vélos, panneau solaire…) compte ici son poids.</p>')
+    s = replace_once(s, '''    h += '<h3 class="sech">Détail du calcul</h3>''', '''    if(c.inc.length) h += '<p class="sub">Déjà compris dans la masse en ordre de marche (présents sur le véhicule à la livraison) : '+esc(c.inc.join(", "))+'.</p>';
+    h += '<h3 class="sech">Détail du calcul</h3>''')
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head
