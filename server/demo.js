@@ -8,16 +8,19 @@
 //   node server/demo.js vous@gmail.com     → idem, et les e-mails des services et des clients arrivent chez vous
 //                                            (vous+sav-nantes@gmail.com, vous+client-paul@gmail.com…)
 //   node server/demo.js --nom "Camping-Cars Dupont"  → la 1re concession porte le nom du prospect (présentation commerciale)
+//   node server/demo.js --stats            → refait seulement les statistiques de test (12 mois de recherches, problèmes,
+//                                            conseils…) des concessions démo, sans toucher aux clients, codes et liens
 //   node server/demo.js --supprimer        → efface toute la démo
 //   SITE_URL=https://mon-site.fr node server/demo.js   → adresse du site dans les liens (par défaut appvdl.alwaysdata.net)
 
 const { createApp } = require('./app');
-const { signToken } = require('./auth');
+const { signToken, hashPassword } = require('./auth');
 
 const PASSWORD = 'demo1234';
 const SITE = new URL(process.env.SITE_URL || 'https://appvdl.alwaysdata.net');
 const args = process.argv.slice(2);
 const remove = args.includes('--supprimer');
+const statsOnly = args.includes('--stats');
 const inbox = args.find((a) => a.includes('@') && !a.startsWith('--'));
 // Prospect's name for a sales presentation: shown on the first dealership (the one with SAV and store on site).
 const nameAt = args.indexOf('--nom');
@@ -134,6 +137,22 @@ function seedUsage(db, dealershipIds) {
 async function main() {
   const app = createApp({ notify: silent, log: () => {} });
   const { db, config } = app;
+
+  if (statsOnly) {
+    const ids = db.prepare("SELECT id FROM dealerships WHERE code IN ('DEMONANT', 'DEMORENN', 'DEMOVANN') ORDER BY id").all().map((d) => d.id);
+    if (!ids.length) throw new Error('Pas de démo sur ce site : lancez d’abord node server/demo.js');
+    for (const id of ids) db.prepare('DELETE FROM usage_events WHERE dealership_id = ?').run(id);
+    const n = seedUsage(db, ids);
+    // A demo made before the statistics has no analyst account yet.
+    if (!db.prepare("SELECT 1 FROM admins WHERE email = 'analyste@demo.test'").get()) {
+      db.prepare("INSERT INTO admins (email, name, password_hash, role) VALUES ('analyste@demo.test', 'Analyste marketing', ?, 'analytics')").run(hashPassword(PASSWORD));
+      console.log(`Compte créé : analyste@demo.test (mot de passe ${PASSWORD}).`);
+    }
+    console.log(`Statistiques de test ajoutées : ${n} actions sur 12 mois pour les ${ids.length} concessions démo (recherches, problèmes, conseils, demandes au magasin, équipements).`);
+    console.log('À voir dans le back-office : Statistiques (compte analyste@demo.test, ou administrateur).');
+    db.close();
+    return;
+  }
 
   if (remove) {
     const r = removeDemo(db);

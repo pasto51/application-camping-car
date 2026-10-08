@@ -75,6 +75,7 @@ Sur le serveur, dans le dossier de l'application :
 
 ```bash
 node server/demo.js vous@gmail.com   # crée 3 concessions DÉMO, leurs équipes, 9 clients et leurs demandes, puis affiche les accès
+node server/demo.js --stats          # refait seulement les statistiques de test (12 mois), sans toucher aux clients ni aux codes
 node server/demo.js --supprimer      # efface toute la démo (la concession DEMO2026 et les vraies données ne sont pas touchées)
 ```
 

@@ -15,6 +15,7 @@ node server/demo.js --nom "Nom de la concession du prospect" votre@gmail.com
 - `--nom` : la première concession porte le nom du prospect (« DÉMO – Camping-Cars Dupont »). Facultatif.
 - L'adresse e-mail : les e-mails de la démo arrivent chez vous (`votre+sav-nantes@gmail.com`…). Facultatif.
 - La commande affiche tous les accès : **gardez-les** (copier-coller dans une note).
+- `node server/demo.js --stats` refait seulement les statistiques de test (12 mois), sans changer les clients ni leurs codes.
 - Relancer la commande recrée une démo propre (les essais du rendez-vous précédent disparaissent).
 
 Préparez :
