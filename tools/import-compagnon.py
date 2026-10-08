@@ -247,6 +247,18 @@ def main():
     # Dealership logo from the back-office.
     head = replace_once(head, ".dlogo.sm{", ".dlogo.img{background:var(--panel);border:1px solid var(--line);overflow:hidden}.dlogo img{width:100%;height:100%;object-fit:contain}\n.dlogo.sm{")
 
+    # Workshop screen = the single place to talk with the dealership: its card, the customer's requests
+    # (conversations, rendered by cloud.js in #cloudreq), then a new request.
+    s = replace_once(s, """b.innerHTML = dealerCard()+'<div class="ok"><b>Demande envoyée.</b> '+esc(DEALER.name)+' vous rappelle pour fixer le rendez-vous, '+esc(rdv.period)+'. Vous retrouverez sa réponse dans l\\'application.</div><button class="btn" id="rnew" style="width:100%">Une autre demande</button>';""",
+        """b.innerHTML = dealerCard()+'<div class="ok"><b>Demande envoyée.</b> '+esc(DEALER.name)+' vous répond ici, dans « Mes demandes ». Délai souhaité : '+esc(rdv.period)+'.</div><div id="cloudreq" class="cloud-block"></div><button class="btn alt" id="rnew" style="width:100%">Faire une autre demande</button>';
+      if(window.CDB_CLOUD && window.CDB_CLOUD.rdvRendered) window.CDB_CLOUD.rdvRendered();""")
+    s = replace_once(s, """var h = dealerCard() + '<p class="eyebrow">Pourquoi prendre rendez-vous ?</p><div class="opts">' +""",
+        """var h = dealerCard() + '<div id="cloudreq" class="cloud-block"></div><p class="eyebrow">Nouvelle demande</p><div class="opts">' +""")
+    s = replace_once(s, """    b.innerHTML = h;
+    if(rdv.m) $("#rmsg").value = rdv.msg;""", """    b.innerHTML = h;
+    if(rdv.m) $("#rmsg").value = rdv.msg;
+    if(window.CDB_CLOUD && window.CDB_CLOUD.rdvRendered) window.CDB_CLOUD.rdvRendered();""")
+
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head

@@ -611,10 +611,11 @@ window.startCompagnon = function(DATA){
   function renderRdv(){
     var b = $("#rdvbody");
     if(rdv.sent){
-      b.innerHTML = dealerCard()+'<div class="ok"><b>Demande envoyée.</b> '+esc(DEALER.name)+' vous rappelle pour fixer le rendez-vous, '+esc(rdv.period)+'. Vous retrouverez sa réponse dans l\'application.</div><button class="btn" id="rnew" style="width:100%">Une autre demande</button>';
+      b.innerHTML = dealerCard()+'<div class="ok"><b>Demande envoyée.</b> '+esc(DEALER.name)+' vous répond ici, dans « Mes demandes ». Délai souhaité : '+esc(rdv.period)+'.</div><div id="cloudreq" class="cloud-block"></div><button class="btn alt" id="rnew" style="width:100%">Faire une autre demande</button>';
+      if(window.CDB_CLOUD && window.CDB_CLOUD.rdvRendered) window.CDB_CLOUD.rdvRendered();
       return;
     }
-    var h = dealerCard() + '<p class="eyebrow">Pourquoi prendre rendez-vous ?</p><div class="opts">' +
+    var h = dealerCard() + '<div id="cloudreq" class="cloud-block"></div><p class="eyebrow">Nouvelle demande</p><div class="opts">' +
       motifsFor().map(function(m){return '<button class="opt'+(rdv.m===m.id?' sel':'')+'" data-m="'+m.id+'" aria-pressed="'+(rdv.m===m.id)+'">'+esc(m.t)+'</button>'}).join("") + '</div>';
     if(rdv.m){
       h += '<label class="eyebrow" for="rmsg">Message pour l\'atelier (modifiable)</label><textarea class="search" id="rmsg" rows="10" style="line-height:1.4"></textarea>' +
@@ -625,6 +626,7 @@ window.startCompagnon = function(DATA){
     }
     b.innerHTML = h;
     if(rdv.m) $("#rmsg").value = rdv.msg;
+    if(window.CDB_CLOUD && window.CDB_CLOUD.rdvRendered) window.CDB_CLOUD.rdvRendered();
   }
   $("#rdvbody").addEventListener("click",function(e){
     var m = e.target.closest("[data-m]");

@@ -155,7 +155,7 @@
       });
     },
     sendRequest: function (body) {
-      return api('POST', '/api/me/requests', body).then(function (r) { loadRequests(); return r; });
+      return api('POST', '/api/me/requests', body).then(function (r) { openReq[r.id] = true; loadRequests(); return r; });
     },
   };
 
@@ -343,7 +343,7 @@
         setInterval(function () { if (document.visibilityState === 'visible') loadRequests(); }, 60000);
         flush();
         if (openScreen) { var b = document.querySelector('[data-go="' + openScreen + '"]'); if (b) b.click(); }
-        if (location.hash === '#demandes') setTimeout(function () { var d = document.getElementById('cloudreq'); if (d) d.scrollIntoView({ block: 'start' }); }, 600);
+        if (location.hash === '#demandes') { history.replaceState(null, '', location.pathname); var t = document.querySelector('.tile[data-go="rdv"]'); if (t) t.click(); }
       })
       .catch(function (err) {
         if (err.status === 401) return;
@@ -359,6 +359,7 @@
   var SEEN_KEY = 'cdb_cloud_seen'; // last dealership message read, per request
   var seen = readJson(SEEN_KEY, {});
   var openReq = {};
+  var drafts = {}; // request id -> message being typed
 
   function loadRequests() {
     if (!session) return;
@@ -367,10 +368,9 @@
       // Link to one request (#demande-12, from an e-mail or a notification): open it and show it.
       var want = (location.hash.match(/^#demande-(\d+)/) || [])[1];
       if (want && requests.some(function (x) { return x.id === Number(want); })) {
-        openReq[want] = true;
         history.replaceState(null, '', location.pathname);
         renderRequests();
-        setTimeout(function () { var el = document.querySelector('[data-req="' + want + '"]'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 300);
+        showRequest(Number(want));
         return;
       }
       renderRequests();
@@ -382,34 +382,68 @@
   function lastDealerMsg(r) { var m = (r.messages || []).filter(function (x) { return x.author === 'concession'; }); return m.length ? m[m.length - 1].id : 0; }
   function unread(r) { return lastDealerMsg(r) > (seen[r.id] || 0); }
 
-  function renderRequests() {
-    var el = document.getElementById('cloudreq'); if (!el) return;
-    el.hidden = !requests.length;
-    var dealer = (DATA && DATA.dealer && DATA.dealer.name) || 'La concession';
-    var n = requests.filter(unread).length;
-    el.innerHTML = '<p class="eyebrow" id="demandes">Mes demandes à l’atelier' + (n ? ' <span class="cloud-new">' + n + ' nouvelle' + (n > 1 ? 's' : '') + ' réponse' + (n > 1 ? 's' : '') + '</span>' : '') + '</p>' +
-      requests.slice(0, 8).map(function (r) {
-        var open = !!openReq[r.id], msgs = r.messages || [];
-        var head = '<button type="button" class="cloud-req-head" data-req="' + r.id + '" aria-expanded="' + open + '"><span><b>' + esc(r.title) + '</b><br><span class="sub">' + esc(dateOf(r.createdAt).toLocaleDateString('fr-FR')) + ' · ' + msgs.length + ' message' + (msgs.length > 1 ? 's' : '') + '</span></span>' +
-          '<span class="cloud-status ' + esc(r.status) + '">' + (unread(r) ? 'Nouvelle réponse' : esc(STATUS[r.status] || r.status)) + '</span></button>';
-        if (!open) {
-          var last = msgs[msgs.length - 1];
-          return '<div class="card cloud-req' + (unread(r) ? ' unread' : '') + '">' + head + (last ? '<p class="sub cloud-last">' + esc(last.author === 'concession' ? dealer + ' : ' : 'Vous : ') + esc(last.body.slice(0, 120)) + (last.body.length > 120 ? '…' : '') + '</p>' : '') + '</div>';
-        }
-        var thread = '<div class="cloud-msg client"><p>' + esc(r.description || r.title).replace(/\n/g, '<br>') + '</p><small>Vous · ' + esc(fmt(r.createdAt)) + '</small></div>' +
-          msgs.map(function (m) {
-            return '<div class="cloud-msg ' + esc(m.author) + '"><p>' + esc(m.body).replace(/\n/g, '<br>') + '</p><small>' + (m.author === 'concession' ? esc(dealer) : 'Vous') + ' · ' + esc(fmt(m.createdAt)) + '</small></div>';
-          }).join('');
-        return '<div class="card cloud-req open">' + head + '<div class="cloud-thread">' + thread + '</div>' +
-          '<form class="cloud-reply" data-reply="' + r.id + '"><textarea class="search" name="body" rows="2" required placeholder="Votre réponse à ' + esc(dealer) + '"></textarea><button class="btn">Envoyer</button></form></div>';
+  function card(r, dealer) {
+    var open = !!openReq[r.id], msgs = r.messages || [], last = msgs[msgs.length - 1];
+    var head = '<button type="button" class="cloud-req-head" data-req="' + r.id + '" aria-expanded="' + open + '"><span><b>' + esc(r.title) + '</b><br><span class="sub">' + esc(dateOf(r.createdAt).toLocaleDateString('fr-FR')) + ' · ' + (msgs.length + 1) + ' message' + (msgs.length ? 's' : '') + '</span></span>' +
+      '<span class="cloud-status ' + (unread(r) ? 'new' : esc(r.status)) + '">' + (unread(r) ? 'Nouvelle réponse' : esc(STATUS[r.status] || r.status)) + '</span></button>';
+    if (!open) {
+      return '<div class="card cloud-req' + (unread(r) ? ' unread' : '') + '">' + head +
+        (last ? '<p class="sub cloud-last">' + esc(last.author === 'concession' ? dealer + ' : ' : 'Vous : ') + esc(last.body.slice(0, 110)) + (last.body.length > 110 ? '…' : '') + '</p>' : '<p class="sub cloud-last">En attente de la réponse de ' + esc(dealer) + '.</p>') + '</div>';
+    }
+    var thread = '<div class="cloud-msg client"><p>' + esc(r.description || r.title).replace(/\n/g, '<br>') + '</p><small>Vous · ' + esc(fmt(r.createdAt)) + '</small></div>' +
+      msgs.map(function (m) {
+        return '<div class="cloud-msg ' + esc(m.author) + '"><p>' + esc(m.body).replace(/\n/g, '<br>') + '</p><small>' + (m.author === 'concession' ? esc(dealer) : 'Vous') + ' · ' + esc(fmt(m.createdAt)) + '</small></div>';
       }).join('');
+    return '<div class="card cloud-req open">' + head + '<div class="cloud-thread">' + thread + '</div>' +
+      '<form class="cloud-reply" data-reply="' + r.id + '"><textarea class="search" name="body" rows="2" required placeholder="Votre message à ' + esc(dealer) + '"></textarea><button class="btn">Envoyer</button></form></div>';
+  }
+
+  // "Mes demandes" lives in the workshop screen; the home screen only says when the dealership has answered.
+  function renderRequests() {
+    var dealer = (DATA && DATA.dealer && DATA.dealer.name) || 'La concession';
+    var news = requests.filter(unread), n = news.length;
+    var el = document.getElementById('cloudreq');
+    if (el) {
+      // Keep what the customer is typing when the list refreshes.
+      Array.prototype.forEach.call(el.querySelectorAll('[data-reply] textarea'), function (t) { drafts[t.form.dataset.reply] = t.value; });
+      var focused = document.activeElement && document.activeElement.closest && document.activeElement.closest('[data-reply]');
+      var active = requests.filter(function (r) { return r.status !== 'resolu' || unread(r) || openReq[r.id]; });
+      var done = requests.filter(function (r) { return active.indexOf(r) < 0; });
+      active.sort(function (x, y) { return (unread(y) ? 1 : 0) - (unread(x) ? 1 : 0); });
+      el.hidden = !requests.length;
+      el.innerHTML = '<p class="eyebrow">Mes demandes' + (n ? ' <span class="cloud-new">' + n + ' nouvelle' + (n > 1 ? 's' : '') + ' réponse' + (n > 1 ? 's' : '') + '</span>' : '') + '</p>' +
+        active.map(function (r) { return card(r, dealer); }).join('') +
+        (done.length ? '<details class="cloud-done"><summary>Demandes traitées (' + done.length + ')</summary>' + done.map(function (r) { return card(r, dealer); }).join('') + '</details>' : '');
+      Array.prototype.forEach.call(el.querySelectorAll('[data-reply] textarea'), function (t) {
+        var id = t.form.dataset.reply;
+        if (drafts[id]) t.value = drafts[id];
+        if (focused && focused.dataset.reply === id) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+      });
+    }
     // Opening a request marks the dealership's answers as read.
     requests.forEach(function (r) { if (openReq[r.id] && unread(r)) { seen[r.id] = lastDealerMsg(r); lsSet(SEEN_KEY, JSON.stringify(seen)); } });
-    var badge = document.querySelector('.tile[data-go="rdv"] .cloud-dot');
-    var tile = document.querySelector('.tile[data-go="rdv"]');
+    n = requests.filter(unread).length;
+    var home = document.getElementById('cloudhome');
+    if (home) {
+      home.hidden = !n;
+      home.innerHTML = n ? '<button type="button" class="cloud-home-new" data-open-rdv="' + requests.filter(unread)[0].id + '"><span class="cloud-home-ic">💬</span><span><b>' + esc(dealer) + ' vous a répondu</b><br><span class="sub">' + esc(requests.filter(unread)[0].title) + (n > 1 ? ' et ' + (n - 1) + ' autre' + (n > 2 ? 's' : '') : '') + '</span></span><span class="cloud-home-go">Voir</span></button>' : '';
+    }
+    var tile = document.querySelector('.tile[data-go="rdv"]'), badge = tile && tile.querySelector('.cloud-dot');
     if (tile && !badge && n) { badge = document.createElement('span'); badge.className = 'cloud-dot'; tile.appendChild(badge); }
     if (badge) { badge.hidden = !n; badge.textContent = n; }
   }
+  window.CDB_CLOUD.rdvRendered = renderRequests;
+
+  // Opens the workshop screen on one request (home banner, e-mail, notification).
+  function showRequest(id) {
+    openReq[id] = true;
+    var go = document.querySelector('.tile[data-go="rdv"]'); if (go) go.click();
+    setTimeout(function () { var el = document.querySelector('[data-req="' + id + '"]'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 250);
+  }
+  document.addEventListener('click', function (e) {
+    var o = e.target.closest('[data-open-rdv]'); if (!o) return;
+    e.preventDefault(); showRequest(Number(o.dataset.openRdv));
+  });
 
   document.addEventListener('click', function (e) {
     var h = e.target.closest('[data-req]'); if (!h) return;
@@ -421,6 +455,7 @@
     var id = Number(f.dataset.reply), body = f.elements.body.value.trim(); if (!body) return;
     f.querySelector('button').disabled = true;
     api('POST', '/api/me/requests/' + id + '/messages', { body: body }).then(function (r) {
+      delete drafts[id]; f.elements.body.value = '';
       requests = requests.map(function (x) { return x.id === id ? r : x; }); renderRequests(); toast('Message envoyé à votre concession');
     }).catch(function (err) { f.querySelector('button').disabled = false; toast(err.message); });
   });
@@ -457,14 +492,14 @@
 
   function addAccountCard() {
     var home = document.getElementById('home'); if (!home || document.getElementById('cloudacc')) return;
-    var req = document.createElement('div'); req.id = 'cloudreq'; req.className = 'cloud-block'; req.hidden = true;
+    var req = document.createElement('div'); req.id = 'cloudhome'; req.hidden = true;
     var acc = document.createElement('div'); acc.id = 'cloudacc'; acc.className = 'card';
     if (DATA.announcement) {
       var ann = document.createElement('div'); ann.className = 'tip cloud-announce';
       ann.innerHTML = '<b>' + esc(DATA.dealer.name || 'Votre concession') + ' :</b> ' + esc(DATA.announcement);
       home.insertBefore(ann, home.firstChild);
     }
-    home.appendChild(req); home.appendChild(acc);
+    home.insertBefore(req, home.firstChild); home.appendChild(acc);
     acc.addEventListener('click', function (e) {
       var b = e.target.closest('[data-acc]'); if (!b) return;
       if (b.dataset.acc === 'logout') {
