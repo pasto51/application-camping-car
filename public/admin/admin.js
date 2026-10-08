@@ -41,12 +41,19 @@ function logout() {
 
 const root = document.getElementById('root');
 const isAdmin = () => state.user?.role === 'admin';
-// Responsable de concession (or administrator): reassigns customers, manages the team.
 // Content editor: diagnostics, equipment, lists, vehicles and photos, announcement — no customers, requests or dealerships.
 const isEditor = () => state.user?.role === 'editor';
 const canEditContent = () => isAdmin() || isEditor();
+// Responsable de concession (or administrator): reassigns customers, manages the team.
 const isManager = () => ['admin', 'manager', 'dealer'].includes(state.user?.role);
 const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur de contenu', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
+const ROLE_ORDER = ['manager', 'sales', 'sav', 'store', 'editor', 'admin'];
+// For searches: no accents, no capitals.
+const norm = (t) =>
+  String(t || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 const SERVICE_LABELS = { sav: '🛠️ SAV', magasin: '🛒 Magasin' };
 // The service a SAV or store account works for (requests shown first).
 const myService = () => ({ sav: 'sav', store: 'magasin' })[state.user?.role] || '';
@@ -461,8 +468,19 @@ const VIEWS = {
     const q = state.filter.customerQuery || '';
     // A salesperson starts on their own customers; everyone in the dealership can see all of them.
     const mine = state.filter.customerMine ?? state.user.role === 'sales';
-    const list = await api('GET', `/api/admin/customers?q=${encodeURIComponent(q)}${mine ? '&mine=1' : ''}`);
+    const dealer = isAdmin() ? state.filter.customerDealership || '' : '';
+    const [list, dealerships] = await Promise.all([
+      api('GET', `/api/admin/customers?q=${encodeURIComponent(q)}${mine ? '&mine=1' : ''}${dealer ? `&dealershipId=${dealer}` : ''}`),
+      isAdmin() ? api('GET', '/api/admin/dealerships') : Promise.resolve([]),
+    ]);
     el.innerHTML = `${pageHeader('Clients', '<button class="btn primary" data-act="add">＋ Nouveau client</button>')}
+      ${
+        isAdmin()
+          ? `<div class="filter-bar"><select data-dealer><option value="">Toutes les concessions</option>${dealerships
+              .map((d) => `<option value="${d.id}" ${String(dealer) === String(d.id) ? 'selected' : ''}>${esc(d.name)}</option>`)
+              .join('')}</select><span class="muted">${list.length} client${list.length > 1 ? 's' : ''}${list.length === 500 ? ' (500 premiers : affinez la recherche)' : ''}</span></div>`
+          : ''
+      }
       ${isAdmin() ? '' : `<div class="filters"><button class="chip ${mine ? 'active' : ''}" data-act="mine" data-value="1">Mes clients</button><button class="chip ${mine ? '' : 'active'}" data-act="mine" data-value="0">Toute la concession</button></div>`}
       <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, n° de cellule…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
       <div class="table-wrap"><table>
@@ -483,6 +501,10 @@ const VIEWS = {
           )
           .join('')}</tbody>
       </table>${list.length ? '' : '<p class="muted">Aucun client.</p>'}</div>`;
+    el.querySelector('[data-dealer]')?.addEventListener('change', (e) => {
+      state.filter.customerDealership = e.target.value;
+      VIEWS.customers(el);
+    });
     el.querySelector('#customer-search').onsubmit = (e) => {
       e.preventDefault();
       state.filter.customerQuery = new FormData(e.target).get('q');
@@ -622,143 +644,112 @@ const VIEWS = {
 
   async dealerships(el) {
     const list = await api('GET', '/api/admin/dealerships');
+    // A dealership account has only its own: straight to its page.
+    if (!isAdmin() && list.length === 1) return dealershipDetail(el, list[0].id);
+    const f = (state.filter.dealerships ||= { q: '' });
     el.innerHTML = `${pageHeader(isAdmin() ? 'Concessions' : 'Ma concession', isAdmin() ? '<button class="btn primary" data-act="add">＋ Nouvelle concession</button>' : '')}
+      <div class="filter-bar"><input type="search" data-f="q" placeholder="Nom, ville, code…" value="${esc(f.q)}"><span class="muted" data-count></span></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Concession</th><th>Code concession</th><th>Ville</th><th>Contact</th><th>Clients</th><th>État</th>${isManager() ? '<th></th>' : ''}</tr></thead>
-        <tbody>${list
-          .map(
-            (d) => `<tr>
+        <thead><tr><th>Concession</th><th>Code concession</th><th>Ville</th><th>Contact</th><th>Clients</th><th>Comptes</th><th>État</th>${isManager() ? '<th></th>' : ''}</tr></thead>
+        <tbody data-rows></tbody>
+      </table></div>
+      <p class="muted">Cliquez sur une concession pour voir sa fiche et tous les comptes qui y sont rattachés. Le code concession est saisi dans l'application du client lors de la mise en main : gardez-le confidentiel.</p>`;
+    const render = () => {
+      const q = norm(f.q);
+      const shown = list.filter((d) => !q || norm([d.name, d.city, d.code, d.email].join(' ')).includes(q));
+      el.querySelector('[data-rows]').innerHTML = shown
+        .map(
+          (d) => `<tr class="clickable" data-act="open" data-id="${d.id}">
           <td><strong>${esc(d.name)}</strong></td>
           <td><code class="code">${esc(d.code)}</code></td>
           <td>${esc(d.city || '')}</td>
           <td>${esc(d.phone || '')}<br><small>${esc(d.email || '')}</small></td>
           <td>${d.customerCount}</td>
+          <td>${d.userCount}</td>
           <td>${d.active ? '<span class="status resolu">Active</span>' : '<span class="status">Désactivée</span>'}</td>
-          ${isManager() ? `<td class="row-actions"><button class="btn small" data-act="edit" data-id="${d.id}">Modifier</button>${isAdmin() ? `<button class="btn small danger" data-act="del" data-id="${d.id}">Supprimer</button>` : ''}</td>` : ''}
+          ${isManager() ? `<td class="row-actions"><button class="btn small" data-act="open" data-id="${d.id}">Voir</button><button class="btn small" data-act="edit" data-id="${d.id}">Modifier</button>${isAdmin() ? `<button class="btn small danger" data-act="del" data-id="${d.id}">Supprimer</button>` : ''}</td>` : ''}
         </tr>`
-          )
-          .join('')}</tbody>
-      </table></div>
-      <p class="muted">Le code concession est saisi dans l'application du client lors de la mise en main. Gardez-le confidentiel.</p>`;
-    const fields = [
-      { name: 'name', label: 'Nom', required: true },
-      { name: 'code', label: 'Code concession', hint: 'Lettres et chiffres, 4 à 16 caractères. Vide = généré automatiquement.' },
-      { name: 'city', label: 'Ville' },
-      { name: 'phone', label: 'Téléphone', type: 'tel' },
-      { name: 'email', label: 'E-mail', type: 'email' },
-      { name: 'warrantyYears', label: 'Garantie habituelle (années)', type: 'number', attrs: 'min="0" max="15"', hint: 'À partir de la mise en main. Ajustable pour chaque client.' },
-      { name: 'savEmail', label: 'SAV : e-mail (reçoit les demandes du SAV)', type: 'email', hint: 'Vide : l’e-mail de la concession.' },
-      { name: 'savPhone', label: 'SAV : téléphone (affiché au client)', type: 'tel' },
-      { name: 'savHours', label: 'SAV : horaires', full: true },
-      { name: 'storeEmail', label: 'Magasin : e-mail (reçoit les demandes du magasin)', type: 'email', hint: 'Vide : celui du SAV.' },
-      { name: 'storePhone', label: 'Magasin : téléphone (affiché au client)', type: 'tel' },
-      { name: 'storeHours', label: 'Magasin : horaires', full: true },
-      { name: 'storeAddress', label: 'Magasin : adresse (s’il est détaché)', full: true },
-      { name: 'storeDetached', label: 'Magasin détaché (indépendant : la concession ne voit pas ses demandes)', type: 'checkbox', full: true },
-      { name: 'hours', label: 'Horaires affichés dans l’appli', full: true },
-      { name: 'website', label: 'Site web (ouvert en touchant le logo dans l’appli)', full: true, attrs: 'placeholder="www.ma-concession.fr"' },
-      { name: 'logo', label: 'Logo de la concession (affiché dans l’appli)', type: 'image' },
-      { name: 'active', label: 'Active (le code fonctionne)', type: 'checkbox' },
-    ].filter((f) => isAdmin() || !['code', 'active'].includes(f.name)); // the code stays with the administrator
+        )
+        .join('');
+      el.querySelector('[data-count]').textContent = shown.length === list.length ? `${list.length} concession${list.length > 1 ? 's' : ''}` : `${shown.length} sur ${list.length}`;
+    };
+    render();
+    el.oninput = (e) => {
+      if (e.target.dataset?.f !== 'q') return;
+      f.q = e.target.value;
+      render();
+    };
     bind(el, {
+      open: (id) => dealershipDetail(el, id),
       add: () =>
         openForm({
           title: 'Nouvelle concession',
-          fields,
+          fields: dealershipFields(),
           values: { active: true, warrantyYears: 2 },
           onSubmit: async (data) => {
             const d = await api('POST', '/api/admin/dealerships', data);
             toast(`Concession créée — code ${d.code}`);
-            VIEWS.dealerships(el);
+            dealershipDetail(el, d.id);
           },
         }),
-      edit: (id) =>
-        openForm({
-          title: 'Modifier la concession',
-          fields,
-          values: { ...list.find((x) => x.id === id), logo: list.find((x) => x.id === id).logoUrl },
-          onSubmit: async (data) => {
-            await api('PUT', `/api/admin/dealerships/${id}`, data);
-            toast('Concession enregistrée');
-            VIEWS.dealerships(el);
-          },
-        }),
+      edit: (id) => editDealership(list.find((x) => x.id === id), () => VIEWS.dealerships(el)),
       del: (id) => confirmDelete('Supprimer cette concession ?', () => api('DELETE', `/api/admin/dealerships/${id}`)),
     });
   },
 
   async users(el) {
     const [users, dealerships] = await Promise.all([api('GET', '/api/admin/users'), api('GET', '/api/admin/dealerships')]);
+    const f = (state.filter.users ||= { q: '', role: '', dealership: '' });
+    const roleOptions = [...new Set(users.map((u) => (u.role === 'dealer' ? 'manager' : u.role)))].sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
     el.innerHTML = `${pageHeader(isAdmin() ? 'Utilisateurs du back-office' : 'Mon équipe', '<button class="btn primary" data-act="add">＋ Nouveau compte</button>')}
+      <div class="filter-bar">
+        <input type="search" data-f="q" placeholder="Nom, e-mail, téléphone…" value="${esc(f.q)}">
+        <select data-f="role"><option value="">Tous les rôles</option>${roleOptions.map((r) => `<option value="${r}" ${f.role === r ? 'selected' : ''}>${esc(ROLE_LABELS[r] || r)}</option>`).join('')}</select>
+        ${
+          isAdmin()
+            ? `<select data-f="dealership"><option value="">Toutes les concessions</option><option value="none" ${f.dealership === 'none' ? 'selected' : ''}>Sans concession (administrateurs, éditeurs)</option>${dealerships
+                .map((d) => `<option value="${d.id}" ${String(f.dealership) === String(d.id) ? 'selected' : ''}>${esc(d.name)}</option>`)
+                .join('')}</select>`
+            : ''
+        }
+        <button class="btn small" data-act="reset">Effacer les filtres</button>
+        <span class="muted" data-count></span>
+      </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Nom</th><th>Contact</th><th>Rôle</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Clients suivis</th><th></th></tr></thead>
-        <tbody>${users
-          .map(
-            (u) => `<tr>
-          <td><strong>${esc(u.name || '')}</strong></td><td>${esc(u.email)}${u.phone ? `<br><small>${esc(u.phone)}</small>` : ''}</td>
-          <td>${esc(ROLE_LABELS[u.role] || u.role)}</td>
-          ${isAdmin() ? `<td>${esc(u.dealershipName || '')}</td>` : ''}
-          <td>${u.role === 'admin' ? '' : u.customerCount}</td>
-          <td class="row-actions"><button class="btn small" data-act="edit" data-id="${u.id}">Modifier</button>${
-            u.customerCount ? `<button class="btn small" data-act="transfer" data-id="${u.id}">Transférer ses clients</button>` : ''
-          }${u.id !== state.user.id ? `<button class="btn small danger" data-act="del" data-id="${u.id}">Supprimer</button>` : ''}</td>
-        </tr>`
-          )
-          .join('')}</tbody>
-      </table></div>
+        <tbody data-rows></tbody>
+      </table><p class="muted" data-empty hidden>Aucun compte ne correspond à ces filtres.</p></div>
       <div class="card muted"><p><strong>Commercial</strong> : gère ses clients (fiche, code d’accès) et fait les mises en main. Il ne traite pas les demandes : il en voit le récap sur son tableau de bord.</p>
       <p><strong>SAV / atelier</strong> : voit les demandes de la concession, répond à celles du SAV (rendez-vous, soucis, pièces sous garantie) et peut les transférer au magasin.</p>
       <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que les siennes.</p>
       <p><strong>Responsable de concession</strong> : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession), sans recevoir d’e-mails.</p>
       ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
-    const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['editor', 'Éditeur de contenu'], ['admin', 'Administrateur']] : [])];
-    const fields = (isNew) => [
-      { name: 'name', label: 'Nom (affiché au client pour un commercial)' },
-      { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
-      { name: 'phone', label: 'Téléphone (affiché au client)', type: 'tel' },
-      { name: 'role', label: 'Rôle', type: 'select', options: roles },
-      ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: [['', '—'], ...dealerships.map((d) => [d.id, d.name])] }] : []),
-      { name: 'password', label: isNew ? 'Mot de passe' : 'Nouveau mot de passe (laisser vide pour ne pas changer)', type: 'password', required: isNew, attrs: 'minlength="8" autocomplete="new-password"' },
-    ];
+    // Filtering happens in the page: typing does not reload the list nor lose the cursor.
+    const render = () => {
+      const q = norm(f.q);
+      const shown = users.filter(
+        (u) =>
+          (!q || norm([u.name, u.email, u.phone, u.dealershipName].join(' ')).includes(q)) &&
+          (!f.role || (u.role === 'dealer' ? 'manager' : u.role) === f.role) &&
+          (!f.dealership || (f.dealership === 'none' ? !u.dealershipId : String(u.dealershipId) === String(f.dealership)))
+      );
+      el.querySelector('[data-rows]').innerHTML = shown.map((u) => userRow(u, { showDealership: isAdmin() })).join('');
+      el.querySelector('[data-empty]').hidden = !!shown.length;
+      el.querySelector('[data-count]').textContent = shown.length === users.length ? `${users.length} compte${users.length > 1 ? 's' : ''}` : `${shown.length} sur ${users.length} comptes`;
+    };
+    render();
+    el.oninput = el.onchange = (e) => {
+      const key = e.target.dataset?.f;
+      if (!key) return;
+      f[key] = e.target.value;
+      render();
+    };
     bind(el, {
-      add: () =>
-        openForm({
-          title: 'Nouveau compte',
-          fields: fields(true),
-          values: { role: 'sales', dealershipId: dealerships[0]?.id },
-          onSubmit: async (data) => {
-            await api('POST', '/api/admin/users', data);
-            toast('Compte créé');
-            VIEWS.users(el);
-          },
-        }),
-      edit: (id) =>
-        openForm({
-          title: 'Modifier le compte',
-          fields: fields(false),
-          values: { ...users.find((x) => x.id === id), role: users.find((x) => x.id === id).role === 'dealer' ? 'manager' : users.find((x) => x.id === id).role },
-          onSubmit: async (data) => {
-            await api('PUT', `/api/admin/users/${id}`, data);
-            toast('Compte enregistré');
-            VIEWS.users(el);
-          },
-        }),
-      transfer: (id) => {
-        const from = users.find((x) => x.id === id);
-        const others = users.filter((u) => u.id !== id && u.role !== 'admin' && u.dealershipId === from.dealershipId);
-        openForm({
-          title: `Transférer les ${from.customerCount} clients de ${from.name || from.email}`,
-          submitLabel: 'Transférer',
-          fields: [{ name: 'toUserId', label: 'Vers', type: 'select', options: [['', '— Personne (clients sans commercial) —'], ...others.map((u) => [u.id, `${u.name || u.email} (${ROLE_LABELS[u.role]})`])] }],
-          values: { toUserId: others[0]?.id || '' },
-          onSubmit: async (data) => {
-            const r = await api('POST', `/api/admin/users/${id}/transfer`, { toUserId: data.toUserId || null });
-            toast(`${r.moved} client${r.moved > 1 ? 's' : ''} transféré${r.moved > 1 ? 's' : ''}`);
-            VIEWS.users(el);
-          },
-        });
+      ...userActions(users, dealerships, () => VIEWS.users(el)),
+      reset: () => {
+        state.filter.users = { q: '', role: '', dealership: '' };
+        VIEWS.users(el);
       },
-      del: (id) => confirmDelete('Supprimer ce compte ?', () => api('DELETE', `/api/admin/users/${id}`)),
     });
   },
 
@@ -957,6 +948,179 @@ function showAccess(c, code, onClose) {
     onClose?.();
   });
   dialog.showModal();
+}
+
+// ---------- Back-office accounts (Utilisateurs, and the team in a dealership's page) ----------
+
+function userRow(u, { showDealership }) {
+  return `<tr>
+    <td><strong>${esc(u.name || '')}</strong></td><td>${esc(u.email)}${u.phone ? `<br><small>${esc(u.phone)}</small>` : ''}</td>
+    <td>${esc(ROLE_LABELS[u.role] || u.role)}</td>
+    ${showDealership ? `<td>${u.dealershipId ? `<button class="lnk" data-act="dealer" data-id="${u.dealershipId}">${esc(u.dealershipName || '')}</button>` : '<span class="muted">—</span>'}</td>` : ''}
+    <td>${['admin', 'editor'].includes(u.role) ? '' : u.customerCount}</td>
+    <td class="row-actions"><button class="btn small" data-act="edit" data-id="${u.id}">Modifier</button>${
+      u.customerCount ? `<button class="btn small" data-act="transfer" data-id="${u.id}">Transférer ses clients</button>` : ''
+    }${u.id !== state.user.id ? `<button class="btn small danger" data-act="del" data-id="${u.id}">Supprimer</button>` : ''}</td>
+  </tr>`;
+}
+
+// Add / edit / transfer / delete, shared by both pages. `dealershipId` pre-fills the dealership of a new account.
+function userActions(users, dealerships, reload, { dealershipId } = {}) {
+  const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['editor', 'Éditeur de contenu'], ['admin', 'Administrateur']] : [])];
+  const fields = (isNew) => [
+    { name: 'name', label: 'Nom (affiché au client pour un commercial)' },
+    { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
+    { name: 'phone', label: 'Téléphone (affiché au client)', type: 'tel' },
+    { name: 'role', label: 'Rôle', type: 'select', options: roles },
+    ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: [['', '—'], ...dealerships.map((d) => [d.id, d.name])], hint: 'Sans objet pour un administrateur ou un éditeur de contenu.' }] : []),
+    { name: 'password', label: isNew ? 'Mot de passe' : 'Nouveau mot de passe (laisser vide pour ne pas changer)', type: 'password', required: isNew, attrs: 'minlength="8" autocomplete="new-password"' },
+  ];
+  return {
+    add: () =>
+      openForm({
+        title: 'Nouveau compte',
+        fields: fields(true),
+        values: { role: 'sales', dealershipId: dealershipId ?? dealerships[0]?.id },
+        onSubmit: async (data) => {
+          await api('POST', '/api/admin/users', data);
+          toast('Compte créé');
+          reload();
+        },
+      }),
+    edit: (id) => {
+      const u = users.find((x) => x.id === id);
+      openForm({
+        title: 'Modifier le compte',
+        fields: fields(false),
+        values: { ...u, role: u.role === 'dealer' ? 'manager' : u.role },
+        onSubmit: async (data) => {
+          await api('PUT', `/api/admin/users/${id}`, data);
+          toast('Compte enregistré');
+          reload();
+        },
+      });
+    },
+    transfer: (id) => {
+      const from = users.find((x) => x.id === id);
+      const others = users.filter((u) => u.id !== id && ['manager', 'dealer', 'sales'].includes(u.role) && u.dealershipId === from.dealershipId);
+      openForm({
+        title: `Transférer les ${from.customerCount} clients de ${from.name || from.email}`,
+        submitLabel: 'Transférer',
+        fields: [{ name: 'toUserId', label: 'Vers', type: 'select', options: [['', '— Personne (clients sans commercial) —'], ...others.map((u) => [u.id, `${u.name || u.email} (${ROLE_LABELS[u.role]})`])] }],
+        values: { toUserId: others[0]?.id || '' },
+        onSubmit: async (data) => {
+          const r = await api('POST', `/api/admin/users/${id}/transfer`, { toUserId: data.toUserId || null });
+          toast(`${r.moved} client${r.moved > 1 ? 's' : ''} transféré${r.moved > 1 ? 's' : ''}`);
+          reload();
+        },
+      });
+    },
+    del: async (id) => {
+      if (!confirm('Supprimer ce compte ?')) return;
+      try {
+        await api('DELETE', `/api/admin/users/${id}`);
+        toast('Supprimé');
+        reload();
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    },
+    dealer: (id) => dealershipDetail(document.getElementById('content'), id),
+  };
+}
+
+// ---------- A dealership's page: its details and everyone attached to it ----------
+
+function dealershipFields() {
+  return [
+    { name: 'name', label: 'Nom', required: true },
+    { name: 'code', label: 'Code concession', hint: 'Lettres et chiffres, 4 à 16 caractères. Vide = généré automatiquement.' },
+    { name: 'city', label: 'Ville' },
+    { name: 'phone', label: 'Téléphone', type: 'tel' },
+    { name: 'email', label: 'E-mail', type: 'email' },
+    { name: 'warrantyYears', label: 'Garantie habituelle (années)', type: 'number', attrs: 'min="0" max="15"', hint: 'À partir de la mise en main. Ajustable pour chaque client.' },
+    { name: 'savEmail', label: 'SAV : e-mail (reçoit les demandes du SAV)', type: 'email', hint: 'Vide : l’e-mail de la concession.' },
+    { name: 'savPhone', label: 'SAV : téléphone (affiché au client)', type: 'tel' },
+    { name: 'savHours', label: 'SAV : horaires', full: true },
+    { name: 'storeEmail', label: 'Magasin : e-mail (reçoit les demandes du magasin)', type: 'email', hint: 'Vide : celui du SAV.' },
+    { name: 'storePhone', label: 'Magasin : téléphone (affiché au client)', type: 'tel' },
+    { name: 'storeHours', label: 'Magasin : horaires', full: true },
+    { name: 'storeAddress', label: 'Magasin : adresse (s’il est détaché)', full: true },
+    { name: 'storeDetached', label: 'Magasin détaché (indépendant : la concession ne voit pas ses demandes)', type: 'checkbox', full: true },
+    { name: 'hours', label: 'Horaires affichés dans l’appli', full: true },
+    { name: 'website', label: 'Site web (ouvert en touchant le logo dans l’appli)', full: true, attrs: 'placeholder="www.ma-concession.fr"' },
+    { name: 'logo', label: 'Logo de la concession (affiché dans l’appli)', type: 'image' },
+    { name: 'active', label: 'Active (le code fonctionne)', type: 'checkbox' },
+  ].filter((f) => isAdmin() || !['code', 'active'].includes(f.name)); // the code stays with the administrator
+}
+
+function editDealership(d, reload) {
+  openForm({
+    title: 'Modifier la concession',
+    fields: dealershipFields(),
+    values: { ...d, logo: d.logoUrl },
+    onSubmit: async (data) => {
+      await api('PUT', `/api/admin/dealerships/${d.id}`, data);
+      toast('Concession enregistrée');
+      reload();
+    },
+  });
+}
+
+
+async function dealershipDetail(el, id) {
+  const [dealerships, users] = await Promise.all([api('GET', '/api/admin/dealerships'), isManager() ? api('GET', '/api/admin/users') : Promise.resolve([])]);
+  const d = dealerships.find((x) => x.id === id);
+  if (!d) return VIEWS.dealerships(el);
+  const team = users.filter((u) => u.dealershipId === id).sort((a, b) => ROLE_ORDER.indexOf(a.role === 'dealer' ? 'manager' : a.role) - ROLE_ORDER.indexOf(b.role === 'dealer' ? 'manager' : b.role) || norm(a.name || a.email).localeCompare(norm(b.name || b.email)));
+  const count = (r) => team.filter((u) => (u.role === 'dealer' ? 'manager' : u.role) === r).length;
+  const fact = (label, value) => `<div><dt>${label}</dt><dd>${value || '<span class="muted">—</span>'}</dd></div>`;
+  el.innerHTML = `${pageHeader(
+    d.name,
+    `${isAdmin() ? '<button class="btn" data-act="back">← Concessions</button>' : ''}${isManager() ? '<button class="btn" data-act="editdealer">Modifier la concession</button>' : ''}`
+  )}
+    <div class="detail-grid">
+      <div class="card">
+        <h2>Concession ${d.active ? '<span class="status resolu">Active</span>' : '<span class="status">Désactivée</span>'}</h2>
+        <dl class="facts">
+          ${fact('Code concession', d.code ? `<code class="code">${esc(d.code)}</code>` : '')}
+          ${fact('Ville', esc(d.city || ''))}
+          ${fact('Accueil', [esc(d.phone || ''), esc(d.email || '')].filter(Boolean).join('<br>'))}
+          ${fact('Garantie habituelle', `${d.warrantyYears ?? 2} an${(d.warrantyYears ?? 2) > 1 ? 's' : ''}`)}
+          ${fact('SAV / atelier', [esc(d.savPhone || ''), esc(d.savEmail || ''), d.savHours ? `<small>${esc(d.savHours)}</small>` : ''].filter(Boolean).join('<br>'))}
+          ${fact(`Magasin${d.storeDetached ? ' (détaché)' : ''}`, [esc(d.storePhone || ''), esc(d.storeEmail || ''), d.storeAddress ? `<small>${esc(d.storeAddress)}</small>` : '', d.storeHours ? `<small>${esc(d.storeHours)}</small>` : ''].filter(Boolean).join('<br>'))}
+          ${fact('Clients', `${d.customerCount} <button class="btn small" data-act="customers">Voir les clients</button>`)}
+          ${fact('Comptes', String(team.length || d.userCount || 0))}
+        </dl>
+      </div>
+      ${isManager() ? `<div class="card">
+        <h2>Équipe</h2>
+        <div class="filters">${['manager', 'sales', 'sav', 'store'].map((r) => `<span class="chip">${esc(ROLE_LABELS[r])} : ${count(r)}</span>`).join('')}</div>
+        ${count('manager') ? '' : '<p class="error">Aucun responsable de concession.</p>'}
+        ${count('sav') ? '' : '<p class="muted">Pas de compte SAV : les demandes SAV arrivent quand même par e-mail.</p>'}
+        <button class="btn primary" data-act="add">＋ Ajouter un compte à cette concession</button>
+      </div>` : ''}
+    </div>
+    ${
+      isManager()
+        ? `<div class="card"><h2>Comptes rattachés (${team.length})</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nom</th><th>Contact</th><th>Rôle</th><th>Clients suivis</th><th></th></tr></thead>
+        <tbody>${team.map((u) => userRow(u, { showDealership: false })).join('')}</tbody>
+      </table>${team.length ? '' : '<p class="muted">Aucun compte rattaché pour l’instant.</p>'}</div></div>`
+        : ''
+    }`;
+  bind(el, {
+    ...userActions(users, dealerships, () => dealershipDetail(el, id), { dealershipId: id }),
+    back: () => VIEWS.dealerships(el),
+    editdealer: () => editDealership(d, () => dealershipDetail(el, id)),
+    customers: () => {
+      if (isAdmin()) state.filter.customerQuery = '';
+      state.filter.customerMine = false;
+      state.filter.customerDealership = id;
+      location.hash = 'customers';
+    },
+  });
 }
 
 async function customerDetail(el, id) {

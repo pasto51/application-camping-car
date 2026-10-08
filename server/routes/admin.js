@@ -700,7 +700,8 @@ function register(router) {
     const s = scope(user, 'd.id');
     return camelAll(
       ctx.db
-        .prepare(`SELECT d.*, (SELECT COUNT(*) FROM customers c WHERE c.dealership_id = d.id) AS customer_count FROM dealerships d WHERE ${s.sql} ORDER BY d.name`)
+        .prepare(`SELECT d.*, (SELECT COUNT(*) FROM customers c WHERE c.dealership_id = d.id) AS customer_count,
+                  (SELECT COUNT(*) FROM admins a WHERE a.dealership_id = d.id) AS user_count FROM dealerships d WHERE ${s.sql} ORDER BY d.name`)
         .all(...s.args)
     );
   });
@@ -818,6 +819,11 @@ function register(router) {
     if (q) {
       where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.cell_number LIKE ?)");
       args.push(...Array(4).fill(`%${q}%`));
+    }
+    const dealershipId = user.role === 'admin' ? optInt(ctx.query.get('dealershipId')) : null;
+    if (dealershipId) {
+      where.push('c.dealership_id = ?');
+      args.push(dealershipId);
     }
     if (ctx.query.get('mine') === '1') {
       where.push('c.salesperson_id = ?');

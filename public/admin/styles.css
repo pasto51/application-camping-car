@@ -215,3 +215,12 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 @media (max-width: 640px) { .part-card { grid-template-columns: 1fr; } }
 .part-card figure { margin: 0; } .part-card figcaption { font-size: .8rem; margin-top: .3rem; }
 .status.sav { color: #0a7c82; border-color: #9bd3d6; }
+
+/* Filters above long lists (accounts, dealerships, customers) */
+.filter-bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+.filter-bar input[type=search] { flex: 1 1 240px; max-width: 360px; }
+.filter-bar select { flex: 0 1 260px; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--bg); }
+.lnk { border: 0; background: none; padding: 0; font: inherit; width: auto; color: var(--accent); cursor: pointer; text-align: left; }
+.lnk:hover { text-decoration: underline; }
