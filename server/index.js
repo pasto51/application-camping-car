@@ -1,11 +1,15 @@
 'use strict';
 
 const { createApp } = require('./app');
+const { startJobs } = require('./jobs');
 
 // Hosts such as alwaysdata give the address to listen on through environment variables.
 const port = Number(process.env.PORT || process.env.ALWAYSDATA_HTTPD_PORT) || 3000;
 const host = process.env.IP || process.env.ALWAYSDATA_HTTPD_IP || undefined;
-const { server, db } = createApp();
+const app = createApp();
+const { server, db } = app;
+// Daily: backup of the database, maintenance reminders, alert on requests without answer.
+startJobs(app);
 
 server.listen(port, host, () => {
   console.log(`Serveur démarré sur http://localhost:${port}`);

@@ -140,6 +140,24 @@ CREATE TABLE IF NOT EXISTS catalog (
 );
 
 -- Everything the app keeps for a customer (equipment checked, photos, weights, handover…), by storage key.
+-- The customer's maintenance logbook (« J'ai fait le test d'étanchéité le… ») and the reminders already notified.
+CREATE TABLE IF NOT EXISTS maintenance_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  done_on TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS maintenance_log_customer ON maintenance_log (customer_id);
+CREATE TABLE IF NOT EXISTS reminder_sent (
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  due TEXT NOT NULL,
+  sent_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (customer_id, kind, due)
+);
+
 -- What customers look for in the app, without saying who: searches, problems opened, advice reached, « Demander au
 -- magasin », equipment looked at. Only the dealership and the vehicle type are kept, for the statistics.
 CREATE TABLE IF NOT EXISTS usage_events (
@@ -235,6 +253,9 @@ const ADDED_COLUMNS = [
   ['dealerships', 'store_email', 'TEXT'],
   ['customers', 'access_code_enc', 'TEXT'],
   ['customers', 'email_notify', 'INTEGER DEFAULT 1'],
+  // « Conseils et offres » of the dealership (campaigns): asked separately from the answers to requests. NULL = not asked yet.
+  ['customers', 'marketing_optin', 'INTEGER'],
+  ['customers', 'marketing_optin_at', 'TEXT'],
   ['customers', 'salesperson_id', 'INTEGER'], // the dealership's salesperson in charge (admins.id)
   ['admins', 'phone', 'TEXT'],
   // Analyst of a group of dealerships: the dealerships they follow (JSON list), none = all.

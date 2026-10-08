@@ -268,3 +268,17 @@ test('store request: photo, model, cell number, year; the VIN goes in the e-mail
   const other = await call('POST', '/api/me/parts', { token, body: { equipmentName: 'Store', photo: '/uploads/pas-a-moi.jpg' } });
   assert.equal(other.data.part.photoUrl, null);
 });
+
+test('daily e-mail to the service mailbox for requests without answer for more than 48 hours', async () => {
+  const { runDue } = require('../server/jobs');
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const h = (await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Patient' } } })).data;
+  const r = (await call('POST', '/api/me/requests', { token: h.token, body: { title: 'Toujours rien ?', message: 'Bonjour' } })).data;
+  app.db.prepare("UPDATE reports SET created_at = datetime('now', '-3 days') WHERE id = ?").run(r.id);
+  const before = smtp.mails.length;
+  await runDue({ db: app.db, notify: app.notify, config: app.config, log: () => {} }, { force: true });
+  await waitFor(() => smtp.mails.slice(before).some((m) => /sans réponse depuis plus de 48/.test(subject(m))));
+  const mail = smtp.mails.slice(before).find((m) => /sans réponse depuis plus de 48/.test(subject(m)));
+  assert.deepEqual(mail.rcpt, ['atelier@concession.fr']);
+  assert.match(bodyText(mail), /Toujours rien \?/);
+});

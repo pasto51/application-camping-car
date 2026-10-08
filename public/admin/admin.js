@@ -341,6 +341,7 @@ const VIEWS = {
     const s = await api('GET', '/api/admin/stats');
     const tiles = [
       ...(state.user.role === 'sales' ? [] : [[myService() ? `Demandes ${myService() === 'sav' ? 'SAV' : 'magasin'} à traiter` : 'Demandes à traiter', s.openReports, 'reports']]),
+      ...(state.user.role !== 'sales' && s.overdueReports ? [['⏰ Sans réponse depuis plus de 48 h', s.overdueReports, 'reports', 'overdue']] : []),
       ...(isDetachedStore() ? [] : [['Clients', s.customers, 'customers']]),
       ...(isAdmin()
         ? [
@@ -369,7 +370,7 @@ const VIEWS = {
         : '';
     el.innerHTML = `${pageHeader('Tableau de bord')}
       ${recap}
-      <div class="tiles">${tiles.map(([label, n, link]) => `<a class="tile" href="#${link}"><strong>${n}</strong><span>${esc(label)}</span></a>`).join('')}</div>
+      <div class="tiles">${tiles.map(([label, n, link, filter]) => `<a class="tile${filter ? ' tile-alert' : ''}" href="#${link}" ${filter ? `data-report-filter="${filter}"` : ''}><strong>${n}</strong><span>${esc(label)}</span></a>`).join('')}</div>
       <div class="card">
         <h2>Fonctionnement</h2>
         <ul>
@@ -379,6 +380,8 @@ const VIEWS = {
           <li>Application client : <a href="/app/" target="_blank">${esc(location.origin)}/app/</a></li>
         </ul>
       </div>`;
+    // The « +48 h » tile opens the requests filtered on those.
+    el.querySelectorAll('[data-report-filter]').forEach((a) => a.addEventListener('click', () => (state.filter.reportStatus = a.dataset.reportFilter)));
   },
 
   async reports(el) {
@@ -386,8 +389,9 @@ const VIEWS = {
     const service = state.filter.reportService ?? myService();
     const [all, settings] = await Promise.all([api('GET', '/api/admin/reports'), api('GET', '/api/admin/settings').catch(() => null)]);
     const list = all.filter((r) =>
-      (!service || r.service === service) && (status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status)
+      (!service || r.service === service) && (status === 'open' ? r.status !== 'resolu' : status === 'overdue' ? r.overdue : status === 'all' || r.status === status)
     );
+    const overdue = all.filter((r) => r.overdue && (!service || r.service === service)).length;
     const toAnswer = all.filter((r) => r.waitingForDealer).length;
     const mailWarning = settings && !settings.mail.ready
       ? `<div class="card warn-card">✉️ Les e-mails de notification ne sont pas encore configurés : vous ne serez pas prévenu des nouvelles demandes. ${isAdmin() ? '<a href="#settings">Configurer l’envoi des e-mails</a>' : 'Demandez à l’administrateur de le configurer.'}</div>`
@@ -396,6 +400,7 @@ const VIEWS = {
       ${mailWarning}
       <div class="filters">${[
         ['open', 'À traiter'],
+        ...(overdue || status === 'overdue' ? [['overdue', `⏰ Sans réponse +48 h (${overdue})`]] : []),
         ['nouveau', 'Nouvelles'],
         ['en_cours', 'En cours'],
         ['resolu', 'Clôturées'],
@@ -418,7 +423,13 @@ const VIEWS = {
             <div class="report-head">
               <div><span class="status ${r.service === 'magasin' ? 'piece' : 'sav'}">${SERVICE_LABELS[r.service] || SERVICE_LABELS.sav}</span> ${
                 r.warranty?.until ? (r.warranty.active ? `<span class="status resolu">🛡️ Garantie jusqu’au ${formatDate(r.warranty.until)}</span> ` : '<span class="status">Hors garantie</span> ') : ''
-              }<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}${r.salespersonName ? ` · suivi par ${esc(r.salespersonName)}` : ''}</small></div>
+              }<strong>${esc(r.title)}</strong>${
+                r.overdue
+                  ? ` <span class="status nouveau">⏰ Sans réponse depuis ${Math.max(2, Math.floor((Date.now() - new Date(String(r.waitingSince).replace(' ', 'T') + 'Z')) / 86400000))} jours</span>`
+                  : r.waitingForDealer
+                    ? ' <span class="status nouveau">À répondre</span>'
+                    : ''
+              }<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}${r.salespersonName ? ` · suivi par ${esc(r.salespersonName)}` : ''}</small></div>
               <span class="status ${esc(r.status)}">${STATUS[r.status]}</span>
             </div>
             ${r.transferNote ? `<p class="closed-note">↪︎ Transférée : ${esc(r.transferNote)}</p>` : ''}
@@ -816,6 +827,7 @@ const VIEWS = {
       </form>`
           : ''
       }
+      ${isAdmin() ? '<div class="card" id="backups"><h2>Sauvegardes</h2><p class="muted">Chargement…</p></div>' : ''}
       <form class="card form" id="password-form">
         <h2>Mon mot de passe</h2>
         <label>Mot de passe actuel<input name="currentPassword" type="password" required autocomplete="current-password"></label>
@@ -861,6 +873,7 @@ const VIEWS = {
         VIEWS.settings(el);
       });
     }
+    if (isAdmin()) drawBackups(el.querySelector('#backups'));
     el.querySelector('#password-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const f = new FormData(e.target);
@@ -1158,6 +1171,43 @@ async function dealershipDetail(el, id) {
   });
 }
 
+// Daily copies of the database (made by the server), to download and keep elsewhere.
+async function drawBackups(box) {
+  const { keep, backups } = await api('GET', '/api/admin/backups');
+  const size = (n) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} Mo` : `${Math.round(n / 1024)} Ko`);
+  box.innerHTML = `<h2>Sauvegardes</h2>
+    <p class="muted">Le serveur copie la base chaque jour (clients, demandes, contenus) et garde les ${keep} derniers jours. Téléchargez-en une de temps en temps pour la garder chez vous : c’est la vraie sécurité si le serveur a un problème. Les photos sont dans le dossier <code>data/uploads</code>, sauvegardé par alwaysdata.</p>
+    ${
+      backups.length
+        ? `<div class="table-wrap"><table><thead><tr><th>Jour</th><th>Taille</th><th></th></tr></thead><tbody>${backups
+            .map((b) => `<tr><td>${formatDate(b.name.slice(4, 14))}</td><td>${size(b.size)}</td><td class="row-actions"><button class="btn small" data-dl="${esc(b.name)}">Télécharger</button></td></tr>`)
+            .join('')}</tbody></table></div>`
+        : '<p>Aucune sauvegarde pour l’instant : la première se fait dans l’heure qui suit le démarrage du site.</p>'
+    }
+    <div class="actions"><button class="btn" data-now>Sauvegarder maintenant</button></div>`;
+  box.onclick = async (e) => {
+    const dl = e.target.closest('[data-dl]');
+    try {
+      if (e.target.closest('[data-now]')) {
+        await api('POST', '/api/admin/backups');
+        toast('Sauvegarde faite');
+        return drawBackups(box);
+      }
+      if (!dl) return;
+      const res = await fetch(`/api/admin/backups/${encodeURIComponent(dl.dataset.dl)}`, { headers: { Authorization: `Bearer ${state.token}` } });
+      if (!res.ok) throw new Error('Téléchargement impossible');
+      const url = URL.createObjectURL(await res.blob());
+      const a = Object.assign(document.createElement('a'), { href: url, download: `compagnon-${dl.dataset.dl}` });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  };
+}
+
 async function customerDetail(el, id) {
   const [c, { vehicles }, dealerships] = await Promise.all([
     api('GET', `/api/admin/customers/${id}`),
@@ -1195,6 +1245,7 @@ async function customerDetail(el, id) {
           }</dd></div>
           <div><dt>E-mail</dt><dd>${esc(c.email || '—')}${c.email && c.emailNotify === 0 ? ' <small class="muted">(ne veut pas recevoir les réponses par e-mail)</small>' : ''}</dd></div>
           <div><dt>Téléphone</dt><dd>${esc(c.phone || '—')}</dd></div>
+          <div><dt>Conseils et offres</dt><dd>${c.marketingOptin === 1 ? `Accepte${c.marketingOptinAt ? ` <small class="muted">(le ${formatDate(c.marketingOptinAt.slice(0, 10))})</small>` : ''}` : c.marketingOptin === 0 ? 'Refuse' : '<span class="muted">Pas encore répondu</span>'}</dd></div>
           <div><dt>Code d’accès</dt><dd>${
             c.accessCode
               ? `<code class="code">${esc(c.accessCode)}</code> <button class="btn small" data-act="copycode">Copier</button> <button class="btn small primary" data-act="resend">Renvoyer au client</button><br><small class="muted">Valable jusqu’au ${formatDate(c.accessExpiresAt.slice(0, 10))}</small>`
@@ -1218,6 +1269,16 @@ async function customerDetail(el, id) {
       <h2>Équipements cochés (${c.equipmentOwned ? c.equipmentOwned.length : 'liste du véhicule'})</h2>
       <p class="muted">${esc((c.equipmentOwned || []).join(' · ') || 'Le client n’a pas encore modifié la liste pré-cochée de son véhicule.')}</p>
     </div>
+    ${
+      c.entretien
+        ? `<div class="card"><h2>Entretien</h2>
+      <p class="muted">Échéances calculées depuis la mise en main et le carnet que le client tient dans son application (il reçoit un rappel sur son téléphone).</p>
+      <div class="detail-grid"><div><h3>Prochaines échéances</h3><ul>${c.entretien.items
+        .map((i) => `<li><strong>${esc(i.label)}</strong> : ${formatDate(i.due)} ${i.state === 'late' ? '<span class="status nouveau">En retard</span>' : i.state === 'soon' ? '<span class="status en_cours">Bientôt</span>' : ''}</li>`)
+        .join('') || '<li class="muted">Pas de date de mise en main.</li>'}</ul></div>
+      <div><h3>Carnet d’entretien</h3><ul>${c.entretien.log.map((e) => `<li>${formatDate(e.doneOn)} · ${esc(e.label)}${e.note ? ` <small class="muted">— ${esc(e.note)}</small>` : ''}</li>`).join('') || '<li class="muted">Rien de noté par le client.</li>'}</ul></div></div></div>`
+        : ''
+    }
     <div class="card">
       <h2>Demandes (${c.reports.length})</h2>
       ${

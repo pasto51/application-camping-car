@@ -253,3 +253,6 @@ tr.clickable:hover td { background: var(--bg); }
 .me .version { opacity: .6; font-size: .72rem; margin-top: .4rem; }
 .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .3rem .8rem; max-height: 220px; overflow: auto; padding: .4rem 0; }
 [hidden] { display: none !important; }
+.tile-alert { border-color: #c2410c; }
+.tile-alert strong { color: #c2410c; }
+@media (prefers-color-scheme: dark) { .tile-alert strong { color: #fb923c; } .tile-alert { border-color: #fb923c; } }

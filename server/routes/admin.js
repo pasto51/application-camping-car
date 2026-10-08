@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs');
+
 const { HttpError } = require('../http');
 const { bumpContentVersion, getSetting, setSetting } = require('../db');
 const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter, sealText, openText } = require('../auth');
@@ -8,7 +10,9 @@ const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
 const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
 const { matchLayouts } = require('../layouts');
-const { warrantyOf, SERVICES } = require('../services');
+const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
+const { backupNow, listBackups, backupFile, KEEP } = require('../backup');
+const { entretienOf } = require('../entretien');
 const { mailConfig, mailReady } = require('../notify');
 const { sendMail } = require('../mailer');
 
@@ -154,9 +158,11 @@ function register(router) {
 
   // ---- Session ----
 
-  router.post('/api/admin/login', ({ db, body, config, ip }) => {
+  router.post('/api/admin/login', ({ db, body, config, ip, origin }) => {
     // Only wrong passwords count: a whole team logging in from the dealership's connection is not blocked.
     if (loginLimiter.reached(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
+    // The address of the site, for the links of the e-mails sent by the daily tasks.
+    if (origin && !/localhost|127\.0\.0\.1/.test(origin)) setSetting(db, 'site_origin', origin);
     const email = String(body.email || '').trim().toLowerCase();
     const user = db.prepare('SELECT * FROM admins WHERE email = ?').get(email);
     if (!user || !verifyPassword(body.password || '', user.password_hash)) {
@@ -173,6 +179,28 @@ function register(router) {
 
   // ---- Statistics of use (« Statistiques ») : what customers look for, to decide the next campaigns ----
   // The administrator and the analyst see every dealership (or one); a dealership manager sees theirs.
+  // ---- Backups of the database (administrator) ----
+  router.get('/api/admin/backups', (ctx) => {
+    adminOnly(ctx);
+    return { keep: KEEP, backups: listBackups(ctx.config.dataDir) };
+  });
+  router.post('/api/admin/backups', (ctx) => {
+    adminOnly(ctx);
+    return backupNow(ctx.db, ctx.config.dataDir);
+  });
+  router.get('/api/admin/backups/:name', (ctx) => {
+    adminOnly(ctx);
+    const file = backupFile(ctx.config.dataDir, ctx.params.name);
+    if (!file) throw new HttpError(404, 'Sauvegarde introuvable');
+    ctx.res.writeHead(200, {
+      'Content-Type': 'application/octet-stream',
+      'Content-Length': fs.statSync(file).size,
+      'Content-Disposition': `attachment; filename="compagnon-${ctx.params.name}"`,
+      'Cache-Control': 'no-store',
+    });
+    fs.createReadStream(file).pipe(ctx.res);
+  });
+
   router.get('/api/admin/analytics', (ctx) => {
     const user = auth(ctx);
     if (!['admin', 'analytics', 'manager'].includes(user.role)) throw new HttpError(403, 'Réservé à l’administrateur et à l’analyste');
@@ -309,6 +337,12 @@ function register(router) {
       openReports: (() => {
         const rs = reportScope(user);
         return count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id JOIN dealerships d ON d.id = c.dealership_id WHERE r.status != 'resolu' AND ${rs.sql}${SERVICE_OF_ROLE[user.role] ? ' AND r.service = ?' : ''}`, [...rs.args, ...(SERVICE_OF_ROLE[user.role] ? [SERVICE_OF_ROLE[user.role]] : [])]);
+      })(),
+      // Requests of the user's service left without answer for more than 48 hours.
+      overdueReports: (() => {
+        const rs = reportScope(user);
+        const svc = SERVICE_OF_ROLE[user.role];
+        return count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id JOIN dealerships d ON d.id = c.dealership_id WHERE ${OVERDUE_SQL} AND ${rs.sql}${svc ? ' AND r.service = ?' : ''}`, [...rs.args, ...(svc ? [svc] : [])]);
       })(),
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       // « Mes clients » recap, for whoever follows customers (no e-mail is sent to salespeople).
@@ -918,7 +952,7 @@ function register(router) {
 
   // ---- Customers ----
 
-  const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.cell_number, c.vehicle_year, c.email_notify, v.model_year,
+  const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.cell_number, c.vehicle_year, c.email_notify, c.marketing_optin, c.marketing_optin_at, v.model_year,
       c.handover_date, c.warranty_end, c.warranty_ext_end, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
       d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name, c.salesperson_id, s.name AS salesperson_name, s.email AS salesperson_email,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
@@ -1064,6 +1098,8 @@ function register(router) {
       accessCode: mine && enc ? openText(enc, ctx.config.secret) : null,
       ...customerStateSummary(ctx.db, customer.id),
       reports: camelAll(ctx.db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id)),
+      // Maintenance due and the logbook kept by the customer in the app.
+      entretien: entretienOf(ctx.db, ctx.db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id)),
     };
   });
 
@@ -1158,12 +1194,13 @@ function register(router) {
       where.push('c.salesperson_id = ?');
       args.push(user.id);
     }
+    if (ctx.query.get('overdue') === '1') where.push(OVERDUE_SQL);
     const list = camelAll(
       ctx.db
         .prepare(
           `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.cell_number, c.salesperson_id, c.dealership_id AS customer_dealership_id, s.name AS salesperson_name,
              c.handover_date, c.warranty_end, c.warranty_ext_end, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
-             p.title AS problem_title
+             p.title AS problem_title, ${WAITING_SINCE} AS waiting_since, CASE WHEN ${OVERDUE_SQL} THEN 1 ELSE 0 END AS overdue
            FROM reports r
            JOIN customers c ON c.id = r.customer_id
            JOIN dealerships d ON d.id = c.dealership_id

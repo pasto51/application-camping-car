@@ -39,6 +39,7 @@ function createApp(options = {}) {
     secret: options.secret || process.env.SECRET || loadOrCreateSecret(dataDir),
     appVersion: computeAppVersion(),
     // Test mode: back-office opens without a password while the file data/acces-libre exists (or ACCES_LIBRE=1).
+    dataDir,
     isOpenAccess: () => (options.openAccess ?? process.env.ACCES_LIBRE === '1') || fs.existsSync(path.join(dataDir, 'acces-libre')),
   };
   const db = options.db || openDatabase(options.dbFile || path.join(dataDir, 'app.db'));
@@ -85,6 +86,8 @@ function createApp(options = {}) {
     };
     let result;
     for (const handler of found.route.handlers) result = await handler(ctx);
+    // A handler that sent a file itself (e.g. a backup to download) has already answered.
+    if (res.headersSent) return;
     sendJson(res, 200, result ?? { ok: true }, req);
   }
 
@@ -127,7 +130,7 @@ function createApp(options = {}) {
     }
   });
 
-  return { server, db, config };
+  return { server, db, config, notify, uploads, log };
 }
 
 // Without a SECRET env var, a random one is kept in the data directory so sessions survive restarts.

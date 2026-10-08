@@ -4,6 +4,7 @@ const { HttpError } = require('../http');
 const { transaction, getSetting, stripVin } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
+const { KINDS, entretienOf, logOf } = require('../entretien');
 const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
@@ -288,6 +289,8 @@ function register(router) {
     if (body.email !== undefined) db.prepare('UPDATE customers SET email = ? WHERE id = ?').run(optEmail(body.email), customer.id);
     if (body.phone !== undefined) db.prepare('UPDATE customers SET phone = ? WHERE id = ?').run(optStr(body.phone, 40), customer.id);
     if (body.emailNotify !== undefined) db.prepare('UPDATE customers SET email_notify = ? WHERE id = ?').run(body.emailNotify ? 1 : 0, customer.id);
+    // Consent to advice and offers (campaigns), with its date: the proof asked by the law.
+    if (body.marketing !== undefined) db.prepare("UPDATE customers SET marketing_optin = ?, marketing_optin_at = datetime('now') WHERE id = ?").run(body.marketing ? 1 : 0, customer.id);
     if (body.cellNumber !== undefined) db.prepare('UPDATE customers SET cell_number = ? WHERE id = ?').run(optStr(body.cellNumber, 40), customer.id);
     if (body.vehicleYear !== undefined) db.prepare('UPDATE customers SET vehicle_year = ? WHERE id = ?').run(optStr(body.vehicleYear, 10), customer.id);
     return session(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id)).customer;
@@ -375,6 +378,24 @@ function register(router) {
   });
 
   router.get('/api/me/requests', (ctx) => requestsOf(ctx.db, requireCustomer(ctx).id));
+
+  // Maintenance: what is due (from the handover and the logbook) and the logbook the customer keeps.
+  router.get('/api/me/entretien', (ctx) => entretienOf(ctx.db, requireCustomer(ctx)));
+  router.post('/api/me/entretien', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const kind = KINDS[ctx.body.kind] ? ctx.body.kind : null;
+    if (!kind) throw new HttpError(400, 'Choisissez ce qui a été fait');
+    const doneOn = optDate(ctx.body.doneOn) || new Date().toISOString().slice(0, 10);
+    if (doneOn > new Date().toISOString().slice(0, 10)) throw new HttpError(400, 'La date ne peut pas être dans le futur');
+    if (ctx.db.prepare('SELECT COUNT(*) AS n FROM maintenance_log WHERE customer_id = ?').get(customer.id).n >= 500) throw new HttpError(400, 'Carnet complet');
+    ctx.db.prepare('INSERT INTO maintenance_log (customer_id, done_on, kind, note) VALUES (?, ?, ?, ?)').run(customer.id, doneOn, kind, optStr(ctx.body.note, 300));
+    return entretienOf(ctx.db, customer);
+  });
+  router.delete('/api/me/entretien/:id', (ctx) => {
+    const customer = requireCustomer(ctx);
+    ctx.db.prepare('DELETE FROM maintenance_log WHERE id = ? AND customer_id = ?').run(Number(ctx.params.id), customer.id);
+    return entretienOf(ctx.db, customer);
+  });
 
   // Usage statistics, without saying who: what is searched, which problems are opened, which advice is reached,
   // « Demander au magasin », which equipment is looked at. Only the dealership, the vehicle type and the month are kept.
@@ -468,6 +489,7 @@ function register(router) {
       dealership: s.dealership,
       appData: state,
       requests: requestsOf(db, customer.id),
+      maintenanceLog: logOf(db, customer.id).map((e) => ({ doneOn: e.done_on, kind: e.kind, label: KINDS[e.kind]?.label, note: e.note })),
     };
   });
 

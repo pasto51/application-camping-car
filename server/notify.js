@@ -207,7 +207,25 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
     });
   }
 
-  return { customerWrote, dealershipAnswered, welcome, push };
+  // Once a day: the requests of a service left without answer for more than 48 hours, in one e-mail to its mailbox.
+  async function overdueDigest({ to, dealer, serviceName, reports, url }) {
+    const lines = reports.map((r) => `• ${r.title} — ${r.client}, depuis le ${r.since}`);
+    const subject = `${reports.length} demande${reports.length > 1 ? 's' : ''} sans réponse depuis plus de 48 h · ${serviceName}`;
+    const html = emailHtml({
+      dealer: { name: `${dealer.name || 'Concession'} · ${serviceName}` },
+      intro: `Ces demandes de clients attendent une réponse depuis plus de 48 heures :<br><br>${reports
+        .map((r) => `• <b>${escHtml(r.title)}</b> — ${escHtml(r.client)}, depuis le ${escHtml(r.since)}`)
+        .join('<br>')}`,
+      button: 'Répondre dans le back-office',
+      url,
+      note: 'Ce rappel est envoyé une fois par jour tant qu’une demande reste sans réponse.',
+      footer: 'E-mail envoyé par l’application Compagnon de bord.',
+    });
+    const text = ['Ces demandes de clients attendent une réponse depuis plus de 48 heures :', '', ...lines, '', `Répondre : ${url}`].join('\n');
+    return mail(db, [to], subject, text, log, { html, fromName: `${dealer.name || 'Compagnon de bord'} via Compagnon de bord` });
+  }
+
+  return { customerWrote, dealershipAnswered, welcome, push, overdueDigest };
 }
 
 module.exports = { createNotifier, mailConfig, mailReady, emailHtml };

@@ -112,6 +112,21 @@ ADMIN_EMAIL=admin@exemple.fr ADMIN_PASSWORD=motdepasse123 npm start
 
 Tests : `npm test`
 
+## Sauvegardes
+
+- Chaque jour (à partir de 7 h), le serveur copie la base dans `data/sauvegardes/app-AAAA-MM-JJ.db` et garde les 14 derniers jours.
+- Back-office → **Paramètres → Sauvegardes** (administrateur) : liste, « Sauvegarder maintenant » et « Télécharger ». Téléchargez-en une régulièrement pour la garder chez vous.
+- Les photos sont dans `data/uploads` (sauvegardé par alwaysdata avec le reste du compte).
+- **Restaurer** : sur alwaysdata, **Web → Sites → Arrêter** le site, puis dans le terminal :
+  ```bash
+  cd ~/application-camping-car && cp data/app.db data/app-avant-restauration.db && cp data/sauvegardes/app-AAAA-MM-JJ.db data/app.db && rm -f data/app.db-wal data/app.db-shm
+  ```
+  puis **Redémarrer** le site.
+
+## Tâches quotidiennes
+
+Le serveur fait aussi chaque jour : les **rappels d'entretien** (notification sur le téléphone des clients 45 jours avant une échéance : étanchéité, révision, contrôle gaz, chauffage, hivernage, remise en route ; calculées depuis la mise en main et le carnet d'entretien que le client tient dans l'appli) et un **e-mail par service** (SAV, magasin) listant les demandes **sans réponse depuis plus de 48 h**.
+
 ## Mise en ligne (cloud)
 
 Les données (base SQLite et photos) sont dans le dossier `DATA_DIR`, qui doit être **persistant**.

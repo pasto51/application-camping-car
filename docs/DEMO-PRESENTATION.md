@@ -33,12 +33,13 @@ Mot de passe de tous les comptes démo : `demo1234`. Les liens clients ne serven
    - **Diagnostic** : une panne guidée pas à pas, le client teste pièce par pièce (ex. « Mon store s'ouvre un peu en roulant », « Mon porte-vélos bouge en roulant »).
    - **Confort = vente** : « J'ai de la buée sur le pare-brise », « Ma batterie ne tient pas deux jours », « Mon camping-car balance en virage », « Je ne sais jamais si mes pneus sont bien gonflés », « Monter dans la cellule est difficile »… (41 situations) l'appli conseille le produit (isolant extérieur, lithium ou solaire, suspensions pneumatiques, capteurs de pression, marchepied électrique) et « Demander au magasin » envoie la demande au magasin.
    - **🛒 Demander une pièce** : photo, modèle, référence. Sous garantie, la demande part **au SAV** ; hors garantie, **au magasin**.
-   - **Mon espace client** : ses infos, sa garantie, son code, ses notifications, l'export ou la suppression de ses données (RGPD).
+   - **Entretien à prévoir** sur l'accueil (test d'étanchéité, révision, hivernage…) : « Prendre rendez-vous » en un geste, ou « C'est fait ». Rappel sur le téléphone 45 jours avant.
+   - **Mon espace client** : ses infos, sa garantie, son **carnet d'entretien** (il note ce qui est fait, l'appli calcule les prochaines dates), son code, ses notifications, son accord pour les **conseils et offres**, l'export ou la suppression de ses données (RGPD).
 2. **La concession, sur le PC**
    - **Responsable** : tableau de bord, toutes les demandes, les clients par commercial, la fiche de la concession et son équipe.
-   - **SAV** puis **Magasin** : chacun traite ses demandes, répond et transfère à l'autre service avec un motif.
+   - **SAV** puis **Magasin** : chacun traite ses demandes, répond et transfère à l'autre service avec un motif. Une demande **sans réponse depuis plus de 48 h** est signalée (⏰ tuile et filtre) et rappelée chaque jour par e-mail au service (ex. SAV de Rennes).
    - **Commercial** (Julien) : ses clients et le récap de leurs demandes, sans e-mails inutiles.
-   - Fiche client : **Modifier la garantie**, renvoyer le code d'accès.
+   - Fiche client : **Modifier la garantie**, renvoyer le code d'accès, l'**entretien** (échéances et carnet du client), son accord pour les conseils et offres.
    - **Statistiques** (compte `analyste@demo.test`, ou le responsable pour sa concession) : ce que les clients cherchent, la saisonnalité (buée et froid l'hiver, chaleur l'été), les produits conseillés et demandés, et des **idées de campagne** calculées toutes seules. Pour un **groupement de concessions** : `analyste.ouest@demo.test` ne voit que Nantes et Rennes.
 3. **Les arguments à montrer**
    - **Magasin détaché** (concession de Rennes) : il ne voit que ses demandes et pas les clients de la concession ; la concession ne voit pas ses demandes.

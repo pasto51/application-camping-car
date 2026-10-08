@@ -356,6 +356,21 @@ async function main() {
   await part('Yves', { need: 'piece', equipmentName: 'WC', product: 'Joint de cassette', model: 'Thetford C223' });
   await ask('Anne', { title: 'Contrôle gaz', message: 'Je voudrais le contrôle gaz avant l’hiver.' });
 
+  // ---- Maintenance logbooks kept by the customers, consent to offers, and requests left without answer ----
+  const logbook = (who, entries) => entries.forEach(([kind, monthsAgo, note]) => call('POST', '/api/me/entretien', { kind, doneOn: day(monthsAgo), note }, C[who].token));
+  await Promise.all([
+    logbook('Henri', [['etanch', 11, 'Concession, aucune trace d’humidité'], ['revision', 11, 'Vidange et filtres'], ['hiv', 12, null]]),
+    logbook('Martine', [['revision', 14, 'Garage près de chez moi'], ['pneus', 20, '4 pneus neufs']]),
+    logbook('Bernard', [['etanch', 13, null], ['gaz', 30, 'Détendeur changé']]),
+  ]);
+  await call('PUT', '/api/me/info', { marketing: true }, C.Paul.token);
+  await call('PUT', '/api/me/info', { marketing: true }, C.Isabelle.token);
+  await call('PUT', '/api/me/info', { marketing: false }, C.Martine.token);
+  // Two requests waiting for more than 48 hours (shown with « ⏰ » in the back-office, and e-mailed once a day).
+  for (const title of ['Accessoire : Porte-vélos', 'Bruit de roulement']) {
+    db.prepare("UPDATE reports SET created_at = datetime('now', '-3 days'), updated_at = datetime('now', '-3 days') WHERE title = ? AND customer_id IN (SELECT id FROM customers WHERE dealership_id IN (?, ?, ?))").run(title, D.nantes.id, D.rennes.id, D.vannes.id);
+  }
+
   // ---- 12 months of use of the app (anonymous statistics), with the seasons, for the « Statistiques » page ----
   const statsCount = seedUsage(db, Object.values(D).map((d) => d.id));
 

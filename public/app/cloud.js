@@ -693,15 +693,79 @@
       home.insertBefore(ann, home.firstChild);
     }
     home.insertBefore(req, home.firstChild); home.appendChild(acc);
+    // Maintenance coming up (or late), near the top of the home screen.
+    var ent = document.createElement('div'); ent.id = 'cloudent'; ent.className = 'card cloud-ent'; ent.hidden = true;
+    home.insertBefore(ent, req.nextSibling);
+    ent.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-ent-done]'); if (!b) return;
+      addLog({ kind: b.dataset.entDone }).then(function () { toast('Noté dans votre carnet d’entretien'); });
+    });
+    loadEntretien();
     acc.addEventListener('click', function (e) {
       var b = e.target.closest('[data-acc]'); if (!b) return;
       if (b.dataset.acc === 'space') openSpace();
       if (b.dataset.acc === 'part') partRequest(null);
+      if (b.dataset.acc === 'mk-yes' || b.dataset.acc === 'mk-no') setMarketing(b.dataset.acc === 'mk-yes');
     });
     renderAccount();
   }
 
   // Home card: who is signed in, backup status, and the two entries of the client space.
+  // ---------- Maintenance: reminders on the home screen and the logbook kept by the customer ----------
+
+  var ENT = null;
+  function fmtDay(d) { return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+  function loadEntretien() {
+    return api('GET', '/api/me/entretien').then(function (r) { ENT = r; renderEntretien(); return r; }).catch(function () { return ENT; });
+  }
+  function addLog(body) {
+    return api('POST', '/api/me/entretien', body).then(function (r) { ENT = r; renderEntretien(); return r; }).catch(function (err) { toast(err.message); throw err; });
+  }
+  function renderEntretien() {
+    var el = document.getElementById('cloudent'); if (!el || !ENT) return;
+    var due = ENT.items.filter(function (i) { return i.state !== 'later'; }).slice(0, 3);
+    el.hidden = !due.length;
+    el.innerHTML = '<p class="eyebrow">Entretien à prévoir</p>' + due.map(function (i) {
+      return '<div class="cloud-ent-item' + (i.state === 'late' ? ' late' : '') + '"><p><b>' + esc(i.label) + '</b><br><span class="sub">' +
+        (i.state === 'late' ? 'Prévu le ' + esc(fmtDay(i.due)) + ' : à faire dès que possible' : 'À faire avant le ' + esc(fmtDay(i.due))) + '</span></p>' +
+        '<div class="cloud-ent-btns"><button class="btn" type="button" data-rdv="' + esc(i.rdv) + '" data-ctx="' + esc('Rappel : ' + i.label + ' à prévoir (le ' + fmtDay(i.due) + ').') + '">Prendre rendez-vous</button>' +
+        '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
+    }).join('');
+  }
+  function carnetHtml() {
+    if (!ENT) return '<p class="sub">Chargement…</p>';
+    var next = ENT.items.map(function (i) {
+      return '<li><b>' + esc(i.label) + '</b> : ' + (i.state === 'late' ? '<span class="cloud-late">en retard (' + esc(fmtDay(i.due)) + ')</span>' : esc(fmtDay(i.due))) + '</li>';
+    }).join('');
+    var log = ENT.log.length ? ENT.log.map(function (e) {
+      return '<li><b>' + esc(fmtDay(e.doneOn)) + '</b> · ' + esc(e.label) + (e.note ? '<br><span class="sub">' + esc(e.note) + '</span>' : '') +
+        ' <button class="lnk cloud-del" type="button" data-sp="logdel" data-id="' + e.id + '" aria-label="Retirer">Retirer</button></li>';
+    }).join('') : '<li class="sub">Rien de noté pour l’instant.</li>';
+    var today = new Date().toISOString().slice(0, 10);
+    return '<p class="eyebrow">Prochaines échéances</p><ul class="cloud-list">' + next + '</ul>' +
+      '<p class="eyebrow">Ce qui a été fait</p><ul class="cloud-list">' + log + '</ul>' +
+      '<details class="cloud-more"><summary>＋ Noter une intervention</summary>' +
+      '<label class="eyebrow">Quoi</label><select class="search" name="kind">' + ENT.kinds.map(function (k) { return '<option value="' + esc(k[0]) + '">' + esc(k[1]) + '</option>'; }).join('') + '</select>' +
+      '<label class="eyebrow">Quand</label><input class="search" type="date" name="doneOn" value="' + today + '" max="' + today + '">' +
+      '<label class="eyebrow">Note (facultatif)</label><input class="search" name="note" maxlength="300" placeholder="Garage, kilométrage, remarque…">' +
+      '<button class="btn">Enregistrer</button></details>';
+  }
+
+  // Consent to the dealership's advice and offers (campaigns), asked once, separately from the answers to requests.
+  function setMarketing(yes) {
+    return api('PUT', '/api/me/info', { marketing: yes }).then(function (cust) {
+      session.customer = cust; saveSession(); renderAccount();
+      toast(yes ? 'Merci : vous recevrez les conseils et offres de votre concession' : 'C’est noté : pas de conseils ni d’offres');
+    }).catch(function (err) { toast(err.message); });
+  }
+  function marketingAsk() {
+    var c = (session && session.customer) || {};
+    if (c.marketingOptin === 0 || c.marketingOptin === 1) return '';
+    var d = (session && session.dealership && session.dealership.name) || 'votre concession';
+    return '<div class="cloud-ask"><p><b>Recevoir les conseils de ' + esc(d) + ' ?</b><br><span class="sub">Entretien de saison, nouveautés et offres du magasin. Vous pourrez changer d’avis dans votre espace client.</span></p>' +
+      '<div class="cloud-ask-btns"><button class="btn" data-acc="mk-yes" type="button">Oui, volontiers</button><button class="btn alt" data-acc="mk-no" type="button">Non merci</button></div></div>';
+  }
+
   function renderAccount() {
     var el = document.getElementById('cloudacc'); if (!el || !session) return;
     var n = Object.keys(pending).length, c = session.customer || {};
@@ -709,7 +773,7 @@
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
     // Simple and large: who I am, who to contact, two buttons. The backup status stays small at the bottom.
     el.innerHTML = '<p class="eyebrow">Mon espace client</p><p class="cloud-who"><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
-      (session.dealership ? '<br><span class="sub">' + esc(session.dealership.name) + '</span>' : '') + '</p>' + contactsHtml() +
+      (session.dealership ? '<br><span class="sub">' + esc(session.dealership.name) + '</span>' : '') + '</p>' + marketingAsk() + contactsHtml() +
       '<div class="cloud-acc-btns"><button class="btn" data-acc="part" type="button">🛒 Demander une pièce</button><button class="btn alt" data-acc="space" type="button">👤 Mon espace client</button></div>' +
       '<p class="sub cloud-saved">' + esc(status) + '</p>';
   }
@@ -772,8 +836,10 @@
       '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" autocomplete="email" value="' + esc(c.email || '') + '">' +
       '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" autocomplete="tel" value="' + esc(c.phone || '') + '">' +
       '<button class="btn">Enregistrer</button></form>' +
+      '<section><h3>Conseils et offres</h3><label class="cloud-check"><input type="checkbox" data-sp="marketing"' + (c.marketingOptin === 1 ? ' checked' : '') + '> Recevoir les conseils de saison et les offres de ' + esc(d.name || 'ma concession') + '</label></section>' +
       '<section><h3>Être prévenu des réponses</h3><div data-push></div>' +
       '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail ci-dessus)') + '</label></section>' +
+      '<form data-spf="log"><h3>Mon carnet d’entretien</h3><p class="sub">Notez ce qui est fait : l’application calcule les prochaines dates et vous les rappelle.</p><div data-carnet>' + carnetHtml() + '</div></form>' +
       '<section><h3>Mon code d’accès</h3><p class="sub">À garder : avec votre nom, il permet de retrouver l’application sur un autre téléphone.</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
       '<details class="cloud-more cloud-options"><summary>Autres options</summary>' +
       '<p class="sub">L’application enregistre pour votre concession : vos coordonnées, votre véhicule, vos équipements, vos photos, vos demandes et messages, et des statistiques anonymes d’utilisation (ce qui est cherché, sans savoir qui). Ni votre VIN ni votre immatriculation.</p>' +
@@ -785,6 +851,7 @@
       '<button type="button" class="btn alt cloud-close-bottom" data-sp="close">Fermer</button>' +
       '</div>';
     document.body.appendChild(m);
+    loadEntretien().then(function () { var cb = m.querySelector('[data-carnet]'); if (cb) cb.innerHTML = carnetHtml(); });
     document.body.style.overflow = 'hidden';
     function close() { m.remove(); document.body.style.overflow = ''; renderAccount(); }
     function drawPush() { pushState().then(function (st) { var p = m.querySelector('[data-push]'); if (p) p.innerHTML = pushHtml(st); }); }
@@ -793,6 +860,10 @@
       var f = e.target.closest('[data-spf]'); if (!f) return;
       e.preventDefault();
       var val = function (n) { return f.elements[n] ? f.elements[n].value.trim() : undefined; }, body;
+      if (f.dataset.spf === 'log') {
+        addLog({ kind: val('kind'), doneOn: val('doneOn'), note: val('note') }).then(function () { m.querySelector('[data-carnet]').innerHTML = carnetHtml(); toast('Noté dans votre carnet'); });
+        return;
+      }
       if (f.dataset.spf === 'me') body = { firstName: val('firstName'), email: val('email'), phone: val('phone') };
       else {
         if (val('vin')) lsSet(VIN_KEY, val('vin')); else lsDel(VIN_KEY);
@@ -801,6 +872,10 @@
       api('PUT', '/api/me/info', body).then(function (cust) { session.customer = cust; saveSession(); toast('Enregistré'); }).catch(function (err) { toast(err.message); });
     });
     m.addEventListener('change', function (e) {
+      if (e.target.dataset.sp === 'marketing') {
+        api('PUT', '/api/me/info', { marketing: e.target.checked }).then(function (cust) { session.customer = cust; saveSession(); toast(e.target.checked ? 'Conseils et offres activés' : 'Plus de conseils ni d’offres'); }).catch(function (err) { toast(err.message); });
+        return;
+      }
       if (e.target.dataset.sp !== 'mailnotif') return;
       api('PUT', '/api/me/info', { emailNotify: e.target.checked }).then(function (cust) { session.customer = cust; saveSession(); toast(e.target.checked ? 'Réponses par e-mail activées' : 'Plus d’e-mails de réponse'); }).catch(function (err) { toast(err.message); });
     });
@@ -826,6 +901,9 @@
         }).catch(function (err) { toast(err.message); });
       }
       if (a === 'update') checkUpdates(true);
+      if (a === 'logdel') {
+        api('DELETE', '/api/me/entretien/' + b.dataset.id).then(function (r) { ENT = r; renderEntretien(); m.querySelector('[data-carnet]').innerHTML = carnetHtml(); }).catch(function (err) { toast(err.message); });
+      }
       if (a === 'logout') {
         if (!confirm('Se déconnecter de ce téléphone ? Vos données restent sauvegardées ; votre code d’accès permettra de les retrouver.')) return;
         api('POST', '/api/me/logout').catch(function () {}).then(function () { session = null; saveSession(); clearLocal(); location.reload(); });

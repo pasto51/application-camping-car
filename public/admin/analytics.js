@@ -92,6 +92,32 @@ function ideas(d) {
   return out.length ? `<ul class="viz-ideas">${out.join('')}</ul>` : '<p class="muted">Pas encore assez de données pour proposer des campagnes.</p>';
 }
 
+// Everything on the page in one file that opens in Excel (semicolons, accents kept): one table after another.
+function exportCsv(d) {
+  const cell = (v) => {
+    const t = v === null || v === undefined ? '' : String(v);
+    return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const table = (title, head, rows) => [[title], head, ...rows, []].map((r) => r.map(cell).join(';')).join('\r\n');
+  const parts = [
+    table('Activité par mois', ['Mois', 'Recherches', 'Problèmes consultés', 'Conseils affichés', 'Demandes au magasin', 'Fiches équipement'], d.perMonth.map((m) => [m.month, m.search, m.diag, m.result, m.shop, m.equip])),
+    table('Problèmes les plus consultés', ['Problème', 'Consultations', 'Période précédente', 'Confort'], d.topProblems.map((p) => [p.label, p.count, p.previous, p.comfort ? 'oui' : ''])),
+    table('Produits conseillés', ['Produit', 'Conseillé', 'Demandé au magasin'], d.topProducts.map((p) => [p.product, p.shown, p.asked])),
+    table('Recherches', ['Recherche', 'Fois', 'Sans réponse'], d.topSearches.map((x) => [x.query, x.count, x.noResult])),
+    table('Recherches sans réponse', ['Recherche', 'Fois'], d.unanswered.map((x) => [x.query, x.count])),
+    table('Saisonnalité', ['Problème', ...d.seasonality.months], d.seasonality.rows.map((r) => [r.label, ...r.counts])),
+    table('Équipements', ['Équipement', 'Clients équipés', 'Fiches ouvertes'], d.equipment.map((x) => [x.name, x.owners, x.views])),
+    table('Types de véhicules', ['Type', 'Problèmes consultés'], d.vehicleTypes.map((x) => [TYPES[x.type] || x.type, x.n])),
+  ];
+  const blob = new Blob(['\ufeff' + parts.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: `statistiques-${d.months}-mois-${new Date().toISOString().slice(0, 10)}.csv` });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
 function tile(label, now, before, hint) {
   return `<div class="tile viz-tile"><strong>${fmt(now)}</strong><span>${esc(label)}</span>${before === undefined ? '' : trend(now, before)}${hint ? `<small class="muted">${esc(hint)}</small>` : ''}</div>`;
 }
@@ -106,7 +132,7 @@ export function registerAnalyticsView(VIEWS, h) {
     const t = d.totals, p = d.prevTotals;
     const askRate = t.result ? Math.round(((t.shop || 0) / t.result) * 100) : 0;
     const empty = !Object.values(t).some(Boolean);
-    el.innerHTML = `${pageHeader('Statistiques')}
+    el.innerHTML = `${pageHeader('Statistiques', canSeeAll() ? '<button class="btn" data-act="export">📥 Exporter (Excel)</button>' : '')}
       <p class="muted">Ce que vos clients cherchent dans l’application, sans savoir qui : pour choisir vos prochaines campagnes. Comparaison avec la période précédente de même durée.</p>
       ${d.followed ? `<p><strong>Concessions suivies :</strong> ${d.followed.map(esc).join(', ')}</p>` : ''}
       <div class="filter-bar">
@@ -207,6 +233,7 @@ export function registerAnalyticsView(VIEWS, h) {
       VIEWS.analytics(el);
     });
     el.onclick = (e) => {
+      if (e.target.closest('[data-act="export"]')) return exportCsv(d);
       const b = e.target.closest('[data-act="months"]');
       if (!b) return;
       f.months = Number(b.dataset.value);

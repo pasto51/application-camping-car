@@ -42,4 +42,10 @@ function serviceEmail(db, dealershipId, service) {
   return service === 'magasin' ? d.store_email || d.sav_email || d.email : d.sav_email || d.email;
 }
 
-module.exports = { SERVICES, warrantyOf, routeRequest, serviceEmail, addYears };
+// A request waits for an answer from the dealership: the customer wrote last (or it is new and nobody answered).
+// Overdue: waiting for more than 48 hours. SQL condition on the alias « r » (reports).
+const LAST_AUTHOR = "(SELECT m.author FROM report_messages m WHERE m.report_id = r.id ORDER BY m.id DESC LIMIT 1)";
+const WAITING_SINCE = 'COALESCE((SELECT MAX(m.created_at) FROM report_messages m WHERE m.report_id = r.id), r.created_at)';
+const OVERDUE_SQL = `r.status != 'resolu' AND COALESCE(${LAST_AUTHOR}, CASE WHEN r.status = 'nouveau' THEN 'client' END) = 'client' AND ${WAITING_SINCE} < datetime('now', '-48 hours')`;
+
+module.exports = { SERVICES, warrantyOf, routeRequest, serviceEmail, addYears, OVERDUE_SQL, WAITING_SINCE };

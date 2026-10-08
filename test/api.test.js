@@ -491,6 +491,86 @@ test('analyst of a group of dealerships: sees only the dealerships they follow',
   assert.equal(all.followed, null);
 });
 
+test('backups: a consistent copy of the database, listed and downloadable by the administrator only', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const b = (await call('POST', '/api/admin/backups', { token: admin, body: {} })).data;
+  assert.match(b.name, /^app-\d{4}-\d{2}-\d{2}\.db$/);
+  assert.ok(b.size > 10000);
+  assert.equal((await call('GET', '/api/admin/backups', { token: admin })).data.backups[0].name, b.name);
+  const res = await fetch(`${base}/api/admin/backups/${b.name}`, { headers: { Authorization: `Bearer ${admin}` } });
+  assert.equal(res.status, 200);
+  assert.equal(Buffer.from(await res.arrayBuffer()).subarray(0, 15).toString(), 'SQLite format 3');
+  assert.equal((await call('GET', '/api/admin/backups/..%2Fapp.db', { token: admin })).status, 404);
+  await call('POST', '/api/admin/users', { token: admin, body: { email: 'sav.backup@test.fr', password: 'motdepasse1', role: 'editor' } });
+  const editor = await login('sav.backup@test.fr', 'motdepasse1');
+  assert.equal((await call('GET', '/api/admin/backups', { token: editor })).status, 403);
+});
+
+test('maintenance: due dates from the handover and the logbook, reminders, consent to offers', async () => {
+  const { dueItems } = require('../server/entretien');
+  // Handover 13 months ago: the yearly watertightness test is late; noted as done a month ago, next one in 11 months.
+  const c = { handover_date: '2025-09-15' };
+  let items = dueItems(c, [], '2026-10-15');
+  assert.equal(items.find((i) => i.kind === 'etanch').state, 'late');
+  items = dueItems(c, [{ kind: 'etanch', done_on: '2026-09-20' }], '2026-10-15');
+  assert.equal(items.find((i) => i.kind === 'etanch').due, '2027-09-20');
+  // Winterizing: due on 15 October, then next year once done.
+  assert.equal(dueItems(c, [], '2026-10-01').find((i) => i.kind === 'hiv').state, 'soon');
+  assert.equal(dueItems(c, [{ kind: 'hiv', done_on: '2026-10-10' }], '2026-10-12').find((i) => i.kind === 'hiv').due, '2027-10-15');
+  // A vehicle delivered two weeks ago: winterizing yes, but no heating revision before next year.
+  const fresh = dueItems({ handover_date: '2026-09-26' }, [], '2026-10-08');
+  assert.equal(fresh.find((i) => i.kind === 'hiv').due, '2026-10-15');
+  assert.equal(fresh.find((i) => i.kind === 'chauf').due, '2027-10-01');
+
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const h = (await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Carnet', handoverDate: '2025-01-10' } } })).data;
+  const e = (await call('GET', '/api/me/entretien', { token: h.token })).data;
+  assert.ok(e.items.some((i) => i.kind === 'etanch' && i.state === 'late'));
+  const after = (await call('POST', '/api/me/entretien', { token: h.token, body: { kind: 'etanch', note: 'Concession, OK' } })).data;
+  assert.equal(after.log[0].label, 'Test d’étanchéité');
+  assert.notEqual(after.items.find((i) => i.kind === 'etanch').state, 'late');
+  assert.equal((await call('POST', '/api/me/entretien', { token: h.token, body: { kind: 'etanch', doneOn: '2099-01-01' } })).status, 400);
+  // The dealership sees it in the customer's record
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const rec = (await call('GET', `/api/admin/customers/${h.customer.id}`, { token: admin })).data;
+  assert.equal(rec.entretien.log[0].note, 'Concession, OK');
+  // Consent to advice and offers, with its date
+  assert.equal(rec.marketingOptin, null);
+  await call('PUT', '/api/me/info', { token: h.token, body: { marketing: true } });
+  const rec2 = (await call('GET', `/api/admin/customers/${h.customer.id}`, { token: admin })).data;
+  assert.equal(rec2.marketingOptin, 1);
+  assert.ok(rec2.marketingOptinAt);
+  // Daily tasks: a backup, and one reminder on the phone (only once for the same date)
+  const { runDue } = require('../server/jobs');
+  app.db.prepare("INSERT INTO push_subscriptions (customer_id, endpoint, p256dh, auth) VALUES (?, 'https://push.test/x', 'k', 'a')").run(h.customer.id);
+  const pushed = [];
+  const fake = { db: app.db, config: { dataDir }, log: () => {}, notify: { push: async (id, p) => (pushed.push([id, p.title]), 1) } };
+  await runDue(fake, { force: true });
+  assert.equal(pushed.filter(([id]) => id === h.customer.id).length, 1);
+  assert.match(pushed.find(([id]) => id === h.customer.id)[1], /^À (faire|prévoir) : /);
+  const again = pushed.length;
+  await runDue(fake, { force: true });
+  assert.ok(pushed.filter(([id, t]) => id === h.customer.id && t === pushed.find(([i]) => i === h.customer.id)[1]).length === 1, 'not twice for the same date');
+  assert.ok(pushed.length >= again);
+});
+
+test('requests without answer for more than 48 hours: badge, filter, dashboard tile', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const h = (await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Attente' } } })).data;
+  const old = (await call('POST', '/api/me/requests', { token: h.token, body: { title: 'Vieille demande', message: 'Bonjour ?' } })).data;
+  const fresh = (await call('POST', '/api/me/requests', { token: h.token, body: { title: 'Demande du jour', message: 'Bonjour' } })).data;
+  app.db.prepare("UPDATE reports SET created_at = datetime('now', '-3 days') WHERE id = ?").run(old.id);
+  const list = (await call('GET', '/api/admin/reports', { token: admin })).data;
+  assert.equal(list.find((r) => r.id === old.id).overdue, 1);
+  assert.equal(list.find((r) => r.id === fresh.id).overdue, 0);
+  assert.ok((await call('GET', '/api/admin/reports?overdue=1', { token: admin })).data.every((r) => r.overdue === 1));
+  assert.ok((await call('GET', '/api/admin/stats', { token: admin })).data.overdueReports >= 1);
+  // Once the dealership answers, it is no longer overdue
+  await call('PUT', `/api/admin/reports/${old.id}`, { token: admin, body: { status: 'en_cours', message: 'On s’en occupe' } });
+  assert.equal((await call('GET', '/api/admin/reports', { token: admin })).data.find((r) => r.id === old.id).overdue, 0);
+});
+
 test('« rester connecté » gives a 15-day session, otherwise 12 hours', async () => {
   const exp = (t) => JSON.parse(Buffer.from(t.split('.')[0], 'base64url').toString()).exp - Date.now() / 1000;
   const long = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123', remember: true } })).data.token;
