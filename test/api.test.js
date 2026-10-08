@@ -54,7 +54,7 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   const diags = (await call('GET', '/api/admin/diagnostics', { token: admin })).data;
   assert.equal(diags.length, 56);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
-  assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 163);
+  assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 188);
 
   // Content corrections from the simulations are applied
   const truma = (await call('GET', '/api/admin/diagnostics/g_truma', { token: admin })).data;
@@ -74,7 +74,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
 
   // Data the app runs on
   const { data } = await call('GET', '/api/app/data', { token });
-  assert.equal(data.equipment.length, 163);
+  assert.equal(data.equipment.length, 188);
   assert.equal(data.diagnostics.length, 56);
   assert.equal(data.vehicle.heroName, 'V114');
   assert.equal(data.vehicle.photos.length, 53);
@@ -293,7 +293,9 @@ test('a few words find the layout and the equipment they name', async () => {
   assert.equal((await call('POST', '/api/admin/layouts/match', { token: admin, body: { text: 'capucine, lits superposés' } })).data.results[0].id, 'ca_superp');
   const fg = (await call('POST', '/api/admin/layouts/match', { token: admin, body: { type: 'fourgon', text: 'lits jumeaux, garage' } })).data;
   assert.equal(fg.results[0].id, 'fg_jumeaux');
-  assert.ok(fg.equipment.some((q) => q.id === 'soute') && !fg.equipment.some((q) => q.id === 'garage'));
+  assert.ok(fg.equipment.some((q) => q.id === 'garage'), 'some fourgons have a garage (R635, V210)');
+  assert.equal((await call('POST', '/api/admin/layouts/match', { token: admin, body: { type: 'fourgon', text: 'lit relevable, garage haut' } })).data.results[0].id, 'fg_relevable');
+  assert.equal((await call('POST', '/api/admin/layouts/match', { token: admin, body: { text: 'capucine, salle d’eau au fond, couchettes superposées' } })).data.results[0].id, 'ca_superp_long');
   assert.equal((await call('POST', '/api/admin/layouts/match', { token: admin, body: { type: 'van', text: 'toit relevable, sans douche' } })).data.results[0].id, 'van_toit');
   // Choosing a layout sets the type and the plan
   const brands = (await call('GET', '/api/admin/brands', { token: admin })).data;
@@ -304,4 +306,13 @@ test('a few words find the layout and the equipment they name', async () => {
   assert.equal(p.type, 'compact');
   assert.equal(p.plan.planUrl, '/app/plans/cp_sdb_ar.svg');
   assert.equal(p.defaultSpots.penderie, 'pend');
+});
+
+test('a catalogue model name finds its layout', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const find = async (text, type) => (await call('POST', '/api/admin/layouts/match', { token: admin, body: { text, type } })).data;
+  assert.equal((await find('Challenger V114M')).results[0].id, 'fg_superp');
+  assert.equal((await find('Kilig 669', 'profile')).results[0].id, 'ca_central', 'the model wins over a wrong type');
+  assert.equal((await find('Randger R635')).model.model, 'R635');
+  assert.equal((await find('lit 140')).model, null);
 });

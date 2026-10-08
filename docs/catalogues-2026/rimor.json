@@ -1,0 +1,1497 @@
+{
+  "brand": "Rimor",
+  "source": "Catalogue Rimor 2026-2027 (édition française, données mai 2026, Luano Camp S.r.l.)",
+  "models": [
+    {
+      "model": "Horus 38",
+      "range": "Horus",
+      "type": "fourgon",
+      "length_m": 5.998,
+      "width_m": 2.05,
+      "height_m": 2.659,
+      "ptac_kg": 3500,
+      "berths_night": 3,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit double transversal 1350x1920 sur toute la largeur, relevable pour transformer l'arrière en espace de chargement",
+        "middle": "cuisine linéaire 2 feux côté porte coulissante avec penderie/rangement, cabinet de toilette (WC + douche) côté conducteur face à la cuisine",
+        "front": "dinette avec demi-banquette 2 places côté conducteur (dos à la route) + table suspendue, sièges cabine pivotants (Captain Chair) ; banquette transformable en couchage simple ; pas de lit de pavillon (couchage 1150x1820)",
+        "garage": false,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Fourgon Fiat Ducato 6 m, empattement 4035 ; frigo 90 l (150 l option, four en option si frigo 90 l)"
+      }
+    },
+    {
+      "model": "Horus 45",
+      "range": "Horus",
+      "type": "fourgon",
+      "length_m": 5.998,
+      "width_m": 2.05,
+      "height_m": 2.659,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 4,
+      "layout": {
+        "rear": "deux lits doubles transversaux superposés 1350x1850 (lits modulables, 4 couchages fixes)",
+        "middle": "cuisine linéaire 2 feux côté porte coulissante avec penderie, cabinet de toilette (WC + douche) côté conducteur",
+        "front": "dinette avec demi-banquette 2 places côté conducteur (dos à la route) + table suspendue, sièges cabine pivotants (Captain Chair) ; banquette transformable en couchage simple ; pas de lit de pavillon (couchage 1150x1820)",
+        "garage": false,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Fourgon familial rare : 4 couchages fixes à l'arrière dans 6 m, jusqu'à 5 couchages avec la dinette"
+      }
+    },
+    {
+      "model": "Horus 54",
+      "range": "Horus",
+      "type": "van",
+      "length_m": 5.413,
+      "width_m": 2.05,
+      "height_m": 2.659,
+      "ptac_kg": 3500,
+      "berths_night": 3,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit double transversal 1320x1920 relevable (espace de chargement), penderie sous/à côté du lit côté conducteur",
+        "middle": "cuisine compacte 2 feux côté porte coulissante, cabinet de toilette compact (WC + douche) côté conducteur",
+        "front": "dinette avec demi-banquette 2 places côté conducteur (dos à la route) + table suspendue, sièges cabine pivotants (Captain Chair) ; banquette transformable en couchage simple ; pas de lit de pavillon (couchage 900x1820)",
+        "garage": false,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Le plus court de la gamme (5,41 m, empattement 3450) ; frigo 70 l, pas de four ; réservoir eau 20/79 l"
+      }
+    },
+    {
+      "model": "Horus 95",
+      "range": "Horus",
+      "type": "fourgon",
+      "length_m": 6.363,
+      "width_m": 2.05,
+      "height_m": 2.659,
+      "ptac_kg": 3500,
+      "berths_night": 3,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lits jumeaux longitudinaux 800x1900 transformables en grand lit 1300x1920 avec rallonge ; penderie et rangement au pied des lits",
+        "middle": "cuisine linéaire 2 feux côté porte coulissante, cabinet de toilette (WC + douche) côté conducteur",
+        "front": "dinette avec demi-banquette 2 places côté conducteur (dos à la route) + table suspendue, sièges cabine pivotants (Captain Chair) ; banquette transformable en couchage simple ; pas de lit de pavillon (couchage 1100x1820)",
+        "garage": false,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Fourgon 6,36 m sur empattement 4035 XL, moteur 103-140 kW"
+      }
+    },
+    {
+      "model": "Kilig 5",
+      "range": "Kilig",
+      "type": "capucine",
+      "length_m": 6.97,
+      "width_m": 2.34,
+      "height_m": 3.04,
+      "ptac_kg": 3500,
+      "berths_night": 6,
+      "seats_road": 6,
+      "layout": {
+        "rear": "lit double transversal 1300x2200 sur garage (accès soute 1280x850, 1080x850 en option)",
+        "middle": "cuisine en angle 3 feux + penderie côté porte ; salle d'eau monobloc (douche, WC, lavabo) côté conducteur face à la cuisine",
+        "front": "dinette face-à-face (deux banquettes) côté conducteur, transformable en lit double 1290x1890 ; colonne frigo près de la porte ; lit de capucine 1400x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Capucine Ford Transit 6 places homologuées (6/5 selon PTAC) ; PTAC 3500, options 3550 et 4100 kg ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 9",
+      "range": "Kilig",
+      "type": "capucine",
+      "length_m": 6.97,
+      "width_m": 2.34,
+      "height_m": 3.04,
+      "ptac_kg": 3500,
+      "berths_night": 7,
+      "seats_road": 7,
+      "layout": {
+        "rear": "lits superposés transversaux 800x2200 (2 couchages) sur toute la largeur, soute sous le lit du bas (accès 1150x650)",
+        "middle": "porte d'entrée au milieu côté droit, cuisine en angle 3 feux côté porte ; salle d'eau monobloc (douche, WC, lavabo) côté conducteur, penderie et colonne frigo",
+        "front": "double dinette : grande dinette face-à-face côté porte (transformable en lit double 1290x1890) + petite dinette face-à-face côté conducteur (lit simple 680x1600) ; lit de capucine 1400x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Capucine familiale 7 places homologuées (7/6) et 7 couchages"
+      }
+    },
+    {
+      "model": "Kilig 50",
+      "range": "Kilig",
+      "type": "capucine",
+      "length_m": 7.285,
+      "width_m": 2.34,
+      "height_m": 3.04,
+      "ptac_kg": 3500,
+      "berths_night": 6,
+      "seats_road": 6,
+      "layout": {
+        "rear": "salle d'eau centrale tout au fond (douche, WC, lavabo) encadrée de deux paires de lits superposés longitudinaux 780x2000 (4 couchages) ; deux accès de soute sous les lits du bas (950x1350 et 950x1150)",
+        "middle": "penderie + colonne frigo côté porte, cuisine en angle 3 feux côté conducteur",
+        "front": "double dinette en L face-à-face (une de chaque côté) avec table, sièges cabine pivotants ; lit de capucine 1400x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "6 couchages fixes sans transformer la dinette ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 669",
+      "range": "Kilig",
+      "type": "capucine",
+      "length_m": 7.308,
+      "width_m": 2.34,
+      "height_m": 3.04,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lit central 1400x1900 accessible des deux côtés, penderies de part et d'autre de la tête de lit, soute sous le lit (accès 750x850, 1150x850 option)",
+        "middle": "salle d'eau séparée de part et d'autre du couloir : WC + lavabo côté porte, douche séparée côté conducteur, suivie de la cuisine en angle (3 feux) côté conducteur ; colonne réfrigérateur côté porte",
+        "front": "salon en L côté conducteur + siège latéral côté porte, table centrale, sièges cabine pivotants ; lit de capucine 1400x2200 au-dessus de la cabine ; dinette transformable en lit simple 1040x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Porte XL"
+      }
+    },
+    {
+      "model": "Kilig 695",
+      "range": "Kilig",
+      "type": "capucine",
+      "length_m": 7.308,
+      "width_m": 2.34,
+      "height_m": 3.04,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lits jumeaux longitudinaux 800x2100 et 800x1980 (grand lit 1900x2200 avec rallonge), penderie et rangement sous le pied des lits, soute 1050x850",
+        "middle": "salle d'eau séparée de part et d'autre du couloir : WC + lavabo côté porte, douche séparée côté conducteur, suivie de la cuisine en angle (3 feux) côté conducteur ; colonne réfrigérateur côté porte",
+        "front": "salon en L côté conducteur + siège latéral côté porte, table centrale, sièges cabine pivotants ; lit de capucine 1400x2200 au-dessus de la cabine ; dinette transformable en lit simple 1040x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "5/4 places homologuées ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 55 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 7.338,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit double transversal 1355x2200 sur garage (accès 1150x850)",
+        "middle": "douche séparée côté porte + colonne frigo ; WC + lavabo, penderie et cuisine en angle 3 feux côté conducteur",
+        "front": "salon lounge : deux banquettes latérales face-à-face avec table centrale, sièges cabine pivotants ; lit de pavillon avant 1215x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "4 couchages fixes (pavillon + lit arrière)"
+      }
+    },
+    {
+      "model": "Kilig 56 Plus",
+      "range": "Kilig",
+      "type": "compact",
+      "length_m": 6.958,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "cuisine arrière en L (plaque 3 feux transversale au fond, évier côté porte) + rangement d'angle",
+        "middle": "penderie côté porte ; salle d'eau côté conducteur (douche + WC + lavabo) avec colonne frigo",
+        "front": "grand salon lounge : deux longues banquettes latérales face-à-face transformables en lit 1400x2200, sièges cabine pivotants ; lit de pavillon avant XL 1370x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Pas de lit fixe arrière : cuisine au fond. Accès soute 1050x650 ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 66 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 7.338,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit central 1400x1900, penderies de part et d'autre de la tête de lit, soute (750x850, 1150x850 option)",
+        "middle": "douche séparée + colonne frigo côté porte ; WC + lavabo et cuisine en angle 3 feux côté conducteur",
+        "front": "deux courtes banquettes latérales face-à-face derrière la cabine avec table, sièges cabine pivotants ; lit de pavillon avant 1215x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": ""
+      }
+    },
+    {
+      "model": "Kilig 67 Plus",
+      "range": "Kilig",
+      "type": "compact",
+      "length_m": 6.449,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "pas de lit : grand espace de rangement/soute arrière transversal (accès 1050x630) avec penderie",
+        "middle": "WC + lavabo + colonne frigo côté porte ; douche séparée et cuisine en angle 3 feux côté conducteur",
+        "front": "salon lounge : deux banquettes latérales face-à-face transformables en lit 1400x2200, sièges cabine pivotants ; lit de pavillon avant XL 1370x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Le plus court des profilés (6,45 m, empattement 3750) ; store 3 m"
+      }
+    },
+    {
+      "model": "Kilig 69 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 7.308,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lit central 1400x1900, penderies de part et d'autre, soute (750x850, 1150x850 option)",
+        "middle": "salle d'eau séparée de part et d'autre du couloir : WC + lavabo côté porte, douche séparée côté conducteur, suivie de la cuisine en angle (3 feux) côté conducteur ; colonne réfrigérateur côté porte",
+        "front": "salon en L côté conducteur + siège latéral face à la route côté porte, table centrale, sièges cabine pivotants ; lit de pavillon avant électrique/escamotable 1215x2000 au-dessus du salon ; dinette transformable en lit simple 1040x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "5/4 places ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 73 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 7.308,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lits superposés transversaux : couchette haute 800x2200 + en dessous une mini-dinette 2 places face-à-face transformable en couchette 590x2200 ; soute (1150x650)",
+        "middle": "WC + lavabo + colonne frigo côté porte ; penderie, douche séparée et cuisine 2 feux côté conducteur ; porte coulissante de séparation",
+        "front": "salon en L côté conducteur + siège latéral face à la route côté porte, table centrale, sièges cabine pivotants ; lit de pavillon avant électrique/escamotable 1215x2000 au-dessus du salon",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "5 couchages fixes, 5 places ; cuisine seulement 2 feux ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 77 Plus",
+      "range": "Kilig",
+      "type": "compact",
+      "length_m": 6.97,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 7,
+      "seats_road": 5,
+      "layout": {
+        "rear": "salon arrière en U avec table, transformable en lit double 1400x2200, surmonté d'un lit de pavillon arrière 1215x2000",
+        "middle": "colonne frigo + cuisine en angle 3 feux côté porte ; penderie et salle d'eau monobloc (douche, lavabo, WC) côté conducteur",
+        "front": "salon en L côté conducteur + siège latéral face à la route côté porte, table centrale, sièges cabine pivotants ; lit de pavillon avant électrique/escamotable 1215x2000 au-dessus du salon ; dinette transformable en lit simple 1040x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Double lit de pavillon (avant + arrière) : deux salons le jour, 4 couchages fixes + 3 ; petite soute 550x700 ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 78 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 6.758,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lit double transversal 1450x2200 sur garage (accès 1050x700)",
+        "middle": "colonne frigo + cuisine en angle 3 feux côté porte ; salle d'eau côté conducteur en deux parties (douche + lavabo, puis WC)",
+        "front": "salon en L côté conducteur + siège latéral face à la route côté porte, table centrale, sièges cabine pivotants ; lit de pavillon avant électrique/escamotable 1215x2000 au-dessus du salon ; dinette transformable en lit simple 1200x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "5/4 places ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 79 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 6.97,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 7,
+      "seats_road": 7,
+      "layout": {
+        "rear": "lits superposés transversaux 800x2200 sur garage (accès 1150x650)",
+        "middle": "porte d'entrée au milieu côté droit, cuisine en angle 3 feux côté porte ; salle d'eau monobloc (douche, WC, lavabo), penderie et colonne frigo côté conducteur",
+        "front": "double dinette face-à-face (grande côté porte transformable en lit 1290x1890, petite côté conducteur en lit 680x1600) ; lit de pavillon avant 1215x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Version profilée de la Kilig 9 : 7 places et 7 couchages"
+      }
+    },
+    {
+      "model": "Kilig 95 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 7.308,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lits jumeaux 800x2100 et 800x1980 (grand lit 1900x2200 avec rallonge), penderie et rangement au pied, soute 1050x850",
+        "middle": "salle d'eau séparée de part et d'autre du couloir : WC + lavabo côté porte, douche séparée côté conducteur, suivie de la cuisine en angle (3 feux) côté conducteur ; colonne réfrigérateur côté porte",
+        "front": "salon en L côté conducteur + siège latéral face à la route côté porte, table centrale, sièges cabine pivotants ; lit de pavillon avant électrique/escamotable 1215x2000 au-dessus du salon ; dinette transformable en lit simple 1040x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "5/4 places ; porte XL"
+      }
+    },
+    {
+      "model": "Kilig 99 Plus",
+      "range": "Kilig",
+      "type": "profile",
+      "length_m": 7.308,
+      "width_m": 2.34,
+      "height_m": 2.845,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lits jumeaux 800x2040 et 800x1960 (grand lit 1900x2200 avec rallonge), penderie et rangement au pied, soute 1050x850",
+        "middle": "douche séparée + colonne frigo côté porte ; WC + lavabo et cuisine en angle 3 feux côté conducteur",
+        "front": "deux courtes banquettes latérales face-à-face avec table, sièges cabine pivotants ; lit de pavillon avant 1215x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Réservoir eau 20/80 l"
+      }
+    },
+    {
+      "model": "Sarus 50",
+      "range": "Sarus",
+      "type": "capucine",
+      "length_m": 6.987,
+      "width_m": 2.34,
+      "height_m": 3.05,
+      "ptac_kg": 3500,
+      "berths_night": 6,
+      "seats_road": 6,
+      "layout": {
+        "rear": "salle d'eau centrale au fond (douche, WC, lavabo) entre deux paires de lits superposés longitudinaux 710x1900 (4 couchages) ; deux accès de soute 950x1150",
+        "middle": "penderie + colonne frigo côté porte ; cuisine linéaire 2 feux côté conducteur",
+        "front": "double dinette en L face-à-face avec table, sièges cabine pivotants ; lit de capucine 1400x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Capucine Fiat Ducato 6 places / 6 couchages fixes ; PTAC 3500 (3650 option) ; porte XL"
+      }
+    },
+    {
+      "model": "Sarus 695",
+      "range": "Sarus",
+      "type": "capucine",
+      "length_m": 7.293,
+      "width_m": 2.34,
+      "height_m": 3.05,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lits jumeaux 800x1975 et 750x2040 (grand lit 1900x2200 avec rallonge), penderie et rangement au pied, soute 1050x750 (850x750 option)",
+        "middle": "douche séparée + colonne frigo côté porte ; WC + lavabo et cuisine 2 feux côté conducteur ; porte de séparation entre zone nuit/salle d'eau et séjour",
+        "front": "salon en L côté conducteur + siège latéral côté porte, table centrale, sièges cabine pivotants ; lit de capucine 1400x2200 au-dessus de la cabine ; dinette transformable en lit simple 1100x2200",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Frigo 89 l (150 l option) ; 5/4 places"
+      }
+    },
+    {
+      "model": "Sarus 66 Plus",
+      "range": "Sarus",
+      "type": "profile",
+      "length_m": 7.443,
+      "width_m": 2.34,
+      "height_m": 2.94,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit central 1400x1900, penderies de part et d'autre de la tête de lit, soute 750x770 (1200x770 option)",
+        "middle": "douche séparée + colonne frigo côté porte ; WC + lavabo et cuisine 2 feux côté conducteur",
+        "front": "deux banquettes latérales face-à-face avec table, sièges cabine pivotants ; lit de pavillon avant 1220x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Le plus long Sarus (7,44 m)"
+      }
+    },
+    {
+      "model": "Sarus 69 Plus",
+      "range": "Sarus",
+      "type": "profile",
+      "length_m": 7.158,
+      "width_m": 2.34,
+      "height_m": 2.94,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lit central 1400x1900, penderies de part et d'autre, soute 750x750 (1200x750 option)",
+        "middle": "douche séparée + colonne frigo côté porte ; WC + lavabo et cuisine 2 feux côté conducteur",
+        "front": "salon en L côté conducteur + siège latéral côté porte, sièges cabine pivotants ; dinette transformable en lit simple 1100x2200 ; lit de pavillon avant 1220x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "5/4 places ; porte XL"
+      }
+    },
+    {
+      "model": "Sarus 95 Plus",
+      "range": "Sarus",
+      "type": "profile",
+      "length_m": 7.293,
+      "width_m": 2.34,
+      "height_m": 2.94,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lits jumeaux 800x1975 et 750x2040 (grand lit 1900x2200 avec rallonge), penderie et rangement au pied, soute 1050x750 (850x750 option)",
+        "middle": "douche séparée + colonne frigo côté porte ; WC + lavabo et cuisine 2 feux côté conducteur ; porte de séparation",
+        "front": "salon en L côté conducteur + siège latéral côté porte ; dinette transformable en lit simple 1100x2200 ; lit de pavillon avant 1220x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Frigo 89 l (150 l option) ; 5/4 places ; porte XL"
+      }
+    },
+    {
+      "model": "Sarus 96 Plus",
+      "range": "Sarus",
+      "type": "profile",
+      "length_m": 6.973,
+      "width_m": 2.34,
+      "height_m": 2.94,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lits jumeaux 750x1947 et 750x1822 (grand lit 1500x2200 avec rallonge), penderie et rangement au pied, soute 1050x850",
+        "middle": "WC + lavabo + colonne frigo côté porte ; douche séparée et cuisine 2 feux côté conducteur ; porte de séparation",
+        "front": "salon en L côté conducteur + siège latéral côté porte ; dinette transformable en lit simple 1050x2200 ; lit de pavillon avant 1220x2000",
+        "garage": true,
+        "door_side": "droite (porte cellule côté passager)",
+        "notes": "Lits jumeaux sous 7 m (6,97 m, empattement 3800) ; 5/4 places"
+      }
+    }
+  ],
+  "equipment": [
+    {
+      "name": "Châssis Fiat Ducato X250 2,2 L (88-120 kW / 103-140 kW)",
+      "category": "chas",
+      "where": "sous le véhicule / compartiment moteur",
+      "explanation": "Base mécanique des Horus (fourgons) et des Sarus (capucines et profilés). Moteur diesel 2,2 L de 120 ch en standard, 140 ch sur l'Horus 95.",
+      "tip": "Respectez les intervalles d'entretien Fiat et vérifiez la charge réelle : 3500 kg arrivent vite.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "Ducato, Fiat, moteur, motorisation, 2.2 Multijet, base porteuse"
+    },
+    {
+      "name": "Châssis Ford Transit 2,0 L (96-130 kW)",
+      "category": "chas",
+      "where": "sous le véhicule / compartiment moteur",
+      "explanation": "Base mécanique de toute la gamme Kilig : moteur diesel 2,0 L EcoBlue de 130 ch, traction avant.",
+      "tip": "Le Transit utilise de l'AdBlue : surveillez le niveau au tableau de bord.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "Ford, Transit, EcoBlue, moteur, Kilig"
+    },
+    {
+      "name": "PTAC 3500 kg / option châssis alourdi 3550, 3650 ou 4100 kg",
+      "category": "chas",
+      "where": "carte grise (rubrique F.2)",
+      "explanation": "Le poids total autorisé en charge est de 3500 kg ; Rimor propose en option 3550 kg ou 4100 kg (Kilig) et 3650 kg (Sarus) pour gagner de la charge utile.",
+      "tip": "Au-delà de 3500 kg il faut le permis C1 (ou permis B obtenu avant 1975) et des limitations de vitesse différentes : vérifiez votre permis avant de choisir l'option.",
+      "standard_or_option": "option",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "PTAC, poids, masse, 3,5 t, 4,1 t, charge utile, permis C1"
+    },
+    {
+      "name": "Réservoir de carburant 60 L",
+      "category": "chas",
+      "where": "sous le plancher, trappe côté conducteur",
+      "explanation": "Capacité du réservoir gazole du Ducato.",
+      "tip": "Avec ~10-12 l/100 km, comptez environ 500 km d'autonomie.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "réservoir, gasoil, gazole, carburant, autonomie"
+    },
+    {
+      "name": "Pneus M+S Camping (Snowflake)",
+      "category": "chas",
+      "where": "roues",
+      "explanation": "Pneus renforcés spécifiques camping-car, marqués M+S et flocon (3PMSF), utilisables en hiver et valant équipement hiver (loi Montagne).",
+      "tip": "Contrôlez la pression à froid : les pneus camping se gonflent nettement plus que ceux d'une voiture (souvent 4,5 à 5,5 bar).",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile"
+      ],
+      "keywords": "pneus, M+S, 3PMSF, hiver, loi montagne, camping, flocon"
+    },
+    {
+      "name": "Jantes acier 6,5 x 16\"",
+      "category": "chas",
+      "where": "roues",
+      "explanation": "Jantes standard en acier du Ford Transit.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "jantes, roues, 16 pouces"
+    },
+    {
+      "name": "Kit Fix & Go (anti-crevaison)",
+      "category": "chas",
+      "where": "cabine, sous un siège ou coffre",
+      "explanation": "Bombe de produit de colmatage et petit compresseur fournis à la place d'une roue de secours.",
+      "tip": "Il ne répare que les petites crevaisons de la bande de roulement ; gardez le numéro d'assistance à portée de main.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "crevaison, roue de secours, compresseur, kit réparation, Fix&Go"
+    },
+    {
+      "name": "Traction Plus avec Hill Descent Control",
+      "category": "chas",
+      "where": "commande au tableau de bord",
+      "explanation": "Antipatinage renforcé qui aide à démarrer sur herbe mouillée, boue ou neige malgré la traction avant, et aide à la descente qui retient le véhicule à vitesse lente dans les pentes raides.",
+      "tip": "Activez Traction Plus avant de quitter un terrain glissant (camping herbeux), pas une fois les roues enlisées.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "Traction+, motricité, patinage, descente, HDC, herbe, boue"
+    },
+    {
+      "name": "Système Stop/Start",
+      "category": "chas",
+      "where": "bouton tableau de bord",
+      "explanation": "Coupe le moteur à l'arrêt (feux rouges) pour économiser du carburant.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "stop and start, arrêt moteur, économie"
+    },
+    {
+      "name": "Frein de stationnement électrique",
+      "category": "chas",
+      "where": "console centrale",
+      "explanation": "Le frein à main est remplacé par un bouton ; il se serre automatiquement à l'arrêt du moteur selon les réglages.",
+      "tip": "Sur terrain en pente, calez aussi les roues.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "frein à main, EPB, frein de parking"
+    },
+    {
+      "name": "Empattement long 4035 / 4035 XL",
+      "category": "chas",
+      "where": "châssis",
+      "explanation": "Distance entre les essieux ; un empattement long améliore la stabilité et le confort, au prix d'un rayon de braquage plus grand.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "empattement, entre-axes, longueur"
+    },
+    {
+      "name": "Climatisation cabine manuelle",
+      "category": "cab",
+      "where": "tableau de bord",
+      "explanation": "Climatisation du poste de conduite du Ducato, réglée manuellement.",
+      "tip": "Elle ne refroidit que la cabine en roulant ; elle ne fonctionne pas moteur coupé.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "clim, climatisation, air conditionné, A/C"
+    },
+    {
+      "name": "Climatisation automatique",
+      "category": "cab",
+      "where": "tableau de bord",
+      "explanation": "Climatisation régulée du Ford Transit : vous choisissez une température, elle se règle seule.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "clim auto, climatisation, régulée"
+    },
+    {
+      "name": "Régulateur et limiteur de vitesse",
+      "category": "cab",
+      "where": "commandes au volant",
+      "explanation": "Le régulateur maintient la vitesse choisie, le limiteur empêche de la dépasser.",
+      "tip": "Idéal sur autoroute pour réduire la consommation ; à désactiver sur route mouillée ou en descente sinueuse.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "cruise control, régulateur, limiteur, vitesse"
+    },
+    {
+      "name": "Sièges Captain Chair sur embases pivotantes",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Sièges cabine confortables avec accoudoirs qui pivotent vers l'arrière pour rejoindre la dinette et agrandir le salon.",
+      "tip": "Tournez-les toujours à l'arrêt, frein serré ; reculez le siège et baissez l'accoudoir côté portière pour pivoter.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "sièges pivotants, captain chair, embase, cabine, salon"
+    },
+    {
+      "name": "Siège conducteur réglable / siège passager avec soutien lombaire et accoudoir",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Réglages de confort des sièges cabine du Ducato.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "siège, lombaire, accoudoir, réglage"
+    },
+    {
+      "name": "Rétroviseurs électriques et chauffants",
+      "category": "cab",
+      "where": "portières",
+      "explanation": "Rétroviseurs réglables depuis la cabine et dégivrants.",
+      "tip": "Rabattez-les dans les ruelles étroites et réglez la partie grand-angle pour voir la cellule.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "rétroviseurs, dégivrage, électriques"
+    },
+    {
+      "name": "Stores occultants cabine avant et latéraux",
+      "category": "cab",
+      "where": "pare-brise et vitres de cabine",
+      "explanation": "Rideaux plissés intégrés qui se tirent devant le pare-brise et les vitres de portières pour l'intimité et l'isolation la nuit.",
+      "tip": "Ne les fermez jamais en roulant ; en plein soleil fermés, ils limitent la chaleur.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "occultant, store cabine, rideau, pare-brise, intimité, isolation"
+    },
+    {
+      "name": "Appuie-tête réglables de type automobile",
+      "category": "cab",
+      "where": "dinette / sièges passagers arrière",
+      "explanation": "Les places de route de la dinette ont des appuie-tête réglables en hauteur, comme en voiture.",
+      "tip": "Réglez-les à hauteur de la tête de chaque passager avant de partir.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "appuie-tête, places assises, sécurité passagers"
+    },
+    {
+      "name": "Chargeurs USB (A+C)",
+      "category": "cab",
+      "where": "planche de bord",
+      "explanation": "Prises USB type A et type C pour recharger téléphones et tablettes en roulant.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "USB, USB-C, chargeur, téléphone"
+    },
+    {
+      "name": "Compartiment de rangement cabine",
+      "category": "cab",
+      "where": "planche de bord",
+      "explanation": "Rangements supplémentaires sur la planche de bord du Transit.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "vide-poche, rangement, boîte à gants"
+    },
+    {
+      "name": "Airbags conducteur et passager",
+      "category": "secu",
+      "where": "volant et planche de bord",
+      "explanation": "Coussins gonflables frontaux de sécurité.",
+      "tip": "N'installez jamais de siège enfant dos à la route à l'avant sans désactiver l'airbag passager.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "airbag, sécurité passive"
+    },
+    {
+      "name": "ESC / ESP (contrôle électronique de stabilité)",
+      "category": "secu",
+      "where": "automatique",
+      "explanation": "Corrige les trajectoires en freinant certaines roues en cas de dérapage, essentiel pour un véhicule haut et lourd.",
+      "tip": "Ne le désactivez pas, sauf pour vous sortir d'un terrain mou.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "ESP, ESC, stabilité, dérapage, antidérapage"
+    },
+    {
+      "name": "HLA – aide au démarrage en côte",
+      "category": "secu",
+      "where": "automatique",
+      "explanation": "Maintient le frein quelques secondes quand vous démarrez en montée pour éviter de reculer.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "hill holder, HLA, côte, démarrage en pente"
+    },
+    {
+      "name": "AEBS / Système d'atténuation des collisions",
+      "category": "secu",
+      "where": "caméra/radar derrière le pare-brise",
+      "explanation": "Freinage d'urgence automatique qui détecte un obstacle devant et freine si vous ne réagissez pas.",
+      "tip": "Gardez la zone du pare-brise devant la caméra propre et dégagée.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "freinage d'urgence, AEBS, pre-collision, anti-collision"
+    },
+    {
+      "name": "Aide au maintien dans la voie",
+      "category": "secu",
+      "where": "caméra pare-brise",
+      "explanation": "Alerte ou corrige la trajectoire si vous franchissez une ligne sans clignotant.",
+      "tip": "Le vent latéral peut faire déclencher l'alerte : restez vigilant.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "lane assist, maintien de voie, LKA"
+    },
+    {
+      "name": "Détection de la fatigue du conducteur",
+      "category": "secu",
+      "where": "tableau de bord",
+      "explanation": "Analyse votre conduite et propose une pause en cas de signes de somnolence.",
+      "tip": "Faites une pause toutes les 2 heures.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "fatigue, somnolence, pause"
+    },
+    {
+      "name": "Intelligent Speed Assist et reconnaissance des panneaux",
+      "category": "secu",
+      "where": "caméra pare-brise / tableau de bord",
+      "explanation": "Lit les panneaux de limitation et vous avertit (ou limite) en cas de dépassement.",
+      "tip": "Attention : il affiche la limite voiture ; certaines limitations pour les plus de 3,5 t ne sont pas prises en compte.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "ISA, panneaux, limitation, vitesse, reconnaissance"
+    },
+    {
+      "name": "TPMS – surveillance de la pression des pneus",
+      "category": "secu",
+      "where": "tableau de bord",
+      "explanation": "Alerte en cas de perte de pression d'un pneu.",
+      "tip": "Une alerte TPMS impose de s'arrêter vite et de vérifier : un pneu sous-gonflé surchauffe sous le poids.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "pression pneus, TPMS, capteur"
+    },
+    {
+      "name": "Avertisseur de sens de marche incorrect",
+      "category": "secu",
+      "where": "tableau de bord",
+      "explanation": "Alerte si vous vous engagez à contresens sur une bretelle d'autoroute.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "contresens, wrong way"
+    },
+    {
+      "name": "FBS – assistance au freinage",
+      "category": "secu",
+      "where": "automatique",
+      "explanation": "Aide électronique qui augmente la force de freinage lors d'un freinage brusque (sigle du catalogue Ford).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "assistance freinage, FBS, freinage d'urgence"
+    },
+    {
+      "name": "Feux antibrouillard avant",
+      "category": "secu",
+      "where": "bouclier avant",
+      "explanation": "Phares bas pour mieux voir par brouillard.",
+      "tip": "N'allumez les feux de brouillard que par visibilité réduite.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "antibrouillard, phares, brouillard"
+    },
+    {
+      "name": "Capteurs de stationnement arrière",
+      "category": "secu",
+      "where": "pare-chocs arrière",
+      "explanation": "Bips d'alerte en marche arrière quand un obstacle approche.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "radar de recul, capteurs, stationnement"
+    },
+    {
+      "name": "Aide au stationnement avant",
+      "category": "secu",
+      "where": "bouclier avant",
+      "explanation": "Capteurs qui détectent les obstacles devant en manœuvre.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "capteurs avant, radar avant, stationnement"
+    },
+    {
+      "name": "Caméra de recul (écran 9\" Ducato / intégrée au 3e feu stop Kilig-Sarus)",
+      "category": "secu",
+      "where": "haut de la face arrière, image sur l'écran de cabine",
+      "explanation": "Caméra qui montre l'arrière en manœuvre ; sur les Kilig et Sarus elle est intégrée dans le nouveau 3e feu stop thermoformé.",
+      "tip": "Nettoyez l'objectif régulièrement ; faites-vous guider quand même dans les manœuvres serrées.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "caméra de recul, recul, écran, 3e feu stop, rétrovision"
+    },
+    {
+      "name": "Pré-équipement ISOFIX",
+      "category": "secu",
+      "where": "banquette de la dinette (places de route)",
+      "explanation": "Ancrages pour fixer un siège enfant ISOFIX sur les places de route de la cellule.",
+      "tip": "Vérifiez sur la notice quelles places sont équipées et utilisez uniquement les places homologuées face à la route.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "ISOFIX, siège enfant, bébé, ancrage, sécurité enfant"
+    },
+    {
+      "name": "SYNC® 4 avec écran tactile 12\"",
+      "category": "multi",
+      "where": "planche de bord",
+      "explanation": "Système multimédia Ford avec navigation connectée, commande vocale, intégration smartphone (Apple CarPlay/Android Auto) et affichage de la caméra de recul.",
+      "tip": "Le GPS voiture ne tient pas compte du gabarit : vérifiez hauteur (2,85-3,04 m) et poids sur les petites routes.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "SYNC 4, écran, GPS, navigation, CarPlay, Android Auto, commande vocale"
+    },
+    {
+      "name": "Radio / système multimédia avec commandes au volant",
+      "category": "multi",
+      "where": "planche de bord",
+      "explanation": "Autoradio de série avec commandes au volant ; 4 haut-parleurs sur le Transit.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "radio, autoradio, commandes au volant, haut-parleurs"
+    },
+    {
+      "name": "Antenne DAB dans le rétroviseur",
+      "category": "multi",
+      "where": "rétroviseur",
+      "explanation": "Antenne intégrée pour la radio numérique DAB+.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "DAB, radio numérique, antenne"
+    },
+    {
+      "name": "Application smartphone Luano Camp (Bluetooth)",
+      "category": "multi",
+      "where": "smartphone",
+      "explanation": "Application dédiée qui se connecte en Bluetooth au MEB-300 pour piloter l'éclairage et voir l'état des batteries et des réservoirs.",
+      "tip": "Installez-la et appairez-la à la livraison, avec le concessionnaire.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "application, appli, Bluetooth, smartphone, Luano Camp, domotique"
+    },
+    {
+      "name": "MEB-300 Smart Energy System",
+      "category": "elec",
+      "where": "panneau tactile au-dessus de la porte ou de la cuisine + boîtier technique",
+      "explanation": "Centrale électrique exclusive Rimor (Luano Camp) : elle gère la recharge des batteries (réseau 230 V, solaire, alternateur), distribue le 12 V et commande l'éclairage, avec un rendement de 96 %.",
+      "tip": "Coupez le 12 V général depuis le panneau quand vous stockez le véhicule pour éviter de vider la batterie.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "MEB-300, centrale électrique, tableau de commande, 12V, gestion énergie, Smart Energy"
+    },
+    {
+      "name": "Chargeur solaire MPPT intégré",
+      "category": "elec",
+      "where": "dans le MEB-300",
+      "explanation": "Régulateur solaire à suivi du point de puissance maximale qui tire le maximum d'un panneau solaire, même par temps variable. Le panneau lui-même s'ajoute en option ou chez le concessionnaire.",
+      "tip": "Un panneau de 100-200 W permet de rester plusieurs jours sans électricité en été.",
+      "standard_or_option": "série (panneau en option)",
+      "types": [],
+      "keywords": "solaire, MPPT, panneau solaire, régulateur, photovoltaïque"
+    },
+    {
+      "name": "Nœuds intelligents / chargeur alternateur 60 A – 350 W",
+      "category": "elec",
+      "where": "dans le MEB-300",
+      "explanation": "Le MEB-300 recharge la batterie cellule en roulant jusqu'à 60 A depuis l'alternateur (350 W de pointe).",
+      "tip": "Une heure de route recharge déjà nettement la batterie cellule.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "chargeur booster, alternateur, B2B, recharge en roulant, 60A"
+    },
+    {
+      "name": "Branchement secteur 230 V (réseau CA)",
+      "category": "elec",
+      "where": "prise extérieure sur la paroi",
+      "explanation": "Prise CEE extérieure pour brancher le camping-car sur une borne : alimente les prises 230 V et recharge les batteries.",
+      "tip": "Déroulez entièrement l'enrouleur pour éviter la surchauffe, et utilisez un adaptateur CEE/domestique.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "230V, prise, borne, secteur, CEE, raccordement électrique"
+    },
+    {
+      "name": "Compartiment batterie modulaire (2 petites ou 1 grande)",
+      "category": "elec",
+      "where": "sous un siège de la dinette ou plancher, accès facile",
+      "explanation": "Nouveau logement facile d'accès qui accueille une grande batterie cellule ou deux petites (ex. pour passer au lithium).",
+      "tip": "Avant d'installer une batterie lithium, vérifiez que le MEB-300 est réglé sur le bon profil de charge.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "batterie, batterie cellule, AGM, lithium, compartiment, auxiliaire"
+    },
+    {
+      "name": "Éclairage intérieur LED / LED d'ambiance et de guidage",
+      "category": "elec",
+      "where": "plafond, sous les meubles hauts, sol",
+      "explanation": "Éclairage basse consommation, avec bandeaux d'ambiance au-dessus des éléments hauts et LED de guidage au sol.",
+      "tip": "Pilotable depuis l'application MEB-300.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "LED, lumière, éclairage, ambiance, veilleuse"
+    },
+    {
+      "name": "Chauffage au gaz Combi C4 (Truma Combi 4)",
+      "category": "chauf",
+      "where": "sous une banquette ou en soute, panneau de commande dans la cellule",
+      "explanation": "Chauffage à air pulsé au gaz propane qui chauffe la cellule par des bouches au sol ; il intègre aussi le chauffe-eau.",
+      "tip": "Pour l'hiver, partez avec deux bouteilles pleines et vidangez le Combi si le véhicule reste au froid sans chauffage (risque de gel).",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "chauffage, Truma, Combi 4, C4, air pulsé, gaz, hiver"
+    },
+    {
+      "name": "Chauffe-eau intégré Combi C4 (10 l)",
+      "category": "chauf",
+      "where": "dans le Combi",
+      "explanation": "Le même appareil chauffe l'eau sanitaire (environ 10 litres) pour la douche et l'évier, en été sans chauffer la cellule.",
+      "tip": "Si le Combi est vide et qu'il gèle, la vanne de vidange s'ouvre seule : refermez-la avant de remplir.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "eau chaude, chauffe-eau, boiler, Truma, vidange"
+    },
+    {
+      "name": "Coffre à gaz 1 x 10 kg",
+      "category": "gaz",
+      "where": "coffre extérieur côté cellule",
+      "explanation": "Logement ventilé pour une bouteille de propane de 10 kg (ou deux petites selon le modèle) qui alimente cuisine et chauffage.",
+      "tip": "En hiver utilisez du propane, pas du butane qui ne se vaporise plus sous 0 °C ; fermez le robinet en roulant si vous n'avez pas de détendeur sécurisé.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "gaz, bouteille, propane, butane, coffre gaz, détendeur"
+    },
+    {
+      "name": "Plaque de cuisson 2 ou 3 feux à allumage électrique",
+      "category": "gaz",
+      "where": "cuisine",
+      "explanation": "Réchaud gaz encastré (plaque triangulaire 3 feux sur la plupart des Kilig, 2 feux sur Horus, Sarus et Kilig 73 Plus) avec allumage par bouton, sans briquet.",
+      "tip": "Aérez en cuisinant et laissez le couvercle en verre ouvert pendant l'utilisation.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "plaque, réchaud, feux, cuisson, gaz, allumage électronique"
+    },
+    {
+      "name": "Four à gaz",
+      "category": "gaz",
+      "where": "sous la plaque de cuisson",
+      "explanation": "Petit four disponible en option sur les Horus 38, 45 et 95, incompatible avec le réfrigérateur 150 l.",
+      "tip": "",
+      "standard_or_option": "option",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "four, cuisson, gaz"
+    },
+    {
+      "name": "Réfrigérateur à compresseur 150 l",
+      "category": "cui",
+      "where": "colonne en cuisine ou près de la porte",
+      "explanation": "Grand frigo 12 V à compresseur (comme à la maison) : il refroidit vite et fonctionne même par forte chaleur, mais consomme de la batterie.",
+      "tip": "Sans branchement 230 V ni solaire, surveillez la batterie : un frigo à compresseur vide une batterie en 1 à 2 jours.",
+      "standard_or_option": "série (option sur Horus 38/45/95, Sarus 695/95 Plus)",
+      "types": [],
+      "keywords": "frigo, réfrigérateur, compresseur, 12V, congélateur, 150 litres"
+    },
+    {
+      "name": "Réfrigérateur 70 / 89 / 90 l",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Réfrigérateur de plus petite taille sur Horus (70 l sur Horus 54, 90 l sinon) et Sarus 695/95 Plus (89 l).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "frigo, réfrigérateur, 90 litres"
+    },
+    {
+      "name": "Plan de travail ultra-résistant / évier carré",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Nouveau plan de travail résistant aux rayures et évier carré plus pratique.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "plan de travail, évier, cuisine"
+    },
+    {
+      "name": "Panier de cuisine amovible",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Corbeille de rangement que l'on peut sortir et emporter.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile"
+      ],
+      "keywords": "panier, rangement cuisine"
+    },
+    {
+      "name": "Tiroirs et charnières à fermeture amortie (soft close)",
+      "category": "cui",
+      "where": "meubles cuisine et placards",
+      "explanation": "Tiroirs et portes qui se referment doucement sans claquer.",
+      "tip": "Verrouillez toujours les tiroirs avant de rouler.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "soft close, fermeture amortie, tiroirs, placards"
+    },
+    {
+      "name": "Cuisine en angle / cuisine en L",
+      "category": "cui",
+      "where": "côté porte ou côté conducteur selon le modèle",
+      "explanation": "Bloc cuisine qui forme un angle, avec plaque triangulaire et évier rond, pour gagner du plan de travail.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "cuisine en L, cuisine d'angle"
+    },
+    {
+      "name": "Cuisine arrière",
+      "category": "cui",
+      "where": "fond du véhicule (Kilig 56 Plus)",
+      "explanation": "La cuisine occupe toute la largeur arrière : grand plan de travail et vue dégagée, mais pas de lit fixe.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "compact"
+      ],
+      "keywords": "cuisine arrière, cuisine au fond"
+    },
+    {
+      "name": "Salle d'eau avec douche séparée",
+      "category": "sdb",
+      "where": "milieu du véhicule, de part et d'autre du couloir",
+      "explanation": "Sur la plupart des profilés et capucines lit central / lits jumeaux, la douche est dans une cabine indépendante en face du cabinet WC + lavabo ; on peut souvent fermer l'ensemble par une porte pour créer une suite.",
+      "tip": "Aérez après la douche (lanterneau) pour éviter la condensation.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "douche séparée, salle de bain, salle d'eau, cabine de douche"
+    },
+    {
+      "name": "Cabinet de toilette monobloc (WC + lavabo + douche)",
+      "category": "sdb",
+      "where": "milieu, généralement côté conducteur",
+      "explanation": "Petite salle d'eau tout-en-un dans les fourgons et certains camping-cars : la douche se prend dans le même espace que le WC.",
+      "tip": "Rabattez le lavabo/protégez le papier toilette avant de vous doucher.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "cabinet de toilette, WC, toilettes, douche, lavabo"
+    },
+    {
+      "name": "WC à cassette",
+      "category": "sdb",
+      "where": "salle d'eau, trappe de vidange à l'extérieur",
+      "explanation": "Toilettes chimiques dont le réservoir (cassette) se retire par une trappe extérieure pour être vidé à une borne.",
+      "tip": "Videz la cassette dès que l'indicateur passe au rouge et utilisez un papier soluble.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "WC, toilettes, cassette, vidange, chimique"
+    },
+    {
+      "name": "Réservoir d'eau propre 20 / 85 l",
+      "category": "eau",
+      "where": "sous une banquette ou sous le plancher (intérieur chauffé)",
+      "explanation": "Réservoir d'eau potable ; Rimor homologue 20 l en roulant (pour respecter le PTAC) et jusqu'à 85 l (79-80 l sur certains) à l'arrêt.",
+      "tip": "Roulez avec 20 l et remplissez sur place : chaque litre compte dans la charge utile.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "eau propre, réservoir, eau potable, remplissage"
+    },
+    {
+      "name": "Réservoir d'eaux usées 70 / 90 / 100 l",
+      "category": "eau",
+      "where": "sous le plancher",
+      "explanation": "Collecte l'eau de l'évier et de la douche : 70 l sur Kilig, 90 l sur Horus, 100 l sur Sarus.",
+      "tip": "Videz-le uniquement sur une aire de service ; laissez la vanne ouverte en hiver si le réservoir n'est pas chauffé.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "eaux grises, eaux usées, vidange, réservoir"
+    },
+    {
+      "name": "Matelas déhoussables en tissu hypoallergénique",
+      "category": "conf",
+      "where": "lits",
+      "explanation": "Housses de matelas lavables et tissu anti-allergies.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "matelas, housse, hypoallergénique, literie"
+    },
+    {
+      "name": "Sommiers à lattes",
+      "category": "conf",
+      "where": "lits arrière (certains Kilig)",
+      "explanation": "Lattes de bois sous le matelas pour la ventilation et le confort.",
+      "tip": "Relevez le matelas de temps en temps pour éviter la condensation.",
+      "standard_or_option": "série (certains modèles)",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "sommier, lattes, literie"
+    },
+    {
+      "name": "Lit de pavillon (lit escamotable)",
+      "category": "conf",
+      "where": "plafond au-dessus du salon avant (ou arrière sur Kilig 77 Plus)",
+      "explanation": "Grand lit (1215-1370 x 2000) qui descend du plafond le soir au-dessus de la dinette et remonte le jour ; charge maxi 250 kg.",
+      "tip": "Ne dépassez pas 250 kg et remontez-le avant de rouler ; vérifiez les sièges cabine en position route avant de le descendre si besoin.",
+      "standard_or_option": "série (profilés Plus)",
+      "types": [
+        "profile",
+        "compact"
+      ],
+      "keywords": "lit de pavillon, lit basculant, lit escamotable, lit de toit, lit électrique"
+    },
+    {
+      "name": "Lit de capucine 1400 x 2200",
+      "category": "conf",
+      "where": "au-dessus de la cabine",
+      "explanation": "Grand lit fixe dans la « casquette » au-dessus de la cabine, accessible par une échelle ; idéal pour les enfants ou les adultes.",
+      "tip": "Installez le filet anti-chute pour les enfants et rangez l'échelle avant de rouler.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine"
+      ],
+      "keywords": "capucine, lit capucine, lit au-dessus de la cabine, échelle, mansardé"
+    },
+    {
+      "name": "Lits superposés",
+      "category": "conf",
+      "where": "arrière (transversaux ou longitudinaux)",
+      "explanation": "Couchettes l'une au-dessus de l'autre : transversales sur Kilig 9/73 Plus/79 Plus, doubles longitudinales de chaque côté sur Kilig 50 et Sarus 50, doubles transversales sur Horus 45.",
+      "tip": "La couchette basse libère souvent une soute quand on la relève.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "lits superposés, couchettes, enfants, famille, bunk"
+    },
+    {
+      "name": "Lit central (lit îlot)",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Lit double placé au milieu, accessible des deux côtés, avec penderies de part et d'autre de la tête.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "lit central, lit îlot, lit queen"
+    },
+    {
+      "name": "Lits jumeaux avec rallonge",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Deux lits simples longitudinaux qu'un coussin de rallonge transforme en un très grand lit (jusqu'à 1900 x 2200).",
+      "tip": "Rangez la rallonge sous le lit pour la retrouver facilement.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "lits jumeaux, lits simples, rallonge, grand lit"
+    },
+    {
+      "name": "Lit transversal",
+      "category": "conf",
+      "where": "arrière, au-dessus de la soute",
+      "explanation": "Lit double placé en travers du véhicule, contre la paroi arrière.",
+      "tip": "La personne côté mur doit enjamber l'autre pour se lever la nuit.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "lit transversal, lit en travers, lit double"
+    },
+    {
+      "name": "Dinette transformable en couchage",
+      "category": "conf",
+      "where": "salon avant (ou arrière sur Kilig 77 Plus)",
+      "explanation": "La table s'abaisse et les coussins se réarrangent pour faire un lit d'appoint simple ou double.",
+      "tip": "Faites un essai à la livraison pour mémoriser la position des coussins.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "dinette, couchage d'appoint, table, banquette convertible"
+    },
+    {
+      "name": "Table suspendue utilisable à l'extérieur",
+      "category": "conf",
+      "where": "dinette (Horus)",
+      "explanation": "Nouvelle table fixée sur un pied latéral qui libère les jambes et peut être sortie pour manger dehors.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "table, table suspendue, table extérieure"
+    },
+    {
+      "name": "Lanterneau panoramique 700 x 500 mm",
+      "category": "conf",
+      "where": "toit de la zone jour",
+      "explanation": "Grande baie de toit ouvrante qui apporte lumière et aération ; avec store et moustiquaire.",
+      "tip": "Fermez-le avant de rouler et en cas de vent fort.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lanterneau, hublot, baie de toit, Heki, aération"
+    },
+    {
+      "name": "Penderie",
+      "category": "conf",
+      "where": "près de la salle d'eau ou au pied/à la tête des lits",
+      "explanation": "Armoire pour vêtements sur cintres.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "penderie, armoire, placard, vêtements"
+    },
+    {
+      "name": "Porte d'entrée XL",
+      "category": "conf",
+      "where": "côté droit de la cellule",
+      "explanation": "Porte cellule plus large, plus confortable pour entrer et charger.",
+      "tip": "Vérifiez que la porte est bien verrouillée avant de partir (témoin sur certains modèles).",
+      "standard_or_option": "série (certains modèles)",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "porte, porte cellule, porte XL, entrée"
+    },
+    {
+      "name": "Isolation plancher 56 mm / parois 30 mm / toit 30 mm",
+      "category": "conf",
+      "where": "structure de la cellule",
+      "explanation": "Épaisseur des panneaux sandwich de la cellule, qui détermine l'isolation thermique.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "isolation, épaisseur, parois, plancher, structure"
+    },
+    {
+      "name": "Store extérieur (3 à 4,5 m)",
+      "category": "ext",
+      "where": "paroi droite, côté porte",
+      "explanation": "Auvent à enrouleur qui se déroule pour créer une zone d'ombre devant la porte.",
+      "tip": "Rentrez-le dès qu'il y a du vent et inclinez-le sous la pluie pour que l'eau s'écoule.",
+      "standard_or_option": "option",
+      "types": [],
+      "keywords": "store, auvent, banne, ombre"
+    },
+    {
+      "name": "Soute / garage arrière avec poignées « pull »",
+      "category": "ext",
+      "where": "sous le lit arrière, portes de chaque côté",
+      "explanation": "Grand coffre sous le lit pour vélos, chaises, table… Les portes ont de nouvelles poignées « pull » plus robustes.",
+      "tip": "Répartissez les charges lourdes près de l'essieu et sanglez-les : tout poids loin derrière allège l'avant.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine",
+        "profile",
+        "compact"
+      ],
+      "keywords": "soute, garage, coffre, rangement extérieur, vélos"
+    },
+    {
+      "name": "Espace de chargement modulable (lit relevable)",
+      "category": "ext",
+      "where": "arrière des Horus 38 et 54",
+      "explanation": "Le lit arrière se relève pour transformer l'espace nuit en zone de chargement (vélos, bagages).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "chargement, lit relevable, garage modulable"
+    },
+    {
+      "name": "Pare-chocs peint + plaque de protection de soubassement noire, phares à encadrement noir",
+      "category": "ext",
+      "where": "face avant",
+      "explanation": "Finitions extérieures du Ducato.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine",
+        "profile"
+      ],
+      "keywords": "pare-chocs, finition, face avant"
+    }
+  ],
+  "layout_patterns": [
+    "Fourgon – lit double transversal arrière (relevable pour charger), cabinet de toilette côté conducteur face à une cuisine linéaire côté porte coulissante, dinette demi-banquette + sièges pivotants : Horus 38, Horus 54",
+    "Fourgon familial – deux lits doubles transversaux superposés à l'arrière, même zone centrale et dinette : Horus 45",
+    "Fourgon – lits jumeaux longitudinaux (grand lit avec rallonge) et penderies au pied, cabinet de toilette face à la cuisine : Horus 95",
+    "Capucine – lit double transversal sur garage, cuisine en angle côté porte face à une salle d'eau monobloc, dinette face-à-face côté conducteur, lit de capucine : Kilig 5",
+    "Capucine / profilé familial 7 places – lits superposés transversaux sur garage, porte au milieu, cuisine côté porte, salle d'eau monobloc + penderie + frigo côté conducteur, double dinette face-à-face (une de chaque côté) : Kilig 9 (capucine), Kilig 79 Plus (profilé avec lit de pavillon)",
+    "Capucine 6 couchages fixes – salle d'eau tout au fond au centre, encadrée de deux paires de lits superposés longitudinaux (4 couchettes), soutes sous les couchettes, double dinette en L face-à-face, lit de capucine : Kilig 50, Sarus 50",
+    "Lit central arrière (penderies de chaque côté de la tête) + salle d'eau séparée (douche et WC/lavabo de part et d'autre du couloir) + salon en L avec siège latéral : Kilig 669 (capucine), Kilig 69 Plus, Sarus 69 Plus (profilés, lit de pavillon)",
+    "Lit central arrière + salle d'eau séparée + salon avec deux banquettes latérales face-à-face derrière la cabine et lit de pavillon : Kilig 66 Plus, Sarus 66 Plus",
+    "Lits jumeaux arrière (rallonge en grand lit, penderie et rangement au pied) + salle d'eau séparée + salon en L avec siège latéral : Kilig 695, Sarus 695 (capucines) ; Kilig 95 Plus, Sarus 95 Plus, Sarus 96 Plus (profilés, lit de pavillon)",
+    "Lits jumeaux arrière + salle d'eau séparée + salon avec deux banquettes face-à-face et lit de pavillon : Kilig 99 Plus",
+    "Profilé – lit transversal sur garage + douche séparée côté porte et WC/cuisine côté conducteur + salon lounge (deux banquettes latérales face-à-face) + lit de pavillon : Kilig 55 Plus",
+    "Profilé – lit transversal sur garage + cuisine en angle côté porte face à une salle d'eau côté conducteur + salon en L + lit de pavillon : Kilig 78 Plus",
+    "Profilé familial – lits superposés transversaux dont la couchette basse est une mini-dinette arrière transformable, salle d'eau séparée, salon en L + lit de pavillon (5 couchages fixes) : Kilig 73 Plus",
+    "Profilé deux salons – salon arrière en U transformable en lit double surmonté d'un lit de pavillon arrière, salon en L à l'avant avec lit de pavillon avant (double lit de pavillon) : Kilig 77 Plus",
+    "Profilé compact à cuisine arrière – cuisine en L au fond, salle d'eau + frigo côté conducteur, grand salon lounge convertible + lit de pavillon XL : Kilig 56 Plus",
+    "Profilé compact sans lit arrière – grand rangement/soute arrière transversal avec penderies, salle d'eau séparée, salon lounge convertible + lit de pavillon XL (6,45 m) : Kilig 67 Plus"
+  ]
+}

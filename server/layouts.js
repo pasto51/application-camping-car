@@ -5,19 +5,25 @@
 // No AI service: a list of phrases and synonyms, scored against each layout's features.
 
 const { layoutList } = require('./vehicle-types');
+// Models of the 2026-2027 Challenger, Randger and Rimor catalogues and the layout that matches each one.
+const MODELS = require('./seed/models.json').map(([brand, model, layout]) => ({ brand, model, layout }));
 
 // weight: how much the word tells the layouts apart (4 = it decides, 1 = every layout has it).
 const FEATURES = [
   { id: 'toit_rel', label: 'toit relevable', weight: 4, re: /toit (relevable|releve|levant|ouvrant)|pop ?top/, eq: ['toit_rel', 'lit_toit'] },
-  { id: 'superp', label: 'lits superposés', weight: 4, re: /superpose/, eq: ['superp'] },
+  { id: 'superp', label: 'lits superposés', weight: 4, re: /superpose|duobed|couchettes?( relevable)?|lits? etages?|lits? enfants?/, eq: ['superp'] },
+  { id: 'lit_relevable', label: 'lit relevable (garage haut)', weight: 3, re: /lit (arriere )?(relevable|papillon|reglable en hauteur|electrique arriere)|easybed|garage haut|papillon/, eq: ['lit_haut'] },
+  { id: 'lit_long', label: 'lit longitudinal', weight: 4, re: /longitudinal|dans le sens de la longueur|lit (en )?long\b/, eq: ['lit_central'] },
+  { id: 'douche_sep', label: 'douche séparée', weight: 2, re: /douche (separee|independante|a part)|cabine de douche|douche et wc (separes|de chaque cote)/, eq: ['douche_sep'] },
+  { id: 'lounge', label: 'salon lounge', weight: 2, re: /lounge|salon en l|salon l\b/, eq: ['salon_l'] },
   { id: 'capucine', label: 'capucine', weight: 4, re: /capucine/, eq: ['lit_cap'] },
   { id: 'lits_jum', label: 'lits jumeaux', weight: 4, re: /jumeaux|lits? separes|(deux|2) lits( simples)?/, eq: ['lits_jum'] },
   { id: 'lit_central', label: 'lit central', weight: 4, re: /lit (central|centrale|a la francaise|ile|queen)|queen ?size|lit centre/, eq: ['lit_central'] },
   { id: 'lit_trans', label: 'lit transversal', weight: 4, re: /transversal|lit (arriere )?en travers|lit travers/, eq: ['lit_ar'] },
   { id: 'salon_ar', label: 'salon arrière', weight: 4, re: /salon (arriere|en u|panoramique)|salon u\b|banquette en u/, eq: ['salon_ar'] },
-  { id: 'cuisine_ar', label: 'cuisine arrière', weight: 4, re: /cuisine (en l )?(a l )?arriere|arriere cuisine/, eq: ['rechaud', 'evier', 'frigo'] },
-  { id: 'sdb_ar', label: 'salle d’eau arrière', weight: 4, re: /(salle d eau|salle de bains?|sdb|douche|toilettes?|wc|cabinet de toilette)( \w+){0,2} (a l )?arriere/, eq: ['douche', 'wc'] },
-  { id: 'penderie_ar', label: 'penderie arrière', weight: 4, re: /(penderie|armoire|dressing)( \w+){0,2} (a l )?arriere|arriere (avec )?(une )?(penderie|armoire|dressing)/, eq: ['penderie'] },
+  { id: 'cuisine_ar', label: 'cuisine arrière', weight: 4, re: /cuisine (en l )?(a l arriere|arriere|au fond|tout au fond)|arriere cuisine/, eq: ['rechaud', 'evier', 'frigo'] },
+  { id: 'sdb_ar', label: 'salle d’eau arrière', weight: 4, re: /(salle d eau|salle de bains?|sdb|douche|toilettes?|wc|cabinet de toilette)( \w+){0,2} (a l arriere|arriere|au fond|tout au fond)/, eq: ['douche', 'wc'] },
+  { id: 'penderie_ar', label: 'penderie arrière', weight: 4, re: /(penderie|armoire|dressing|lingere)( \w+){0,2} (a l arriere|arriere|au fond|tout au fond)|arriere (avec )?(une )?(grande? )?(penderie|armoire|dressing)|grand dressing/, eq: ['penderie'] },
   { id: 'banquette_lit', label: 'banquette-lit', weight: 3, re: /banquette (lit|convertible|arriere)|banquettelit/, eq: ['banq'] },
   { id: 'pavillon', label: 'lit de pavillon', weight: 3, re: /pavillon|basculant|lit (de |au )?plafond|lit electrique avant|lit escamotable/, eq: ['pavillon'] },
   { id: 'garage', label: 'garage', weight: 2, re: /garage|soute/, eq: ['garage'] },
@@ -30,8 +36,8 @@ const FEATURES = [
   { id: 'lit_ar', label: 'lit arrière', weight: 1, re: /lit (fixe )?arriere|chambre arriere/, eq: [] },
 ];
 // The detailed feature already says it: no need to count the general one too.
-const COVERS = { cuisine_ar: ['cuisine'], sdb_ar: ['sdb'], penderie_ar: ['penderie'], salon_ar: ['dinette'], superp: ['famille'] };
-const REAR_BEDS = ['lit_trans', 'lit_central', 'lits_jum', 'superp', 'banquette_lit'];
+const COVERS = { cuisine_ar: ['cuisine'], sdb_ar: ['sdb'], penderie_ar: ['penderie'], salon_ar: ['dinette', 'lounge'], superp: ['famille'], douche_sep: ['sdb'], lounge: ['dinette'] };
+const REAR_BEDS = ['lit_trans', 'lit_central', 'lits_jum', 'superp', 'banquette_lit', 'lit_long', 'lit_relevable'];
 // A garage on a coachbuilt is a « soute » in a fourgon.
 const SAME = { garage: ['garage', 'soute'] };
 
@@ -84,9 +90,26 @@ function has(layout, id) {
   return null;
 }
 
+// A catalogue model named in the words (« V114 », « Kilig 669 », « R602 »…), longest name first.
+// Model names made of digits only (Challenger 250, 3048…) count only next to the word « Challenger » or alone.
+function findModel(text) {
+  const t = norm(text);
+  const list = [...MODELS].sort((a, b) => b.model.length - a.model.length);
+  for (const m of list) {
+    const name = norm(m.model).replace(/ plus$/, '');
+    const re = new RegExp(`(^|\\s)${name.replace(/ /g, '\\s?')}(\\s?plus)?(\\s|$)`);
+    if (!re.test(t)) continue;
+    if (/^\d+$/.test(name) && !(t.includes(norm(m.brand)) || t === name)) continue;
+    return m;
+  }
+  return null;
+}
+
 // Best layouts for these words, most likely first.
 function matchLayouts(text, type) {
   const u = understand(text);
+  const model = findModel(text);
+  if (model) type = layoutList().find((L) => L.id === model.layout)?.type || type;
   const byId = Object.fromEntries(FEATURES.map((f) => [f.id, f]));
   const useType = type || u.type;
   const results = layoutList()
@@ -109,11 +132,17 @@ function matchLayouts(text, type) {
           missing.push(`sans ${byId[id].label}`);
         }
       }
+      if (model && model.layout === L.id) {
+        score += 20;
+        matched.unshift(`modèle ${model.brand} ${model.model}`);
+      }
       return { ...L, score, matched, missing };
     })
     .sort((a, b) => b.score - a.score);
   const equipment = [...new Set(u.wanted.flatMap((id) => byId[id].eq))];
-  return { understood: u.wanted.map((id) => byId[id].label), refused: u.refused.map((id) => byId[id].label), type: useType || null, results, equipment };
+  const understood = u.wanted.map((id) => byId[id].label);
+  if (model) understood.unshift(`${model.brand} ${model.model}`);
+  return { understood, refused: u.refused.map((id) => byId[id].label), type: useType || null, model, results, equipment };
 }
 
-module.exports = { matchLayouts, understand, FEATURES };
+module.exports = { matchLayouts, understand, findModel, FEATURES, MODELS };

@@ -1,0 +1,15 @@
+[
+ ["Challenger", "V114S", "van_trans"], ["Challenger", "V114", "fg_trans"], ["Challenger", "V114M", "fg_superp"], ["Challenger", "V210", "fg_relevable"], ["Challenger", "V217", "fg_jumeaux"],
+ ["Challenger", "S217", "pr_jumeaux"], ["Challenger", "S194", "pr_trans"], ["Challenger", "S294", "pr_trans"], ["Challenger", "X150", "cp_sdb_ar"], ["Challenger", "X260", "cp_sdb_ar"],
+ ["Challenger", "250", "cp_sdb_ar"], ["Challenger", "240", "pr_sdb_ar"], ["Challenger", "260", "pr_sdb_ar"], ["Challenger", "270", "pr_sdb_ar"], ["Challenger", "380", "pr_superp"],
+ ["Challenger", "287", "pr_jumeaux"], ["Challenger", "337", "pr_jumeaux"], ["Challenger", "328", "pr_central"], ["Challenger", "318", "pr_central"],
+ ["Challenger", "C194", "ca_trans"], ["Challenger", "C256", "ca_superp"], ["Challenger", "C387", "ca_jumeaux"], ["Challenger", "3057", "in_jumeaux"], ["Challenger", "3048", "in_central"],
+ ["Randger", "R490", "van_toit"], ["Randger", "R540", "van_trans"], ["Randger", "R550", "van_pav"], ["Randger", "R555", "fg_trans_pav"], ["Randger", "R600", "fg_superp"],
+ ["Randger", "R602", "fg_trans"], ["Randger", "R635", "fg_long"], ["Randger", "R640", "fg_jumeaux"], ["Randger", "R560 4x4", "fg_trans"], ["Randger", "R560", "fg_trans"],
+ ["Rimor", "Horus 38", "fg_relevable"], ["Rimor", "Horus 45", "fg_superp"], ["Rimor", "Horus 54", "van_trans"], ["Rimor", "Horus 95", "fg_jumeaux"],
+ ["Rimor", "Kilig 5", "ca_trans"], ["Rimor", "Kilig 9", "ca_superp"], ["Rimor", "Kilig 50", "ca_superp_long"], ["Rimor", "Kilig 669", "ca_central"], ["Rimor", "Kilig 695", "ca_jumeaux"],
+ ["Rimor", "Kilig 55 Plus", "pr_trans"], ["Rimor", "Kilig 56 Plus", "cp_cuisine_ar"], ["Rimor", "Kilig 66 Plus", "pr_central"], ["Rimor", "Kilig 67 Plus", "cp_sdb_ar"], ["Rimor", "Kilig 69 Plus", "pr_central"],
+ ["Rimor", "Kilig 73 Plus", "pr_superp"], ["Rimor", "Kilig 77 Plus", "cp_salon_ar"], ["Rimor", "Kilig 78 Plus", "pr_trans"], ["Rimor", "Kilig 79 Plus", "pr_superp"], ["Rimor", "Kilig 95 Plus", "pr_jumeaux"],
+ ["Rimor", "Kilig 99 Plus", "pr_jumeaux"], ["Rimor", "Sarus 50", "ca_superp_long"], ["Rimor", "Sarus 695", "ca_jumeaux"], ["Rimor", "Sarus 66 Plus", "pr_central"], ["Rimor", "Sarus 69 Plus", "pr_central"],
+ ["Rimor", "Sarus 95 Plus", "pr_jumeaux"], ["Rimor", "Sarus 96 Plus", "pr_jumeaux"]
+]

@@ -1,0 +1,1617 @@
+{
+  "brand": "Challenger",
+  "catalogue": "Catalogue général Challenger édition 2027 (BE-CH-FR, impression août 2026)",
+  "data_notes": "Le catalogue ne donne PAS les largeurs (sauf 2,10 m pour Slim et Série X), hauteurs, PTAC, nombre de couchages et places route par modèle : ils sont publiés uniquement sur challenger-camping-cars.fr. Les champs berths_night/seats_road sont des estimations d'après les plans et les fourchettes par gamme (Fourgons 2-5 pers., Slim 2-4, Série X 2-4, Profilés 3-5, Capucines 4-7, Intégraux 2-4) ; ils sont listés dans estimated_fields. Sur les plans la cabine est à droite : le côté gauche du véhicule est en haut, la porte cellule est côté droit (passager).",
+  "models": [
+    {
+      "model": "V114S",
+      "range": "Fourgon",
+      "type": "van",
+      "length_m": 5.41,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato (Break/Sport Edition) ou Citroën Jumper (Road/Road Sport Edition)",
+      "editions": [
+        "Road Edition",
+        "Road Sport Edition",
+        "Break Edition",
+        "Sport Edition"
+      ],
+      "layout": {
+        "rear": "lit transversal arrière (lit double en travers), rangement dessous accessible par les portes arrière",
+        "middle": "salle d'eau côté gauche (WC + lavabo + douche) derrière la dinette ; cuisine linéaire côté droit en face de la porte coulissante (évier, réchaud, réfrigérateur)",
+        "front": "dinette : banquette 2 places face route avec table, face aux sièges cabine pivotants ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Le plus court de la gamme (5,41 m). Salle de bain vario non disponible sur ce modèle. Couchage d'appoint possible selon dinette."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "V114",
+      "range": "Fourgon",
+      "type": "fourgon",
+      "length_m": 5.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato (Break/Sport Edition) ou Citroën Jumper (Road/Road Sport Edition)",
+      "editions": [
+        "Road Edition",
+        "Road Sport Edition",
+        "Break Edition",
+        "Sport Edition"
+      ],
+      "layout": {
+        "rear": "lit transversal arrière, soute de rangement dessous accessible par les portes arrière",
+        "middle": "salle d'eau côté gauche (WC, lavabo, douche ; salle de bain vario en Sport/Road Sport) ; cuisine linéaire côté droit près de la porte coulissante avec réfrigérateur (84 L en Break Edition) et colonne/penderie",
+        "front": "dinette : banquette 2 places face route avec table, face aux sièges cabine pivotants ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Best-seller ; version Break Edition avec nouvelle cuisine et grand plan de travail."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "V114M",
+      "range": "Fourgon",
+      "type": "fourgon",
+      "length_m": 5.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato (Break/Sport Edition) ou Citroën Jumper (Road/Road Sport Edition)",
+      "editions": [
+        "Road Edition",
+        "Road Sport Edition",
+        "Break Edition",
+        "Sport Edition"
+      ],
+      "layout": {
+        "rear": "lits superposés arrière : lit transversal double en bas + couchette relevable au-dessus",
+        "middle": "salle d'eau côté gauche ; cuisine linéaire côté droit face à la porte coulissante",
+        "front": "dinette : banquette 2 places face route avec table, face aux sièges cabine pivotants ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Version famille du V114 : couchette supérieure relevable pour libérer la hauteur quand elle ne sert pas."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "F&S",
+      "range": "Fourgon",
+      "type": "fourgon",
+      "length_m": 5.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 4,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Sport Edition"
+      ],
+      "layout": {
+        "rear": "lits superposés à l'arrière (couchettes étagées au-dessus d'un espace de rangement), accessibles aussi par les portes arrière",
+        "middle": "salle d'eau à l'arrière côté gauche ; bloc cuisine côté droit",
+        "front": "dinette face aux sièges cabine pivotants",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Plan atypique destiné aux familles/sportifs ; couchettes qui servent aussi d'étagères de rangement quand elles sont libres. Salle de bain vario non disponible. Lecture du plan incertaine (plan très peu contrasté)."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "V210",
+      "range": "Fourgon",
+      "type": "fourgon",
+      "length_m": 6.36,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Sport Edition"
+      ],
+      "layout": {
+        "rear": "lit de pavillon arrière (grand lit double transversal relevable vers le plafond) au-dessus d'un vaste garage",
+        "middle": "salle d'eau côté gauche avec salle de bain vario ; cuisine linéaire côté droit",
+        "front": "dinette : banquette 2 places face route avec table, face aux sièges cabine pivotants ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Quand le lit est relevé, l'arrière devient un garage haut (vélos, matériel de sport), accessible par les portes arrière."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "V217",
+      "range": "Fourgon",
+      "type": "fourgon",
+      "length_m": 6.36,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Break Edition",
+        "Sport Edition"
+      ],
+      "layout": {
+        "rear": "lits jumeaux longitudinaux à l'arrière (transformables en grand lit), rangement dessous",
+        "middle": "salle d'eau côté gauche ; cuisine linéaire côté droit",
+        "front": "dinette : banquette 2 places face route avec table, face aux sièges cabine pivotants ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Lits jumeaux avec rangements de pavillon au-dessus et liseuses."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "S217",
+      "range": "Profilé slim",
+      "type": "compact",
+      "length_m": 6.59,
+      "width_m": 2.1,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lits jumeaux longitudinaux sur garage traversant (option : transformation intégrée en lit XXL)",
+        "middle": "salle d'eau côté gauche (salle de bain vario nouvelle génération) ; cuisine côté droit avec frigo à compression",
+        "front": "dinette : banquette face route + sièges cabine pivotants + petit siège latéral ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Largeur 2,10 m, « le plus étroit du marché »."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "S194",
+      "range": "Profilé slim",
+      "type": "compact",
+      "length_m": 5.99,
+      "width_m": 2.1,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lit transversal arrière relevable « papillon » au-dessus d'un garage traversant",
+        "middle": "salle d'eau côté gauche ; cuisine côté droit",
+        "front": "dinette : banquette face route + siège latéral + sièges cabine pivotants",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Largeur 2,10 m. Le lit se relève pour agrandir le garage ou accéder aux rangements."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "S294",
+      "range": "Profilé slim",
+      "type": "compact",
+      "length_m": 6.59,
+      "width_m": 2.1,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lit transversal arrière relevable au-dessus d'un garage traversant",
+        "middle": "salle d'eau côté gauche à cloison pivotante (vario) ; cuisine côté droit",
+        "front": "Smart Lounge : deux banquettes latérales face à face autour d'une table (banquettes ISOFIX transformables en sièges route)",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Largeur 2,10 m. Smart Lounge convertible en couchage d'appoint."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "X150",
+      "range": "Série X",
+      "type": "compact",
+      "length_m": 5.99,
+      "width_m": 2.1,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Open Edition"
+      ],
+      "layout": {
+        "rear": "salle de bain traversante arrière (douche avec caillebotis d'un côté, WC/lavabo de l'autre)",
+        "middle": "cuisine côté gauche (frigo à compression grand volume) ; penderie/rangement côté droit près de la porte",
+        "front": "Smart Lounge (maxi salon : deux banquettes latérales face à face) sous un lit de pavillon électrique",
+        "garage": false,
+        "door_side": "droite (côté passager)",
+        "notes": "Largeur 2,10 m. Lit de pavillon utilisable en position basse ou intermédiaire avec échelle ; dinette transformable en couchage d'appoint. Jantes alu 16'', balisage LED au sol."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "X260",
+      "range": "Série X",
+      "type": "compact",
+      "length_m": 6.55,
+      "width_m": 2.1,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Open Edition"
+      ],
+      "layout": {
+        "rear": "grand dressing arrière (penderie/lingère) avec rangement traversant accessible de l'extérieur",
+        "middle": "salle de bain traversante (douche avec caillebotis, WC, lavabo relevable) ; cuisine côté gauche avec tiroir casserolier",
+        "front": "Smart Lounge (maxi salon) sous un lit de pavillon électrique",
+        "garage": false,
+        "door_side": "droite (côté passager)",
+        "notes": "Nouveauté 2027. Largeur 2,10 m. Pas de garage mais un coffre traversant arrière."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "250",
+      "range": "Profilé",
+      "type": "compact",
+      "length_m": 6.39,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "dressing / penderie arrière au-dessus d'une soute",
+        "middle": "salle de bain traversante (douche côté gauche, WC + lavabo côté droit) ; cuisine côté gauche",
+        "front": "Smart Lounge (deux banquettes face à face, table) avec lit de pavillon au-dessus",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Profilé le plus court (6,39 m), sans lit fixe arrière."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "240",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 6.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "dressing / rangement arrière sur toute la largeur",
+        "middle": "cuisine côté gauche avec séparation vitrée type verrière ; salle de bain vario (cloison pivotante douche/lavabo) côté droit",
+        "front": "salon en L avec banquette latérale et siège, table, sous un lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Seul profilé avec salon en L au lieu du Smart Lounge."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "260",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 6.96,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato (6,96 m) ou Ford Transit (6,99 m)",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "dressing arrière au-dessus d'une soute garage (porte extérieure arrière) ; trappe entre salle d'eau et garage",
+        "middle": "salle de bain traversante (douche côté gauche, WC/lavabo côté droit) ; cuisine côté gauche",
+        "front": "Smart Lounge avec lit de pavillon électrique au-dessus",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Longueur 6,96 m (Fiat) / 6,99 m (Ford)."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "270",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 6.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "dressing arrière avec trappe d'accès vers le garage/soute",
+        "middle": "salle de bain traversante ; cuisine côté gauche",
+        "front": "Smart Lounge avec lits jumeaux de pavillon (deux lits simples qui descendent du plafond)",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Seul modèle à lits jumeaux de pavillon."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "380",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 7.19,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 5,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "Duobed : lit transversal arrière avec couchette superposée escamotable (un ou deux lits au choix)",
+        "middle": "douche séparée côté gauche, cabinet de toilette (WC + lavabo) côté droit ; cuisine côté gauche",
+        "front": "Smart Lounge avec lit de pavillon",
+        "garage": null,
+        "door_side": "droite (côté passager)",
+        "notes": "Le plus familial des profilés (jusqu'à 5 couchages)."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "287",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 6.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lits jumeaux longitudinaux sur garage",
+        "middle": "salle d'eau côté gauche ; cuisine côté droit",
+        "front": "dinette en L avec banquette latérale + sièges cabine pivotants ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": ""
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "337",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 7.16,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato (7,16 m) ou Ford Transit (7,19 m)",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lits jumeaux longitudinaux sur garage",
+        "middle": "salle de bain séparée en deux : douche côté gauche, WC/lavabo côté droit, fermable en suite ; cuisine côté gauche",
+        "front": "Smart Lounge",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Nouveauté 2027."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "328",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 7.19,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lit central (lit « île » accessible des deux côtés)",
+        "middle": "douche côté gauche et WC/lavabo côté droit de part et d'autre du couloir ; cuisine côté gauche",
+        "front": "Smart Lounge",
+        "garage": false,
+        "door_side": "droite (côté passager)",
+        "notes": ""
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "318",
+      "range": "Profilé",
+      "type": "profile",
+      "length_m": 7.36,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 3,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato (7,36 m) ou Ford Transit (7,39 m)",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lit central arrière",
+        "middle": "douche et cabinet de toilette séparés de part et d'autre ; cuisine côté gauche",
+        "front": "Smart Lounge",
+        "garage": false,
+        "door_side": "droite (côté passager)",
+        "notes": ""
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "C194",
+      "range": "Capucine",
+      "type": "capucine",
+      "length_m": 5.99,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 5,
+      "seats_road": 4,
+      "chassis": "Ford Transit",
+      "editions": [
+        "Break Edition"
+      ],
+      "layout": {
+        "rear": "lit transversal arrière relevable « papillon » au-dessus d'un garage",
+        "middle": "salle d'eau côté gauche ; cuisine côté droit",
+        "front": "dinette (banquette face route + siège latéral) avec sièges cabine pivotants ; lit de capucine au-dessus de la cabine",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Capucine très compacte (5,99 m)."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "C256",
+      "range": "Capucine",
+      "type": "capucine",
+      "length_m": 6.96,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 7,
+      "seats_road": null,
+      "chassis": "Citroën Jumper",
+      "editions": [
+        "Break Edition"
+      ],
+      "layout": {
+        "rear": "lits superposés transversaux à l'arrière (enfants), avec échelle",
+        "middle": "salle d'eau côté gauche ; cuisine côté droit",
+        "front": "grande dinette (banquettes face à face + banquette latérale), transformable en lit ; lit de capucine",
+        "garage": null,
+        "door_side": "droite (côté passager)",
+        "notes": "Nouveauté 2027, orientée grande famille."
+      },
+      "estimated_fields": [
+        "berths_night"
+      ]
+    },
+    {
+      "model": "C387",
+      "range": "Capucine",
+      "type": "capucine",
+      "length_m": 7.36,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 6,
+      "seats_road": null,
+      "chassis": "Citroën Jumper",
+      "editions": [
+        "Break Edition"
+      ],
+      "layout": {
+        "rear": "lits jumeaux longitudinaux sur garage",
+        "middle": "salle d'eau côté gauche ; cuisine côté droit",
+        "front": "Dinette XL (banquette face route + banquette latérale + siège) ; lit de capucine",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "Nouveauté 2027."
+      },
+      "estimated_fields": [
+        "berths_night"
+      ]
+    },
+    {
+      "model": "3057",
+      "range": "Intégral",
+      "type": "integral",
+      "length_m": 7.47,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lits jumeaux longitudinaux sur garage",
+        "middle": "salle de bain séparée : WC/lavabo côté gauche, douche côté droit ; cuisine côté gauche",
+        "front": "Smart Lounge avec sièges face route ; lit cabine (pavillon) en option au-dessus de la cabine",
+        "garage": true,
+        "door_side": "droite (côté passager)",
+        "notes": "2 couchages de série, 4 avec le lit cabine en option."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    },
+    {
+      "model": "3048",
+      "range": "Intégral",
+      "type": "integral",
+      "length_m": 7.47,
+      "width_m": null,
+      "height_m": null,
+      "ptac_kg": null,
+      "berths_night": 2,
+      "seats_road": 4,
+      "chassis": "Fiat Ducato",
+      "editions": [
+        "Graphite Edition"
+      ],
+      "layout": {
+        "rear": "lit central arrière",
+        "middle": "salle de bain séparée de part et d'autre (WC/lavabo et douche) ; cuisine côté gauche",
+        "front": "Smart Lounge avec sièges face route ; lit cabine en option",
+        "garage": false,
+        "door_side": "droite (côté passager)",
+        "notes": "2 couchages de série, 4 avec le lit cabine en option."
+      },
+      "estimated_fields": [
+        "berths_night",
+        "seats_road"
+      ]
+    }
+  ],
+  "equipment": [
+    {
+      "name": "Porteur Fiat Ducato 140 ch",
+      "category": "chas",
+      "where": "moteur / châssis",
+      "explanation": "Base roulante des fourgons, de la Série X, de certains profilés et des intégraux. Moteur diesel 140 ch à boîte manuelle.",
+      "tip": "Fiat Camper Assistance : 1 800 ateliers spécialisés camping-car en Europe et assistance 24h/24, 7j/7.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "fiat ducato porteur moteur 140ch"
+    },
+    {
+      "name": "Porteur Citroën Jumper 120/140 ch",
+      "category": "chas",
+      "where": "moteur / châssis",
+      "explanation": "Base roulante des fourgons Road Edition (120 ch) et de capucines (140 ch), boîte manuelle.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon",
+        "capucine"
+      ],
+      "keywords": "citroen jumper porteur 120ch 140ch"
+    },
+    {
+      "name": "Porteur Ford Transit 130 ch",
+      "category": "chas",
+      "where": "moteur / châssis",
+      "explanation": "Base roulante des profilés slim, de profilés et de capucines, moteur 130 ch boîte manuelle.",
+      "tip": "Les Ford ont un frein à main électrique : il se desserre en accélérant ceinture bouclée.",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "ford transit porteur 130ch"
+    },
+    {
+      "name": "ESP (contrôle de stabilité)",
+      "category": "secu",
+      "where": "châssis",
+      "explanation": "Corrige automatiquement les dérapages en freinant une roue : essentiel sur un véhicule haut et lourd.",
+      "tip": "Ne pas le désactiver sauf pour démarrer sur terrain glissant.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "esp stabilité antidérapage"
+    },
+    {
+      "name": "Traction +",
+      "category": "chas",
+      "where": "châssis / commande au tableau de bord",
+      "explanation": "Antipatinage renforcé qui aide à démarrer sur herbe, boue ou neige (le Ducato/Jumper est une traction).",
+      "tip": "Activer avant de s'engager sur un terrain gras, pas une fois embourbé.",
+      "standard_or_option": "série (Citroën, Fiat sauf intégraux)",
+      "types": [
+        "van",
+        "fourgon",
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "traction plus motricité herbe boue neige"
+    },
+    {
+      "name": "Hill Descent Control",
+      "category": "chas",
+      "where": "commande au tableau de bord",
+      "explanation": "Aide à la descente : le véhicule retient automatiquement sa vitesse dans les pentes raides et glissantes.",
+      "tip": "Fonctionne à faible vitesse ; garder le pied prêt à freiner.",
+      "standard_or_option": "série (Citroën, Fiat sauf intégraux)",
+      "types": [
+        "van",
+        "fourgon",
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "aide descente pente hdc"
+    },
+    {
+      "name": "Eco Pack (Stop&Start, alternateur intelligent)",
+      "category": "chas",
+      "where": "moteur",
+      "explanation": "Coupe le moteur à l'arrêt et gère la charge pour réduire la consommation.",
+      "tip": "L'alternateur intelligent peut moins recharger la batterie cellule en roulant : un booster/chargeur adapté peut aider.",
+      "standard_or_option": "série (Citroën, Fiat)",
+      "types": [],
+      "keywords": "stop start eco pack consommation alternateur"
+    },
+    {
+      "name": "Start & Stop",
+      "category": "chas",
+      "where": "moteur",
+      "explanation": "Coupe automatiquement le moteur à l'arrêt (feux, bouchons) pour économiser du carburant.",
+      "tip": "Désactivable par un bouton si gênant.",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "stop start"
+    },
+    {
+      "name": "Frein à main électrique",
+      "category": "chas",
+      "where": "cabine, console",
+      "explanation": "Frein de parking commandé par un bouton au lieu d'un levier ; libère de la place pour pivoter les sièges.",
+      "tip": "",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "frein parking électrique"
+    },
+    {
+      "name": "Jantes alliage 16''",
+      "category": "chas",
+      "where": "roues",
+      "explanation": "Jantes en aluminium, plus légères et esthétiques que les jantes tôle.",
+      "tip": "Vérifier la pression des pneus (pression camping-car souvent élevée) chaque mois.",
+      "standard_or_option": "série (Série X)",
+      "types": [
+        "compact"
+      ],
+      "keywords": "jantes alu alliage roues"
+    },
+    {
+      "name": "Pare-chocs avant peint",
+      "category": "chas",
+      "where": "avant",
+      "explanation": "Pare-chocs couleur carrosserie selon finition.",
+      "tip": "",
+      "standard_or_option": "série selon finition (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "pare-chocs"
+    },
+    {
+      "name": "Climatisation de cabine",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Clim manuelle (Citroën, Fiat) ou automatique (Ford) pour la cabine pendant la conduite ; elle ne refroidit pas la cellule à l'arrêt.",
+      "tip": "Fonctionne moteur tournant uniquement.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "clim climatisation cabine"
+    },
+    {
+      "name": "Double airbag",
+      "category": "secu",
+      "where": "cabine",
+      "explanation": "Airbags conducteur et passager.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "airbag"
+    },
+    {
+      "name": "Sièges de cabine pivotants réglables en hauteur, double accoudoir",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Les sièges conducteur et passager pivotent vers l'arrière pour agrandir le salon à l'étape.",
+      "tip": "Avancer le siège et baisser l'accoudoir côté porte avant de pivoter ; frein à main serré.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "sièges pivotants cabine fauteuils"
+    },
+    {
+      "name": "Housses de siège cabine assorties à l'ambiance cellule",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Les sièges cabine sont habillés du même tissu que le salon.",
+      "tip": "",
+      "standard_or_option": "série selon finition (Ford, Fiat)",
+      "types": [],
+      "keywords": "housses sièges tissu"
+    },
+    {
+      "name": "Fix&Go (kit anti-crevaison)",
+      "category": "secu",
+      "where": "cabine ou coffre (selon porteur)",
+      "explanation": "Bombe/compresseur de réparation de pneu fourni à la place d'une roue de secours.",
+      "tip": "Ne répare que les petites perforations de la bande de roulement ; repérer où il est rangé avant le départ.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "kit crevaison fix and go roue secours compresseur"
+    },
+    {
+      "name": "Rétroviseurs électriques (et chauffants)",
+      "category": "cab",
+      "where": "portières",
+      "explanation": "Réglage électrique des rétros ; dégivrants sur Citroën.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "rétroviseurs électriques chauffants"
+    },
+    {
+      "name": "Régulateur / limiteur de vitesse",
+      "category": "cab",
+      "where": "volant",
+      "explanation": "Maintient une vitesse choisie ou empêche de la dépasser.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "régulateur limiteur vitesse cruise"
+    },
+    {
+      "name": "Caméra de recul",
+      "category": "cab",
+      "where": "arrière du véhicule, écran en cabine",
+      "explanation": "Affiche l'arrière du véhicule à l'écran pour manœuvrer.",
+      "tip": "Indispensable sur un camping-car : nettoyer l'objectif régulièrement.",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "caméra recul marche arrière"
+    },
+    {
+      "name": "Système multimédia avec commandes au volant",
+      "category": "multi",
+      "where": "tableau de bord",
+      "explanation": "Écran tactile radio/multimédia du porteur Ford, piloté depuis le volant.",
+      "tip": "",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "autoradio écran multimédia carplay"
+    },
+    {
+      "name": "Antenne radio DAB",
+      "category": "multi",
+      "where": "toit / cabine",
+      "explanation": "Réception de la radio numérique terrestre (DAB+), meilleure qualité que la FM.",
+      "tip": "",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "radio dab numérique"
+    },
+    {
+      "name": "FordPass (géolocalisation)",
+      "category": "multi",
+      "where": "application smartphone",
+      "explanation": "Application connectée qui permet de localiser son camping-car à distance avec le smartphone.",
+      "tip": "Utile en cas de vol ou pour retrouver son véhicule.",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "fordpass géolocalisation connecté application"
+    },
+    {
+      "name": "Feux anti-brouillard",
+      "category": "secu",
+      "where": "pare-chocs avant",
+      "explanation": "Phares bas complémentaires pour le brouillard.",
+      "tip": "",
+      "standard_or_option": "série (Ford) / selon finition (Fiat)",
+      "types": [],
+      "keywords": "antibrouillard phares"
+    },
+    {
+      "name": "Pack Safety (AEBS, maintien de voie, somnolence, panneaux)",
+      "category": "secu",
+      "where": "cabine (caméra/radar pare-brise)",
+      "explanation": "Aides à la conduite : freinage d'urgence automatique, maintien de voie d'urgence, détection de somnolence, aide intelligente à la vitesse et lecture des panneaux.",
+      "tip": "Garder le pare-brise propre devant la caméra.",
+      "standard_or_option": "série (Citroën, Fiat)",
+      "types": [],
+      "keywords": "aebs freinage urgence aide conduite adas somnolence"
+    },
+    {
+      "name": "Pack Safety Ford (anti-collision, pression pneus, pluie/luminosité)",
+      "category": "secu",
+      "where": "cabine",
+      "explanation": "Alerte anti-collision, capteur de pression des pneus, contrôle de franchissement de ligne, détecteurs de pluie et de luminosité.",
+      "tip": "Une alerte de pression pneu doit être vérifiée rapidement : le poids d'un camping-car use vite un pneu sous-gonflé.",
+      "standard_or_option": "série (Ford)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine"
+      ],
+      "keywords": "tpms pression pneus anti collision détecteur pluie"
+    },
+    {
+      "name": "Lit cabine (lit de pavillon d'intégral)",
+      "category": "conf",
+      "where": "plafond au-dessus de la cabine",
+      "explanation": "Lit double qui descend du plafond au-dessus des sièges cabine et donne 4 vrais couchages à un intégral.",
+      "tip": "Remonter le lit avant de rouler et vérifier le verrouillage.",
+      "standard_or_option": "option",
+      "types": [
+        "integral"
+      ],
+      "keywords": "lit cabine pavillon intégral"
+    },
+    {
+      "name": "Construction 100 % polyester (polyester/XPS/polyester)",
+      "category": "conf",
+      "where": "parois, toit, plancher",
+      "explanation": "Cellule mono-matière : parois en sandwich polyester – isolant XPS – polyester, sans bois, donc insensible à l'humidité et avec peu de ponts thermiques.",
+      "tip": "Faire quand même le contrôle annuel d'étanchéité pour garder la garantie.",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile",
+        "capucine",
+        "integral"
+      ],
+      "keywords": "polyester xps sandwich construction cellule"
+    },
+    {
+      "name": "IRP 360",
+      "category": "conf",
+      "where": "structure de cellule",
+      "explanation": "Nom donné par Challenger à son procédé de construction/isolation de la cellule (mono-matière polyester).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile",
+        "capucine",
+        "integral"
+      ],
+      "keywords": "irp 360 isolation"
+    },
+    {
+      "name": "Isolation EN1646-1 Classe 3 (grade 3)",
+      "category": "chauf",
+      "where": "cellule",
+      "explanation": "Norme hiver : la cellule passe de -15 °C à +20 °C en moins de 4 h ; adapté aux séjours au ski.",
+      "tip": "Concerne profilés et capucines (capucines avec chauffage > 5,5 kW), pas les fourgons, slims, Série X ni intégraux.",
+      "standard_or_option": "série",
+      "types": [
+        "profile",
+        "capucine",
+        "compact"
+      ],
+      "keywords": "classe 3 grade 3 hiver ski isolation norme"
+    },
+    {
+      "name": "Garantie étanchéité 7 ans",
+      "category": "conf",
+      "where": "—",
+      "explanation": "La cellule est garantie 7 ans contre les infiltrations, à condition de faire un contrôle annuel chez un membre agréé du réseau.",
+      "tip": "Noter la date du contrôle chaque année : un oubli annule la garantie.",
+      "standard_or_option": "série (hors fourgons)",
+      "types": [
+        "compact",
+        "profile",
+        "capucine",
+        "integral"
+      ],
+      "keywords": "garantie étanchéité infiltration contrôle annuel"
+    },
+    {
+      "name": "Baies affleurantes",
+      "category": "conf",
+      "where": "parois",
+      "explanation": "Fenêtres de cellule montées au ras de la paroi, avec store et moustiquaire intégrés.",
+      "tip": "Ne pas ouvrir les baies en roulant.",
+      "standard_or_option": "série (Sport Edition)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "baies fenêtres affleurantes"
+    },
+    {
+      "name": "Porte d'entrée cellule avec fenêtre, 2 points, verrouillage centralisé",
+      "category": "conf",
+      "where": "côté droit (côté passager)",
+      "explanation": "Porte de cellule avec fenêtre, fermeture en 2 points et condamnation avec la clé du véhicule.",
+      "tip": "",
+      "standard_or_option": "série (Profilés slim Graphite)",
+      "types": [
+        "compact"
+      ],
+      "keywords": "porte entrée cellule verrouillage centralisé"
+    },
+    {
+      "name": "Grands lanterneaux & Skyview",
+      "category": "conf",
+      "where": "toit",
+      "explanation": "Grandes ouvertures vitrées dans le toit (lanterneaux) et toit panoramique Skyview au-dessus de la cabine pour la lumière et l'aération.",
+      "tip": "Fermer les lanterneaux avant de rouler et par grand vent.",
+      "standard_or_option": "série (Profilés Graphite)",
+      "types": [
+        "profile",
+        "compact"
+      ],
+      "keywords": "lanterneau skyview toit panoramique aération heki"
+    },
+    {
+      "name": "Habillage de lanterneaux, vestiaires, tête de lit (accessoires)",
+      "category": "conf",
+      "where": "cellule",
+      "explanation": "Accessoires de finition : portemanteaux/vestiaires, tête de lit, habillage décoratif des lanterneaux (modèles sans lit de pavillon).",
+      "tip": "",
+      "standard_or_option": "série (Profilés Graphite)",
+      "types": [
+        "profile"
+      ],
+      "keywords": "accessoires vestiaire tête de lit"
+    },
+    {
+      "name": "Éclairage LED (dont balisage au sol)",
+      "category": "elec",
+      "where": "cellule",
+      "explanation": "Éclairage d'ambiance et de travail en LED, peu gourmand pour la batterie ; balisage lumineux au sol sur la Série X.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "led éclairage balisage sol"
+    },
+    {
+      "name": "Véhicule branché : prises extérieure, USB-C, 220 V, dans le garage",
+      "category": "elec",
+      "where": "salon, chambre, garage, extérieur",
+      "explanation": "Nombreuses prises 230 V (actives sur branchement secteur ou convertisseur), USB-C pour recharger les appareils, et prise dans le garage (vélos électriques).",
+      "tip": "Les prises 230 V ne fonctionnent qu'une fois branché au secteur (ou avec un convertisseur).",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile",
+        "capucine",
+        "integral"
+      ],
+      "keywords": "prises 220v usb c électricité branchement"
+    },
+    {
+      "name": "Smart Lounge",
+      "category": "conf",
+      "where": "avant, derrière la cabine",
+      "explanation": "Salon à deux banquettes latérales face à face autour d'une table, avec dossiers modulables ; les banquettes se transforment en sièges route ou en couchage d'appoint.",
+      "tip": "Consulter la notice pour la position route des banquettes.",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile",
+        "integral"
+      ],
+      "keywords": "smart lounge salon face à face banquettes"
+    },
+    {
+      "name": "Banquettes certifiées ISOFIX",
+      "category": "secu",
+      "where": "salon (Smart Lounge)",
+      "explanation": "Les 2 banquettes du salon se transforment en sièges route avec points d'ancrage ISOFIX pour fixer un siège enfant.",
+      "tip": "Ne transporter des passagers que sur les places homologuées (voir carte grise).",
+      "standard_or_option": "série (modèles Smart Lounge)",
+      "types": [
+        "compact",
+        "profile",
+        "integral"
+      ],
+      "keywords": "isofix siège enfant sièges route face route"
+    },
+    {
+      "name": "Sièges face route",
+      "category": "secu",
+      "where": "salon",
+      "explanation": "Places passagers orientées dans le sens de la marche, avec ceinture.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "profile",
+        "integral"
+      ],
+      "keywords": "sièges face route ceinture passagers"
+    },
+    {
+      "name": "T-System (table à réglage électrique en hauteur) et table Tulipe",
+      "category": "conf",
+      "where": "salon",
+      "explanation": "Table dont la hauteur se règle électriquement ; elle descend pour laisser passer le lit de pavillon ou pour transformer le salon. Pied central type « tulipe ».",
+      "tip": "Toujours baisser la table avant de descendre le lit de pavillon.",
+      "standard_or_option": "série selon modèle",
+      "types": [
+        "compact",
+        "profile",
+        "integral"
+      ],
+      "keywords": "table électrique t-system tulipe"
+    },
+    {
+      "name": "Lit de pavillon électrique",
+      "category": "conf",
+      "where": "plafond au-dessus du salon",
+      "explanation": "Lit double rangé au plafond qui descend électriquement au-dessus du salon ; utilisable en position basse ou intermédiaire avec une échelle.",
+      "tip": "Le remonter avant de rouler ; ne pas dépasser la charge indiquée sur l'étiquette.",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile",
+        "fourgon"
+      ],
+      "keywords": "lit pavillon électrique escamotable plafond"
+    },
+    {
+      "name": "Lits jumeaux de pavillon",
+      "category": "conf",
+      "where": "plafond au-dessus du salon",
+      "explanation": "Deux lits simples qui descendent du plafond au-dessus du salon (modèle 270).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "profile"
+      ],
+      "keywords": "lits jumeaux pavillon"
+    },
+    {
+      "name": "Duobed",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Couchage arrière modulable : un lit, ou deux lits superposés en abaissant la couchette supérieure (modèle 380).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "profile"
+      ],
+      "keywords": "duobed lit superposé modulable"
+    },
+    {
+      "name": "Easybed (lit réglable en hauteur)",
+      "category": "conf",
+      "where": "arrière, au-dessus du garage",
+      "explanation": "Le lit arrière se règle en hauteur pour agrandir le garage (vélos) ou gagner de la hauteur sous plafond.",
+      "tip": "Fixer le chargement du garage avec des sangles.",
+      "standard_or_option": "série selon modèle",
+      "types": [
+        "fourgon",
+        "compact",
+        "profile"
+      ],
+      "keywords": "easybed lit hauteur variable garage"
+    },
+    {
+      "name": "Easy Storage / lit relevable « papillon »",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Le sommier se relève sur vérins pour accéder aux rangements sous le lit ou augmenter le volume du garage.",
+      "tip": "",
+      "standard_or_option": "série selon modèle",
+      "types": [
+        "compact",
+        "capucine"
+      ],
+      "keywords": "lit relevable papillon easy storage vérins"
+    },
+    {
+      "name": "Easybox",
+      "category": "conf",
+      "where": "sous le lit",
+      "explanation": "Coffres de rangement intégrés sous le lit accessibles en soulevant le sommier, pour les petits modèles.",
+      "tip": "",
+      "standard_or_option": "série selon modèle",
+      "types": [
+        "fourgon",
+        "compact"
+      ],
+      "keywords": "easybox rangement sous lit"
+    },
+    {
+      "name": "Lits jumeaux transformables en lit XXL",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Système intégré qui relie les deux lits jumeaux pour former un grand lit.",
+      "tip": "",
+      "standard_or_option": "option (S217)",
+      "types": [
+        "compact"
+      ],
+      "keywords": "lit xxl jumeaux transformation"
+    },
+    {
+      "name": "Dinette transformable en couchage d'appoint",
+      "category": "conf",
+      "where": "salon",
+      "explanation": "La table s'abaisse et les coussins se réorganisent pour faire un lit supplémentaire.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "dinette lit appoint transformable"
+    },
+    {
+      "name": "Dinette XL",
+      "category": "conf",
+      "where": "salon",
+      "explanation": "Grande dinette familiale pouvant accueillir de nombreux convives.",
+      "tip": "",
+      "standard_or_option": "série (Capucines)",
+      "types": [
+        "capucine"
+      ],
+      "keywords": "dinette xl grande dinette famille"
+    },
+    {
+      "name": "Lit de capucine",
+      "category": "conf",
+      "where": "au-dessus de la cabine",
+      "explanation": "Couchage double dans la casquette au-dessus de la cabine, idéal pour les enfants.",
+      "tip": "Installer le filet anti-chute pour les enfants.",
+      "standard_or_option": "série",
+      "types": [
+        "capucine"
+      ],
+      "keywords": "lit capucine casquette enfants"
+    },
+    {
+      "name": "Lits superposés",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Couchettes superposées pour enfants, avec échelle et rideau.",
+      "tip": "",
+      "standard_or_option": "série selon modèle",
+      "types": [
+        "fourgon",
+        "capucine"
+      ],
+      "keywords": "lits superposés couchettes enfants"
+    },
+    {
+      "name": "Matelas premium",
+      "category": "conf",
+      "where": "lits",
+      "explanation": "Matelas de meilleure qualité de couchage.",
+      "tip": "",
+      "standard_or_option": "série (fourgons Sport Edition)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "matelas confort"
+    },
+    {
+      "name": "Grand dressing arrière / penderie-lingère",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Armoire penderie avec étagères et rangement à chaussures sur toute la largeur arrière (X260, profilés 240-270).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "compact",
+        "profile"
+      ],
+      "keywords": "dressing penderie armoire lingère"
+    },
+    {
+      "name": "Garage / soute arrière traversant(e)",
+      "category": "ext",
+      "where": "arrière, sous le lit",
+      "explanation": "Grand coffre arrière accessible par une ou deux portes extérieures, pour vélos, chaises, matériel.",
+      "tip": "Respecter la charge maximale du garage et arrimer le chargement.",
+      "standard_or_option": "série selon modèle",
+      "types": [
+        "compact",
+        "profile",
+        "capucine",
+        "integral"
+      ],
+      "keywords": "garage soute coffre traversant vélos"
+    },
+    {
+      "name": "Rangement traversant",
+      "category": "ext",
+      "where": "arrière",
+      "explanation": "Coffre arrière accessible des deux côtés du véhicule.",
+      "tip": "",
+      "standard_or_option": "série (X260)",
+      "types": [
+        "compact"
+      ],
+      "keywords": "coffre traversant rangement"
+    },
+    {
+      "name": "Trappe d'accès salle d'eau / garage",
+      "category": "conf",
+      "where": "salle d'eau",
+      "explanation": "Trappe intérieure qui permet d'accéder au garage depuis la salle d'eau sans sortir.",
+      "tip": "",
+      "standard_or_option": "série (profilés 260/270)",
+      "types": [
+        "profile"
+      ],
+      "keywords": "trappe garage accès intérieur"
+    },
+    {
+      "name": "Ambiances et tissus (Klein, Barcelona, Jacobsen, Paglieta, Periand, Berlin, Lloyd, Cannes, Mazamet)",
+      "category": "conf",
+      "where": "sellerie / mobilier",
+      "explanation": "Noms des décors : Klein/Barcelona (Road & Break), Jacobsen/Paglieta (Sport & Road Sport), Lloyd/Cannes (Série X), Periand/Berlin (Slim, Profilés, Capucines, Intégraux) ; Mazamet en option.",
+      "tip": "",
+      "standard_or_option": "série / option (Mazamet)",
+      "types": [],
+      "keywords": "ambiance tissu sellerie décor"
+    },
+    {
+      "name": "Coloris carrosserie (blanc, gris Campovolo, Lanzarote, Artense, noir, parois grises)",
+      "category": "ext",
+      "where": "carrosserie",
+      "explanation": "Fourgons Sport en gris Campovolo de série, Lanzarote/Artense/noir en option ; cellules avec parois blanches ou grises selon gamme.",
+      "tip": "",
+      "standard_or_option": "série / option",
+      "types": [],
+      "keywords": "couleur carrosserie gris noir"
+    },
+    {
+      "name": "Réfrigérateur 84 L",
+      "category": "cui",
+      "where": "cuisine, sous le plan de travail",
+      "explanation": "Grand réfrigérateur de la nouvelle cuisine des fourgons Break Edition.",
+      "tip": "",
+      "standard_or_option": "série (Break Edition)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "frigo réfrigérateur 84 litres"
+    },
+    {
+      "name": "Réfrigérateur à compression",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Frigo électrique 12 V fonctionnant comme celui d'une maison, efficace même par forte chaleur ; il consomme sur la batterie cellule (pas de gaz).",
+      "tip": "Surveiller la charge batterie si on reste plusieurs jours sans rouler ni brancher.",
+      "standard_or_option": "série (Slim, Série X, Profilés Graphite)",
+      "types": [
+        "compact",
+        "profile",
+        "integral"
+      ],
+      "keywords": "frigo compression 12v réfrigérateur"
+    },
+    {
+      "name": "Cuisine intérieure / extérieure",
+      "category": "cui",
+      "where": "fourgons, côté porte coulissante",
+      "explanation": "Cuisine placée près de la porte coulissante pour pouvoir cuisiner porte ouverte, presque dehors.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "cuisine extérieure porte coulissante"
+    },
+    {
+      "name": "Plan de travail effet ciment, crédence, tiroir casserolier",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Grand tiroir pour casseroles, crédence murale et plan de travail décoratif (Série X).",
+      "tip": "",
+      "standard_or_option": "série (Série X)",
+      "types": [
+        "compact"
+      ],
+      "keywords": "plan travail tiroir casserolier crédence"
+    },
+    {
+      "name": "Robinetterie 100 % noire",
+      "category": "cui",
+      "where": "cuisine et salle d'eau",
+      "explanation": "Robinets noirs mats.",
+      "tip": "",
+      "standard_or_option": "série (Profilés Graphite)",
+      "types": [
+        "profile"
+      ],
+      "keywords": "robinet mitigeur noir"
+    },
+    {
+      "name": "Salle de bain vario (cloison pivotante)",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Une paroi pivote pour transformer le cabinet de toilette (lavabo) en cabine de douche fermée, gain de place.",
+      "tip": "Remettre la paroi en position lavabo et la verrouiller avant de rouler.",
+      "standard_or_option": "série (Sport/Road Sport Edition hors V114S et F&S ; Slims ; profilés 240…)",
+      "types": [
+        "fourgon",
+        "compact",
+        "profile"
+      ],
+      "keywords": "salle de bain vario cloison pivotante douche"
+    },
+    {
+      "name": "Vraie salle de bain fermée et aérée (paroi rigide)",
+      "category": "sdb",
+      "where": "salle d'eau côté gauche (fourgons)",
+      "explanation": "Salle d'eau avec cloisons rigides, porte et ventilation, au lieu d'un simple rideau.",
+      "tip": "Laisser la porte ou le lanterneau ouvert après la douche pour sécher.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "salle d'eau fermée paroi rigide"
+    },
+    {
+      "name": "Salle de bain traversante avec caillebotis",
+      "category": "sdb",
+      "where": "arrière ou milieu sur toute la largeur",
+      "explanation": "Salle d'eau sur toute la largeur : douche d'un côté (avec caillebotis bois), WC/lavabo de l'autre, fermable sur le couloir.",
+      "tip": "Relever le caillebotis pour le faire sécher.",
+      "standard_or_option": "série (Série X, certains profilés)",
+      "types": [
+        "compact",
+        "profile"
+      ],
+      "keywords": "salle de bain traversante caillebotis douche"
+    },
+    {
+      "name": "Lavabo relevable",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Lavabo qui se replie contre la paroi pour libérer de la place.",
+      "tip": "",
+      "standard_or_option": "série (X260)",
+      "types": [
+        "compact"
+      ],
+      "keywords": "lavabo relevable rabattable"
+    },
+    {
+      "name": "WC à cassette",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Toilettes chimiques avec cassette amovible vidée par une trappe extérieure (marque non précisée dans le catalogue).",
+      "tip": "Vider la cassette dans une borne de vidange, jamais dans la nature.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "wc toilettes cassette chimique"
+    },
+    {
+      "name": "Chauffage sur carburant utilisable en roulant",
+      "category": "chauf",
+      "where": "cellule",
+      "explanation": "Chauffage alimenté par le gazole du réservoir du porteur, autorisé en roulant ; réduit la dépendance au gaz.",
+      "tip": "Garder au moins 1/4 de réservoir : le chauffage se coupe quand le niveau est trop bas.",
+      "standard_or_option": "série (Profilés Graphite)",
+      "types": [
+        "profile"
+      ],
+      "keywords": "chauffage gasoil diesel air pulsé roulant"
+    },
+    {
+      "name": "Nouveau chauffage (fourgons Sport Edition)",
+      "category": "chauf",
+      "where": "cellule",
+      "explanation": "Nouveau système de chauffage de la cellule sur les fourgons Sport Edition (modèle non précisé).",
+      "tip": "",
+      "standard_or_option": "série (Sport Edition)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "chauffage fourgon"
+    },
+    {
+      "name": "Trigano Service (pièces détachées)",
+      "category": "multi",
+      "where": "—",
+      "explanation": "Plateforme européenne de pièces détachées et accessoires toutes marques du groupe Trigano.",
+      "tip": "Noter le numéro de série du véhicule pour commander.",
+      "standard_or_option": "service",
+      "types": [],
+      "keywords": "pièces détachées sav trigano"
+    },
+    {
+      "name": "Fiat Camper Assistance",
+      "category": "secu",
+      "where": "—",
+      "explanation": "Réseau de 1 800 ateliers Fiat spécialisés camping-car en Europe et assistance téléphonique 24h/24, 7j/7.",
+      "tip": "Enregistrer le numéro d'assistance dans le téléphone avant le départ.",
+      "standard_or_option": "série (porteur Fiat)",
+      "types": [],
+      "keywords": "assistance dépannage fiat camper"
+    },
+    {
+      "name": "Visite virtuelle 360° et fiches techniques en ligne",
+      "category": "multi",
+      "where": "site web",
+      "explanation": "Les données techniques (poids, dimensions, PTAC) ne figurent plus dans le catalogue mais sur challenger-camping-cars.fr, avec vidéos et visites 360°.",
+      "tip": "Vérifier sur le site le PTAC et la charge utile avant de charger le véhicule.",
+      "standard_or_option": "service",
+      "types": [],
+      "keywords": "fiche technique site internet 360"
+    }
+  ],
+  "layout_patterns": [
+    "Fourgon classique : lit transversal à l'arrière (soute dessous accessible par les portes arrière), salle d'eau côté gauche et cuisine linéaire côté droit face à la porte coulissante, dinette (banquette face route) devant, face aux sièges cabine pivotants — V114S, V114.",
+    "Fourgon familial à lits superposés : lit transversal double avec couchette relevable au-dessus, reste identique au V114 — V114M ; variante F&S avec couchettes étagées accessibles par les portes arrière et salle d'eau à l'arrière.",
+    "Fourgon à lit de pavillon arrière : grand lit transversal qui remonte au plafond pour libérer un garage haut (vélos) — V210.",
+    "Fourgon à lits jumeaux longitudinaux arrière, salle d'eau côté gauche, cuisine côté droit, dinette — V217.",
+    "Lits jumeaux longitudinaux sur garage, salle d'eau côté gauche, cuisine côté droit, dinette avant (banquette face route ou en L) — S217 (slim), 287 (profilé), C387 (capucine, Dinette XL).",
+    "Lits jumeaux sur garage + salle de bain éclatée (douche d'un côté du couloir, WC/lavabo de l'autre, fermable en suite) + cuisine côté gauche + Smart Lounge — 337 (profilé), 3057 (intégral, lit cabine en option).",
+    "Lit transversal arrière relevable « papillon » au-dessus d'un garage traversant, salle d'eau côté gauche, cuisine côté droit, dinette face route — S194 (slim), C194 (capucine avec lit de capucine).",
+    "Lit transversal arrière sur garage + Smart Lounge (banquettes face à face) — S294.",
+    "Sans lit fixe : Smart Lounge à l'avant sous un lit de pavillon électrique, cuisine côté gauche au milieu, salle de bain traversante tout à l'arrière — X150.",
+    "Sans lit fixe avec dressing arrière : Smart Lounge + lit de pavillon, salle de bain traversante au milieu-arrière, grand dressing/penderie (et soute ou coffre traversant) sur toute la largeur arrière — X260, 250, 260.",
+    "Lits jumeaux de pavillon descendant au-dessus du Smart Lounge, salle de bain traversante, dressing arrière avec trappe vers le garage — 270.",
+    "Salon en L sous lit de pavillon, cuisine avec verrière, salle de bain vario côté droit, dressing arrière — 240.",
+    "Profilé familial : Smart Lounge + lit de pavillon à l'avant, douche et WC séparés au milieu, Duobed (lit transversal + couchette superposée escamotable) à l'arrière — 380.",
+    "Lit central (île) à l'arrière, douche et cabinet de toilette de part et d'autre du couloir, cuisine côté gauche, Smart Lounge — 328, 318 (profilés), 3048 (intégral).",
+    "Capucine grande famille : lits superposés transversaux à l'arrière, salle d'eau et cuisine au milieu, grande dinette convertible, lit de capucine — C256."
+  ]
+}

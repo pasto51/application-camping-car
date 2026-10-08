@@ -5,7 +5,7 @@
 // meanwhile in the back-office always wins.
 
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
-const { NEW_EQUIPMENT, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
+const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
 
 const PATCHES = [
   {
@@ -65,6 +65,41 @@ const PATCHES = [
           v.profile = JSON.stringify(p);
           db.prepare('UPDATE vehicles SET profile = ? WHERE id = ?').run(v.profile, v.id);
         }
+      }
+      return changed;
+    },
+  },
+  {
+    // Equipment and vehicle types found in the 2026-2027 Challenger, Randger and Rimor catalogues.
+    // Types are only widened if they were still the ones set by the previous patch (a back-office edit wins).
+    key: '2026-10-10-catalogues-constructeurs',
+    run: (db) => {
+      let changed = 0;
+      const rows = new Map(db.prepare('SELECT id, data FROM equipment').all().map((r) => [r.id, JSON.parse(r.data)]));
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM equipment').get().n;
+      for (const q of NEW_EQUIPMENT_2026) {
+        if (rows.has(q.id)) continue;
+        db.prepare('INSERT INTO equipment (id, sort, data) VALUES (?, ?, ?)').run(q.id, ++sort, JSON.stringify(q));
+        changed++;
+      }
+      const WIDEN = {
+        superp: [['profile', 'integral', 'capucine'], ['fourgon', 'profile', 'integral', 'capucine']],
+        pavillon: [['compact', 'profile', 'integral'], ['van', 'fourgon', 'compact', 'profile', 'integral']],
+        baies: [['compact', 'profile', 'integral', 'capucine'], []],
+        hotte: [['compact', 'profile', 'integral', 'capucine'], []],
+        douche_sep: [['compact', 'profile', 'integral', 'capucine'], []],
+        sdb_mod: [['van', 'fourgon', 'compact'], ['van', 'fourgon', 'compact', 'profile']],
+        echelle_lit: [['compact', 'profile', 'integral', 'capucine'], []],
+        lant_pav: [['compact', 'profile', 'integral'], ['van', 'fourgon', 'compact', 'profile', 'integral']],
+        garage: [['profile', 'integral', 'capucine'], ['fourgon', 'compact', 'profile', 'integral', 'capucine']],
+        lit_central: [['profile', 'integral', 'capucine'], ['fourgon', 'profile', 'integral', 'capucine']],
+      };
+      for (const [id, [before, after]] of Object.entries(WIDEN)) {
+        const q = rows.get(id);
+        if (!q || JSON.stringify(q.types || []) !== JSON.stringify(before)) continue;
+        q.types = after;
+        db.prepare('UPDATE equipment SET data = ? WHERE id = ?').run(JSON.stringify(q), id);
+        changed++;
       }
       return changed;
     },

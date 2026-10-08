@@ -1,0 +1,1558 @@
+{
+  "brand": "Randger",
+  "source": "Catalogue Randger Gamme 2026 (FR, imprimé septembre 2025)",
+  "notes": "Toutes les implantations ont la porte latérale coulissante côté droit. Dimensions : le catalogue donne longueur, hauteur et largeur via pictogrammes ; ptac_kg = 'Poids en charge'. Fabriqué par PVDL à Brantôme (Dordogne).",
+  "models": [
+    {
+      "model": "R490",
+      "range": "Mini vans (Ford Transit Custom)",
+      "type": "van",
+      "length_m": 5.05,
+      "width_m": 2.15,
+      "height_m": 2.0,
+      "ptac_kg": 3175,
+      "berths_night": 4,
+      "seats_road": 5,
+      "layout": {
+        "rear": "banquette 3 places coulissante (ISOFIX) face à la route, convertible en couchage 189 x 114 cm ; petits meubles de rangement derrière/à côté de la banquette",
+        "middle": "cuisine linéaire le long de la paroi gauche (réchaud 2 feux + évier inox, réfrigérateur à compression 42 L) ; table dinette au centre",
+        "front": "sièges cabine pivotants et chauffants faisant face à la banquette ; toit relevable avec lit de 190 x 118 cm sur sommier à plots",
+        "garage": false,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Combi-van type 'California' : pas de salle d'eau ni de WC. 5 places carte grise, boîte automatique de série, chauffage gasoil 2 kW. Hauteur 2,00 m (passe sous la plupart des barres de parking). Mesure de 2,15 m donnée comme largeur dans le catalogue (probablement rétros inclus)."
+      },
+      "chassis": "Ford Transit Custom 2.0 EcoBlue 136 ch BVA",
+      "fresh_water_l": 50,
+      "grey_water_l": 32
+    },
+    {
+      "model": "R540",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "van",
+      "length_m": 5.41,
+      "width_m": 2.05,
+      "height_m": 2.66,
+      "ptac_kg": 3500,
+      "berths_night": 2,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit transversal 194 x 132/107 cm (forme découpée côté porte) + penderie ; nouvelle soute sous le lit accessible par les portes arrière",
+        "middle": "salle d'eau côté gauche (cabine de douche séparée + WC cassette + lavabo) ; cuisine linéaire côté droit face à la porte (réchaud 2 feux/évier combiné, frigo à compression 70 L double ouverture)",
+        "front": "banquette 2 places ISOFIX face à la route avec rallonge d'assise + sièges cabine pivotants, table avec rail extérieur ; couchage dinette en option ; toit pop-up double couchage en option (pop-up noir) ; pas de lit de pavillon",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Le plus court des big vans Fiat. 2 couchages de série, 3 à 5 en option (dinette + pop-up). Seul modèle Fiat avec batterie AGM 105 Ah au lieu du lithium."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ou 180 ch",
+      "fresh_water_l": 100,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R550",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "van",
+      "length_m": 5.48,
+      "width_m": 2.05,
+      "height_m": 2.78,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "cuisine arrière en angle (L) dans le coin arrière droit (réchaud 2 feux, évier, hotte aspirante, frigo à compression 113 L) + salle d'eau arrière gauche (WC cassette, lavabo avec douchette, cabine de douche)",
+        "middle": "penderie et espace de circulation ouvert en diagonale vers la cuisine d'angle",
+        "front": "salon/dinette face-à-face (banquettes) avec sièges cabine pivotants, convertible en couchage 190 x 122 cm ; grand lit de pavillon électrique 197 x 152 cm (king size) au-dessus du salon",
+        "garage": false,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Aucun lit fixe à l'arrière : tous les couchages sont à l'avant (lit de pavillon + dinette). Double plancher isolé, isolation renforcée hiver, batterie lithium 120 Ah. 5,48 m : à mi-chemin entre van court et fourgon 6 m (classé 'van' ici)."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ch",
+      "fresh_water_l": 85,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R555",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "fourgon",
+      "length_m": 5.99,
+      "width_m": 2.05,
+      "height_m": 2.89,
+      "ptac_kg": 3500,
+      "berths_night": 5,
+      "seats_road": 5,
+      "layout": {
+        "rear": "lit double transversal permanent 184 x 130/123 cm sur sommier à lattes, soute dessous (4 anneaux d'arrimage) + penderie",
+        "middle": "salle d'eau tout-en-un côté gauche (WC cassette, lavabo, cabine de douche) ; cuisine linéaire côté droit (réchaud 2 feux, évier, frigo à compression 113 L)",
+        "front": "banquette 2 places ISOFIX face à la route + 5e siège (strapontin/siège individuel) côté porte, sièges cabine pivotants ; lit de pavillon électrique 197 x 132 cm au-dessus de la dinette ; 5e couchage dinette 184 x 99 cm",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Modèle famille : 5 places carte grise et 5 couchages. Toit très haut (2,89 m) pour loger le lit de pavillon."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ou 180 ch",
+      "fresh_water_l": 100,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R600",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "fourgon",
+      "length_m": 5.99,
+      "width_m": 2.05,
+      "height_m": 2.66,
+      "ptac_kg": 3500,
+      "berths_night": 4,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lits superposés transversaux : 2 grands lits doubles (190 x 149 cm et 186 x 131 cm) l'un au-dessus de l'autre ; maxi soute à portes coulissantes",
+        "middle": "grande salle d'eau modulable côté gauche (WC cassette, lavabo, douche modulable) ; cuisine linéaire côté droit (réchaud 2 feux + évier, frigo à compression 138 L en colonne près de la porte)",
+        "front": "banquette en L (2 places ISOFIX, extrémité arrondie) + sièges cabine pivotants, grand lanterneau au-dessus ; couchage dinette en option ; toit pop-up double couchage en option",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Modèle familial : jusqu'à 7 couchages avec options (dinette + pop-up). Une seule bouteille de propane 6 kg."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ou 180 ch",
+      "fresh_water_l": 100,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R602",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "fourgon",
+      "length_m": 5.99,
+      "width_m": 2.05,
+      "height_m": 2.66,
+      "ptac_kg": 3500,
+      "berths_night": 2,
+      "seats_road": 4,
+      "layout": {
+        "rear": "grand lit double transversal 194 x 147 cm sur sommier à lattes + penderie ; grande soute à porte coulissante dessous",
+        "middle": "salle d'eau modulable côté gauche (WC cassette, lavabo, douche modulable) ; cuisine linéaire côté droit (réchaud 2 feux + évier, frigo à compression 138 L en colonne)",
+        "front": "banquette en L 2 places ISOFIX + sièges cabine pivotants, grand lanterneau ; couchage dinette en option ; toit pop-up double couchage en option",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Version couple du R600 (un seul lit arrière mais plus grand). 3 à 5 couchages avec options."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ou 180 ch",
+      "fresh_water_l": 100,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R635",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "fourgon",
+      "length_m": 6.36,
+      "width_m": 2.05,
+      "height_m": 2.66,
+      "ptac_kg": 3500,
+      "berths_night": 2,
+      "seats_road": 4,
+      "layout": {
+        "rear": "grand lit arrière 185 x 160 cm sur sommier à lattes, orienté dans la longueur (lit central / 'lit pavillon arrière'), encadré de rangements, au-dessus d'une grande soute garage",
+        "middle": "salle d'eau côté gauche (WC cassette, lavabo avec douchette, douche modulable) ; cuisine linéaire côté droit (réchaud 2 feux + évier, frigo à compression 138 L)",
+        "front": "banquette en L 2 places ISOFIX + sièges cabine pivotants, grand lanterneau ; pas d'option dinette ni pop-up",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Le seul plan à grand lit 160 cm de large ; 2 couchages fixes, sans option de couchage supplémentaire."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ou 180 ch",
+      "fresh_water_l": 100,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R640",
+      "range": "Big vans (Fiat Ducato)",
+      "type": "fourgon",
+      "length_m": 6.36,
+      "width_m": 2.05,
+      "height_m": 2.66,
+      "ptac_kg": 3500,
+      "berths_night": 2,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lits jumeaux longitudinaux 187 x 80 cm et 187 x 86 cm, transformables en lit king size avec le complément central ; grande soute à porte coulissante dessous",
+        "middle": "salle d'eau côté gauche (WC cassette, lavabo avec douchette, douche modulable) ; cuisine linéaire côté droit (réchaud 2 feux + évier, frigo à compression 138 L)",
+        "front": "banquette en L 2 places ISOFIX + sièges cabine pivotants, grand lanterneau ; lit banquette avant en option ; toit pop-up double couchage en option",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Vrais lits jumeaux dans 6,36 m. 3 à 5 couchages avec options."
+      },
+      "chassis": "Fiat Ducato 2.2 Multijet 3 140 ou 180 ch",
+      "fresh_water_l": 100,
+      "grey_water_l": 100
+    },
+    {
+      "model": "R560 4x4",
+      "range": "Big vans (Ford Transit)",
+      "type": "fourgon",
+      "length_m": 5.98,
+      "width_m": 2.06,
+      "height_m": 2.78,
+      "ptac_kg": 3500,
+      "berths_night": 2,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit double transversal 190 x 136 cm sur sommier à lattes + penderie, soute dessous",
+        "middle": "salle de bains modulable XL côté gauche (WC cassette, lavabo avec douchette/mitigeur, douche XL) ; cuisine linéaire côté droit (réchaud 2 feux + évier, frigo à compression 70 L)",
+        "front": "banquette 2 places ISOFIX face à la route avec rallonge d'assise + sièges cabine pivotants, table dinette, rails de table à l'entrée ; 3e couchage de cabine en option",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Transmission intégrale 4x4 (Ford 165 ch BVM6) pour chemins et pistes. Grande hauteur intérieure, cloisons polyester faciles à nettoyer, autoradio SYNC 4 avec modem 5G."
+      },
+      "chassis": "Ford Transit 2.0 EcoBlue 165 ch 4x4",
+      "fresh_water_l": 100,
+      "grey_water_l": 60
+    },
+    {
+      "model": "R560 4x2",
+      "range": "Big vans (Ford Transit)",
+      "type": "fourgon",
+      "length_m": 5.98,
+      "width_m": 2.06,
+      "height_m": 2.79,
+      "ptac_kg": 3500,
+      "berths_night": 2,
+      "seats_road": 4,
+      "layout": {
+        "rear": "lit double transversal 190 x 136 cm sur sommier à lattes + penderie, soute dessous",
+        "middle": "salle de bains modulable XL côté gauche (WC cassette, lavabo, douche XL) ; cuisine linéaire côté droit (réchaud 2 feux + évier, frigo à compression 138 L en colonne)",
+        "front": "banquette 2 places ISOFIX avec rallonge d'assise + sièges cabine pivotants, table avec rail extérieur ; 3e couchage de cabine en option",
+        "garage": true,
+        "door_side": "droite (porte latérale coulissante)",
+        "notes": "Même plan que le R560 4x4 en traction avant (130 ch BVM ou 165 ch BVA). Batterie lithium, panneaux solaires, store et caméra en option seulement."
+      },
+      "chassis": "Ford Transit 2.0 EcoBlue 130 ch (BVM6) ou 165 ch (BVA)",
+      "fresh_water_l": 100,
+      "grey_water_l": 60
+    }
+  ],
+  "equipment": [
+    {
+      "name": "Fiat Ducato 2.2 Multijet 3 (140 / 180 ch)",
+      "category": "chas",
+      "where": "moteur, sous le capot",
+      "explanation": "Motorisation diesel des big vans Randger sur base Fiat. Le 140 ch est en boîte manuelle 6 vitesses (automatique en option), le 180 ch est livré en boîte automatique.",
+      "tip": "Le 180 ch automatique est plus agréable en montagne et à pleine charge.",
+      "standard_or_option": "série (140 ch) / option (180 ch)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "moteur diesel ducato multijet motorisation puissance 140ch 180ch"
+    },
+    {
+      "name": "Ford Transit 2.0 EcoBlue (130 / 165 ch)",
+      "category": "chas",
+      "where": "moteur, sous le capot",
+      "explanation": "Motorisation diesel des R560 sur base Ford Transit. 130 ch en boîte manuelle, 165 ch en manuelle (4x4) ou automatique (4x2).",
+      "tip": "",
+      "standard_or_option": "série / option selon version",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "moteur ford transit ecoblue 130ch 165ch"
+    },
+    {
+      "name": "Ford Transit Custom 2.0 EcoBlue 136 ch BVA",
+      "category": "chas",
+      "where": "moteur, sous le capot",
+      "explanation": "Moteur diesel du mini van R490, associé de série à une boîte automatique.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van"
+      ],
+      "keywords": "transit custom moteur boîte automatique"
+    },
+    {
+      "name": "Transmission intégrale 4x4",
+      "category": "chas",
+      "where": "châssis",
+      "explanation": "Les quatre roues sont motrices, ce qui améliore fortement l'adhérence sur chemin, herbe mouillée, neige ou piste.",
+      "tip": "La 4x4 aide à sortir d'un terrain glissant mais n'augmente pas la garde au sol : repérez le terrain à pied avant de vous engager.",
+      "standard_or_option": "série (R560 4x4)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "4x4 quatre roues motrices tout-terrain awd piste"
+    },
+    {
+      "name": "Boîte de vitesses automatique",
+      "category": "chas",
+      "where": "cabine",
+      "explanation": "Boîte qui passe les rapports seule : pas d'embrayage, conduite plus reposante en ville et en montagne.",
+      "tip": "",
+      "standard_or_option": "option sur 140 ch / série sur 180 ch et R490",
+      "types": [],
+      "keywords": "boîte auto bva automatique"
+    },
+    {
+      "name": "Boîte de vitesses manuelle 6 rapports",
+      "category": "chas",
+      "where": "cabine",
+      "explanation": "Boîte classique à 6 vitesses avec pédale d'embrayage.",
+      "tip": "",
+      "standard_or_option": "série (versions 130/140 ch)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "boîte manuelle bvm6 embrayage"
+    },
+    {
+      "name": "Traction+",
+      "category": "chas",
+      "where": "électronique châssis",
+      "explanation": "Antipatinage renforcé qui freine la roue avant qui patine pour transférer le couple à l'autre : utile pour décoller d'une herbe mouillée ou d'un chemin boueux.",
+      "tip": "Activez-le avant de démarrer sur un terrain glissant, pas une fois enlisé.",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "traction plus antipatinage herbe boue motricité"
+    },
+    {
+      "name": "Aide au démarrage en côte",
+      "category": "chas",
+      "where": "électronique châssis",
+      "explanation": "Maintient le véhicule freiné quelques secondes quand vous relâchez la pédale de frein en pente, pour éviter de reculer.",
+      "tip": "",
+      "standard_or_option": "série (R550, R555)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "hill holder démarrage côte pente"
+    },
+    {
+      "name": "ESP / ABS / ASR",
+      "category": "chas",
+      "where": "électronique châssis",
+      "explanation": "Aides électroniques : ABS empêche le blocage des roues au freinage, ASR limite le patinage, ESP corrige les dérapages.",
+      "tip": "Un camping-car est lourd et haut : l'ESP ne remplace pas une vitesse adaptée en virage.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "abs esp asr tcs contrôle stabilité"
+    },
+    {
+      "name": "Start & Stop",
+      "category": "chas",
+      "where": "moteur",
+      "explanation": "Coupe le moteur à l'arrêt (feux, bouchons) et le relance automatiquement pour économiser du carburant.",
+      "tip": "Peut se désactiver par un bouton si vous préférez.",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "start stop arrêt moteur"
+    },
+    {
+      "name": "Suspension renforcée",
+      "category": "chas",
+      "where": "essieu arrière",
+      "explanation": "Suspensions plus fermes adaptées au poids d'un véhicule aménagé, pour limiter le roulis et l'affaissement de l'arrière.",
+      "tip": "",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "suspension renforcée ressorts roulis"
+    },
+    {
+      "name": "PTAC 3500 kg (permis B)",
+      "category": "chas",
+      "where": "carte grise",
+      "explanation": "Poids total autorisé en charge : le véhicule chargé (passagers, eau, bagages) ne doit pas dépasser 3,5 t, conduisible avec le permis B. Le R490 est à 3175 kg.",
+      "tip": "Pesez le véhicule chargé une fois : avec 3 000 kg à vide sur certains modèles, la charge utile reste limitée (eau pleine = 100 kg).",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "ptac poids total charge utile permis b 3,5 tonnes"
+    },
+    {
+      "name": "Réservoir carburant 90 L / 70 L",
+      "category": "chas",
+      "where": "sous le châssis",
+      "explanation": "Capacité du réservoir de gazole : 90 L sur les Fiat, 70 L sur les Ford.",
+      "tip": "Le chauffage Truma et le chauffage gasoil puisent dans ce réservoir : ne partez pas en hiver réservoir presque vide.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "réservoir gasoil carburant autonomie"
+    },
+    {
+      "name": "Jantes alliage (16\" / 17\")",
+      "category": "chas",
+      "where": "roues",
+      "explanation": "Jantes en aluminium : alu 17\" sur le R490, 16\" sur le R560 4x4, de série sur les Fiat, en option sur le R560 4x2.",
+      "tip": "",
+      "standard_or_option": "série / option (R560 4x2)",
+      "types": [],
+      "keywords": "jantes alu alliage roues"
+    },
+    {
+      "name": "Pare-chocs avant peint",
+      "category": "chas",
+      "where": "avant du véhicule",
+      "explanation": "Pare-chocs couleur carrosserie au lieu du plastique noir brut.",
+      "tip": "",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "pare-chocs peint couleur carrosserie"
+    },
+    {
+      "name": "Antibrouillards avant",
+      "category": "chas",
+      "where": "pare-chocs avant",
+      "explanation": "Feux bas et larges à utiliser par brouillard épais ou forte pluie.",
+      "tip": "Éteignez-les dès que la visibilité revient : ils éblouissent.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "antibrouillard feux brouillard"
+    },
+    {
+      "name": "Feux de jour à LED",
+      "category": "chas",
+      "where": "face avant",
+      "explanation": "Feux qui s'allument automatiquement en roulant de jour pour être mieux vu.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "feux de jour led drl"
+    },
+    {
+      "name": "Couleurs de carrosserie (Blanc, Gris Campovolo, Lanzarote, Artense, Fer / Gris magnétique, Bleu blazer, Bleu métallique)",
+      "category": "chas",
+      "where": "carrosserie",
+      "explanation": "Blanc de série ; teintes grises (Fiat) ou grises/bleues (Ford) en option. Le R490 est en Gris matter.",
+      "tip": "Une teinte foncée chauffe plus au soleil l'été.",
+      "standard_or_option": "série / option",
+      "types": [],
+      "keywords": "couleur peinture carrosserie teinte"
+    },
+    {
+      "name": "Sièges avant pivotants avec accoudoirs",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Les sièges conducteur et passager tournent vers l'arrière pour rejoindre la dinette et agrandir le salon à l'étape.",
+      "tip": "Reculez le siège et baissez le frein à main avant de pivoter ; remettez-le dans le sens de la marche et verrouillez-le avant de rouler.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "sièges pivotants tournants salon cabine accoudoirs"
+    },
+    {
+      "name": "Siège captain chair",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Siège de cabine type 'fauteuil' (plus épais, avec deux accoudoirs), plus confortable pour les longs trajets et en position salon.",
+      "tip": "",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "captain chair fauteuil siège confort"
+    },
+    {
+      "name": "Sièges réglables en hauteur",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Réglage de la hauteur d'assise du conducteur et du passager pour une bonne position de conduite.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "réglage hauteur siège"
+    },
+    {
+      "name": "Sièges avant chauffants",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Résistance chauffante dans l'assise et le dossier des sièges avant.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "sièges chauffants"
+    },
+    {
+      "name": "Housses de siège avant",
+      "category": "cab",
+      "where": "cabine",
+      "explanation": "Housses assorties à la sellerie de la cellule, posées sur les sièges cabine.",
+      "tip": "Lavables : retirez-les pour les nettoyer après un séjour à la plage.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "housses sièges sellerie"
+    },
+    {
+      "name": "Climatisation de cabine (manuelle ou automatique)",
+      "category": "cab",
+      "where": "tableau de bord",
+      "explanation": "Climatisation du véhicule porteur : elle refroidit la cabine moteur tournant uniquement, pas la cellule à l'arrêt.",
+      "tip": "Faites-la tourner quelques minutes même l'hiver pour garder le circuit en bon état.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "clim climatisation cabine automatique"
+    },
+    {
+      "name": "Pare-brise chauffant",
+      "category": "cab",
+      "where": "pare-brise",
+      "explanation": "Résistances fines intégrées au pare-brise qui le dégivrent et le désembuent en quelques minutes.",
+      "tip": "",
+      "standard_or_option": "série (Fiat sauf R550)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "pare-brise chauffant dégivrage buée"
+    },
+    {
+      "name": "Vitres teintées à commande électrique",
+      "category": "cab",
+      "where": "portes cabine",
+      "explanation": "Vitres avant électriques légèrement teintées.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "vitres électriques lève-vitres teintées"
+    },
+    {
+      "name": "Rétroviseurs électriques et dégivrants",
+      "category": "cab",
+      "where": "portes cabine",
+      "explanation": "Rétroviseurs réglables depuis la cabine et chauffants pour enlever givre et buée.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "rétroviseurs électriques dégivrants"
+    },
+    {
+      "name": "Rétroviseurs rabattables électriquement",
+      "category": "cab",
+      "where": "portes cabine",
+      "explanation": "Les rétroviseurs se replient d'un bouton, pratique dans les rues étroites ou pour se garer.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "rétroviseurs rabattables"
+    },
+    {
+      "name": "Régulateur et limiteur de vitesse",
+      "category": "cab",
+      "where": "volant",
+      "explanation": "Le régulateur maintient une vitesse choisie, le limiteur empêche de la dépasser.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "régulateur limiteur vitesse cruise"
+    },
+    {
+      "name": "Ordinateur de bord",
+      "category": "cab",
+      "where": "tableau de bord",
+      "explanation": "Affiche consommation, autonomie, distance parcourue, etc.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "ordinateur de bord consommation autonomie"
+    },
+    {
+      "name": "Commandes radio au volant / volant cuir",
+      "category": "cab",
+      "where": "volant",
+      "explanation": "Boutons au volant pour régler le son et le téléphone sans lâcher la route ; volant gainé de cuir sur plusieurs modèles.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "commandes au volant volant cuir"
+    },
+    {
+      "name": "Verrouillage centralisé à distance",
+      "category": "cab",
+      "where": "clé du véhicule",
+      "explanation": "Ouvre et ferme les portes cabine (et souvent la porte latérale) avec la télécommande de la clé.",
+      "tip": "La porte de cellule ou la soute peuvent avoir leur propre serrure : vérifiez-les avant de partir.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "verrouillage centralisé télécommande clé"
+    },
+    {
+      "name": "Essuie-glaces automatiques et allumage automatique des feux",
+      "category": "cab",
+      "where": "pare-brise (capteur)",
+      "explanation": "Un capteur déclenche les essuie-glaces sous la pluie et allume les feux à la tombée de la nuit ou dans un tunnel.",
+      "tip": "",
+      "standard_or_option": "série (R490, inclus dans le Pack Safety Fiat)",
+      "types": [],
+      "keywords": "capteur pluie allumage automatique feux"
+    },
+    {
+      "name": "Frein de stationnement électrique",
+      "category": "cab",
+      "where": "console centrale",
+      "explanation": "Frein à main remplacé par un bouton ; il se desserre automatiquement au démarrage.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "frein à main électrique"
+    },
+    {
+      "name": "Découpe de cabine",
+      "category": "cab",
+      "where": "plafond cabine",
+      "explanation": "La paroi du haut de cabine est découpée pour ouvrir l'espace entre la cabine et la cellule et gagner en sensation d'espace.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "découpe cabine ouverture"
+    },
+    {
+      "name": "Stores occultants plissés de cabine",
+      "category": "cab",
+      "where": "pare-brise et vitres de portes avant",
+      "explanation": "Rideaux plissés intégrés qui se tirent devant le pare-brise et les vitres latérales pour l'intimité et l'isolation la nuit.",
+      "tip": "Fermez-les en plein soleil pour limiter la chaleur, et en hiver pour garder la chaleur.",
+      "standard_or_option": "série (option sur R560 4x2)",
+      "types": [],
+      "keywords": "stores occultants plissés pare-brise cabine intimité"
+    },
+    {
+      "name": "Spots orientables et liseuses de cabine",
+      "category": "cab",
+      "where": "plafond cabine",
+      "explanation": "Petites lampes LED orientables pour lire ou éclairer le salon côté cabine.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "spots liseuses éclairage lecture"
+    },
+    {
+      "name": "Vide-poches filet en cabine (avec éclairage)",
+      "category": "cab",
+      "where": "plafond/parois cabine",
+      "explanation": "Filets de rangement pour les petits objets. Éclairage intégré sauf avec le toit panoramique.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "vide-poche filet rangement cabine"
+    },
+    {
+      "name": "Rangement cabine",
+      "category": "cab",
+      "where": "au-dessus de la cabine",
+      "explanation": "Casier de rangement au-dessus du poste de conduite.",
+      "tip": "Ne mettez rien de lourd en hauteur : ça tombe au freinage.",
+      "standard_or_option": "série (R560)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "rangement cabine casier"
+    },
+    {
+      "name": "Airbags conducteur et passager",
+      "category": "secu",
+      "where": "volant et tableau de bord",
+      "explanation": "Coussins gonflables de sécurité pour les deux places avant.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "airbag sécurité"
+    },
+    {
+      "name": "Pack Safety",
+      "category": "secu",
+      "where": "pare-brise (caméra/radar)",
+      "explanation": "Ensemble d'aides à la conduite : freinage automatique d'urgence avec détection des piétons, allumage auto des feux et essuie-glaces, alerte de franchissement de ligne, reconnaissance des panneaux, détection de somnolence et assistance de vitesse intelligente.",
+      "tip": "Gardez le pare-brise propre devant la caméra, sinon les aides se désactivent.",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "pack safety aide conduite freinage urgence adas somnolence"
+    },
+    {
+      "name": "Système de prévention de collision / alerte de franchissement de ligne / reconnaissance des panneaux",
+      "category": "secu",
+      "where": "pare-brise (caméra)",
+      "explanation": "Aides à la conduite du Ford Transit Custom : freinage d'urgence, alerte si vous mordez une ligne sans clignotant, lecture des limitations de vitesse.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "prévention collision franchissement ligne panneaux"
+    },
+    {
+      "name": "Aide au stationnement",
+      "category": "secu",
+      "where": "pare-chocs",
+      "explanation": "Capteurs qui bipent quand un obstacle approche lors des manœuvres.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "radar recul stationnement capteurs"
+    },
+    {
+      "name": "Rétro-caméra de recul",
+      "category": "secu",
+      "where": "arrière du véhicule / écran multimédia",
+      "explanation": "Caméra à l'arrière affichée sur l'écran pour reculer et, en roulant, voir derrière un véhicule sans vitre arrière utile.",
+      "tip": "Faites-vous guider en plus pour les manœuvres serrées : la caméra ne voit pas le haut (branches, auvents).",
+      "standard_or_option": "série (option sur R490 et R560 4x2)",
+      "types": [],
+      "keywords": "caméra de recul rétrovision"
+    },
+    {
+      "name": "Banquette ISOFIX",
+      "category": "secu",
+      "where": "dinette / banquette",
+      "explanation": "Banquette homologuée route avec points d'ancrage ISOFIX pour fixer solidement des sièges enfants.",
+      "tip": "Seules les places marquées 'carte grise' peuvent être occupées en roulant, ceinture bouclée.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "isofix siège enfant banquette ceinture"
+    },
+    {
+      "name": "Anneaux d'arrimage dans la soute (x4)",
+      "category": "secu",
+      "where": "soute / garage",
+      "explanation": "Points d'attache au plancher de la soute pour sangler vélos, bagages lourds.",
+      "tip": "Sanglez toujours les objets lourds : en cas de freinage ils deviennent dangereux.",
+      "standard_or_option": "série (R555, R602, R635, R640)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "anneaux arrimage sangles soute garage vélos"
+    },
+    {
+      "name": "Filet de retenue des bagages",
+      "category": "secu",
+      "where": "soute",
+      "explanation": "Filet qui empêche les bagages de glisser dans la soute.",
+      "tip": "",
+      "standard_or_option": "série (R540, R602, R635, R640)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "filet bagages soute"
+    },
+    {
+      "name": "Pack multimédia ZENEC (Android Auto & Apple CarPlay)",
+      "category": "multi",
+      "where": "tableau de bord",
+      "explanation": "Autoradio à écran tactile de la marque ZENEC, compatible Android Auto et Apple CarPlay pour afficher le GPS et la musique du téléphone, relié à la caméra de recul.",
+      "tip": "Installez une appli de navigation camping-car (gabarit, hauteur) sur votre téléphone.",
+      "standard_or_option": "série (Fiat)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "zenec autoradio écran gps carplay android auto multimédia"
+    },
+    {
+      "name": "Ford SYNC 4 – écran 12\", modem 5G",
+      "category": "multi",
+      "where": "tableau de bord",
+      "explanation": "Système multimédia Ford avec grand écran tactile, 4 haut-parleurs et connexion 5G intégrée (services connectés, mises à jour).",
+      "tip": "",
+      "standard_or_option": "série (R560)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "ford sync 4 écran 5g connecté"
+    },
+    {
+      "name": "Ford SYNC – écran tactile 13\"",
+      "category": "multi",
+      "where": "tableau de bord",
+      "explanation": "Écran 13 pouces avec commandes au volant, 5 haut-parleurs, Apple CarPlay et Android Auto.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "sync écran 13 carplay"
+    },
+    {
+      "name": "Pré-équipement TV",
+      "category": "multi",
+      "where": "salon (support/câblage)",
+      "explanation": "Câblage et emplacement prévus pour installer facilement une télévision et son antenne.",
+      "tip": "",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "tv télévision pré-équipement antenne"
+    },
+    {
+      "name": "Isolation plancher sandwich + parois isolantes",
+      "category": "conf",
+      "where": "plancher et parois",
+      "explanation": "Plancher en panneau sandwich et parois isolées avec couches aluminisées, laine de verre et polystyrène, pour garder la chaleur l'hiver et la fraîcheur l'été.",
+      "tip": "",
+      "standard_or_option": "série (plancher 'isolé' sur le R490)",
+      "types": [],
+      "keywords": "isolation plancher sandwich laine de verre hiver"
+    },
+    {
+      "name": "Double plancher isolé",
+      "category": "conf",
+      "where": "sous le plancher de la cellule",
+      "explanation": "Faux plancher qui crée un volume chauffé sous les pieds : réservoirs et canalisations y sont protégés du gel et des rangements supplémentaires sont créés.",
+      "tip": "",
+      "standard_or_option": "série (R550)",
+      "types": [
+        "van"
+      ],
+      "keywords": "double plancher hiver gel rangement"
+    },
+    {
+      "name": "Parois intérieures thermoformées / cloisons polyester",
+      "category": "conf",
+      "where": "habillage intérieur",
+      "explanation": "Habillage moulé des parois (thermoformé sur les Fiat, polyester sur les Ford et cloison polyester sur certains modèles) : lisse, robuste et facile à nettoyer.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "parois thermoformées polyester habillage"
+    },
+    {
+      "name": "Baies double vitrage affleurantes avec store occultant et moustiquaire",
+      "category": "conf",
+      "where": "parois de la cellule",
+      "explanation": "Fenêtres de cellule en double vitrage teinté, montées à fleur de carrosserie, avec store occultant plissé et moustiquaire intégrés.",
+      "tip": "Fermez les baies avant de rouler et ne les ouvrez pas en grand par vent fort.",
+      "standard_or_option": "série (2 à 5 selon modèle)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "baies fenêtres double vitrage store moustiquaire"
+    },
+    {
+      "name": "Baie double vitrage de salle d'eau",
+      "category": "conf",
+      "where": "salle d'eau",
+      "explanation": "Petite fenêtre dans la salle d'eau pour la lumière et l'aération.",
+      "tip": "",
+      "standard_or_option": "série (R550, R555)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "fenêtre salle de bain"
+    },
+    {
+      "name": "Grand lanterneau au-dessus de la dinette",
+      "category": "conf",
+      "where": "toit, au-dessus du salon",
+      "explanation": "Grande trappe de toit vitrée qui apporte beaucoup de lumière et s'entrouvre pour aérer.",
+      "tip": "Fermez-le toujours avant de rouler et quand vous quittez le véhicule.",
+      "standard_or_option": "série (R540, R600, R602, R635, R640)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lanterneau panoramique toit lumière aération"
+    },
+    {
+      "name": "Lanterneau 40 x 40",
+      "category": "conf",
+      "where": "toit",
+      "explanation": "Trappe de toit carrée de 40 cm avec store et moustiquaire, pour aérer et évacuer l'humidité de la cuisine ou de la chambre.",
+      "tip": "Une aération haute (lanterneau) et une basse évitent la condensation la nuit.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lanterneau aération trappe toit"
+    },
+    {
+      "name": "Lanterneau 28 x 28 salle de bains",
+      "category": "conf",
+      "where": "toit de la salle d'eau",
+      "explanation": "Petite trappe d'aération au-dessus de la douche pour évacuer la vapeur.",
+      "tip": "Ouvrez-le pendant et après la douche.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lanterneau salle de bain aération vapeur"
+    },
+    {
+      "name": "Toit panoramique",
+      "category": "conf",
+      "where": "toit de cabine",
+      "explanation": "Vitrage de toit au-dessus de la cabine (option du véhicule), incompatible avec le pop-up, le store auvent et les panneaux solaires selon le catalogue.",
+      "tip": "",
+      "standard_or_option": "option",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "toit panoramique vitré"
+    },
+    {
+      "name": "Stores occultants plissés des portes arrière / rideaux isolants",
+      "category": "conf",
+      "where": "portes arrière et portes latérales",
+      "explanation": "Stores plissés (ou rideaux isolants sur R550/R555) devant les vitres des portes arrière et latérales pour l'intimité et l'isolation.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "stores rideaux portes arrière occultants"
+    },
+    {
+      "name": "Vitres portes arrière teintées",
+      "category": "conf",
+      "where": "portes arrière",
+      "explanation": "Vitres arrière teintées qui limitent la chaleur et les regards.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "vitres teintées arrière"
+    },
+    {
+      "name": "Moustiquaire de porte latérale",
+      "category": "conf",
+      "where": "porte latérale coulissante",
+      "explanation": "Moustiquaire plissée qui se tire devant l'ouverture de la porte coulissante pour laisser la porte ouverte sans insectes.",
+      "tip": "Refermez-la doucement : les guides se tordent facilement.",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "moustiquaire porte insectes"
+    },
+    {
+      "name": "Penderie",
+      "category": "conf",
+      "where": "à côté du lit arrière ou près de la salle d'eau",
+      "explanation": "Armoire avec tringle pour suspendre les vêtements.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "penderie armoire vêtements"
+    },
+    {
+      "name": "Table dinette avec rail extérieur",
+      "category": "conf",
+      "where": "dinette",
+      "explanation": "Table du salon fixée sur un rail ; elle peut aussi s'accrocher à l'extérieur du véhicule pour manger dehors.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "table dinette rail extérieur repas"
+    },
+    {
+      "name": "Rails de table à l'entrée",
+      "category": "conf",
+      "where": "près de la porte latérale",
+      "explanation": "Rails permettant de positionner la table près de l'entrée.",
+      "tip": "",
+      "standard_or_option": "série (R560)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "rail table entrée"
+    },
+    {
+      "name": "Lit arrière transversal sur sommier à lattes",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Lit double installé en travers du véhicule, sur lattes pour la ventilation du matelas ; souvent découpé d'un côté pour gagner de la place.",
+      "tip": "Si vous êtes grand (> 1,85 m), vérifiez la longueur réelle (184 à 197 cm selon modèle).",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lit transversal arrière sommier lattes couchage"
+    },
+    {
+      "name": "Lits jumeaux avec complément central (king size)",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Deux lits simples dans la longueur ; un coussin complément se pose entre eux pour former un grand lit.",
+      "tip": "",
+      "standard_or_option": "série (R640)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "lits jumeaux king size complément"
+    },
+    {
+      "name": "Lits superposés",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Deux lits doubles superposés à l'arrière, idéal pour les familles.",
+      "tip": "Vérifiez le système anti-chute pour les enfants en haut.",
+      "standard_or_option": "série (R600)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "lits superposés famille enfants"
+    },
+    {
+      "name": "Lit de pavillon électrique",
+      "category": "conf",
+      "where": "plafond, au-dessus du salon",
+      "explanation": "Lit qui descend du plafond par moteur électrique au-dessus de la dinette pour la nuit et remonte le jour pour libérer le salon.",
+      "tip": "Remontez-le et verrouillez-le avant de rouler ; en cas de panne il existe en général une manivelle de secours.",
+      "standard_or_option": "série (R550, R555)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lit pavillon électrique plafond descend"
+    },
+    {
+      "name": "Couchage dinette",
+      "category": "conf",
+      "where": "salon",
+      "explanation": "La table s'abaisse et les coussins se réorganisent pour transformer le salon en lit d'appoint.",
+      "tip": "",
+      "standard_or_option": "série (R490, R550, R555) / option (R540, R600, R602, R640)",
+      "types": [],
+      "keywords": "dinette convertible couchage appoint"
+    },
+    {
+      "name": "3e couchage de cabine",
+      "category": "conf",
+      "where": "cabine",
+      "explanation": "Couchage d'appoint aménagé au-dessus ou au niveau de la cabine pour une personne.",
+      "tip": "",
+      "standard_or_option": "option (R560)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "couchage cabine appoint"
+    },
+    {
+      "name": "Toit pop-up double couchage",
+      "category": "conf",
+      "where": "toit",
+      "explanation": "Toit relevable qui se déplie à l'étape et offre un lit double supplémentaire en hauteur. Incompatible avec toit panoramique, store auvent et panneaux solaires.",
+      "tip": "Repliez-le à sec si possible ; sinon dépliez-le dès que possible pour faire sécher la toile.",
+      "standard_or_option": "option (R540 'pop-up noir', R600, R602, R640)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "pop-up toit relevable couchage"
+    },
+    {
+      "name": "Toit relevable avec couchage sur sommier à plots",
+      "category": "conf",
+      "where": "toit",
+      "explanation": "Toit qui se soulève pour se tenir debout et accueillir un lit double 190 x 118 cm sur sommier à plots (plots souples pour le confort).",
+      "tip": "Ne roulez jamais toit relevé et vérifiez les sangles/verrous avant de partir.",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "toit relevable couchage plots"
+    },
+    {
+      "name": "Banquette 3 places ISOFIX modulable et coulissante",
+      "category": "conf",
+      "where": "arrière",
+      "explanation": "Banquette sur rails qu'on avance ou recule pour agrandir le coffre ou l'espace ; elle se replie en couchage.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "banquette coulissante rails modulable"
+    },
+    {
+      "name": "Habillage baie dinette et baie arrière gauche",
+      "category": "conf",
+      "where": "parois",
+      "explanation": "Habillages intérieurs autour des vitres pour la finition et l'isolation.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "habillage baie"
+    },
+    {
+      "name": "Éclairage indirect",
+      "category": "conf",
+      "where": "plafond et meubles",
+      "explanation": "Bandeaux LED cachés qui diffusent une lumière douce d'ambiance.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "éclairage indirect led ambiance"
+    },
+    {
+      "name": "Vide-poche filet / tissu de banquette",
+      "category": "conf",
+      "where": "dos de banquette",
+      "explanation": "Poches de rangement au dos ou sur le côté de la banquette.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "vide-poche banquette"
+    },
+    {
+      "name": "Soute / garage arrière",
+      "category": "conf",
+      "where": "sous le lit arrière",
+      "explanation": "Espace de rangement sous le lit, accessible par les portes arrière (et parfois une porte coulissante) pour vélos, chaises, cales.",
+      "tip": "Respectez la charge maximale et répartissez le poids : trop lourd à l'arrière déleste l'avant.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "soute garage rangement vélos portes coulissantes"
+    },
+    {
+      "name": "Mobilier Vicenza / Surf – sellerie Dakar / Chile / Helsinki",
+      "category": "conf",
+      "where": "intérieur",
+      "explanation": "Ambiances de série : mobilier Vicenza (Surf sur R490) et sellerie Dakar (Chile sur R550, Helsinki sur R490).",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "mobilier sellerie tissu ambiance déco"
+    },
+    {
+      "name": "Réchaud 2 feux avec allumage piézo",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Plaque de cuisson au gaz à deux brûleurs ; un bouton piézo crée l'étincelle pour allumer sans briquet.",
+      "tip": "Ouvrez la vanne de gaz correspondante et aérez en cuisinant.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "réchaud plaque gaz feux piezo cuisson"
+    },
+    {
+      "name": "Combiné cuve inox + réchaud avec couvercle",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "Évier en inox et réchaud intégrés dans un même bloc, recouverts d'un couvercle (affleurant sur le R540) qui sert de plan de travail.",
+      "tip": "Ne fermez pas le couvercle en verre sur un réchaud encore chaud.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "évier cuve inox couvercle plan de travail"
+    },
+    {
+      "name": "Réfrigérateur à compression (42 à 138 L)",
+      "category": "cui",
+      "where": "cuisine (colonne près de la porte sur les plus grands)",
+      "explanation": "Frigo électrique 12 V fonctionnant comme celui de la maison (compresseur), efficace même par forte chaleur, alimenté par la batterie cellule. 42 L (R490), 70 L (R540, R560 4x4), 113 L (R550, R555), 138 L (R600, R602, R635, R640, R560 4x2).",
+      "tip": "Il consomme surtout la nuit et par grosse chaleur : surveillez la batterie ; ne le remplissez pas d'aliments chauds.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "frigo réfrigérateur compression 12v congélateur"
+    },
+    {
+      "name": "Réfrigérateur double ouverture",
+      "category": "cui",
+      "where": "cuisine",
+      "explanation": "La porte du frigo s'ouvre à gauche ou à droite selon l'accès.",
+      "tip": "",
+      "standard_or_option": "série (R540)",
+      "types": [
+        "van"
+      ],
+      "keywords": "frigo double ouverture porte réversible"
+    },
+    {
+      "name": "Hotte aspirante",
+      "category": "cui",
+      "where": "au-dessus du réchaud",
+      "explanation": "Extracteur qui évacue fumées et vapeurs de cuisson.",
+      "tip": "",
+      "standard_or_option": "série (R550)",
+      "types": [
+        "van"
+      ],
+      "keywords": "hotte aspirante cuisine vapeur"
+    },
+    {
+      "name": "Accessoires de cuisine / range-couverts",
+      "category": "cui",
+      "where": "tiroirs de cuisine",
+      "explanation": "Range-couverts et accessoires de rangement dans les tiroirs.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "range-couverts tiroirs accessoires"
+    },
+    {
+      "name": "WC à cassette",
+      "category": "sdb",
+      "where": "salle d'eau (trappe de vidange à l'extérieur)",
+      "explanation": "Toilettes chimiques dont le réservoir (cassette) s'extrait par une trappe extérieure pour être vidé dans une borne de vidange.",
+      "tip": "Utilisez un produit adapté et videz la cassette avant qu'elle soit pleine (indicateur) ; jamais dans la nature.",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "wc toilettes cassette chimique vidange"
+    },
+    {
+      "name": "Cabine de douche",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Douche séparée du WC dans une cabine fermée.",
+      "tip": "Coupez l'eau pendant le savonnage pour économiser le réservoir.",
+      "standard_or_option": "série (R540, R550, R555)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "douche cabine séparée"
+    },
+    {
+      "name": "Douche modulable / modulable XL",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Salle d'eau dont une paroi pivotante ou coulissante transforme l'espace WC/lavabo en cabine de douche.",
+      "tip": "Rangez papier toilette et serviettes avant de déplier la douche.",
+      "standard_or_option": "série (R600, R602, R635, R640, R560)",
+      "types": [
+        "fourgon"
+      ],
+      "keywords": "douche modulable paroi pivotante xl"
+    },
+    {
+      "name": "Caillebotis de douche",
+      "category": "sdb",
+      "where": "bac de douche",
+      "explanation": "Plancher en lattes posé dans le bac de douche pour ne pas avoir les pieds dans l'eau.",
+      "tip": "Retirez-le pour le faire sécher et nettoyer le bac.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "caillebotis douche"
+    },
+    {
+      "name": "Lavabo (avec douchette / mitigeur)",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Petit lavabo dont le robinet se détache parfois pour servir de pommeau de douche.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "lavabo robinet douchette mitigeur"
+    },
+    {
+      "name": "Rangements de salle de bains",
+      "category": "sdb",
+      "where": "salle d'eau",
+      "explanation": "Placards et étagères pour les affaires de toilette.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "rangement salle de bain"
+    },
+    {
+      "name": "Pompe électrique à dépression",
+      "category": "eau",
+      "where": "près du réservoir d'eau propre",
+      "explanation": "Pompe 12 V qui se met en route automatiquement quand vous ouvrez un robinet (elle détecte la baisse de pression).",
+      "tip": "Coupez la pompe en roulant ou en quittant le véhicule ; si elle tourne seule, cherchez une fuite.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "pompe eau pression 12v robinet"
+    },
+    {
+      "name": "Réservoir d'eau propre (50 à 100 L)",
+      "category": "eau",
+      "where": "dans le véhicule (souvent sous banquette ou double plancher)",
+      "explanation": "Réserve d'eau potable : 50 L (R490), 85 L (R550), 100 L (autres).",
+      "tip": "Rouler réservoir plein ajoute 100 kg : remplissez près de l'étape si vous êtes juste en charge.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "eau propre réservoir potable remplissage"
+    },
+    {
+      "name": "Réservoir d'eaux usées (32 à 100 L)",
+      "category": "eau",
+      "where": "sous le châssis",
+      "explanation": "Récupère l'eau de l'évier et de la douche : 32 L (R490), 60 L (R560), 100 L (Fiat).",
+      "tip": "Videz-le uniquement sur une aire de service, robinet de vidange sous le véhicule.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "eaux grises usées vidange réservoir"
+    },
+    {
+      "name": "Sonde de réchauffage du réservoir d'eaux usées",
+      "category": "eau",
+      "where": "réservoir eaux usées sous le châssis",
+      "explanation": "Résistance chauffante qui empêche le réservoir d'eaux usées extérieur de geler en hiver.",
+      "tip": "Elle consomme de l'électricité : à activer seulement par temps de gel.",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "chauffage réservoir eaux usées antigel hiver"
+    },
+    {
+      "name": "Douchette extérieure eau froide",
+      "category": "eau",
+      "where": "extérieur, trappe sur la carrosserie (pommeau de douche sur R550)",
+      "explanation": "Petit robinet/douchette dehors pour rincer pieds, chien, vélos ou matériel de plage.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "douchette extérieure eau froide rinçage"
+    },
+    {
+      "name": "Coffre à gaz propane 2 x 6 kg (1 x 6 kg sur R600)",
+      "category": "gaz",
+      "where": "coffre accessible de l'extérieur",
+      "explanation": "Logement ventilé pour les bouteilles de propane qui alimentent le réchaud.",
+      "tip": "Le propane fonctionne par grand froid contrairement au butane ; fermez les bouteilles en roulant si vous n'avez pas de détendeur sécurisé.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "gaz bouteille propane coffre détendeur"
+    },
+    {
+      "name": "Coffre à gaz butane 1 x 2,7 kg",
+      "category": "gaz",
+      "where": "coffre à gaz",
+      "explanation": "Petite bouteille de butane qui alimente le réchaud du mini van.",
+      "tip": "Le butane ne se détend plus sous 0 °C : en hiver, préférez le propane si possible.",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "butane petite bouteille 2,7 kg"
+    },
+    {
+      "name": "Combiné chauffage + chauffe-eau Truma Combi D4 gasoil avec kit altitude",
+      "category": "chauf",
+      "where": "sous banquette / meuble (sorties d'air dans la cellule)",
+      "explanation": "Appareil Truma qui chauffe l'air de la cellule et produit l'eau chaude (réservoir intégré) en brûlant le gazole du réservoir du véhicule. Le kit altitude permet un fonctionnement correct en montagne.",
+      "tip": "En hiver, vidangez le chauffe-eau (vanne de vidange) si le véhicule reste sans chauffage par gel.",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "truma combi d4 diesel gasoil chauffage chauffe-eau eau chaude altitude"
+    },
+    {
+      "name": "Commande Truma CP+",
+      "category": "chauf",
+      "where": "panneau mural dans la cellule",
+      "explanation": "Écran de commande du chauffage Truma : réglage de la température, de l'eau chaude et programmation.",
+      "tip": "Mode 'eau chaude seule' l'été pour consommer moins de gazole.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "truma cp plus panneau commande thermostat"
+    },
+    {
+      "name": "Chauffage d'air 2 kW gasoil",
+      "category": "chauf",
+      "where": "sous le plancher / sous un siège",
+      "explanation": "Chauffage à air pulsé qui brûle le gazole du véhicule pour chauffer l'intérieur du mini van (sans eau chaude).",
+      "tip": "Faites-le tourner régulièrement à pleine puissance pour éviter l'encrassement.",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "chauffage stationnaire gasoil diesel air pulsé 2kw"
+    },
+    {
+      "name": "Chauffage sous banquette / sur l'avant du véhicule",
+      "category": "chauf",
+      "where": "sous la banquette, vers la cabine",
+      "explanation": "Sortie d'air chaud placée à l'avant de la cellule pour chauffer la zone cabine, souvent la plus froide.",
+      "tip": "Fermez les stores de cabine la nuit pour garder la chaleur.",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "chauffage sous banquette bouche air chaud cabine"
+    },
+    {
+      "name": "Centrale de commande",
+      "category": "elec",
+      "where": "panneau mural près de l'entrée",
+      "explanation": "Tableau qui affiche le niveau des batteries et des réservoirs et allume l'éclairage, la pompe, etc.",
+      "tip": "Consultez-le chaque soir pour suivre votre autonomie.",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "tableau de bord cellule panneau contrôle niveaux batterie"
+    },
+    {
+      "name": "Batterie lithium 120 Ah",
+      "category": "elec",
+      "where": "sous un siège ou dans le double plancher",
+      "explanation": "Batterie cellule au lithium : plus légère, se recharge vite et peut être utilisée presque jusqu'au bout, pour une meilleure autonomie hors camping.",
+      "tip": "Elle n'aime pas être rechargée sous 0 °C : gardez-la au chaud (cellule chauffée).",
+      "standard_or_option": "série (sauf R540, option R560 4x2)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "batterie lithium lifepo4 120ah autonomie"
+    },
+    {
+      "name": "Batterie AGM 105 Ah",
+      "category": "elec",
+      "where": "sous siège",
+      "explanation": "Batterie cellule au plomb étanche (AGM), sans entretien, qui alimente l'éclairage, le frigo et la pompe.",
+      "tip": "Ne la déchargez pas sous 50 % pour préserver sa durée de vie.",
+      "standard_or_option": "série (R540)",
+      "types": [
+        "van"
+      ],
+      "keywords": "batterie agm plomb 105ah"
+    },
+    {
+      "name": "Chargeur de batterie DC-DC",
+      "category": "elec",
+      "where": "près de la batterie cellule",
+      "explanation": "Chargeur qui recharge efficacement la batterie cellule à partir de l'alternateur quand le moteur tourne (indispensable pour le lithium et les moteurs Euro 6).",
+      "tip": "Une heure de route recharge déjà une bonne partie de la batterie.",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "chargeur dc-dc booster alternateur recharge en roulant"
+    },
+    {
+      "name": "Chargeur de batterie 230 V",
+      "category": "elec",
+      "where": "dans la cellule",
+      "explanation": "Recharge la batterie quand le véhicule est branché sur une borne électrique 230 V.",
+      "tip": "",
+      "standard_or_option": "série (R490)",
+      "types": [
+        "van"
+      ],
+      "keywords": "chargeur secteur 230v prise camping"
+    },
+    {
+      "name": "Prises USB / 12 V / 230 V",
+      "category": "elec",
+      "where": "salon, cuisine, chambre",
+      "explanation": "Prises pour recharger téléphones et appareils. Les prises 230 V ne fonctionnent que branché sur secteur (pas de convertisseur annoncé). Nombre selon modèle (ex. 4 USB-1×12 V-2×230 V).",
+      "tip": "Branchez-vous au camping pour les appareils gourmands (sèche-cheveux, bouilloire).",
+      "standard_or_option": "série",
+      "types": [],
+      "keywords": "prises usb 12v 230v 220v recharge"
+    },
+    {
+      "name": "Panneaux solaires",
+      "category": "elec",
+      "where": "toit",
+      "explanation": "Panneaux photovoltaïques qui rechargent la batterie cellule grâce au soleil, pour rester plusieurs jours sans camping (puissance non précisée dans le catalogue).",
+      "tip": "Garez-vous au soleil et nettoyez-les régulièrement ; incompatible avec le pop-up.",
+      "standard_or_option": "série (big vans Fiat, R560 4x4) / option (R490, R560 4x2)",
+      "types": [],
+      "keywords": "panneau solaire photovoltaïque autonomie recharge"
+    },
+    {
+      "name": "Pré-équipement panneaux solaires",
+      "category": "elec",
+      "where": "toit / câblage",
+      "explanation": "Câbles et passages déjà prévus pour ajouter facilement un panneau solaire.",
+      "tip": "",
+      "standard_or_option": "série (R490, R540, R560 4x2)",
+      "types": [],
+      "keywords": "pré-équipement solaire câblage"
+    },
+    {
+      "name": "Store auvent",
+      "category": "ext",
+      "where": "extérieur côté porte (sur le toit)",
+      "explanation": "Auvent enroulé dans un boîtier sur le flanc, qui se déroule à la manivelle pour créer de l'ombre devant la porte.",
+      "tip": "Rentrez-le dès qu'il y a du vent ou en partant ; inclinez-le pour que la pluie s'écoule.",
+      "standard_or_option": "série (option R560 4x2)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "store auvent banne ombre manivelle"
+    },
+    {
+      "name": "Éclairage extérieur + gouttière de porte latérale",
+      "category": "ext",
+      "where": "au-dessus de la porte latérale",
+      "explanation": "Lampe extérieure pour éclairer l'entrée la nuit, avec une gouttière qui évite que la pluie tombe dans l'ouverture.",
+      "tip": "",
+      "standard_or_option": "série",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "éclairage extérieur lampe auvent gouttière"
+    },
+    {
+      "name": "Marchepied électrique grande largeur",
+      "category": "ext",
+      "where": "sous la porte latérale",
+      "explanation": "Marche qui sort automatiquement ou par bouton pour faciliter l'entrée dans le véhicule.",
+      "tip": "Vérifiez qu'il est rentré avant de partir (souvent un voyant/bip) : il se plie contre les trottoirs.",
+      "standard_or_option": "série (big vans)",
+      "types": [
+        "van",
+        "fourgon"
+      ],
+      "keywords": "marchepied électrique marche entrée"
+    }
+  ],
+  "layout_patterns": [
+    "Combi-van à toit relevable sans salle d'eau : cuisine linéaire sur paroi gauche, banquette 3 places coulissante à l'arrière, lit dans le toit relevable + banquette convertible. Modèle : R490.",
+    "Lit transversal arrière + salle d'eau à gauche (douche séparée) + cuisine linéaire à droite face à la porte + banquette 2 places face route avec rallonge et sièges pivotants (fourgon court 5,41 m). Modèle : R540.",
+    "Salon avant 'studio' sans lit arrière : cuisine d'angle en L à l'arrière droit + salle d'eau à l'arrière gauche, salon/dinette avant convertible et grand lit de pavillon électrique au-dessus. Modèle : R550.",
+    "Lit transversal arrière permanent + lit de pavillon électrique au-dessus de la dinette (familial 5 places/5 couchages, toit haut), salle d'eau tout-en-un à gauche, cuisine à droite. Modèle : R555.",
+    "Lits superposés transversaux à l'arrière (2 lits doubles) au-dessus d'une soute, salle d'eau modulable à gauche, cuisine linéaire + frigo colonne à droite, banquette en L. Modèle : R600.",
+    "Lit transversal arrière sur soute + salle d'eau modulable à gauche + cuisine linéaire avec frigo colonne 138 L à droite + banquette en L et sièges pivotants (fourgon 6 m classique). Modèles : R602 (Fiat) ; variante avec banquette droite + rallonge : R560 4x2 et R560 4x4 (Ford).",
+    "Grand lit arrière longitudinal 185 x 160 cm (lit central) sur grande soute garage, salle d'eau à gauche, cuisine à droite, banquette en L. Modèle : R635.",
+    "Lits jumeaux longitudinaux à l'arrière (transformables en king size) sur soute, salle d'eau modulable à gauche, cuisine à droite, banquette en L. Modèle : R640."
+  ]
+}

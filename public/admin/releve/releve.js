@@ -575,8 +575,8 @@ const STEPS = [
             ${L.matched?.length ? `<small class="ok-l">✓ ${esc(L.matched.join(' · '))}</small>` : ''}${L.missing?.length ? `<small class="ko-l">✗ ${esc(L.missing.join(' · '))}</small>` : ''}</span></label>`
           )
           .join('');
-      return `<p class="muted" style="margin:0">Décrivez l’intérieur en quelques mots : l’appli trouve le bon plan et coche ce que vous citez.</p>
-        <label>En quelques mots<textarea name="words" rows="2" placeholder="ex : penderie arrière, lit pavillon, cuisine et table">${esc(W.words || '')}</textarea></label>
+      return `<p class="muted" style="margin:0">Décrivez l’intérieur en quelques mots, ou donnez le modèle (V114, R602, Kilig 669…) : l’appli trouve le bon plan et coche ce que vous citez.</p>
+        <label>En quelques mots<textarea name="words" rows="2" placeholder="ex : penderie arrière, lit pavillon, cuisine et table — ou : Kilig 669">${esc(W.words || '')}</textarea></label>
         <button type="button" class="btn block" data-find>🔎 Trouver le plan</button>
         ${
           m
@@ -593,6 +593,19 @@ const STEPS = [
         }`;
     },
     bind: (W, el) => {
+      // A catalogue model in the vehicle's name (« C256 », « Kilig 669 »…) finds its plan straight away.
+      if (!W.match && !W.autoTried) {
+        W.autoTried = true;
+        api('POST', '/api/admin/layouts/match', { text: `${W.v.brandName} ${W.v.name} ${W.profile.fullName || ''}`, type: W.profile.type || null })
+          .then((r) => {
+            if (!r.model || W.step !== STEPS.findIndex((x) => x.title === 'Ce qu’il y a dedans')) return;
+            W.match = r;
+            W.words = `${r.model.brand} ${r.model.model}`;
+            W.layoutPick = r.results[0]?.id;
+            showStep(W, W.step);
+          })
+          .catch(() => {});
+      }
       el.querySelector('[data-find]').onclick = async () => {
         W.words = el.querySelector('[name=words]').value;
         try {
