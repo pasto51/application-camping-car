@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS admins (
   email TEXT NOT NULL UNIQUE,
   name TEXT,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'manager', 'sales', 'sav', 'store')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'analytics', 'manager', 'sales', 'sav', 'store')),
   dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
   phone TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -140,6 +140,23 @@ CREATE TABLE IF NOT EXISTS catalog (
 );
 
 -- Everything the app keeps for a customer (equipment checked, photos, weights, handover…), by storage key.
+-- What customers look for in the app, without saying who: searches, problems opened, advice reached, « Demander au
+-- magasin », equipment looked at. Only the dealership and the vehicle type are kept, for the statistics.
+CREATE TABLE IF NOT EXISTS usage_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL DEFAULT (datetime('now')),
+  month TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  item TEXT,
+  label TEXT,
+  query TEXT,
+  prod TEXT,
+  results INTEGER,
+  dealership_id INTEGER,
+  vehicle_type TEXT
+);
+CREATE INDEX IF NOT EXISTS usage_events_month ON usage_events (month, kind);
+
 CREATE TABLE IF NOT EXISTS customer_state (
   customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   key TEXT NOT NULL,
@@ -253,7 +270,7 @@ function stripVin(value) {
 // « dealer » role: those accounts become managers. The CHECK constraint changes, so the table is rebuilt once.
 function migrateRoles(db) {
   const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'admins'").get()?.sql || '';
-  if (sql.includes("'editor'")) return;
+  if (sql.includes("'analytics'")) return;
   const cols = db.prepare('PRAGMA table_info(admins)').all().map((c) => c.name);
   db.exec('PRAGMA foreign_keys = OFF');
   transaction(db, () => {
@@ -262,7 +279,7 @@ function migrateRoles(db) {
       email TEXT NOT NULL UNIQUE,
       name TEXT,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'manager', 'sales', 'sav', 'store')),
+      role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'analytics', 'manager', 'sales', 'sav', 'store')),
       dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
       phone TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))

@@ -505,6 +505,7 @@ window.startCompagnon = function(DATA){
   }
   function showItem(id){
     var it = eqById(id); if(!it) return;
+    window.CDB_TRACK&&window.CDB_TRACK("equip",{id:id,label:it.name});
     if(it.spot){selectSpot(it.spot); return}
     selSpot = null; $$("#planSpots .spot").forEach(function(g){g.classList.remove("sel")});
     $("#whatbody").innerHTML = '<div class="detail"><button class="btn alt" id="zback" style="width:100%">← Retour à la liste</button><p class="eyebrow">Emplacement variable selon le modèle</p>'+card(it)+'</div>';
@@ -850,7 +851,7 @@ window.startCompagnon = function(DATA){
   function drawDiagList(q){
     var el = $("#dlist"), h = ""; if(!el) return;
     if(q){
-      var tk = qTokens(q), res = SOUCIS.map(function(s){return {s:s,k:dScore(s,tk)}}).filter(function(x){return x.k>0}).sort(function(a,b){return b.k-a.k || (a.s.urgent?1:0)-(b.s.urgent?1:0)}); var top = res.length ? res[0].k : 0; res = res.filter(function(x){return x.k >= Math.max(top*0.55,1)}).slice(0,8).map(function(x){return x.s});
+      var tk = qTokens(q), res = SOUCIS.map(function(s){return {s:s,k:dScore(s,tk)}}).filter(function(x){return x.k>0}).sort(function(a,b){return b.k-a.k || (a.s.urgent?1:0)-(b.s.urgent?1:0)}); var top = res.length ? res[0].k : 0; res = res.filter(function(x){return x.k >= Math.max(top*0.55,1)}).slice(0,8).map(function(x){return x.s}); window.CDB_TRACK&&window.CDB_TRACK("search",{q:q,n:res.length});
       el.innerHTML = res.length ? '<p class="eyebrow">'+res.length+' proposition'+(res.length>1?'s':'')+', la plus proche en premier</p><div class="opts" style="margin-top:8px">'+res.map(dBtn).join("")+'</div><p class="sub" style="margin-top:12px">Ce n\'est pas tout à fait ça ? Reformulez avec d\'autres mots, ou passez à l\'atelier.</p><button class="btn alt" data-act="rdvfree" style="width:100%">Rendez-vous atelier</button>' : '<div class="empty"><p>Aucun souci ne correspond. Essayez un autre mot, par exemple « gaz », « batterie » ou « odeur », ou passez à l\'atelier.</p><button class="btn" data-act="rdvfree">Rendez-vous atelier</button></div>';
       return;
     }
@@ -894,13 +895,13 @@ window.startCompagnon = function(DATA){
       b.innerHTML = '<p class="eyebrow">'+esc(s.label)+' · question '+(diag.ans.length+1)+'</p><h2 style="font-size:23px;margin:6px 0 14px">'+esc(n.t)+'</h2>'+autoTxt+'<div class="opts">' +
         n.o.map(function(o,k){return '<button class="opt" data-a="'+k+'">'+esc(o)+'</button>'}).join("") + '</div>' + back;
     } else {
-      b.innerHTML = resultHTML(s,n,back,autoTxt,vnote);
+      b.innerHTML = resultHTML(s,n,back,autoTxt,vnote); window.CDB_TRACK&&window.CDB_TRACK("result",{id:s.id,label:n.cause,prod:n.prod.indexOf("Aucun")===0?null:n.prod});
     }
   }
   $("#diagbody").addEventListener("input",function(e){if(e.target.id==="dsearch") drawDiagList(norm(e.target.value).trim())});
   $("#diagbody").addEventListener("click",function(e){
     var s = e.target.closest("[data-s]");
-    if(s){diag.i = +s.dataset.s; diag.ans = []; diag.auto = []; diag.h = []; renderDiagStep(); window.scrollTo(0,0); return}
+    if(s){diag.i = +s.dataset.s; diag.ans = []; diag.auto = []; diag.h = []; window.CDB_TRACK&&window.CDB_TRACK("diag",{id:SOUCIS[diag.i].id,label:SOUCIS[diag.i].label}); renderDiagStep(); window.scrollTo(0,0); return}
     if(e.target.closest("[data-back]")){ if(SOUCIS[diag.i].elim){ if(diag.h.length){diag.h.pop(); renderDiagStep()} else renderDiagList(); window.scrollTo(0,0); return } do{diag.ans.pop(); diag.auto.length = Math.min(diag.auto.length, diag.ans.length+1); var wasAuto = diag.auto[diag.ans.length]; diag.auto[diag.ans.length] = undefined}while(diag.ans.length && wasAuto); diag.auto.length = diag.ans.length; if(diag.ans.length || SOUCIS[diag.i].tree.n){ if(!diag.ans.length && SOUCIS[diag.i].tree.vk && vars[SOUCIS[diag.i].tree.vk] && vars[SOUCIS[diag.i].tree.vk]!=="ns"){renderDiagList()} else renderDiagStep()} else renderDiagList(); window.scrollTo(0,0); return}
     var ea = e.target.closest("[data-ea]");
     if(ea){diag.h.push({q:+ea.dataset.eq,a:+ea.dataset.ea}); renderDiagStep(); window.scrollTo(0,0); return}
@@ -915,7 +916,7 @@ window.startCompagnon = function(DATA){
       else if(a.dataset.act==="rdvfree"){openRdv("souci","")}
       else if(a.dataset.act==="fill"){$("#wsearch").value = ""; go("what"); showItem(sj.eq)}
       else if(a.dataset.act==="copy"){var tx = keepText(sj,rr); try{navigator.clipboard.writeText(tx).then(function(){toast("Fiche copiée")},function(){toast(tx)})}catch(err){toast(tx)}}
-      else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0], rr.achat ? "accessoire" : null)}
+      else if(a.dataset.act==="shop"){window.CDB_TRACK&&window.CDB_TRACK("shop",{id:sj.id,label:sj.label,prod:rr.prod}); window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0], rr.achat ? "accessoire" : null)}
       return;
     }
     if(e.target.closest("#dagain")){renderDiagList()}

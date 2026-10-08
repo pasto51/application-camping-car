@@ -92,7 +92,7 @@ function register(router) {
 
   // Roles: admin (everything) ; manager, « responsable de concession » (their dealership: customers, team, reassignments) ;
   // sales, « commercial » (sees their dealership, manages only their own customers).
-  const ROLES = ['admin', 'editor', 'manager', 'sales', 'sav', 'store'];
+  const ROLES = ['admin', 'editor', 'analytics', 'manager', 'sales', 'sav', 'store'];
 
   // Content editor: the app's contents (diagnostics, equipment, lists, vehicles and photos, announcement), not the business data.
   function contentOnly(ctx) {
@@ -170,6 +170,118 @@ function register(router) {
   });
 
   router.get('/api/admin/me', (ctx) => ({ ...camel(auth(ctx)), openAccess: ctx.config.isOpenAccess() }));
+
+  // ---- Statistics of use (« Statistiques ») : what customers look for, to decide the next campaigns ----
+  // The administrator and the analyst see every dealership (or one); a dealership manager sees theirs.
+  router.get('/api/admin/analytics', (ctx) => {
+    const user = auth(ctx);
+    if (!['admin', 'analytics', 'manager'].includes(user.role)) throw new HttpError(403, 'Réservé à l’administrateur et à l’analyste');
+    const { db } = ctx;
+    const months = [3, 6, 12, 24].includes(Number(ctx.query.get('months'))) ? Number(ctx.query.get('months')) : 12;
+    const dealershipId = user.role === 'manager' ? user.dealership_id ?? -1 : optInt(ctx.query.get('dealershipId'));
+    const monthAgo = (n) => {
+      const d = new Date();
+      d.setUTCDate(1);
+      d.setUTCMonth(d.getUTCMonth() - n);
+      return d.toISOString().slice(0, 7);
+    };
+    const list = (n) => Array.from({ length: n }, (_, i) => monthAgo(n - 1 - i));
+    const from = monthAgo(months - 1);
+    const prevFrom = monthAgo(2 * months - 1);
+    const scopeSql = dealershipId ? ' AND dealership_id = ?' : '';
+    const scopeArgs = dealershipId ? [dealershipId] : [];
+    const rows = (sql, ...args) => db.prepare(sql).all(...args);
+    const inRange = `month >= ? ${scopeSql}`;
+    const inPrev = `month >= ? AND month < ? ${scopeSql}`;
+
+    const totals = {};
+    for (const r of rows(`SELECT kind, COUNT(*) AS n FROM usage_events WHERE ${inRange} GROUP BY kind`, from, ...scopeArgs)) totals[r.kind] = r.n;
+    const prevTotals = {};
+    for (const r of rows(`SELECT kind, COUNT(*) AS n FROM usage_events WHERE ${inPrev} GROUP BY kind`, prevFrom, from, ...scopeArgs)) prevTotals[r.kind] = r.n;
+
+    const monthsList = list(months);
+    const perMonth = new Map(monthsList.map((m) => [m, { month: m, search: 0, diag: 0, result: 0, shop: 0, equip: 0 }]));
+    for (const r of rows(`SELECT month, kind, COUNT(*) AS n FROM usage_events WHERE ${inRange} GROUP BY month, kind`, from, ...scopeArgs)) {
+      if (perMonth.has(r.month)) perMonth.get(r.month)[r.kind] = r.n;
+    }
+
+    const diagNames = new Map(rows('SELECT id, data FROM diagnostics').map((d) => [d.id, JSON.parse(d.data).label]));
+    const prevDiag = new Map(rows(`SELECT item, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND ${inPrev} GROUP BY item`, prevFrom, from, ...scopeArgs).map((r) => [r.item, r.n]));
+    const topProblems = rows(`SELECT item, MAX(label) AS label, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND ${inRange} GROUP BY item ORDER BY n DESC LIMIT 15`, from, ...scopeArgs).map((r) => ({
+      id: r.item,
+      label: diagNames.get(r.item) || r.label,
+      count: r.n,
+      previous: prevDiag.get(r.item) || 0,
+      comfort: String(r.item || '').startsWith('p_'),
+    }));
+
+    // Products put forward at the end of the advice, and how many customers then asked the store.
+    const shops = new Map(rows(`SELECT prod, COUNT(*) AS n FROM usage_events WHERE kind = 'shop' AND prod IS NOT NULL AND ${inRange} GROUP BY prod`, from, ...scopeArgs).map((r) => [r.prod, r.n]));
+    const topProducts = rows(`SELECT prod, COUNT(*) AS n FROM usage_events WHERE kind = 'result' AND prod IS NOT NULL AND ${inRange} GROUP BY prod ORDER BY n DESC LIMIT 15`, from, ...scopeArgs).map((r) => ({
+      product: r.prod,
+      shown: r.n,
+      asked: shops.get(r.prod) || 0,
+    }));
+
+    const topSearches = rows(
+      `SELECT query, COUNT(*) AS n, SUM(CASE WHEN results = 0 THEN 1 ELSE 0 END) AS none FROM usage_events WHERE kind = 'search' AND ${inRange} GROUP BY query ORDER BY n DESC LIMIT 20`,
+      from,
+      ...scopeArgs
+    ).map((r) => ({ query: r.query, count: r.n, noResult: r.none }));
+    const unanswered = rows(
+      `SELECT query, COUNT(*) AS n FROM usage_events WHERE kind = 'search' AND results = 0 AND ${inRange} GROUP BY query ORDER BY n DESC LIMIT 15`,
+      from,
+      ...scopeArgs
+    ).map((r) => ({ query: r.query, count: r.n }));
+
+    // Seasonality: the most frequent problems, month by month over the last 12 months.
+    const season12 = list(12);
+    const seasonTop = rows(`SELECT item, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND month >= ? ${scopeSql} GROUP BY item ORDER BY n DESC LIMIT 10`, season12[0], ...scopeArgs);
+    const seasonCells = new Map();
+    for (const r of rows(`SELECT item, month, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND month >= ? ${scopeSql} GROUP BY item, month`, season12[0], ...scopeArgs)) {
+      seasonCells.set(`${r.item}|${r.month}`, r.n);
+    }
+    const seasonality = {
+      months: season12,
+      rows: seasonTop.map((t) => ({ id: t.item, label: diagNames.get(t.item) || t.item, counts: season12.map((m) => seasonCells.get(`${t.item}|${m}`) || 0) })),
+    };
+
+    // Equipment: how many customers have it (ticked in their app, or the list of their model), and how often it is looked at.
+    const eqNames = new Map(rows('SELECT id, data FROM equipment').map((r) => [r.id, JSON.parse(r.data).name]));
+    const profiles = new Map(rows('SELECT id, profile FROM vehicles').map((v) => [v.id, (() => { try { return JSON.parse(v.profile || '{}').equipment || []; } catch { return []; } })()]));
+    const owners = new Map();
+    const customers = rows(`SELECT c.id, c.vehicle_id, s.value AS own FROM customers c LEFT JOIN customer_state s ON s.customer_id = c.id AND s.key = 'cdb_own' ${dealershipId ? 'WHERE c.dealership_id = ?' : ''}`, ...scopeArgs);
+    for (const c of customers) {
+      let ids = profiles.get(c.vehicle_id) || [];
+      try {
+        const own = c.own ? JSON.parse(c.own) : null;
+        if (own && typeof own === 'object') ids = Object.keys(own).filter((k) => own[k]);
+      } catch { /* keep the model's list */ }
+      for (const id of new Set(ids)) owners.set(id, (owners.get(id) || 0) + 1);
+    }
+    const views = new Map(rows(`SELECT item, COUNT(*) AS n FROM usage_events WHERE kind = 'equip' AND ${inRange} GROUP BY item`, from, ...scopeArgs).map((r) => [r.item, r.n]));
+    const equipment = [...new Set([...owners.keys(), ...views.keys()])]
+      .map((id) => ({ id, name: eqNames.get(id) || id, owners: owners.get(id) || 0, views: views.get(id) || 0 }))
+      .sort((a, b) => b.owners - a.owners || b.views - a.views)
+      .slice(0, 25);
+
+    const vehicleTypes = rows(`SELECT COALESCE(vehicle_type, 'inconnu') AS type, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND ${inRange} GROUP BY type ORDER BY n DESC`, from, ...scopeArgs);
+    return {
+      months,
+      dealershipId: dealershipId || null,
+      customers: customers.length,
+      totals,
+      prevTotals,
+      perMonth: [...perMonth.values()],
+      topProblems,
+      topProducts,
+      topSearches,
+      unanswered,
+      seasonality,
+      equipment,
+      vehicleTypes,
+    };
+  });
 
   router.get('/api/admin/stats', (ctx) => {
     const user = auth(ctx);
@@ -1124,7 +1236,7 @@ function register(router) {
     let role = pick(optStr(body.role, 10), current.role ?? 'sales');
     if (role === 'dealer') role = 'manager';
     if (!ROLES.includes(role)) throw new HttpError(400, 'Rôle invalide');
-    const global = role === 'admin' || role === 'editor';
+    const global = role === 'admin' || role === 'editor' || role === 'analytics';
     if (me.role !== 'admin' && global) throw new HttpError(403, 'Seul un administrateur peut créer ce compte');
     // A manager's team always belongs to their dealership; the administrator and content editors belong to none.
     const dealershipId = global ? null : me.role === 'admin' ? pick(optInt(body.dealershipId), current.dealership_id ?? null) : me.dealership_id;
@@ -1136,7 +1248,7 @@ function register(router) {
 
   function teamMember(ctx, me, id) {
     const user = getOr404(ctx.db, 'admins', id, 'Utilisateur');
-    if (me.role !== 'admin' && (user.role === 'admin' || user.role === 'editor' || user.dealership_id !== me.dealership_id)) throw new HttpError(404, 'Utilisateur introuvable');
+    if (me.role !== 'admin' && (['admin', 'editor', 'analytics'].includes(user.role) || user.dealership_id !== me.dealership_id)) throw new HttpError(404, 'Utilisateur introuvable');
     return user;
   }
 

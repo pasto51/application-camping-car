@@ -165,6 +165,32 @@
     });
   }
 
+  // ---------- Usage statistics (anonymous: searches, problems, advice, store requests, equipment looked at) ----------
+
+  var events = [], lastSearch = null, searchTimer = null;
+  function sendEvents(leaving) {
+    if (lastSearch) { events.push(lastSearch); lastSearch = null; clearTimeout(searchTimer); }
+    if (!events.length || !(session && session.token)) return;
+    var batch = events.splice(0, 50);
+    try {
+      fetch('/api/me/events', { method: 'POST', keepalive: !!leaving, headers: { Authorization: 'Bearer ' + session.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ events: batch }) }).catch(function () {});
+    } catch (e) { /* statistics are never worth an error */ }
+  }
+  // A search is kept once the customer stops typing (only the last words count, not every letter).
+  window.CDB_TRACK = function (kind, data) {
+    data = data || {}; data.kind = kind;
+    if (kind === 'search') {
+      lastSearch = data; clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () { if (lastSearch) { events.push(lastSearch); lastSearch = null; } }, 2500);
+      return;
+    }
+    if (lastSearch) { events.push(lastSearch); lastSearch = null; clearTimeout(searchTimer); }
+    events.push(data);
+    if (events.length >= 20) sendEvents(false);
+  };
+  setInterval(function () { sendEvents(false); }, 20000);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') sendEvents(true); });
+
   window.CDB_CLOUD = {
     accessCode: function (info) {
       return askDealerCode('Valider la mise en main', 'Saisissez votre code concession pour générer le code d’accès du client.').then(function (code) {

@@ -376,6 +376,32 @@ function register(router) {
 
   router.get('/api/me/requests', (ctx) => requestsOf(ctx.db, requireCustomer(ctx).id));
 
+  // Usage statistics, without saying who: what is searched, which problems are opened, which advice is reached,
+  // « Demander au magasin », which equipment is looked at. Only the dealership, the vehicle type and the month are kept.
+  const EVENT_KINDS = ['search', 'diag', 'result', 'shop', 'equip'];
+  const eventLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 120 });
+  router.post('/api/me/events', (ctx) => {
+    const customer = requireCustomer(ctx);
+    if (eventLimiter(`c${customer.id}`)) return { saved: 0 };
+    const list = Array.isArray(ctx.body.events) ? ctx.body.events.slice(0, 50) : [];
+    const vehicle = ctx.db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
+    const type = vehicle ? readProfile(vehicle).type || null : null;
+    const month = new Date().toISOString().slice(0, 7);
+    const insert = ctx.db.prepare(
+      'INSERT INTO usage_events (month, kind, item, label, query, prod, results, dealership_id, vehicle_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    const text = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);
+    let saved = 0;
+    for (const e of list) {
+      if (!e || !EVENT_KINDS.includes(e.kind)) continue;
+      const query = e.kind === 'search' ? text(e.q, 80)?.toLowerCase() : null;
+      if (e.kind === 'search' && (!query || query.length < 3)) continue;
+      insert.run(month, e.kind, text(e.id, 40), text(e.label, 160), query, text(e.prod, 160), Number.isInteger(e.n) ? e.n : null, customer.dealership_id, type);
+      saved++;
+    }
+    return { saved };
+  });
+
   // The customer answers in the conversation of one of their requests.
   router.post('/api/me/requests/:id/messages', (ctx) => {
     const customer = requireCustomer(ctx);

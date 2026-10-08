@@ -277,6 +277,21 @@ def main():
     if(rdv.m) $("#rmsg").value = rdv.msg;
     if(window.CDB_CLOUD && window.CDB_CLOUD.rdvRendered) window.CDB_CLOUD.rdvRendered();""")
 
+    # ---- Usage statistics (anonymous): searches, problems opened, advice reached, store requests, equipment looked at ----
+    T = 'window.CDB_TRACK&&window.CDB_TRACK'
+    s = replace_once(s, 'res = res.filter(function(x){return x.k >= Math.max(top*0.55,1)}).slice(0,8).map(function(x){return x.s});',
+        'res = res.filter(function(x){return x.k >= Math.max(top*0.55,1)}).slice(0,8).map(function(x){return x.s}); ' + T + '("search",{q:q,n:res.length});')
+    s = replace_once(s, 'if(s){diag.i = +s.dataset.s; diag.ans = []; diag.auto = []; diag.h = []; renderDiagStep();',
+        'if(s){diag.i = +s.dataset.s; diag.ans = []; diag.auto = []; diag.h = []; ' + T + '("diag",{id:SOUCIS[diag.i].id,label:SOUCIS[diag.i].label}); renderDiagStep();')
+    s = replace_once(s, 'b.innerHTML = resultHTML(s,n,back,autoTxt,vnote);',
+        'b.innerHTML = resultHTML(s,n,back,autoTxt,vnote); ' + T + '("result",{id:s.id,label:n.cause,prod:n.prod.indexOf("Aucun")===0?null:n.prod});')
+    s = replace_once(s, 'else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(',
+        'else if(a.dataset.act==="shop"){' + T + '("shop",{id:sj.id,label:sj.label,prod:rr.prod}); window.CDB_CLOUD.partRequest(')
+    s = replace_once(s, """  function showItem(id){
+    var it = eqById(id); if(!it) return;""", """  function showItem(id){
+    var it = eqById(id); if(!it) return;
+    """ + T + """("equip",{id:id,label:it.name});""")
+
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head

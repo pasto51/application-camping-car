@@ -46,9 +46,89 @@ function removeDemo(db) {
   const ids = db.prepare("SELECT id FROM dealerships WHERE code IN ('DEMONANT', 'DEMORENN', 'DEMOVANN')").all().map((d) => d.id);
   let customers = 0;
   for (const id of ids) customers += db.prepare('DELETE FROM customers WHERE dealership_id = ?').run(id).changes;
+  for (const id of ids) db.prepare('DELETE FROM usage_events WHERE dealership_id = ?').run(id);
   const accounts = db.prepare("DELETE FROM admins WHERE email LIKE '%@demo.test'").run().changes;
   for (const id of ids) db.prepare('DELETE FROM dealerships WHERE id = ?').run(id);
   return { dealerships: ids.length, customers, accounts };
+}
+
+// Seasons of each problem (12 weights, January → December), so that the « Statistiques » page tells a true story:
+// fogged windscreen and cold in winter, heat and air conditioning in summer, departures in spring, storage in autumn.
+const WINTER = [10, 9, 6, 3, 1, 1, 1, 1, 2, 5, 8, 10];
+const SUMMER = [1, 1, 2, 3, 5, 8, 10, 10, 5, 2, 1, 1];
+const SPRING = [2, 3, 8, 10, 8, 5, 4, 3, 4, 3, 2, 2];
+const AUTUMN = [3, 2, 2, 2, 1, 1, 1, 2, 4, 9, 10, 6];
+const FLAT = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
+const USAGE = [
+  ['p_buee', WINTER, 9, ['buée pare-brise', 'condensation vitres', 'buee le matin']],
+  ['p_froid', WINTER, 7, ['froid la nuit', 'sol froid']],
+  ['g_truma', WINTER, 6, ['chauffage ne marche pas', 'truma clignote']],
+  ['p_gaz', WINTER, 5, ['bouteille gaz vide vite']],
+  ['c_tank_gel', WINTER, 3, ['eau gelée']],
+  ['p_chaleur', SUMMER, 9, ['trop chaud la nuit', 'chaleur cellule']],
+  ['h_clim', SUMMER, 6, ['clim ne refroidit pas']],
+  ['h_frigo', SUMMER, 8, ['frigo ne refroidit pas', 'frigo gaz']],
+  ['p_autonomie', SUMMER, 8, ['batterie ne tient pas', 'autonomie batterie']],
+  ['p_moustiques', SUMMER, 4, ['moustiques']],
+  ['p_eau', SUMMER, 4, ['manque d eau']],
+  ['h_store', SUMMER, 5, ['store bloqué', 'manivelle store']],
+  ['p_tpms', SPRING, 4, ['pression pneus']],
+  ['p_balan', SPRING, 5, ['camping car balance', 'roulis virage']],
+  ['h_wc', FLAT, 5, ['odeur toilettes', 'cassette fuit']],
+  ['p_internet', FLAT, 4, ['pas internet', 'wifi camping']],
+  ['p_vol', FLAT, 3, ['alarme vol']],
+  ['p_stockage', AUTUMN, 4, ['hivernage', 'stockage hiver']],
+];
+const UNANSWERED = ['remorque', 'attelage', 'starlink', 'panneau grêle'];
+
+function seedUsage(db, dealershipIds) {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const leafOf = new Map();
+  for (const [id] of USAGE) {
+    const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+    if (!row) continue;
+    const leaves = [];
+    (function walk(n) {
+      if (!n) return;
+      if (Array.isArray(n.n)) n.n.forEach(walk);
+      else leaves.push(n);
+    })(JSON.parse(row.data).tree);
+    leafOf.set(id, leaves.filter((l) => l.prod && !/^Aucun/.test(l.prod)));
+  }
+  const equipment = db.prepare('SELECT id FROM equipment ORDER BY sort LIMIT 40').all().map((r) => r.id);
+  const types = ['fourgon', 'fourgon', 'profile', 'profile', 'compact', 'integral', 'van'];
+  const insert = db.prepare('INSERT INTO usage_events (at, month, kind, item, label, query, prod, results, dealership_id, vehicle_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  let n = 0;
+  const now = new Date();
+  for (let back = 11; back >= 0; back--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 15));
+    const month = d.toISOString().slice(0, 7);
+    const at = `${month}-15 12:00:00`;
+    const growth = 0.6 + (11 - back) * 0.05; // more customers on the app month after month
+    dealershipIds.forEach((dealer, k) => {
+      const size = [1, 0.7, 0.45][k] || 0.5;
+      for (const [id, season, weight, queries] of USAGE) {
+        const times = Math.round(season[d.getUTCMonth()] * weight * size * growth * (0.7 + rnd() * 0.6) / 4);
+        for (let i = 0; i < times; i++) {
+          const type = types[Math.floor(rnd() * types.length)];
+          if (rnd() < 0.6) { insert.run(at, month, 'search', null, null, queries[Math.floor(rnd() * queries.length)], null, 1 + Math.floor(rnd() * 4), dealer, type); n++; }
+          insert.run(at, month, 'diag', id, null, null, null, null, dealer, type); n++;
+          const leaves = leafOf.get(id) || [];
+          if (leaves.length && rnd() < 0.75) {
+            const leaf = leaves[Math.floor(rnd() * leaves.length)];
+            insert.run(at, month, 'result', id, leaf.cause, null, leaf.prod, null, dealer, type); n++;
+            if (rnd() < (id.startsWith('p_') ? 0.22 : 0.08)) { insert.run(at, month, 'shop', id, null, null, leaf.prod, null, dealer, type); n++; }
+          }
+        }
+      }
+      for (let i = 0; i < Math.round(25 * size * growth); i++) {
+        insert.run(at, month, 'equip', equipment[Math.floor(rnd() * equipment.length)], null, null, null, null, dealer, types[Math.floor(rnd() * types.length)]); n++;
+      }
+      if (rnd() < 0.5) { insert.run(at, month, 'search', null, null, UNANSWERED[Math.floor(rnd() * UNANSWERED.length)], null, 0, dealer, null); n++; }
+    });
+  }
+  return n;
 }
 
 async function main() {
@@ -158,6 +238,7 @@ async function main() {
     ['vannes', 'manager', 'Yann Le Floch', 'responsable.vannes'],
     ['vannes', 'sales', 'Gwen Tanguy', 'gwen.vannes'],
     [null, 'editor', 'Éditrice de contenu', 'editeur'],
+    [null, 'analytics', 'Analyste marketing', 'analyste'],
   ];
   const accounts = [];
   for (const [key, role, name, login, phone] of ACCOUNTS) {
@@ -251,6 +332,9 @@ async function main() {
   await part('Yves', { need: 'piece', equipmentName: 'WC', product: 'Joint de cassette', model: 'Thetford C223' });
   await ask('Anne', { title: 'Contrôle gaz', message: 'Je voudrais le contrôle gaz avant l’hiver.' });
 
+  // ---- 12 months of use of the app (anonymous statistics), with the seasons, for the « Statistiques » page ----
+  const statsCount = seedUsage(db, Object.values(D).map((d) => d.id));
+
   // ---- What each one sees (checked now, printed below) ----
   const seen = async (staff) =>
     (await call('GET', '/api/admin/reports', undefined, staffToken(staff.id, staff.role))).map((r) => `${r.title} [${r.service === 'magasin' ? 'magasin' : 'SAV'}]`);
@@ -273,12 +357,12 @@ async function main() {
   const line = '─'.repeat(78);
   console.log(`\n${line}\n DÉMO prête sur ${SITE.origin}\n${line}`);
   console.log('\n BACK-OFFICE : ' + SITE.origin + '/admin/   (mot de passe de tous les comptes démo : ' + PASSWORD + ')\n');
-  const ROLE = { manager: 'Responsable', sales: 'Commercial', sav: 'SAV', store: 'Magasin', editor: 'Éditeur de contenu' };
+  const ROLE = { manager: 'Responsable', sales: 'Commercial', sav: 'SAV', store: 'Magasin', editor: 'Éditeur de contenu', analytics: 'Analyste' };
   for (const d of Object.values(D)) {
     console.log(` ${d.name}  (code concession ${d.code} — ${d.situation})`);
     for (const a of accounts.filter((x) => x.key === d.key)) console.log(`    ${ROLE[a.role].padEnd(12)} ${a.name.padEnd(26)} ${a.email}`);
   }
-  console.log(`\n Sans concession :\n    ${ROLE.editor.padEnd(12)} ${'Éditrice de contenu'.padEnd(26)} editeur@demo.test`);
+  console.log(`\n Sans concession :\n    ${ROLE.editor.padEnd(12)} ${'Éditrice de contenu'.padEnd(26)} editeur@demo.test\n    ${ROLE.analytics.padEnd(12)} ${'Analyste marketing'.padEnd(26)} analyste@demo.test   (page Statistiques : ${statsCount} actions sur 12 mois)`);
   console.log(`\n${line}\n ESPACES CLIENTS : ouvrez le lien (une seule fois), ou dans l'appli « J'ai déjà un compte » avec le nom et le code.\n Un seul client à la fois par navigateur : ouvrir un autre lien change de client.\n${line}`);
   for (const c of out) {
     console.log(`\n ${c.first} ${c.last} — ${c.dealer.name.replace('DÉMO – ', '')} — ${c.note}${c.sales ? ` — commercial : ${c.dealer.staff[c.sales].name}` : ''}`);

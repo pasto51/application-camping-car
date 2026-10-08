@@ -5,6 +5,7 @@ const formatDateTime = (t) => {
   return Number.isNaN(d.getTime()) ? '' : `${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
 };
 import { registerCatalogViews } from '/admin/catalog.js';
+import { registerAnalyticsView } from '/admin/analytics.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -44,12 +45,15 @@ const isAdmin = () => state.user?.role === 'admin';
 // Content editor: diagnostics, equipment, lists, vehicles and photos, announcement — no customers, requests or dealerships.
 const isEditor = () => state.user?.role === 'editor';
 const canEditContent = () => isAdmin() || isEditor();
+// Analyst: the statistics of use only (all dealerships), to prepare the campaigns.
+const isAnalyst = () => state.user?.role === 'analytics';
+const canSeeStats = () => isAdmin() || isAnalyst() || ['manager', 'dealer'].includes(state.user?.role);
 // Responsable de concession (or administrator): reassigns customers, manages the team.
 // A detached store is independent: no access to the dealership's customers.
 const isDetachedStore = () => state.user?.role === 'store' && !!state.user?.storeDetached;
 const isManager = () => ['admin', 'manager', 'dealer'].includes(state.user?.role);
-const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur de contenu', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
-const ROLE_ORDER = ['manager', 'sales', 'sav', 'store', 'editor', 'admin'];
+const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur de contenu', analytics: 'Analyste (statistiques)', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
+const ROLE_ORDER = ['manager', 'sales', 'sav', 'store', 'editor', 'analytics', 'admin'];
 // For searches: no accents, no capitals.
 const norm = (t) =>
   String(t || '')
@@ -91,15 +95,16 @@ function renderLogin() {
 
 function sections() {
   const all = [
-    ['dashboard', '📊', 'Tableau de bord', !isEditor()],
-    ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales' && !isEditor()],
-    ['customers', '👥', 'Clients', !isEditor() && !isDetachedStore()],
+    ['dashboard', '📊', 'Tableau de bord', !isEditor() && !isAnalyst()],
+    ['analytics', '📈', 'Statistiques', canSeeStats()],
+    ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales' && !isEditor() && !isAnalyst()],
+    ['customers', '👥', 'Clients', !isEditor() && !isAnalyst() && !isDetachedStore()],
     ['vehicles', '🚐', 'Véhicules', canEditContent()],
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', canEditContent()],
     ['equipment', '🧰', 'Équipements', canEditContent()],
     ['content', '📋', 'Contenus de l’appli', canEditContent()],
     ['brands', '🏷️', 'Marques', canEditContent()],
-    ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor()],
+    ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor() && !isAnalyst()],
     ['users', '🔑', isAdmin() ? 'Utilisateurs' : 'Mon équipe', isManager()],
     ['settings', '⚙️', 'Paramètres', true],
   ];
@@ -725,7 +730,7 @@ const VIEWS = {
       <p><strong>SAV / atelier</strong> : voit les demandes de la concession, répond à celles du SAV (rendez-vous, soucis, pièces sous garantie) et peut les transférer au magasin.</p>
       <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que ses demandes, et pas les clients de la concession.</p>
       <p><strong>Responsable de concession</strong> : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession), sans recevoir d’e-mails.</p>
-      ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
+      ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Analyste (statistiques)</strong> : voit seulement les statistiques d’utilisation de l’appli (recherches, problèmes, produits conseillés, saisonnalité, équipements) de toutes les concessions, pour préparer les campagnes. Le responsable de concession voit aussi les statistiques de sa concession.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
     // Filtering happens in the page: typing does not reload the list nor lose the cursor.
     const render = () => {
       const q = norm(f.q);
@@ -847,6 +852,7 @@ const VIEWS = {
 };
 
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin, canEditContent });
+registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.
 const NEEDS = { piece: 'Pièce détachée', remplacement: 'Remplacement de l’équipement', accessoire: 'Accessoire ou consommable' };
@@ -959,7 +965,7 @@ function userRow(u, { showDealership }) {
     <td><strong>${esc(u.name || '')}</strong></td><td>${esc(u.email)}${u.phone ? `<br><small>${esc(u.phone)}</small>` : ''}</td>
     <td>${esc(ROLE_LABELS[u.role] || u.role)}</td>
     ${showDealership ? `<td>${u.dealershipId ? `<button class="lnk" data-act="dealer" data-id="${u.dealershipId}">${esc(u.dealershipName || '')}</button>` : '<span class="muted">—</span>'}</td>` : ''}
-    <td>${['admin', 'editor'].includes(u.role) ? '' : u.customerCount}</td>
+    <td>${['admin', 'editor', 'analytics'].includes(u.role) ? '' : u.customerCount}</td>
     <td class="row-actions"><button class="btn small" data-act="edit" data-id="${u.id}">Modifier</button>${
       u.customerCount ? `<button class="btn small" data-act="transfer" data-id="${u.id}">Transférer ses clients</button>` : ''
     }${u.id !== state.user.id ? `<button class="btn small danger" data-act="del" data-id="${u.id}">Supprimer</button>` : ''}</td>
@@ -968,7 +974,7 @@ function userRow(u, { showDealership }) {
 
 // Add / edit / transfer / delete, shared by both pages. `dealershipId` pre-fills the dealership of a new account.
 function userActions(users, dealerships, reload, { dealershipId } = {}) {
-  const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['editor', 'Éditeur de contenu'], ['admin', 'Administrateur']] : [])];
+  const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['editor', 'Éditeur de contenu'], ['analytics', 'Analyste (statistiques)'], ['admin', 'Administrateur']] : [])];
   const fields = (isNew) => [
     { name: 'name', label: 'Nom (affiché au client pour un commercial)' },
     { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
