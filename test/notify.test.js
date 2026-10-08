@@ -184,4 +184,17 @@ test('conversation: dealership is e-mailed, customer gets push + e-mail, website
   const list = (await call('GET', '/api/admin/reports', { token: admin })).data;
   assert.equal(list.find((r) => r.id === req.id).waitingForDealer, true);
   assert.equal((await call('POST', `/api/me/requests/9999/messages`, { token, body: { body: 'x' } })).status, 404);
+
+  // Closed by the dealership: the customer can no longer answer (new request instead); reopening allows it again
+  await call('PUT', `/api/admin/reports/${req.id}`, { token: admin, body: { status: 'resolu', message: 'Rendez-vous confirmé, bonne route !' } });
+  const closed = (await call('GET', '/api/me/requests', { token })).data.find((r) => r.id === req.id);
+  assert.equal(closed.status, 'resolu');
+  assert.ok(closed.closedAt);
+  const refused = await call('POST', `/api/me/requests/${req.id}/messages`, { token, body: { body: 'Encore une question' } });
+  assert.equal(refused.status, 409);
+  assert.match(refused.data.error, /clôturée/);
+  assert.equal((await call('GET', '/api/admin/reports', { token: admin })).data.find((r) => r.id === req.id).waitingForDealer, false);
+  await call('PUT', `/api/admin/reports/${req.id}`, { token: admin, body: { status: 'en_cours' } });
+  assert.equal((await call('POST', `/api/me/requests/${req.id}/messages`, { token, body: { body: 'Merci' } })).status, 200);
+  assert.equal((await call('GET', '/api/me/requests', { token })).data.find((r) => r.id === req.id).closedAt, null);
 });

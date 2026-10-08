@@ -746,7 +746,7 @@ function register(router) {
     for (const r of list) {
       r.messages = msgs.filter((m) => m.reportId === r.id);
       // The customer wrote last: the dealership owes an answer.
-      r.waitingForDealer = r.messages.length ? r.messages[r.messages.length - 1].author === 'client' : r.status === 'nouveau';
+      r.waitingForDealer = r.status !== 'resolu' && (r.messages.length ? r.messages[r.messages.length - 1].author === 'client' : r.status === 'nouveau');
     }
     return list;
   });
@@ -762,7 +762,9 @@ function register(router) {
     // A reply is a new message in the conversation; the customer is notified.
     const reply = optStr(body.dealerReply ?? body.message, 4000);
     if (reply) db.prepare("INSERT INTO report_messages (report_id, author, body) VALUES (?, 'concession', ?)").run(report.id, reply);
-    db.prepare("UPDATE reports SET status = ?, dealer_reply = ?, updated_at = datetime('now') WHERE id = ?").run(status, reply || report.dealer_reply, report.id);
+    // Closing stamps the date shown to the customer; reopening ("En cours") clears it.
+    const closedAt = status === 'resolu' ? report.closed_at || new Date().toISOString().replace('T', ' ').slice(0, 19) : null;
+    db.prepare("UPDATE reports SET status = ?, dealer_reply = ?, closed_at = ?, updated_at = datetime('now') WHERE id = ?").run(status, reply || report.dealer_reply, closedAt, report.id);
     if (reply) {
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(report.customer_id);
       ctx.notify.dealershipAnswered({ report, customer, text: reply, origin: ctx.origin }).catch(() => {});

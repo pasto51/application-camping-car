@@ -207,6 +207,7 @@ const ADDED_COLUMNS = [
   ['dealerships', 'hours', 'TEXT'],
   ['dealerships', 'logo_url', 'TEXT'],
   ['dealerships', 'website', 'TEXT'],
+  ['reports', 'closed_at', 'TEXT'],
   ['customers', 'access_code_at', 'TEXT'],
   ['customers', 'access_expires_at', 'TEXT'],
 ];

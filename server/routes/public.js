@@ -275,10 +275,11 @@ function register(router) {
     const { db } = ctx;
     const report = db.prepare('SELECT * FROM reports WHERE id = ? AND customer_id = ?').get(Number(ctx.params.id), customer.id);
     if (!report) throw new HttpError(404, 'Demande introuvable');
+    // A closed request is read-only for the customer: they open a new request instead.
+    if (report.status === 'resolu') throw new HttpError(409, 'Cette demande est clôturée : faites une nouvelle demande.');
     const text = reqStr(ctx.body.body, 'Message', 4000);
     db.prepare("INSERT INTO report_messages (report_id, author, body) VALUES (?, 'client', ?)").run(report.id, text);
-    // A new message from the customer puts the request back on the dealership's to-do list.
-    db.prepare("UPDATE reports SET status = CASE WHEN status = 'resolu' THEN 'nouveau' ELSE status END, updated_at = datetime('now') WHERE id = ?").run(report.id);
+    db.prepare("UPDATE reports SET updated_at = datetime('now') WHERE id = ?").run(report.id);
     ctx.notify.customerWrote({ report, customer, text, origin: ctx.origin, isNew: false }).catch(() => {});
     return requestsOf(db, customer.id).find((r) => r.id === report.id);
   });

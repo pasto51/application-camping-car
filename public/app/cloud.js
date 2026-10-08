@@ -155,6 +155,9 @@
       });
     },
     sendRequest: function (body) {
+      // Follow-up of a closed request: its title says so, for the dealership.
+      if (followUp && body.title === 'Un souci sur mon véhicule' && /^Suite de ma demande/.test(body.message || '')) body.title = ('Suite : ' + followUp).slice(0, 150);
+      followUp = null;
       return api('POST', '/api/me/requests', body).then(function (r) { openReq[r.id] = true; loadRequests(); return r; });
     },
   };
@@ -354,12 +357,13 @@
   // ---------- Added to the home screen: workshop requests and account ----------
 
   var requests = [];
-  var STATUS = { nouveau: 'Envoyée', en_cours: 'En cours', resolu: 'Traitée' };
+  var STATUS = { nouveau: 'Envoyée', en_cours: 'En cours', resolu: 'Clôturée' };
 
   var SEEN_KEY = 'cdb_cloud_seen'; // last dealership message read, per request
   var seen = readJson(SEEN_KEY, {});
   var openReq = {};
   var drafts = {}; // request id -> message being typed
+  var followUp = null; // title of the closed request a new one follows
 
   function loadRequests() {
     if (!session) return;
@@ -394,8 +398,12 @@
       msgs.map(function (m) {
         return '<div class="cloud-msg ' + esc(m.author) + '"><p>' + esc(m.body).replace(/\n/g, '<br>') + '</p><small>' + (m.author === 'concession' ? esc(dealer) : 'Vous') + ' · ' + esc(fmt(m.createdAt)) + '</small></div>';
       }).join('');
-    return '<div class="card cloud-req open">' + head + '<div class="cloud-thread">' + thread + '</div>' +
-      '<form class="cloud-reply" data-reply="' + r.id + '"><textarea class="search" name="body" rows="2" required placeholder="Votre message à ' + esc(dealer) + '"></textarea><button class="btn">Envoyer</button></form></div>';
+    // Closed by the dealership: read-only; a follow-up starts a new request that refers to this one.
+    var end = r.status === 'resolu'
+      ? '<div class="cloud-closed"><p>🔒 Demande clôturée par ' + esc(dealer) + (r.closedAt ? ' le ' + esc(dateOf(r.closedAt).toLocaleDateString('fr-FR')) : '') + '.</p>' +
+        '<button type="button" class="btn alt" data-followup="' + r.id + '">Nouvelle demande à ce sujet</button></div>'
+      : '<form class="cloud-reply" data-reply="' + r.id + '"><textarea class="search" name="body" rows="2" required placeholder="Votre message à ' + esc(dealer) + '"></textarea><button class="btn">Envoyer</button></form>';
+    return '<div class="card cloud-req open' + (r.status === 'resolu' ? ' closed' : '') + '">' + head + '<div class="cloud-thread">' + thread + '</div>' + end + '</div>';
   }
 
   // "Mes demandes" lives in the workshop screen; the home screen only says when the dealership has answered.
@@ -407,13 +415,13 @@
       // Keep what the customer is typing when the list refreshes.
       Array.prototype.forEach.call(el.querySelectorAll('[data-reply] textarea'), function (t) { drafts[t.form.dataset.reply] = t.value; });
       var focused = document.activeElement && document.activeElement.closest && document.activeElement.closest('[data-reply]');
-      var active = requests.filter(function (r) { return r.status !== 'resolu' || unread(r) || openReq[r.id]; });
+      var active = requests.filter(function (r) { return r.status !== 'resolu' || unread(r); });
       var done = requests.filter(function (r) { return active.indexOf(r) < 0; });
       active.sort(function (x, y) { return (unread(y) ? 1 : 0) - (unread(x) ? 1 : 0); });
       el.hidden = !requests.length;
       el.innerHTML = '<p class="eyebrow">Mes demandes' + (n ? ' <span class="cloud-new">' + n + ' nouvelle' + (n > 1 ? 's' : '') + ' réponse' + (n > 1 ? 's' : '') + '</span>' : '') + '</p>' +
         active.map(function (r) { return card(r, dealer); }).join('') +
-        (done.length ? '<details class="cloud-done"><summary>Demandes traitées (' + done.length + ')</summary>' + done.map(function (r) { return card(r, dealer); }).join('') + '</details>' : '');
+        (done.length ? '<details class="cloud-done"' + (done.some(function (r) { return openReq[r.id]; }) ? ' open' : '') + '><summary>Demandes clôturées (' + done.length + ')</summary>' + done.map(function (r) { return card(r, dealer); }).join('') + '</details>' : '');
       Array.prototype.forEach.call(el.querySelectorAll('[data-reply] textarea'), function (t) {
         var id = t.form.dataset.reply;
         if (drafts[id]) t.value = drafts[id];
@@ -440,6 +448,19 @@
     var go = document.querySelector('.tile[data-go="rdv"]'); if (go) go.click();
     setTimeout(function () { var el = document.querySelector('[data-req="' + id + '"]'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 250);
   }
+  // "Nouvelle demande à ce sujet": the new-request form below, motif "J'ai un souci", message referring to the old one.
+  document.addEventListener('click', function (e) {
+    var f = e.target.closest('[data-followup]'); if (!f) return;
+    var r = requests.filter(function (x) { return x.id === Number(f.dataset.followup); })[0]; if (!r) return;
+    followUp = r.title;
+    var m = document.querySelector('#rdvbody [data-m="souci"]'); if (m) m.click();
+    setTimeout(function () {
+      var t = document.getElementById('rmsg'); if (!t) return;
+      t.value = 'Suite de ma demande « ' + r.title + ' » du ' + dateOf(r.createdAt).toLocaleDateString('fr-FR') + ' :\n\n';
+      t.dispatchEvent(new Event('input', { bubbles: true }));
+      t.scrollIntoView({ block: 'center', behavior: 'smooth' }); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+    }, 50);
+  });
   document.addEventListener('click', function (e) {
     var o = e.target.closest('[data-open-rdv]'); if (!o) return;
     e.preventDefault(); showRequest(Number(o.dataset.openRdv));

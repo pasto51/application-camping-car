@@ -8,7 +8,7 @@ import { registerCatalogViews } from '/admin/catalog.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
-const STATUS = { nouveau: 'Nouveau', en_cours: 'En cours', resolu: 'Résolu' };
+const STATUS = { nouveau: 'Nouvelle', en_cours: 'En cours', resolu: 'Clôturée' };
 
 const state = { token: null, user: null, section: 'dashboard', filter: {}, cache: {} };
 
@@ -320,7 +320,7 @@ const VIEWS = {
   async reports(el) {
     const status = state.filter.reportStatus ?? 'open';
     const [all, settings] = await Promise.all([api('GET', '/api/admin/reports'), api('GET', '/api/admin/settings').catch(() => null)]);
-    const list = all.filter((r) => (status === 'open' ? r.status !== 'resolu' || r.waitingForDealer : status === 'all' || r.status === status));
+    const list = all.filter((r) => (status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status));
     const toAnswer = all.filter((r) => r.waitingForDealer).length;
     const mailWarning = settings && !settings.mail.ready
       ? `<div class="card warn-card">✉️ Les e-mails de notification ne sont pas encore configurés : vous ne serez pas prévenu des nouvelles demandes. ${isAdmin() ? '<a href="#settings">Configurer l’envoi des e-mails</a>' : 'Demandez à l’administrateur de le configurer.'}</div>`
@@ -331,7 +331,7 @@ const VIEWS = {
         ['open', 'À traiter'],
         ['nouveau', 'Nouvelles'],
         ['en_cours', 'En cours'],
-        ['resolu', 'Traitées'],
+        ['resolu', 'Clôturées'],
         ['all', 'Toutes'],
       ]
         .map(([v, l]) => `<button class="chip ${status === v ? 'active' : ''}" data-act="filter" data-value="${v}">${l}</button>`)
@@ -350,10 +350,15 @@ const VIEWS = {
               ${r.messages.map((m) => `<div class="msg ${esc(m.author)}"><p>${multiline(m.body)}</p><small>${m.author === 'client' ? 'Client' : 'Concession'} · ${formatDateTime(m.createdAt)}</small></div>`).join('')}
             </div>
             ${r.photos.length ? `<div class="photos">${r.photos.map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}
+            ${
+              r.status === 'resolu'
+                ? `<p class="closed-note">🔒 Demande clôturée${r.closedAt ? ` le ${formatDateTime(r.closedAt)}` : ''} : le client ne peut plus y répondre (il peut faire une nouvelle demande). Pour la rouvrir, choisissez « En cours ».</p>`
+                : ''
+            }
             <form class="reply-form" data-reply="${r.id}">
-              <textarea name="message" rows="2" placeholder="Votre réponse au client (il la reçoit dans son application)"></textarea>
+              <textarea name="message" rows="2" placeholder="${r.status === 'resolu' ? 'Dernier message au client (facultatif)' : 'Votre réponse au client (il la reçoit dans son application)'}"></textarea>
               <div class="actions">
-                <select name="status">${Object.entries(STATUS).map(([v, l]) => `<option value="${v}" ${(r.status === 'nouveau' ? 'en_cours' : r.status) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                <select name="status">${Object.entries(STATUS).map(([v, l]) => `<option value="${v}" ${(r.status === 'nouveau' ? 'en_cours' : r.status) === v ? 'selected' : ''}>${v === 'resolu' ? 'Clôturer la demande' : l}</option>`).join('')}</select>
                 <button class="btn primary">Envoyer</button>
                 ${r.phone ? `<a class="btn small" href="tel:${esc(r.phone)}">📞 ${esc(r.phone)}</a>` : ''}
                 ${r.email ? `<a class="btn small" href="mailto:${esc(r.email)}">✉️ ${esc(r.email)}</a>` : ''}
