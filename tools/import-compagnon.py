@@ -231,7 +231,11 @@ def main():
     s = replace_once(s, 'function baseOwn(){var o = {}; EQUIP.forEach(function(q){if(q.base) o[q.id]=true}); V114_EXTRA.forEach(function(i){o[i]=true}); Object.keys(o).forEach(function(i){if(PHOTOS[i]==null) delete o[i]}); return o}',
                      'function baseOwn(){var o = {}; (DATA.vehicle.equipment||[]).forEach(function(i){if(eqById0(i)) o[i]=true}); return o}')
     s = replace_once(s, "+(q.base?'<small>De série</small>':'')", "")
-    s = replace_once(s, 'toast("Liste de série rétablie.")', 'toast("Liste du modèle rétablie.")')
+    # No "reset to the model's list" button: one touch would erase what the dealership set with the customer.
+    s = replace_once(s, '$("#eqreset").addEventListener("click",function(){own = baseOwn(); syncImplied(); saveOwn(); renderEquip(); toast("Liste de série rétablie.")});', '')
+    # Brand and model of each equipment: those noted for the vehicle (back-office / relevé) come pre-filled, the customer's own notes win.
+    s = replace_once(s, 'var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} return o})();',
+                     'var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} var vm = DATA.vehicle.models||{}; Object.keys(vm).forEach(function(k){var m = o[k] = o[k]||{}; if(!m.name && vm[k]) m.name = vm[k]}); return o})();')
     s = replace_once(s, '" équipements cochés (de série et options). Comparez avec le bon de commande."', '" équipements cochés pour ce véhicule. Comparez avec le bon de commande et ajustez la liste."')
     s = replace_once(s, "function present(id){var it = eqById(id); return !!(ownA(id) || (it && it.base))}", "function present(id){return !!ownA(id)}")
 
@@ -269,7 +273,7 @@ def main():
         die("la page contient déjà <html> ou <body> : adaptez tools/import-compagnon.py")
     body_part = replace_once(body_part, '<image href="img/dessus.png" ', '<image ')
     body_part = replace_once(body_part, "Les équipements de série sont déjà cochés : décochez ce qui manque.", "Les équipements prévus pour ce modèle sont déjà cochés : ajoutez ou décochez avec la concession.")
-    body_part = replace_once(body_part, '<button class="btn alt" id="eqreset">Liste de série</button>', '<button class="btn alt" id="eqreset">Liste du modèle</button>')
+    body_part = replace_once(body_part, '<button class="btn alt" id="eqreset">Liste de série</button>', '')
     body_part = replace_once(body_part, '<div class="device" id="device">', '<div id="cloud"></div>\n<div class="device" id="device" hidden>')
     page = (
         '<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'

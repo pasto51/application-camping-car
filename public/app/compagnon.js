@@ -381,7 +381,7 @@ window.startCompagnon = function(DATA){
       $("#addeq").open = false; $("#esearch").value = ""; renderEquip();
     });
   })();
-  $("#eqreset").addEventListener("click",function(){own = baseOwn(); syncImplied(); saveOwn(); renderEquip(); toast("Liste du modèle rétablie.")});
+  
 
   /* ---------- C'est quoi, ça ? : plan réel du V114 vu du dessus ---------- */
   var SPOTS = DATA.vehicle.spots;
@@ -456,7 +456,7 @@ window.startCompagnon = function(DATA){
       toast("Photo enregistrée"); if(done) done();
     });
   }
-  var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} return o})();
+  var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} var vm = DATA.vehicle.models||{}; Object.keys(vm).forEach(function(k){var m = o[k] = o[k]||{}; if(!m.name && vm[k]) m.name = vm[k]}); return o})();
   function modSave(){lsSet("cdb_mod",JSON.stringify(mods))}
   var PLATE = DATA.config.PLATE;
   var VARIANTS = DATA.config.VARIANTS;

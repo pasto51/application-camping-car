@@ -162,3 +162,4 @@ textarea { font: inherit; color: var(--text); background: var(--card); border: 1
 .layout-card small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
 .layout-card small.ok-l { color: var(--ok); font-weight: 600; }
 .layout-card small.ko-l { color: var(--danger); font-weight: 600; }
+.tick small.mdl { display: block; font-size: .8rem; color: var(--muted); font-weight: 600; }

@@ -45,6 +45,7 @@ const S = {
   plan: { spots: [], planUrl: null },
   defaultSpots: {},
   labels: {}, // equipment name on this vehicle
+  models: {}, // brand and model on this vehicle
   spotOverrides: {}, // equipment zone on this vehicle
   showAll: false,
   metaDirty: false,
@@ -160,6 +161,7 @@ async function openVehicle(id, skipWizard = false) {
     plan: profile.plan || { spots: [], planUrl: null },
     defaultSpots: profile.defaultSpots || {},
     labels: { ...(profile.labels || {}) },
+    models: { ...(profile.models || {}) },
     spotOverrides: { ...(profile.spotOverrides || {}) },
   });
   store.set(LAST_KEY, String(id));
@@ -244,7 +246,7 @@ function itemHtml(q) {
   const url = S.photos[q.id];
   const state = S.busy === q.id ? 'busy' : S.photoQueue.has(q.id) ? 'wait' : '';
   return `<div class="item ${on ? 'on' : ''}" data-item="${esc(q.id)}">
-    <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(nameOf(q))}</span></button>
+    <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(nameOf(q))}${S.models[q.id] ? `<small class="mdl">${esc(S.models[q.id])}</small>` : ''}</span></button>
     ${S.plan.spots.length ? `<button class="zone ${spotOf(q.id) ? '' : 'none'}" data-zone="${esc(q.id)}" aria-label="Zone et nom : ${esc(nameOf(q))}">${spotOf(q.id) ? `📍${spotById(spotOf(q.id)).n}` : '📍?'}</button>` : ''}
     <button class="shot ${url ? 'has' : ''} ${state}" data-shot="${esc(q.id)}" aria-label="${url ? 'Voir la photo' : 'Prendre une photo'} : ${esc(q.name)}">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : '📷'}</button>
   </div>`;
@@ -371,6 +373,61 @@ function photoAction(id) {
   );
 }
 
+// Brands and models seen in the 2026-2027 catalogues and on the road: suggestions only, anything can be typed.
+const MODEL_HINTS = {
+  trumac: ['Truma Combi 4', 'Truma Combi 6', 'Truma Combi 4 E'],
+  trumad: ['Truma Combi D 4', 'Truma Combi D 6'],
+  webasto: ['Webasto Air Top 2000 STC', 'Eberspächer Airtronic D2', 'Autoterm Air 2D'],
+  alde: ['Alde Compact 3030'],
+  chauf: ['Truma Combi 4', 'Truma Combi D 4', 'Webasto Air Top 2000 STC'],
+  cmd_chauf: ['Truma CP Plus', 'Truma iNet X'],
+  wc: ['Thetford C223', 'Thetford C263', 'Dometic CTW 4110'],
+  wcfixe: ['Trelino', 'Separett Villa', 'OGO'],
+  frigo: ['Dometic CRX 80', 'Dometic CRX 140', 'Thetford T2090'],
+  comp: ['Dometic CRX 80', 'Dometic CRX 140'],
+  rechaud: ['Dometic', 'Can', 'Thetford'],
+  four: ['Thetford Duplex', 'Dometic'],
+  pompe: ['Shurflo Trail King', 'Fiamma Aqua 8', 'Reich'],
+  solaire: ['2 × 100 W', '1 × 150 W', '2 × 120 W'],
+  mppt: ['Victron SmartSolar 75/15', 'Votronic MPP 250'],
+  b2b: ['Votronic VCC 1212-30', 'Victron Orion-Tr Smart 12/12-30', 'Schaudt WA 121545'],
+  charg: ['Votronic VAC 1215', 'Schaudt EBL', 'Victron Blue Smart IP22'],
+  cell: ['AGM 95 Ah', 'AGM 105 Ah'],
+  agm: ['AGM 95 Ah', 'AGM 105 Ah'],
+  lith: ['Lithium 120 Ah', 'Lithium 150 Ah', 'Lithium 200 Ah'],
+  gest_energie: ['MEB-300 Smart Energy', 'Schaudt EBL', 'Victron Cerbo GX'],
+  panneau: ['CBE PC380', 'Schaudt LT 453', 'Nordelettronica'],
+  onduleur: ['Victron Phoenix 12/500', 'Votronic SMI 1200'],
+  store: ['Thule Omnistore 6300', 'Fiamma F45', 'Fiamma F80S', 'Thule Omnistor 5200'],
+  marche: ['Thule Slide-out Step', 'Fiamma'],
+  lant: ['Fiamma Vent 40', 'Dometic Midi Heki', 'Dometic Mini Heki'],
+  lant_lit: ['Fiamma Vent 28', 'Dometic Micro Heki'],
+  heki: ['Dometic Midi Heki', 'Dometic Heki 2'],
+  maxx: ['MaxxAir MaxxFan Deluxe', 'Fiamma Turbo Vent'],
+  clim: ['Truma Aventa', 'Dometic FreshJet', 'Telair'],
+  radio: ['Zenec Z-E3766', 'Ford SYNC 4', 'Pioneer'],
+  gps: ['Garmin Camper', 'TomTom GO Camper', 'Zenec'],
+  camera: ['Zenec', 'Waeco PerfectView', 'Ford'],
+  sat: ['Teleco Flatsat', 'Oyster', 'Megasat'],
+  tnt: ['Teleco', 'Fracarro'],
+  tv: ['Alphatronics', 'Telefunken'],
+  wifi: ['Alden Wifi', 'Teltonika', 'Tenda'],
+  velos: ['Thule Elite Van XT', 'Fiamma Carry-Bike'],
+  att: ['Westfalia', 'AL-KO'],
+  verins: ['Goldschmitt', 'E&P Hydraulics'],
+  air: ['Goldschmitt', 'VB-Airsuspension', 'Dunlop'],
+  alarme: ['Thitronik WiPro III', 'Cobra'],
+  traceur: ['Thitronik', 'Invoxia'],
+  co: ['Thitronik CO-Melder'],
+  gazdet: ['Thitronik G.A.S.-pro'],
+  duo: ['Truma DuoControl', 'GOK'],
+  gaslow: ['Gaslow', 'Alugas', 'Wynen'],
+  filtre: ['BWT Bestcamp', 'Alde Aquastar'],
+  pile_comb: ['EFOY Comfort 80', 'EFOY Comfort 150'],
+  groupe: ['Honda EU22i', 'Telair Energy'],
+  x4: ['Ford Transit AWD', 'Dangel'],
+};
+
 // Zone on the plan and name of one equipment, for this vehicle only.
 function itemSheet(id) {
   const q = S.equipment.find((x) => x.id === id);
@@ -389,6 +446,7 @@ function itemSheet(id) {
   dialog(
     `<form class="dlg" method="dialog">
       <h2>${esc(nameOf(q))}</h2>
+      <label>Marque et modèle<input name="model" maxlength="80" list="model-hints" value="${esc(S.models[id] || '')}" placeholder="${esc(MODEL_HINTS[id]?.[0] ? `ex : ${MODEL_HINTS[id][0]}` : 'ex : marque et nom du modèle')}" autocomplete="off"><datalist id="model-hints">${(MODEL_HINTS[id] || []).map((m) => `<option value="${esc(m)}">`).join('')}</datalist><span class="hint">Déjà noté pour chaque client de ce véhicule : utile en magasin ou à l’atelier. Le client y ajoute son numéro de série.</span></label>
       <label>Nom sur ce véhicule<input name="label" maxlength="120" value="${esc(S.labels[id] || '')}" placeholder="${esc(q.name)}"><span class="hint">Laissez vide pour garder « ${esc(q.name)} ». Ex : préciser la taille, le modèle ou la position.</span></label>
       <div class="label-like">Zone sur le plan <span class="hint">Touchez le bon numéro.</span></div>
       <div class="plan-pick">${S.plan.planUrl ? `<img src="${esc(S.plan.planUrl)}" alt="">` : ''}<svg viewBox="0 0 800 360" id="pdots">${dots()}</svg></div>
@@ -398,7 +456,11 @@ function itemSheet(id) {
     </form>`,
     (dlg, value) => {
       if (value !== 'ok') return;
-      const label = new FormData(dlg.querySelector('form')).get('label').trim();
+      const fd = new FormData(dlg.querySelector('form'));
+      const label = fd.get('label').trim();
+      const model = fd.get('model').trim();
+      if (model) S.models[id] = model;
+      else delete S.models[id];
       if (label && label !== q.name) S.labels[id] = label;
       else delete S.labels[id];
       if (reset) delete S.spotOverrides[id];
@@ -808,7 +870,7 @@ async function flush() {
         S.metaDirty = false;
         renderPending();
         try {
-          await api('PUT', `/api/admin/vehicles/${vid}/profile`, { labels: S.labels, spotOverrides: S.spotOverrides });
+          await api('PUT', `/api/admin/vehicles/${vid}/profile`, { labels: S.labels, spotOverrides: S.spotOverrides, models: S.models });
         } catch (err) {
           S.metaDirty = true;
           throw err;

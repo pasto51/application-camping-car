@@ -569,6 +569,14 @@ function register(router) {
       next.layout = body.layout || '';
       if (L) next.type = L.type;
     }
+    if (body.models !== undefined) {
+      if (!body.models || typeof body.models !== 'object' || Array.isArray(body.models)) throw new HttpError(400, 'Format invalide');
+      next.models = Object.fromEntries(
+        Object.entries(body.models)
+          .map(([k, v]) => [String(k), optStr(v, 80)])
+          .filter(([, v]) => v)
+      );
+    }
     if (body.labels !== undefined) {
       if (!body.labels || typeof body.labels !== 'object' || Array.isArray(body.labels)) throw new HttpError(400, 'Format invalide');
       next.labels = Object.fromEntries(

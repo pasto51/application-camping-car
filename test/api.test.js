@@ -316,3 +316,15 @@ test('a catalogue model name finds its layout', async () => {
   assert.equal((await find('Randger R635')).model.model, 'R635');
   assert.equal((await find('lit 140')).model, null);
 });
+
+test('brand and model noted for the vehicle are pre-filled in the app', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const brands = (await call('GET', '/api/admin/brands', { token: admin })).data;
+  const v = (await call('POST', '/api/admin/vehicles', { token: admin, body: { brandId: brands[0].id, name: 'Modèles test' } })).data;
+  await call('PUT', `/api/admin/vehicles/${v.id}/profile`, { token: admin, body: { models: { trumac: 'Truma Combi 4', wc: 'Thetford C223', vide: '  ' } } });
+  const dealership = (await call('GET', '/api/admin/dealerships', { token: admin })).data[0];
+  const c = (await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: v.id, dealershipId: dealership.id, lastName: 'Modele' } })).data;
+  const token = (await call('POST', '/api/restore', { body: { lastName: 'Modele', code: c.accessCode } })).data.token;
+  const { data } = await call('GET', '/api/app/data', { token });
+  assert.deepEqual(data.vehicle.models, { trumac: 'Truma Combi 4', wc: 'Thetford C223' });
+});

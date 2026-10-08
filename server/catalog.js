@@ -36,6 +36,7 @@ function defaultProfile(vehicle) {
     weights: { ptac: 3500, mom: 2800, pax: 2, eau: 30, gaz: 0, bag: 100 },
     type: '', // silhouette: van, fourgon, compact, profile, integral, capucine (server/vehicle-types.js)
     layout: '', // implantation of that type (lit central, salon arrière…): picks the plan, see tools/make-plans.js
+    models: {}, // brand and model of equipment on this vehicle (ex : truma → « Truma Combi 4 »), pre-filled for its customers
     labels: {}, // equipment name on this vehicle, when it differs from the catalogue (ex : « Lanterneau avant, 70 × 40 cm »)
     equipment: [], // pre-checked for this vehicle; the dealership adjusts it with each customer
     vars: {},
