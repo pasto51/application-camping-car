@@ -54,7 +54,7 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   const diags = (await call('GET', '/api/admin/diagnostics', { token: admin })).data;
   assert.equal(diags.length, 56);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
-  assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 122);
+  assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 163);
 
   // Content corrections from the simulations are applied
   const truma = (await call('GET', '/api/admin/diagnostics/g_truma', { token: admin })).data;
@@ -74,7 +74,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
 
   // Data the app runs on
   const { data } = await call('GET', '/api/app/data', { token });
-  assert.equal(data.equipment.length, 122);
+  assert.equal(data.equipment.length, 163);
   assert.equal(data.diagnostics.length, 56);
   assert.equal(data.vehicle.heroName, 'V114');
   assert.equal(data.vehicle.photos.length, 53);
@@ -241,4 +241,44 @@ test('a customer registered from the back-office gets a working access code and 
   const again = await call('POST', `/api/admin/customers/${res.data.id}/recovery-code`, { token: admin, body: {} });
   assert.equal((await call('POST', '/api/restore', { body: { lastName: 'Bureau', code: res.data.accessCode } })).status, 404);
   assert.equal((await call('POST', '/api/restore', { body: { lastName: 'Bureau', code: again.data.recoveryCode } })).status, 200);
+});
+
+test('vehicle type: plan, equipment of that type only, zone and name chosen for the vehicle', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const brands = (await call('GET', '/api/admin/brands', { token: admin })).data;
+  const v = (await call('POST', '/api/admin/vehicles', { token: admin, body: { brandId: brands[1].id, name: 'Profilé test' } })).data;
+  assert.equal((await call('PUT', `/api/admin/vehicles/${v.id}/profile`, { token: admin, body: { type: 'bateau' } })).status, 400);
+  await call('PUT', `/api/admin/vehicles/${v.id}/profile`, {
+    token: admin,
+    body: { type: 'profile', equipment: ['velos', 'garage'], labels: { velos: 'Porte-vélos 3 places', garage: '' }, spotOverrides: { velos: 'ext' } },
+  });
+  const p = (await call('GET', `/api/admin/vehicles/${v.id}/profile`, { token: admin })).data;
+  assert.equal(p.plan.planUrl, '/app/plans/profile.svg');
+  assert.ok(p.plan.spots.some((s) => s.id === 'gar'));
+  assert.equal(p.defaultSpots.velos, 'arr');
+  assert.equal(p.defaultSpots.bouteille, 'ext', 'gas locker outside on a coachbuilt');
+  assert.deepEqual(p.labels, { velos: 'Porte-vélos 3 places' });
+
+  const dealership = (await call('GET', '/api/admin/dealerships', { token: admin })).data[0];
+  const c = (await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: v.id, dealershipId: dealership.id, lastName: 'Type' } })).data;
+  const token = (await call('POST', '/api/restore', { body: { lastName: 'Type', code: c.accessCode } })).data.token;
+  const { data } = await call('GET', '/api/app/data', { token });
+  const eq = Object.fromEntries(data.equipment.map((q) => [q.id, q]));
+  assert.equal(eq.velos.name, 'Porte-vélos 3 places');
+  assert.equal(eq.velos.spot, 'ext');
+  assert.equal(eq.garage.spot, 'gar');
+  assert.equal(data.vehicle.planUrl, '/app/plans/profile.svg');
+  assert.ok(data.config.HIDDEN_EQ.porte, 'no sliding side door on a profilé');
+  assert.ok(!data.config.HIDDEN_EQ.porte_cell);
+  const spotIds = new Set(data.vehicle.spots.map((s) => s.id));
+  assert.ok(data.equipment.every((q) => !q.spot || spotIds.has(q.spot)), 'every zone exists on the plan');
+
+  // The V114 keeps its own names after the catalogue went generic
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const v114 = (await call('GET', `/api/admin/vehicles/${catalog.vehicles.find((x) => x.name === 'V114').id}/profile`, { token: admin })).data;
+  assert.equal(v114.labels.lant, 'Lanterneau avant, 70 × 40 cm');
+  const lant = (await call('GET', '/api/admin/equipment', { token: admin })).data.find((q) => q.id === 'lant');
+  assert.equal(lant.name, 'Lanterneau du salon');
+  // Types on an equipment
+  assert.deepEqual((await call('PUT', '/api/admin/equipment/lant', { token: admin, body: { types: ['van', 'nope'] } })).data.types, ['van']);
 });

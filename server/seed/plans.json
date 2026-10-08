@@ -1,0 +1,525 @@
+{
+ "van": [
+  {
+   "id": "cab",
+   "n": 1,
+   "x": 712,
+   "y": 180,
+   "name": "Cabine"
+  },
+  {
+   "id": "din",
+   "n": 2,
+   "x": 540,
+   "y": 100,
+   "name": "Salon et dinette"
+  },
+  {
+   "id": "cui",
+   "n": 3,
+   "x": 430,
+   "y": 284,
+   "name": "Cuisine"
+  },
+  {
+   "id": "sdb",
+   "n": 4,
+   "x": 340,
+   "y": 104,
+   "name": "Salle d'eau"
+  },
+  {
+   "id": "toit",
+   "n": 5,
+   "x": 385,
+   "y": 198,
+   "name": "Toit et aération"
+  },
+  {
+   "id": "ent",
+   "n": 6,
+   "x": 588,
+   "y": 288,
+   "name": "Entrée"
+  },
+  {
+   "id": "lit",
+   "n": 7,
+   "x": 200,
+   "y": 180,
+   "name": "Lit arrière et soute"
+  },
+  {
+   "id": "tech",
+   "n": 8,
+   "x": 470,
+   "y": 172,
+   "name": "Sous la banquette (technique)"
+  },
+  {
+   "id": "ext",
+   "n": 9,
+   "x": 588,
+   "y": 340,
+   "name": "Extérieur, côté porte"
+  },
+  {
+   "id": "extb",
+   "n": 10,
+   "x": 440,
+   "y": 20,
+   "name": "Extérieur, côté opposé"
+  },
+  {
+   "id": "arr",
+   "n": 11,
+   "x": 70,
+   "y": 180,
+   "name": "Arrière du véhicule (extérieur)"
+  }
+ ],
+ "fourgon": [
+  {
+   "id": "cab",
+   "n": 1,
+   "x": 712,
+   "y": 180,
+   "name": "Cabine"
+  },
+  {
+   "id": "din",
+   "n": 2,
+   "x": 552,
+   "y": 100,
+   "name": "Salon et dinette"
+  },
+  {
+   "id": "cui",
+   "n": 3,
+   "x": 440,
+   "y": 284,
+   "name": "Cuisine"
+  },
+  {
+   "id": "sdb",
+   "n": 4,
+   "x": 335,
+   "y": 104,
+   "name": "Salle d'eau"
+  },
+  {
+   "id": "toit",
+   "n": 5,
+   "x": 345,
+   "y": 206,
+   "name": "Toit et aération"
+  },
+  {
+   "id": "ent",
+   "n": 6,
+   "x": 593,
+   "y": 288,
+   "name": "Entrée"
+  },
+  {
+   "id": "lit",
+   "n": 7,
+   "x": 172,
+   "y": 180,
+   "name": "Lit arrière et soute"
+  },
+  {
+   "id": "tech",
+   "n": 8,
+   "x": 476,
+   "y": 172,
+   "name": "Sous la banquette (technique)"
+  },
+  {
+   "id": "ext",
+   "n": 9,
+   "x": 593,
+   "y": 340,
+   "name": "Extérieur, côté porte"
+  },
+  {
+   "id": "extb",
+   "n": 10,
+   "x": 495,
+   "y": 20,
+   "name": "Extérieur, côté opposé"
+  },
+  {
+   "id": "arr",
+   "n": 11,
+   "x": 36,
+   "y": 180,
+   "name": "Arrière du véhicule (extérieur)"
+  }
+ ],
+ "compact": [
+  {
+   "id": "cab",
+   "n": 1,
+   "x": 715,
+   "y": 180,
+   "name": "Cabine"
+  },
+  {
+   "id": "pav",
+   "n": 2,
+   "x": 590,
+   "y": 212,
+   "name": "Lit de pavillon"
+  },
+  {
+   "id": "din",
+   "n": 3,
+   "x": 532,
+   "y": 98,
+   "name": "Salon et dinette"
+  },
+  {
+   "id": "cui",
+   "n": 4,
+   "x": 345,
+   "y": 288,
+   "name": "Cuisine"
+  },
+  {
+   "id": "sdb",
+   "n": 5,
+   "x": 315,
+   "y": 100,
+   "name": "Salle d'eau"
+  },
+  {
+   "id": "toit",
+   "n": 6,
+   "x": 390,
+   "y": 198,
+   "name": "Toit et aération"
+  },
+  {
+   "id": "ent",
+   "n": 7,
+   "x": 506,
+   "y": 292,
+   "name": "Entrée"
+  },
+  {
+   "id": "sal",
+   "n": 8,
+   "x": 112,
+   "y": 180,
+   "name": "Salon arrière"
+  },
+  {
+   "id": "tech",
+   "n": 9,
+   "x": 186,
+   "y": 88,
+   "name": "Sous la banquette (technique)"
+  },
+  {
+   "id": "ext",
+   "n": 10,
+   "x": 506,
+   "y": 344,
+   "name": "Extérieur, côté porte"
+  },
+  {
+   "id": "extb",
+   "n": 11,
+   "x": 400,
+   "y": 16,
+   "name": "Extérieur, côté opposé"
+  },
+  {
+   "id": "arr",
+   "n": 12,
+   "x": 36,
+   "y": 180,
+   "name": "Arrière du véhicule (extérieur)"
+  }
+ ],
+ "profile": [
+  {
+   "id": "cab",
+   "n": 1,
+   "x": 718,
+   "y": 180,
+   "name": "Cabine"
+  },
+  {
+   "id": "pav",
+   "n": 2,
+   "x": 600,
+   "y": 212,
+   "name": "Lit de pavillon"
+  },
+  {
+   "id": "din",
+   "n": 3,
+   "x": 552,
+   "y": 98,
+   "name": "Salon et dinette"
+  },
+  {
+   "id": "cui",
+   "n": 4,
+   "x": 365,
+   "y": 288,
+   "name": "Cuisine"
+  },
+  {
+   "id": "sdb",
+   "n": 5,
+   "x": 335,
+   "y": 100,
+   "name": "Salle d'eau"
+  },
+  {
+   "id": "toit",
+   "n": 6,
+   "x": 390,
+   "y": 198,
+   "name": "Toit et aération"
+  },
+  {
+   "id": "ent",
+   "n": 7,
+   "x": 526,
+   "y": 292,
+   "name": "Entrée"
+  },
+  {
+   "id": "lit",
+   "n": 8,
+   "x": 169,
+   "y": 128,
+   "name": "Chambre arrière"
+  },
+  {
+   "id": "gar",
+   "n": 9,
+   "x": 169,
+   "y": 236,
+   "name": "Garage arrière"
+  },
+  {
+   "id": "tech",
+   "n": 10,
+   "x": 474,
+   "y": 190,
+   "name": "Sous la banquette (technique)"
+  },
+  {
+   "id": "ext",
+   "n": 11,
+   "x": 526,
+   "y": 344,
+   "name": "Extérieur, côté porte"
+  },
+  {
+   "id": "extb",
+   "n": 12,
+   "x": 400,
+   "y": 16,
+   "name": "Extérieur, côté opposé"
+  },
+  {
+   "id": "arr",
+   "n": 13,
+   "x": 36,
+   "y": 180,
+   "name": "Arrière du véhicule (extérieur)"
+  }
+ ],
+ "integral": [
+  {
+   "id": "cab",
+   "n": 1,
+   "x": 722,
+   "y": 200,
+   "name": "Cabine"
+  },
+  {
+   "id": "pav",
+   "n": 2,
+   "x": 636,
+   "y": 118,
+   "name": "Lit de pavillon"
+  },
+  {
+   "id": "din",
+   "n": 3,
+   "x": 540,
+   "y": 98,
+   "name": "Salon et dinette"
+  },
+  {
+   "id": "cui",
+   "n": 4,
+   "x": 365,
+   "y": 288,
+   "name": "Cuisine"
+  },
+  {
+   "id": "sdb",
+   "n": 5,
+   "x": 335,
+   "y": 100,
+   "name": "Salle d'eau"
+  },
+  {
+   "id": "toit",
+   "n": 6,
+   "x": 390,
+   "y": 198,
+   "name": "Toit et aération"
+  },
+  {
+   "id": "ent",
+   "n": 7,
+   "x": 526,
+   "y": 292,
+   "name": "Entrée"
+  },
+  {
+   "id": "lit",
+   "n": 8,
+   "x": 169,
+   "y": 128,
+   "name": "Chambre arrière"
+  },
+  {
+   "id": "gar",
+   "n": 9,
+   "x": 169,
+   "y": 236,
+   "name": "Garage arrière"
+  },
+  {
+   "id": "tech",
+   "n": 10,
+   "x": 474,
+   "y": 190,
+   "name": "Sous la banquette (technique)"
+  },
+  {
+   "id": "ext",
+   "n": 11,
+   "x": 526,
+   "y": 344,
+   "name": "Extérieur, côté porte"
+  },
+  {
+   "id": "extb",
+   "n": 12,
+   "x": 420,
+   "y": 16,
+   "name": "Extérieur, côté opposé"
+  },
+  {
+   "id": "arr",
+   "n": 13,
+   "x": 36,
+   "y": 180,
+   "name": "Arrière du véhicule (extérieur)"
+  }
+ ],
+ "capucine": [
+  {
+   "id": "cab",
+   "n": 1,
+   "x": 718,
+   "y": 200,
+   "name": "Cabine"
+  },
+  {
+   "id": "cap",
+   "n": 2,
+   "x": 660,
+   "y": 108,
+   "name": "Capucine (au-dessus de la cabine)"
+  },
+  {
+   "id": "din",
+   "n": 3,
+   "x": 545,
+   "y": 98,
+   "name": "Salon et dinette"
+  },
+  {
+   "id": "cui",
+   "n": 4,
+   "x": 365,
+   "y": 288,
+   "name": "Cuisine"
+  },
+  {
+   "id": "sdb",
+   "n": 5,
+   "x": 335,
+   "y": 100,
+   "name": "Salle d'eau"
+  },
+  {
+   "id": "toit",
+   "n": 6,
+   "x": 390,
+   "y": 198,
+   "name": "Toit et aération"
+  },
+  {
+   "id": "ent",
+   "n": 7,
+   "x": 526,
+   "y": 292,
+   "name": "Entrée"
+  },
+  {
+   "id": "lit",
+   "n": 8,
+   "x": 169,
+   "y": 128,
+   "name": "Chambre arrière"
+  },
+  {
+   "id": "gar",
+   "n": 9,
+   "x": 169,
+   "y": 236,
+   "name": "Garage arrière"
+  },
+  {
+   "id": "tech",
+   "n": 10,
+   "x": 474,
+   "y": 190,
+   "name": "Sous la banquette (technique)"
+  },
+  {
+   "id": "ext",
+   "n": 11,
+   "x": 526,
+   "y": 344,
+   "name": "Extérieur, côté porte"
+  },
+  {
+   "id": "extb",
+   "n": 12,
+   "x": 400,
+   "y": 16,
+   "name": "Extérieur, côté opposé"
+  },
+  {
+   "id": "arr",
+   "n": 13,
+   "x": 36,
+   "y": 180,
+   "name": "Arrière du véhicule (extérieur)"
+  }
+ ]
+}

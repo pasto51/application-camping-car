@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { transaction, bumpContentVersion } = require('./db');
 const { safeJson } = require('./util');
+const { vehiclePlan, effectiveSpot, isApplicable } = require('./vehicle-types');
 
 const SEED_DIR = path.join(__dirname, 'seed');
 const CATALOG_KEYS = ['lists', 'reminders', 'motifs', 'steps', 'cats', 'config'];
@@ -33,6 +34,8 @@ function defaultProfile(vehicle) {
     codePrefix: 'CDB',
     model: { l: 0, h: 0 },
     weights: { ptac: 3500, mom: 2800, pax: 2, eau: 30, gaz: 0, bag: 100 },
+    type: '', // silhouette: van, fourgon, compact, profile, integral, capucine (server/vehicle-types.js)
+    labels: {}, // equipment name on this vehicle, when it differs from the catalogue (ex : « Lanterneau avant, 70 × 40 cm »)
     equipment: [], // pre-checked for this vehicle; the dealership adjusts it with each customer
     vars: {},
     spotOverrides: {},
@@ -122,13 +125,29 @@ function appData(db, { vehicleId, dealershipId }) {
     .get(vehicleId);
   const dealership = db.prepare('SELECT * FROM dealerships WHERE id = ?').get(dealershipId);
   const profile = vehicle ? readProfile(vehicle) : defaultProfile(null);
+  const { spots, planUrl } = vehiclePlan(profile);
+  const preset = new Set(profile.equipment);
+  const labels = profile.labels || {};
+  const hidden = {};
+  const equipment = db
+    .prepare('SELECT data FROM equipment ORDER BY sort, id')
+    .all()
+    .map((r) => {
+      const q = JSON.parse(r.data);
+      // Equipment that does not exist on this kind of vehicle stays out of the customer's list (unless pre-checked).
+      if (!isApplicable(q, profile.type) && !preset.has(q.id)) hidden[q.id] = 1;
+      return { ...q, name: labels[q.id] || q.name, spot: effectiveSpot(q, profile, spots) };
+    });
   const data = {
-    equipment: db.prepare('SELECT data FROM equipment ORDER BY sort, id').all().map((r) => JSON.parse(r.data)),
+    equipment,
     diagnostics: db.prepare('SELECT data FROM diagnostics ORDER BY sort, id').all().map((r) => JSON.parse(r.data)),
     vehicle: {
       ...profile,
       id: vehicle?.id,
       brand: vehicle?.brand_name,
+      spots,
+      planUrl,
+      spotOverrides: {}, // already applied to each equipment's zone
       heroUrl: vehicle?.photo_url || null,
       fullName: profile.fullName || [vehicle?.brand_name, vehicle?.name, vehicle?.model_year].filter(Boolean).join(' '),
     },
@@ -143,6 +162,7 @@ function appData(db, { vehicleId, dealershipId }) {
     },
   };
   for (const key of CATALOG_KEYS) data[key] = getCatalogValue(db, key);
+  if (data.config) data.config = { ...data.config, HIDDEN_EQ: { ...(data.config.HIDDEN_EQ || {}), ...hidden } };
   return data;
 }
 

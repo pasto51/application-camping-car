@@ -40,6 +40,14 @@ const S = {
   cats: [],
   checked: new Set(),
   photos: {}, // equipment id -> url (or local data URL while it uploads)
+  type: '', // vehicle silhouette: hides equipment that does not exist on it
+  types: [],
+  plan: { spots: [], planUrl: null },
+  defaultSpots: {},
+  labels: {}, // equipment name on this vehicle
+  spotOverrides: {}, // equipment zone on this vehicle
+  showAll: false,
+  metaDirty: false,
   filter: 'all',
   search: '',
   // Waiting changes: the whole list (latest wins) and one photo per equipment (latest wins).
@@ -147,6 +155,12 @@ async function openVehicle(id, skipWizard = false) {
     cats,
     checked: new Set(profile.equipment),
     photos: Object.fromEntries(profile.photos.map((p) => [p.id, p.url])),
+    type: profile.type || '',
+    types: profile.types || [],
+    plan: profile.plan || { spots: [], planUrl: null },
+    defaultSpots: profile.defaultSpots || {},
+    labels: { ...(profile.labels || {}) },
+    spotOverrides: { ...(profile.spotOverrides || {}) },
   });
   store.set(LAST_KEY, String(id));
   history.replaceState(null, '', `#v=${id}`);
@@ -183,9 +197,14 @@ async function openVehicle(id, skipWizard = false) {
   );
   const list = root.querySelector('#list');
   list.onclick = (e) => {
-    const t = e.target.closest('[data-tick],[data-shot],[data-add]');
+    const t = e.target.closest('[data-tick],[data-shot],[data-add],[data-zone],[data-showall],[data-pick-type]');
     if (!t) return;
-    if (t.dataset.tick) toggle(t.dataset.tick);
+    if (t.dataset.zone) itemSheet(t.dataset.zone);
+    else if (t.dataset.showall !== undefined) {
+      S.showAll = !S.showAll;
+      renderList();
+    } else if (t.dataset.pickType !== undefined) openWizard(id, 1);
+    else if (t.dataset.tick) toggle(t.dataset.tick);
     else if (t.dataset.shot) photoAction(t.dataset.shot);
     else addEquipment(t.dataset.add);
   };
@@ -199,13 +218,24 @@ const norm = (s) =>
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '');
 
+const nameOf = (q) => S.labels[q.id] || q.name;
+// Equipment that exists on this kind of vehicle (always shown when it is ticked).
+const applicable = (q) => !S.type || !q.types?.length || q.types.includes(S.type) || S.checked.has(q.id);
+const spotOf = (id) => {
+  const ids = new Set(S.plan.spots.map((s) => s.id));
+  if (Object.prototype.hasOwnProperty.call(S.spotOverrides, id)) return ids.has(S.spotOverrides[id]) ? S.spotOverrides[id] : null;
+  return S.defaultSpots[id] ?? null;
+};
+const spotById = (id) => S.plan.spots.find((s) => s.id === id);
+
 function visible(q) {
   const on = S.checked.has(q.id);
+  if (!S.showAll && !applicable(q)) return false;
   if (S.filter === 'on' && !on) return false;
   if (S.filter === 'off' && on) return false;
   if (S.filter === 'nophoto' && (!on || S.photos[q.id])) return false;
   const words = norm(S.search).split(/\s+/).filter(Boolean);
-  const hay = norm(`${q.name} ${q.kw || ''} ${q.text || ''}`);
+  const hay = norm(`${nameOf(q)} ${q.name} ${q.kw || ''} ${q.text || ''}`);
   return words.every((w) => hay.includes(w));
 }
 
@@ -214,7 +244,8 @@ function itemHtml(q) {
   const url = S.photos[q.id];
   const state = S.busy === q.id ? 'busy' : S.photoQueue.has(q.id) ? 'wait' : '';
   return `<div class="item ${on ? 'on' : ''}" data-item="${esc(q.id)}">
-    <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(q.name)}</span></button>
+    <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(nameOf(q))}</span></button>
+    ${S.plan.spots.length ? `<button class="zone ${spotOf(q.id) ? '' : 'none'}" data-zone="${esc(q.id)}" aria-label="Zone et nom : ${esc(nameOf(q))}">${spotOf(q.id) ? `📍${spotById(spotOf(q.id)).n}` : '📍?'}</button>` : ''}
     <button class="shot ${url ? 'has' : ''} ${state}" data-shot="${esc(q.id)}" aria-label="${url ? 'Voir la photo' : 'Prendre une photo'} : ${esc(q.name)}">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : '📷'}</button>
   </div>`;
 }
@@ -227,7 +258,7 @@ function renderList() {
   const cats = [...S.cats, ...(S.equipment.some((q) => !known.has(q.cat)) ? [['__other', 'Autres']] : [])];
   const html = cats
     .map(([cid, cname]) => {
-      const all = S.equipment.filter((q) => (cid === '__other' ? !known.has(q.cat) : q.cat === cid));
+      const all = S.equipment.filter((q) => (cid === '__other' ? !known.has(q.cat) : q.cat === cid) && (S.showAll || applicable(q)));
       const shown = all.filter(visible);
       if (searching && !shown.length) return '';
       const n = all.filter((q) => S.checked.has(q.id)).length;
@@ -235,7 +266,12 @@ function renderList() {
         <div class="items">${shown.map(itemHtml).join('')}${cid === '__other' || searching ? '' : `<button class="add" data-add="${esc(cid)}">＋ Ajouter un équipement dans « ${esc(cname)} »</button>`}</div></section>`;
     })
     .join('');
-  list.innerHTML = html || '<p class="empty">Aucun équipement ne correspond.</p>';
+  const hiddenN = S.type ? S.equipment.filter((q) => !applicable(q)).length : 0;
+  const typeName = S.types.find((t) => t.id === S.type)?.name;
+  const head = S.type
+    ? `<p class="type-note">Liste adaptée à un <strong>${esc(typeName || S.type)}</strong>${hiddenN ? ` : ${hiddenN} équipements d’autres types ${S.showAll ? 'affichés' : 'masqués'}. <button class="linkbtn" data-showall>${S.showAll ? 'Les masquer' : 'Les afficher'}</button>` : '.'}</p>`
+    : '<p class="type-note warn">Indiquez le type de véhicule (van, profilé, capucine…) : la liste ne montrera que ses équipements. <button class="linkbtn" data-pick-type>Choisir le type</button></p>';
+  list.innerHTML = head + (html || '<p class="empty">Aucun équipement ne correspond.</p>');
   updateCount();
 }
 
@@ -317,7 +353,7 @@ function photoAction(id) {
   }
   dialog(
     `<form class="dlg" method="dialog">
-      <h2>${esc(q?.name || '')}</h2>
+      <h2>${esc(q ? nameOf(q) : '')}</h2>
       <img src="${esc(url)}" alt="">
       <div class="stack">
         <button class="btn primary block" value="camera">📷 Reprendre la photo</button>
@@ -333,6 +369,64 @@ function photoAction(id) {
       } else if (value === 'remove') setPhoto(id, null);
     }
   );
+}
+
+// Zone on the plan and name of one equipment, for this vehicle only.
+function itemSheet(id) {
+  const q = S.equipment.find((x) => x.id === id);
+  if (!q) return;
+  let chosen = spotOf(id);
+  let reset = false;
+  const dots = () =>
+    S.plan.spots
+      .map(
+        (s) => `<g class="pdot ${s.id === chosen ? 'sel' : ''}" data-spot="${esc(s.id)}" transform="translate(${s.x} ${s.y})"><circle r="30" fill="transparent"/><circle class="d" r="24"/><text y="7">${s.n}</text></g>`
+      )
+      .join('');
+  const zoneList = () =>
+    S.plan.spots.map((s) => `<button type="button" class="zbtn ${s.id === chosen ? 'sel' : ''}" data-spot="${esc(s.id)}"><b>${s.n}</b> ${esc(s.name)}</button>`).join('') +
+    `<button type="button" class="zbtn ${chosen ? '' : 'sel'}" data-spot=""><b>–</b> Pas de zone précise (emplacement variable)</button>`;
+  dialog(
+    `<form class="dlg" method="dialog">
+      <h2>${esc(nameOf(q))}</h2>
+      <label>Nom sur ce véhicule<input name="label" maxlength="120" value="${esc(S.labels[id] || '')}" placeholder="${esc(q.name)}"><span class="hint">Laissez vide pour garder « ${esc(q.name)} ». Ex : préciser la taille, le modèle ou la position.</span></label>
+      <div class="label-like">Zone sur le plan <span class="hint">Touchez le bon numéro.</span></div>
+      <div class="plan-pick">${S.plan.planUrl ? `<img src="${esc(S.plan.planUrl)}" alt="">` : ''}<svg viewBox="0 0 800 360" id="pdots">${dots()}</svg></div>
+      <div class="zlist" id="zlist">${zoneList()}</div>
+      ${Object.prototype.hasOwnProperty.call(S.spotOverrides, id) ? '<button type="button" class="linkbtn" data-reset>Revenir à la zone par défaut</button>' : ''}
+      <div class="stack"><button class="btn primary block" value="ok">Enregistrer</button><button class="btn block" value="" formnovalidate>Annuler</button></div>
+    </form>`,
+    (dlg, value) => {
+      if (value !== 'ok') return;
+      const label = new FormData(dlg.querySelector('form')).get('label').trim();
+      if (label && label !== q.name) S.labels[id] = label;
+      else delete S.labels[id];
+      if (reset) delete S.spotOverrides[id];
+      else if (chosen !== spotOf(id)) S.spotOverrides[id] = chosen || '';
+      S.metaDirty = true;
+      refreshItem(id);
+      schedule(0);
+    },
+    { focus: false }
+  );
+  const dlg = document.querySelector('dialog[open]');
+  const choose = (spot) => {
+    chosen = spot || null;
+    reset = false;
+    dlg.querySelector('#pdots').innerHTML = dots();
+    dlg.querySelector('#zlist').innerHTML = zoneList();
+  };
+  dlg.querySelector('form').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-spot]');
+    if (t) choose(t.dataset.spot);
+    if (e.target.closest('[data-reset]')) {
+      chosen = S.defaultSpots[id] ?? null;
+      dlg.querySelector('#pdots').innerHTML = dots();
+      dlg.querySelector('#zlist').innerHTML = zoneList();
+      reset = true;
+      toast('Zone par défaut : enregistrez pour confirmer');
+    }
+  });
 }
 
 function addEquipment(cat) {
@@ -398,7 +492,7 @@ async function openWizard(id, step = 0) {
   if (!v) return renderVehicles();
   store.set(LAST_KEY, String(id));
   history.replaceState(null, '', `#v=${id}`);
-  const W = { v, profile, brands, variants: config.VARIANTS || {}, photo: v.photoUrl || null };
+  const W = { v, profile, brands, types: profile.types || [], variants: config.VARIANTS || {}, photo: v.photoUrl || null };
   showStep(W, step);
 }
 
@@ -442,6 +536,22 @@ const STEPS = [
         // Customer access codes start with this (ex : V114-ABCD-EFGH); keep one already chosen.
         codePrefix: profile.codePrefix && profile.codePrefix !== 'CDB' ? profile.codePrefix : prefixOf(heroName) || 'CDB',
       });
+    },
+  },
+  {
+    title: 'Le type de véhicule',
+    html: ({ profile, types }) => `<p class="muted" style="margin:0">La liste des équipements et le plan vu du dessus s’adaptent au type.</p>
+      <div class="types">${types
+        .map(
+          (t) => `<label class="type-card"><input type="radio" name="type" value="${esc(t.id)}" ${profile.type === t.id ? 'checked' : ''}>
+          <img src="/app/plans/${esc(t.id)}.svg" alt=""><span><strong>${esc(t.name)}</strong><small>${esc(t.hint)}</small></span></label>`
+        )
+        .join('')}</div>`,
+    save: async ({ v, profile }, f) => {
+      const type = f.get('type') || '';
+      if (!type) throw new Error('Choisissez le type de véhicule (ou passez cette étape)');
+      profile.type = type;
+      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { type });
     },
   },
   {
@@ -521,10 +631,11 @@ const STEPS = [
   },
   {
     title: 'C’est prêt',
-    html: ({ v, profile, photo, variants }) => `<div class="recap">
+    html: (W) => { const { v, profile, photo, variants } = W; return `<div class="recap">
         ${photo ? `<img src="${esc(photo)}" alt="">` : '<p class="error" style="margin:0">Pas de photo du véhicule.</p>'}
         <dl>
           <div><dt>Nom complet</dt><dd>${esc(profile.fullName || v.name)}</dd></div>
+          <div><dt>Type</dt><dd>${esc(W.types.find((t) => t.id === profile.type)?.name || '—')}</dd></div>
           <div><dt>Accueil de l’appli</dt><dd>${esc(profile.heroPrefix)} <strong>${esc(profile.heroName)}</strong></dd></div>
           <div><dt>Hauteur · longueur</dt><dd>${profile.model.h ? `${Number(profile.model.h).toFixed(2).replace('.', ',')} m` : '—'} · ${profile.model.l ? `${Number(profile.model.l).toFixed(2).replace('.', ',')} m` : '—'}</dd></div>
           <div><dt>PTAC · ordre de marche</dt><dd>${esc(profile.weights.ptac)} kg · ${esc(profile.weights.mom)} kg</dd></div>
@@ -532,7 +643,7 @@ const STEPS = [
           <div><dt>Codes clients</dt><dd>${esc(profile.codePrefix)}-XXXX-XXXX</dd></div>
         </dl>
       </div>
-      <p class="muted" style="margin:0">Étape suivante : cochez les équipements présents et photographiez-les.</p>`,
+      <p class="muted" style="margin:0">Étape suivante : cochez les équipements présents et photographiez-les.</p>`; },
   },
 ];
 
@@ -591,13 +702,13 @@ function schedule(delay = 700) {
   renderPending();
 }
 
-const hasPending = () => S.listDirty || S.photoQueue.size > 0 || !!S.busy;
+const hasPending = () => S.listDirty || S.metaDirty || S.photoQueue.size > 0 || !!S.busy;
 
 async function flush() {
   if (S.busy || !S.vehicle) return;
   const vid = S.vehicle.id;
   try {
-    while (S.photoQueue.size || S.listDirty) {
+    while (S.photoQueue.size || S.listDirty || S.metaDirty) {
       if (S.photoQueue.size) {
         const [id, image] = S.photoQueue.entries().next().value;
         S.busy = id;
@@ -611,6 +722,17 @@ async function flush() {
         }
         S.busy = null;
         refreshItem(id);
+      } else if (S.metaDirty) {
+        S.busy = '__meta';
+        S.metaDirty = false;
+        renderPending();
+        try {
+          await api('PUT', `/api/admin/vehicles/${vid}/profile`, { labels: S.labels, spotOverrides: S.spotOverrides });
+        } catch (err) {
+          S.metaDirty = true;
+          throw err;
+        }
+        S.busy = null;
       } else {
         S.busy = '__list';
         S.listDirty = false;
@@ -627,7 +749,7 @@ async function flush() {
   } catch (err) {
     const id = S.busy;
     S.busy = null;
-    if (id && id !== '__list') refreshItem(id);
+    if (id && !id.startsWith('__')) refreshItem(id);
     S.failed = true;
     if (err.status === 401) {
       toast('Session expirée : reconnectez-vous', 'error');
@@ -641,7 +763,7 @@ async function flush() {
 function renderPending() {
   const el = root.querySelector('#pending');
   if (!el) return;
-  const n = S.photoQueue.size + (S.listDirty ? 1 : 0);
+  const n = S.photoQueue.size + (S.listDirty ? 1 : 0) + (S.metaDirty ? 1 : 0);
   if (!n && !S.busy) {
     el.hidden = true;
     return;
@@ -649,7 +771,7 @@ function renderPending() {
   el.hidden = false;
   el.classList.toggle('saving', !S.failed);
   const photos = S.photoQueue.size;
-  const what = [photos ? `${photos} photo${photos > 1 ? 's' : ''}` : '', S.listDirty || S.busy === '__list' ? 'la liste cochée' : ''].filter(Boolean).join(' et ') || 'les modifications';
+  const what = [photos ? `${photos} photo${photos > 1 ? 's' : ''}` : '', S.listDirty || S.busy === '__list' ? 'la liste cochée' : '', S.metaDirty || S.busy === '__meta' ? 'les zones et noms' : ''].filter(Boolean).join(' et ') || 'les modifications';
   el.innerHTML = S.failed
     ? `<span>⚠️ Pas envoyé : ${esc(what)}. Ce sera renvoyé dès que le réseau revient.</span><button class="btn small" id="retry">Réessayer</button>`
     : `<span>⏳ Enregistrement de ${esc(what)}…</span>`;
@@ -664,7 +786,7 @@ window.addEventListener('beforeunload', (e) => {
 
 // ---------- Small helpers ----------
 
-function dialog(html, onClose) {
+function dialog(html, onClose, { focus = true } = {}) {
   const dlg = document.createElement('dialog');
   dlg.innerHTML = html;
   document.body.appendChild(dlg);
@@ -673,7 +795,8 @@ function dialog(html, onClose) {
     Promise.resolve(onClose(dlg, value)).finally(() => dlg.remove());
   });
   dlg.showModal();
-  dlg.querySelector('input')?.focus();
+  if (focus) dlg.querySelector('input')?.focus();
+  else dlg.querySelector('h2')?.setAttribute('tabindex', '-1'), dlg.querySelector('h2')?.focus();
 }
 
 // ---------- Start ----------

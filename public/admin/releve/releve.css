@@ -123,3 +123,30 @@ fieldset.choice legend { font-weight: 700; padding: 0 6px; }
 .recap dl div:first-child { border-top: 0; }
 .recap dt { color: var(--muted); }
 .recap dd { margin: 0; text-align: right; }
+
+/* Vehicle type, zone on the plan */
+.zone { flex: none; min-width: 46px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-weight: 700; font-size: .9rem; cursor: pointer; padding: 0 6px; }
+.zone.none { color: var(--muted); border-style: dashed; }
+.type-note { margin: 4px 4px 0; font-size: .9rem; color: var(--muted); }
+.type-note.warn { color: #5c3d00; background: #fff4e0; border: 1px solid #f0c674; border-radius: 12px; padding: 10px 12px; }
+.type-note .linkbtn { padding: 0 2px; color: var(--accent); font-weight: 600; }
+@media (prefers-color-scheme: dark) { .type-note .linkbtn { color: #8fb3e0; } .type-note.warn .linkbtn { color: #5c3d00; } }
+.types { display: flex; flex-direction: column; gap: 10px; }
+.type-card { flex-direction: row; align-items: center; gap: 12px; padding: 10px; border: 2px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text); cursor: pointer; }
+.type-card:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+.type-card input { width: 22px; height: 22px; flex: none; accent-color: var(--accent); }
+.type-card img { width: 110px; height: 50px; object-fit: contain; flex: none; border-radius: 6px; background: #f3f7f6; }
+.type-card strong { display: block; font-size: 1rem; }
+.type-card small { display: block; font-weight: 400; color: var(--muted); font-size: .82rem; }
+.label-like { font-size: .9rem; font-weight: 600; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.plan-pick { position: relative; width: 100%; aspect-ratio: 800 / 360; border-radius: 12px; overflow: hidden; background: #f3f7f6; }
+.plan-pick img, .plan-pick svg { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; border-radius: 0; }
+.pdot { cursor: pointer; }
+.pdot .d { fill: #0a7c82; stroke: #fff; stroke-width: 3; }
+.pdot text { fill: #fff; font: 700 21px Helvetica, Arial, sans-serif; text-anchor: middle; pointer-events: none; }
+.pdot.sel .d { fill: #e8590c; }
+.zlist { display: flex; flex-direction: column; gap: 6px; max-height: 32vh; overflow-y: auto; }
+.zbtn { text-align: left; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); font: inherit; padding: 9px 10px; cursor: pointer; }
+.zbtn b { display: inline-block; min-width: 1.6em; color: var(--accent); }
+.zbtn.sel { border-color: #e8590c; background: color-mix(in srgb, #e8590c 10%, var(--card)); }
+dialog { max-height: 92vh; overflow-y: auto; }

@@ -6,6 +6,7 @@ const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, ran
 const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
 const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
+const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot } = require('../vehicle-types');
 const { mailConfig, mailReady } = require('../notify');
 const { sendMail } = require('../mailer');
 
@@ -321,6 +322,8 @@ function register(router) {
       text: pick(optStr(body.text, 2000), current.text ?? '') ?? '',
       tip: pick(optStr(body.tip, 1000), current.tip ?? '') ?? '',
       kw: pick(optStr(body.kw, 500), current.kw ?? '') ?? '',
+      // Vehicle types this equipment exists on (empty: all).
+      types: body.types === undefined ? current.types || [] : (Array.isArray(body.types) ? body.types : []).map(String).filter((t) => TYPE_IDS.includes(t)),
     };
   }
   router.get('/api/admin/equipment', (ctx) => {
@@ -486,7 +489,19 @@ function register(router) {
   router.get('/api/admin/vehicles/:id/profile', (ctx) => {
     auth(ctx);
     const vehicle = getOr404(ctx.db, 'vehicles', ctx.params.id, 'Véhicule');
-    return readProfile(vehicle);
+    const profile = readProfile(vehicle);
+    // plan: the drawing and numbered zones actually shown for this vehicle (its own, or its type's).
+    const plan = vehiclePlan(profile);
+    // Zone of each equipment when the vehicle does not choose one itself (depends on its type).
+    const defaults = { ...profile, spotOverrides: {} };
+    const defaultSpots = Object.fromEntries(
+      ctx.db
+        .prepare('SELECT data FROM equipment')
+        .all()
+        .map((r) => JSON.parse(r.data))
+        .map((q) => [q.id, effectiveSpot(q, defaults, plan.spots)])
+    );
+    return { ...profile, plan, defaultSpots, types: TYPES };
   });
 
   function num(value, fallback, label) {
@@ -521,6 +536,18 @@ function register(router) {
         if (!Array.isArray(body[key])) throw new HttpError(400, 'Format invalide');
         next[key] = body[key];
       }
+    }
+    if (body.type !== undefined) {
+      if (body.type && !TYPE_IDS.includes(body.type)) throw new HttpError(400, 'Type de véhicule inconnu');
+      next.type = body.type || '';
+    }
+    if (body.labels !== undefined) {
+      if (!body.labels || typeof body.labels !== 'object' || Array.isArray(body.labels)) throw new HttpError(400, 'Format invalide');
+      next.labels = Object.fromEntries(
+        Object.entries(body.labels)
+          .map(([k, v]) => [String(k), optStr(v, 120)])
+          .filter(([, v]) => v)
+      );
     }
     for (const key of ['vars', 'spotOverrides']) {
       if (body[key] !== undefined) {

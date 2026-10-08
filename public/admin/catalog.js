@@ -25,6 +25,16 @@ export function registerCatalogViews(VIEWS, h) {
 
   // ---------- Equipment ----------
 
+  const VEHICLE_TYPES = [
+    ['van', 'Van'],
+    ['fourgon', 'Fourgon aménagé'],
+    ['compact', 'Profilé compact'],
+    ['profile', 'Profilé'],
+    ['integral', 'Intégral'],
+    ['capucine', 'Capucine'],
+  ];
+  const typesLabel = (types) => (types?.length ? types.map((t) => (VEHICLE_TYPES.find((x) => x[0] === t) || [, t])[1]).join(', ') : 'Tous');
+
   VIEWS.equipment = async (el) => {
     const [list, cats] = await Promise.all([api('GET', '/api/admin/equipment'), api('GET', '/api/admin/catalog/cats').then((r) => r.value)]);
     const catName = Object.fromEntries(cats);
@@ -37,12 +47,13 @@ export function registerCatalogViews(VIEWS, h) {
         .map(([id, n]) => `<button class="chip ${state.eqCat === id ? 'active' : ''}" data-act="cat" data-value="${esc(id)}">${esc(n)}</button>`)
         .join('')}</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Équipement</th><th>Rubrique</th><th>Zone du plan</th><th></th></tr></thead>
+        <thead><tr><th>Équipement</th><th>Rubrique</th><th>Véhicules</th><th>Zone du plan</th><th></th></tr></thead>
         <tbody>${shown
           .map(
             (x) => `<tr>
           <td><strong>${esc(x.name)}</strong><br><small class="muted">${esc(x.text || '').slice(0, 110)}${(x.text || '').length > 110 ? '…' : ''}</small></td>
           <td>${esc(catName[x.cat] || x.cat)}</td>
+          <td><small>${esc(typesLabel(x.types))}</small></td>
           <td>${esc(x.spot || '')}</td>
           <td class="row-actions">${isAdmin() ? `<button class="btn small" data-act="edit" data-key="${esc(x.id)}">Modifier</button><button class="btn small danger" data-act="del" data-key="${esc(x.id)}">Supprimer</button>` : ''}</td>
         </tr>`
@@ -52,11 +63,22 @@ export function registerCatalogViews(VIEWS, h) {
     const fields = [
       { name: 'name', label: 'Nom', required: true, full: true },
       { name: 'cat', label: 'Rubrique', type: 'select', options: cats },
-      { name: 'spot', label: 'Zone du plan (cab, din, cui, sdb, toit, ent, lit, tech, ext, extb)' },
+      { name: 'spot', label: 'Zone du plan par défaut (cab, din, cui, sdb, toit, ent, lit, gar, sal, pav, cap, tech, ext, extb, arr)', full: true },
+      ...VEHICLE_TYPES.map(([id, n]) => ({ name: `type_${id}`, label: `Existe sur : ${n}`, type: 'checkbox' })),
       { name: 'text', label: 'Explication (« C’est quoi, ça ? »)', type: 'textarea', rows: 4 },
       { name: 'tip', label: 'Conseil', type: 'textarea', rows: 2 },
       { name: 'kw', label: 'Mots-clés de recherche', full: true },
     ];
+    // No box ticked = the equipment exists on every type of vehicle.
+    function withTypes(data) {
+      const types = VEHICLE_TYPES.map(([t]) => t).filter((t) => data[`type_${t}`]);
+      VEHICLE_TYPES.forEach(([t]) => delete data[`type_${t}`]);
+      return { ...data, types: types.length === VEHICLE_TYPES.length ? [] : types };
+    }
+    function typeValues(x) {
+      const all = !x.types?.length;
+      return { ...x, ...Object.fromEntries(VEHICLE_TYPES.map(([t]) => [`type_${t}`, all || x.types.includes(t)])) };
+    }
     el.querySelector('#eq-search').onsubmit = (e) => {
       e.preventDefault();
       state.eqFilter = new FormData(e.target).get('q');
@@ -73,7 +95,7 @@ export function registerCatalogViews(VIEWS, h) {
           fields,
           values: { cat: cats[0]?.[0] },
           onSubmit: async (data) => {
-            await api('POST', '/api/admin/equipment', data);
+            await api('POST', '/api/admin/equipment', withTypes(data));
             toast('Équipement créé');
             VIEWS.equipment(el);
           },
@@ -82,9 +104,9 @@ export function registerCatalogViews(VIEWS, h) {
         openForm({
           title: 'Modifier l’équipement',
           fields,
-          values: list.find((x) => x.id === id),
+          values: typeValues(list.find((x) => x.id === id)),
           onSubmit: async (data) => {
-            await api('PUT', `/api/admin/equipment/${encodeURIComponent(id)}`, data);
+            await api('PUT', `/api/admin/equipment/${encodeURIComponent(id)}`, withTypes(data));
             toast('Équipement enregistré');
             VIEWS.equipment(el);
           },
@@ -487,6 +509,7 @@ export function registerCatalogViews(VIEWS, h) {
           <dl class="facts">
             <div><dt>Accueil</dt><dd>${esc(profile.heroPrefix)} <strong>${esc(profile.heroName)}</strong></dd></div>
             <div><dt>Nom complet</dt><dd>${esc(profile.fullName)}</dd></div>
+            <div><dt>Type</dt><dd>${esc(typesLabel(profile.type ? [profile.type] : []).replace('Tous', '—'))}</dd></div>
             <div><dt>Longueur / hauteur</dt><dd>${esc(profile.model.l)} m / ${esc(profile.model.h)} m</dd></div>
             <div><dt>Préfixe des codes clients</dt><dd>${esc(profile.codePrefix)}</dd></div>
             ${Object.entries(W).map(([k, l]) => `<div><dt>${esc(l)}</dt><dd>${esc(profile.weights[k])}</dd></div>`).join('')}
@@ -496,13 +519,11 @@ export function registerCatalogViews(VIEWS, h) {
         <div class="card">
           <h2>Plan vu du dessus (« C’est quoi, ça ? »)</h2>
           ${
-            profile.planUrl
-              ? `<img class="cover" src="${esc(profile.planUrl)}" alt="">`
-              : profile.spots.length
-                ? '<img class="cover" src="/app/plan-van.svg" alt=""><p class="muted">Plan schématique par défaut. Remplacez-le par le vrai plan du véhicule (format 800 × 360, cabine à droite).</p>'
-                : '<p class="muted">Pas de plan pour ce véhicule.</p>'
+            profile.plan.planUrl
+              ? `<img class="cover" src="${esc(profile.plan.planUrl)}" alt="">${profile.planUrl ? '' : '<p class="muted">Plan schématique du type de véhicule. Vous pouvez le remplacer par le vrai plan (format 800 × 360, cabine à droite, porte en bas).</p>'}`
+              : '<p class="muted">Pas de plan : choisissez le type de véhicule (Modifier le profil).</p>'
           }
-          <p class="muted">${profile.spots.length} zones numérotées.</p>
+          <p class="muted">${profile.plan.spots.length} zones numérotées : ${esc(profile.plan.spots.map((s) => `${s.n}. ${s.name}`).join(' · '))}</p>
           <div class="actions"><button class="btn" data-act="plan">${profile.planUrl ? 'Changer le plan' : 'Ajouter le plan'}</button>${profile.planUrl ? '<button class="btn danger" data-act="noplan">Retirer</button>' : ''}</div>
         </div>
       </div>
@@ -514,7 +535,8 @@ export function registerCatalogViews(VIEWS, h) {
           .map(
             ([cid, cname]) => `<fieldset><legend>${esc(cname)}</legend>${equipment
               .filter((q) => q.cat === cid)
-              .map((q) => `<label class="check"><input type="checkbox" name="eq" value="${esc(q.id)}" ${profile.equipment.includes(q.id) ? 'checked' : ''}> ${esc(q.name)}</label>`)
+              .filter((q) => !profile.type || !q.types?.length || q.types.includes(profile.type) || profile.equipment.includes(q.id))
+              .map((q) => `<label class="check"><input type="checkbox" name="eq" value="${esc(q.id)}" ${profile.equipment.includes(q.id) ? 'checked' : ''}> ${esc(profile.labels?.[q.id] || q.name)}</label>`)
               .join('')}</fieldset>`
           )
           .join('')}</div>
@@ -593,6 +615,7 @@ export function registerCatalogViews(VIEWS, h) {
             ...Object.fromEntries(Object.entries(profile.vars).map(([k, val]) => [`var_${k}`, val])),
           },
           fields: [
+            { name: 'type', label: 'Type de véhicule', type: 'select', options: [['', '— Non précisé —'], ...VEHICLE_TYPES] },
             { name: 'heroPrefix', label: 'Accueil : mot avant le nom (ex : Van)' },
             { name: 'heroName', label: 'Accueil : nom (ex : V114)' },
             { name: 'fullName', label: 'Nom complet (ex : Challenger V114 Road Edition 2027)', full: true },
@@ -606,6 +629,7 @@ export function registerCatalogViews(VIEWS, h) {
             const vars = {};
             Object.keys(config.VARIANTS || {}).forEach((k) => data[`var_${k}`] && (vars[k] = data[`var_${k}`]));
             await api('PUT', `/api/admin/vehicles/${vehicleId}/profile`, {
+              type: data.type,
               heroPrefix: data.heroPrefix,
               heroName: data.heroName,
               fullName: data.fullName,
