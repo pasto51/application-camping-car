@@ -216,7 +216,7 @@ window.startCompagnon = function(DATA){
         return '<div class="fld dimfld"><label for="dp_'+id+'">'+esc((eqById(id)||{name:DIMS[id].n}).name)+'</label><span class="dimin"><input id="dp_'+id+'" type="number" inputmode="numeric" min="0" max="300" step="1" data-dp="'+id+'" value="'+dimVal(id)+'"> cm</span></div>';
       }).join("") + '<p class="sub">Mesurez sur votre véhicule et corrigez si besoin. Seul l\'équipement qui dépasse le plus compte : '+(key==="l"?"un porte-vélos et une boule d'attelage ne s'additionnent pas.":"une antenne et un coffre de toit ne s'additionnent pas.")+'</p>';
     } else h += '<p class="sub">Aucun équipement coché ne dépasse. Un porte-vélos, une boule d\'attelage, une antenne ou un coffre de toit se cochent dans « Mes équipements ».</p>';
-    h += '<button class="lnk" type="button" data-go="equip">Mes équipements</button>';
+    h += '<div class="dimclose"><button class="btn alt" type="button" data-dimclose="1">Fermer</button><button class="btn alt" type="button" data-go="equip">Mes équipements</button></div>';
     p.innerHTML = h;
   }
   function renderDims(){
@@ -228,6 +228,9 @@ window.startCompagnon = function(DATA){
       el.addEventListener("click",function(e){
         var b = e.target.closest("[data-dimk]"); if(!b) return;
         dimOpen = dimOpen===b.dataset.dimk ? null : b.dataset.dimk; renderDims(); renderDimPanel();
+      });
+      pn.addEventListener("click",function(e){
+        if(e.target.closest("[data-dimclose]") || e.target.closest("[data-go]")){dimOpen = null; renderDims(); renderDimPanel()}
       });
       pn.addEventListener("input",function(e){
         var id = e.target.dataset.dp; if(!id) return;
