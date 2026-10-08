@@ -10,6 +10,8 @@ const { HttpError, createRouter, readJsonBody, sendJson, serveStatic } = require
 const { seed } = require('./seed');
 const { seedCatalog, ensureEquipmentPresets } = require('./catalog');
 const { applyContentPatches } = require('./content-patches');
+const { loadVapidKeys } = require('./webpush');
+const { createNotifier } = require('./notify');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 
@@ -46,6 +48,8 @@ function createApp(options = {}) {
   seedCatalog(db, uploads, log);
   ensureEquipmentPresets(db);
   applyContentPatches(db, log);
+  config.vapid = loadVapidKeys(dataDir);
+  const notify = options.notify || createNotifier({ db, vapid: config.vapid, log });
 
   const router = createRouter();
   publicRoutes.register(router);
@@ -66,6 +70,9 @@ function createApp(options = {}) {
       params: found.route ? found.params : {},
       query: url.searchParams,
       ip: req.socket.remoteAddress || 'unknown',
+      notify,
+      // Public address of the site, for links in e-mails (the host may sit behind an HTTPS proxy).
+      origin: `${String(req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http')).split(',')[0]}://${String(req.headers['x-forwarded-host'] || req.headers.host).split(',')[0]}`,
     };
     let result;
     for (const handler of found.route.handlers) result = await handler(ctx);

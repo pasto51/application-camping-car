@@ -147,6 +147,25 @@ CREATE TABLE IF NOT EXISTS customer_state (
   PRIMARY KEY (customer_id, key)
 );
 
+-- Conversation of a request between the customer and the dealership.
+CREATE TABLE IF NOT EXISTS report_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  report_id INTEGER NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  author TEXT NOT NULL CHECK (author IN ('client', 'concession')),
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Phones of a customer that accept push notifications.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  endpoint TEXT PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_report_messages ON report_messages(report_id);
 CREATE INDEX IF NOT EXISTS idx_vehicles_brand ON vehicles(brand_id);
 CREATE INDEX IF NOT EXISTS idx_problems_scope ON problems(brand_id, vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_customers_dealership ON customers(dealership_id);
@@ -179,6 +198,7 @@ const ADDED_COLUMNS = [
   ['vehicles', 'profile', 'TEXT'],
   ['dealerships', 'hours', 'TEXT'],
   ['dealerships', 'logo_url', 'TEXT'],
+  ['dealerships', 'website', 'TEXT'],
   ['customers', 'access_code_at', 'TEXT'],
   ['customers', 'access_expires_at', 'TEXT'],
 ];
@@ -188,6 +208,10 @@ function migrate(db) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
   }
+  // Answers given before conversations existed become the first message from the dealership.
+  db.exec(`INSERT INTO report_messages (report_id, author, body, created_at)
+    SELECT id, 'concession', dealer_reply, updated_at FROM reports r
+    WHERE dealer_reply IS NOT NULL AND dealer_reply != '' AND NOT EXISTS (SELECT 1 FROM report_messages m WHERE m.report_id = r.id)`);
 }
 
 // Wraps fn in a transaction; rolls back if it throws.

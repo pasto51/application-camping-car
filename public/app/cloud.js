@@ -340,8 +340,10 @@
         window.startCompagnon(DATA);
         addAccountCard();
         loadRequests();
+        setInterval(function () { if (document.visibilityState === 'visible') loadRequests(); }, 60000);
         flush();
         if (openScreen) { var b = document.querySelector('[data-go="' + openScreen + '"]'); if (b) b.click(); }
+        if (location.hash === '#demandes') setTimeout(function () { var d = document.getElementById('cloudreq'); if (d) d.scrollIntoView({ block: 'start' }); }, 600);
       })
       .catch(function (err) {
         if (err.status === 401) return;
@@ -354,19 +356,91 @@
   var requests = [];
   var STATUS = { nouveau: 'Envoyée', en_cours: 'En cours', resolu: 'Traitée' };
 
+  var SEEN_KEY = 'cdb_cloud_seen'; // last dealership message read, per request
+  var seen = readJson(SEEN_KEY, {});
+  var openReq = {};
+
   function loadRequests() {
     if (!session) return;
     api('GET', '/api/me/requests').then(function (r) { requests = r; renderRequests(); }).catch(function () { /* offline */ });
   }
 
+  function dateOf(t) { return new Date(String(t).replace(' ', 'T') + 'Z'); }
+  function fmt(t) { var d = dateOf(t); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
+  function lastDealerMsg(r) { var m = (r.messages || []).filter(function (x) { return x.author === 'concession'; }); return m.length ? m[m.length - 1].id : 0; }
+  function unread(r) { return lastDealerMsg(r) > (seen[r.id] || 0); }
+
   function renderRequests() {
     var el = document.getElementById('cloudreq'); if (!el) return;
     el.hidden = !requests.length;
-    el.innerHTML = '<p class="eyebrow">Mes demandes à l’atelier</p>' + requests.slice(0, 5).map(function (r) {
-      return '<div class="card"><div class="cloud-row"><b>' + esc(r.title) + '</b><span class="cloud-status ' + esc(r.status) + '">' + esc(STATUS[r.status] || r.status) + '</span></div>' +
-        '<p class="sub">' + esc(new Date(r.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString('fr-FR')) + '</p>' +
-        (r.dealerReply ? '<div class="ok"><b>Réponse de la concession :</b> ' + esc(r.dealerReply) + '</div>' : '') + '</div>';
-    }).join('');
+    var dealer = (DATA && DATA.dealer && DATA.dealer.name) || 'La concession';
+    var n = requests.filter(unread).length;
+    el.innerHTML = '<p class="eyebrow" id="demandes">Mes demandes à l’atelier' + (n ? ' <span class="cloud-new">' + n + ' nouvelle' + (n > 1 ? 's' : '') + ' réponse' + (n > 1 ? 's' : '') + '</span>' : '') + '</p>' +
+      requests.slice(0, 8).map(function (r) {
+        var open = !!openReq[r.id], msgs = r.messages || [];
+        var head = '<button type="button" class="cloud-req-head" data-req="' + r.id + '" aria-expanded="' + open + '"><span><b>' + esc(r.title) + '</b><br><span class="sub">' + esc(dateOf(r.createdAt).toLocaleDateString('fr-FR')) + ' · ' + msgs.length + ' message' + (msgs.length > 1 ? 's' : '') + '</span></span>' +
+          '<span class="cloud-status ' + esc(r.status) + '">' + (unread(r) ? 'Nouvelle réponse' : esc(STATUS[r.status] || r.status)) + '</span></button>';
+        if (!open) {
+          var last = msgs[msgs.length - 1];
+          return '<div class="card cloud-req' + (unread(r) ? ' unread' : '') + '">' + head + (last ? '<p class="sub cloud-last">' + esc(last.author === 'concession' ? dealer + ' : ' : 'Vous : ') + esc(last.body.slice(0, 120)) + (last.body.length > 120 ? '…' : '') + '</p>' : '') + '</div>';
+        }
+        var thread = '<div class="cloud-msg client"><p>' + esc(r.description || r.title).replace(/\n/g, '<br>') + '</p><small>Vous · ' + esc(fmt(r.createdAt)) + '</small></div>' +
+          msgs.map(function (m) {
+            return '<div class="cloud-msg ' + esc(m.author) + '"><p>' + esc(m.body).replace(/\n/g, '<br>') + '</p><small>' + (m.author === 'concession' ? esc(dealer) : 'Vous') + ' · ' + esc(fmt(m.createdAt)) + '</small></div>';
+          }).join('');
+        return '<div class="card cloud-req open">' + head + '<div class="cloud-thread">' + thread + '</div>' +
+          '<form class="cloud-reply" data-reply="' + r.id + '"><textarea class="search" name="body" rows="2" required placeholder="Votre réponse à ' + esc(dealer) + '"></textarea><button class="btn">Envoyer</button></form></div>';
+      }).join('');
+    // Opening a request marks the dealership's answers as read.
+    requests.forEach(function (r) { if (openReq[r.id] && unread(r)) { seen[r.id] = lastDealerMsg(r); lsSet(SEEN_KEY, JSON.stringify(seen)); } });
+    var badge = document.querySelector('.tile[data-go="rdv"] .cloud-dot');
+    var tile = document.querySelector('.tile[data-go="rdv"]');
+    if (tile && !badge && n) { badge = document.createElement('span'); badge.className = 'cloud-dot'; tile.appendChild(badge); }
+    if (badge) { badge.hidden = !n; badge.textContent = n; }
+  }
+
+  document.addEventListener('click', function (e) {
+    var h = e.target.closest('[data-req]'); if (!h) return;
+    var id = Number(h.dataset.req); openReq[id] = !openReq[id]; renderRequests();
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target.closest('[data-reply]'); if (!f) return;
+    e.preventDefault();
+    var id = Number(f.dataset.reply), body = f.elements.body.value.trim(); if (!body) return;
+    f.querySelector('button').disabled = true;
+    api('POST', '/api/me/requests/' + id + '/messages', { body: body }).then(function (r) {
+      requests = requests.map(function (x) { return x.id === id ? r : x; }); renderRequests(); toast('Message envoyé à votre concession');
+    }).catch(function (err) { f.querySelector('button').disabled = false; toast(err.message); });
+  });
+
+  // ---------- Push notifications (answers from the dealership) ----------
+
+  function pushSupported() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+  function keyBytes(b64) { var s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b64.length + 3) % 4)), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+
+  function pushState() {
+    if (!pushSupported()) return Promise.resolve(/iPhone|iPad/.test(navigator.userAgent) && !isStandalone() ? 'ios-install' : 'unsupported');
+    if (Notification.permission === 'denied') return Promise.resolve('denied');
+    return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) { return sub ? 'on' : 'off'; });
+  }
+
+  function enablePush() {
+    return Notification.requestPermission().then(function (perm) {
+      if (perm !== 'granted') throw new Error('Notifications refusées : autorisez-les dans les réglages du téléphone.');
+      return Promise.all([navigator.serviceWorker.ready, api('GET', '/api/push/key')]);
+    }).then(function (r) {
+      return r[0].pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(r[1].publicKey) });
+    }).then(function (sub) {
+      return api('POST', '/api/me/push', { subscription: sub.toJSON() });
+    });
+  }
+
+  function disablePush() {
+    return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) {
+      if (!sub) return;
+      return api('DELETE', '/api/me/push', { endpoint: sub.endpoint }).catch(function () {}).then(function () { return sub.unsubscribe(); });
+    });
   }
 
   function addAccountCard() {
@@ -390,6 +464,8 @@
         api('DELETE', '/api/me').then(function () { session = null; saveSession(); clearLocal(); location.reload(); }).catch(function (err) { toast(err.message); });
       }
       if (b.dataset.acc === 'update') checkUpdates(true);
+      if (b.dataset.acc === 'push-on') enablePush().then(function () { toast('Notifications activées'); renderAccount(); }).catch(function (err) { toast(err.message); renderAccount(); });
+      if (b.dataset.acc === 'push-off') disablePush().then(function () { toast('Notifications désactivées'); renderAccount(); });
     });
     renderAccount();
   }
@@ -401,8 +477,20 @@
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
     el.innerHTML = '<p class="eyebrow">Mon compte</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
       (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p><p class="sub">' + esc(status) + '</p>' +
+      '<div id="cloudpush"></div>' +
       '<div class="btns"><button class="btn alt" data-acc="update">Vérifier les mises à jour</button><button class="btn alt" data-acc="logout">Se déconnecter</button></div>' +
       '<p style="text-align:center"><button class="lnk" data-acc="delete" type="button">Supprimer mon compte</button></p>';
+    pushState().then(function (st) {
+      var p = document.getElementById('cloudpush'); if (!p) return;
+      var txt = {
+        on: '<p class="sub">🔔 Notifications activées : vous êtes prévenu quand votre concession répond.</p><button class="lnk" data-acc="push-off" type="button">Désactiver les notifications</button>',
+        off: '<button class="btn" data-acc="push-on" type="button">🔔 Être prévenu quand la concession répond</button>',
+        denied: '<p class="sub">🔕 Notifications bloquées : autorisez-les pour cette appli dans les réglages du téléphone.</p>',
+        'ios-install': '<p class="sub">🔔 Pour recevoir les notifications sur iPhone : touchez Partager puis « Sur l’écran d’accueil », et ouvrez l’appli depuis son icône.</p>',
+        unsupported: '',
+      }[st];
+      p.innerHTML = txt || '';
+    });
   }
 
   // ---------- Remote updates ----------

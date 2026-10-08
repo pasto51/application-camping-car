@@ -47,3 +47,33 @@ self.addEventListener('fetch', (event) => {
     caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req).catch(() => caches.match('/app/')))
   );
 });
+
+// Push notification from the dealership (answer to a request).
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data && event.data.text() };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Compagnon de bord', {
+      body: data.body || 'Vous avez un nouveau message.',
+      icon: '/app/icon.svg',
+      badge: '/app/icon.svg',
+      tag: data.tag,
+      data: { url: data.url || '/app/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data && event.notification.data.url || '/app/', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) if (c.url.startsWith(self.location.origin + '/app/')) return c.focus().then((w) => w && w.navigate ? w.navigate(url) : w);
+      return self.clients.openWindow(url);
+    })
+  );
+});

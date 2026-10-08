@@ -1,4 +1,9 @@
 import { esc, multiline, formatDate, createApi, pickImage, toast } from '/shared/common.js';
+
+const formatDateTime = (t) => {
+  const d = new Date(String(t).replace(' ', 'T') + 'Z');
+  return Number.isNaN(d.getTime()) ? '' : `${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+};
 import { registerCatalogViews } from '/admin/catalog.js';
 
 const TOKEN_KEY = 'cc-admin-token';
@@ -314,15 +319,20 @@ const VIEWS = {
 
   async reports(el) {
     const status = state.filter.reportStatus ?? 'open';
-    const all = await api('GET', '/api/admin/reports');
-    const list = all.filter((r) => (status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status));
-    el.innerHTML = `${pageHeader('Demandes clients (rendez-vous atelier)')}
+    const [all, settings] = await Promise.all([api('GET', '/api/admin/reports'), api('GET', '/api/admin/settings').catch(() => null)]);
+    const list = all.filter((r) => (status === 'open' ? r.status !== 'resolu' || r.waitingForDealer : status === 'all' || r.status === status));
+    const toAnswer = all.filter((r) => r.waitingForDealer).length;
+    const mailWarning = settings && !settings.mail.ready
+      ? `<div class="card warn-card">✉️ Les e-mails de notification ne sont pas encore configurés : vous ne serez pas prévenu des nouvelles demandes. ${isAdmin() ? '<a href="#settings">Configurer l’envoi des e-mails</a>' : 'Demandez à l’administrateur de le configurer.'}</div>`
+      : '';
+    el.innerHTML = `${pageHeader(`Demandes clients${toAnswer ? ` · ${toAnswer} à répondre` : ''}`)}
+      ${mailWarning}
       <div class="filters">${[
         ['open', 'À traiter'],
-        ['nouveau', 'Nouveaux'],
+        ['nouveau', 'Nouvelles'],
         ['en_cours', 'En cours'],
-        ['resolu', 'Résolus'],
-        ['all', 'Tous'],
+        ['resolu', 'Traitées'],
+        ['all', 'Toutes'],
       ]
         .map(([v, l]) => `<button class="chip ${status === v ? 'active' : ''}" data-act="filter" data-value="${v}">${l}</button>`)
         .join('')}</div>
@@ -330,45 +340,47 @@ const VIEWS = {
         list.length
           ? list
               .map(
-                (r) => `<div class="card report">
+                (r) => `<div class="card report ${r.waitingForDealer ? 'waiting' : ''}">
             <div class="report-head">
-              <div><strong>${esc(r.title)}</strong><br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.vehicleName)}${r.plate ? ` · ${esc(r.plate)}` : ''}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
+              <div><strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${r.plate ? ` · ${esc(r.plate)}` : ''}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
               <span class="status ${esc(r.status)}">${STATUS[r.status]}</span>
             </div>
-            ${r.problemTitle ? `<p class="muted">Fiche liée : ${esc(r.problemTitle)}</p>` : ''}
-            ${r.description ? `<p>${multiline(r.description)}</p>` : ''}
-            ${r.photos.length ? `<div class="photos">${r.photos.map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}
-            ${r.dealerReply ? `<div class="reply"><strong>Réponse :</strong> ${multiline(r.dealerReply)}</div>` : ''}
-            <div class="actions">
-              ${r.phone ? `<a class="btn small" href="tel:${esc(r.phone)}">📞 ${esc(r.phone)}</a>` : ''}
-              ${r.email ? `<a class="btn small" href="mailto:${esc(r.email)}">✉️ ${esc(r.email)}</a>` : ''}
-              <button class="btn small primary" data-act="answer" data-id="${r.id}">Répondre / changer le statut</button>
+            <div class="thread">
+              <div class="msg client"><p>${multiline(r.description || r.title)}</p><small>Client · ${formatDateTime(r.createdAt)}</small></div>
+              ${r.messages.map((m) => `<div class="msg ${esc(m.author)}"><p>${multiline(m.body)}</p><small>${m.author === 'client' ? 'Client' : 'Concession'} · ${formatDateTime(m.createdAt)}</small></div>`).join('')}
             </div>
+            ${r.photos.length ? `<div class="photos">${r.photos.map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}
+            <form class="reply-form" data-reply="${r.id}">
+              <textarea name="message" rows="2" placeholder="Votre réponse au client (il la reçoit dans son application)"></textarea>
+              <div class="actions">
+                <select name="status">${Object.entries(STATUS).map(([v, l]) => `<option value="${v}" ${(r.status === 'nouveau' ? 'en_cours' : r.status) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                <button class="btn primary">Envoyer</button>
+                ${r.phone ? `<a class="btn small" href="tel:${esc(r.phone)}">📞 ${esc(r.phone)}</a>` : ''}
+                ${r.email ? `<a class="btn small" href="mailto:${esc(r.email)}">✉️ ${esc(r.email)}</a>` : ''}
+              </div>
+            </form>
           </div>`
               )
               .join('')
-          : '<p class="muted">Aucun signalement.</p>'
+          : '<p class="muted">Aucune demande.</p>'
       }</div>`;
+    el.querySelectorAll('[data-reply]').forEach((f) => {
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(f);
+        try {
+          await api('PUT', `/api/admin/reports/${f.dataset.reply}`, { status: fd.get('status'), message: fd.get('message') });
+          toast(fd.get('message').trim() ? 'Réponse envoyée au client' : 'Statut enregistré');
+          VIEWS.reports(el);
+        } catch (err) {
+          toast(err.message, 'error');
+        }
+      };
+    });
     bind(el, {
       filter: (_, b) => {
         state.filter.reportStatus = b.dataset.value;
         VIEWS.reports(el);
-      },
-      answer: (id) => {
-        const r = all.find((x) => x.id === id);
-        openForm({
-          title: r.title,
-          values: r,
-          fields: [
-            { name: 'status', label: 'Statut', type: 'select', options: Object.entries(STATUS) },
-            { name: 'dealerReply', label: 'Réponse au client (visible dans son application)', type: 'textarea' },
-          ],
-          onSubmit: async (data) => {
-            await api('PUT', `/api/admin/reports/${id}`, data);
-            toast('Signalement mis à jour');
-            VIEWS.reports(el);
-          },
-        });
       },
     });
   },
@@ -551,6 +563,7 @@ const VIEWS = {
       { name: 'phone', label: 'Téléphone', type: 'tel' },
       { name: 'email', label: 'E-mail', type: 'email' },
       { name: 'hours', label: 'Horaires affichés dans l’appli', full: true },
+      { name: 'website', label: 'Site web (ouvert en touchant le logo dans l’appli)', full: true, attrs: 'placeholder="www.ma-concession.fr"' },
       { name: 'logo', label: 'Logo de la concession (affiché dans l’appli)', type: 'image' },
       { name: 'active', label: 'Active (le code fonctionne)', type: 'checkbox' },
     ];
@@ -647,6 +660,25 @@ const VIEWS = {
       </form>`
           : ''
       }
+      ${
+        isAdmin()
+          ? `<form class="card form" id="mail-form">
+        <h2>Envoi des e-mails ${s.mail.ready ? '<span class="status resolu">Configuré</span>' : '<span class="status nouveau">Non configuré</span>'}</h2>
+        <p class="muted">Sert à prévenir la concession de chaque nouvelle demande et à envoyer ses réponses au client. Sur alwaysdata : créez une adresse dans <b>E-mails → Adresses</b>, puis indiquez <b>smtp-appvdl.alwaysdata.net</b>, port <b>465</b>, l’adresse complète et son mot de passe.</p>
+        <div class="fields-inline">
+          <label>Serveur SMTP<input name="host" value="${esc(s.mail.host || '')}" placeholder="smtp-appvdl.alwaysdata.net"></label>
+          <label>Port<input name="port" type="number" value="${esc(s.mail.port || 465)}"></label>
+          <label>Identifiant<input name="user" value="${esc(s.mail.user || '')}" placeholder="contact@votre-domaine.fr" autocomplete="off"></label>
+          <label>Mot de passe<input name="pass" type="password" placeholder="${s.mail.passwordSet ? '•••••••• (inchangé)' : ''}" autocomplete="new-password"></label>
+          <label>Adresse d’expédition<input name="from" value="${esc(s.mail.from || '')}" placeholder="Compagnon de bord <contact@votre-domaine.fr>"></label>
+          <label>Copie de toutes les notifications (facultatif)<input name="copy" type="email" value="${esc(s.mail.copy || '')}"></label>
+        </div>
+        <p class="muted">Les notifications partent vers l’e-mail de chaque concession (rubrique Concessions) et de ses comptes du back-office.</p>
+        ${s.mailLast ? `<p class="${s.mailLast.ok ? 'muted' : 'error'}">Dernier envoi : ${s.mailLast.ok ? 'réussi' : 'échec'} (${formatDateTime(s.mailLast.at.replace('T', ' ').slice(0, 19))})${s.mailLast.error ? ' : ' + esc(s.mailLast.error) : ''}</p>` : ''}
+        <div class="actions"><button class="btn primary">Enregistrer</button><input name="testto" type="email" placeholder="Adresse pour un test"><button type="button" class="btn" id="mail-test">Envoyer un e-mail de test</button></div>
+      </form>`
+          : ''
+      }
       <form class="card form" id="password-form">
         <h2>Mon mot de passe</h2>
         <label>Mot de passe actuel<input name="currentPassword" type="password" required autocomplete="current-password"></label>
@@ -662,6 +694,36 @@ const VIEWS = {
         toast(err.message, 'error');
       }
     });
+    const mailForm = el.querySelector('#mail-form');
+    if (mailForm) {
+      const mailData = () => {
+        const f = new FormData(mailForm);
+        return { host: f.get('host'), port: f.get('port'), user: f.get('user'), pass: f.get('pass'), from: f.get('from'), copy: f.get('copy') };
+      };
+      mailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await api('PUT', '/api/admin/settings', { mail: mailData() });
+          toast('Réglages des e-mails enregistrés');
+          VIEWS.settings(el);
+        } catch (err) {
+          toast(err.message, 'error');
+        }
+      });
+      el.querySelector('#mail-test').addEventListener('click', async (e) => {
+        const to = mailForm.elements.testto.value.trim();
+        if (!to) return toast('Indiquez une adresse pour le test', 'error');
+        e.target.disabled = true;
+        try {
+          await api('PUT', '/api/admin/settings', { mail: mailData() });
+          await api('POST', '/api/admin/settings/test-email', { to });
+          toast(`E-mail de test envoyé à ${to}`);
+        } catch (err) {
+          toast(err.message, 'error');
+        }
+        VIEWS.settings(el);
+      });
+    }
     el.querySelector('#password-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const f = new FormData(e.target);

@@ -139,6 +139,7 @@ function appData(db, { vehicleId, dealershipId }) {
       hours: dealership?.hours || '',
       city: dealership?.city || '',
       logoUrl: dealership?.logo_url || null,
+      website: dealership?.website || null,
     },
   };
   for (const key of CATALOG_KEYS) data[key] = getCatalogValue(db, key);

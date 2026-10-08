@@ -111,3 +111,19 @@ cd ~/application-camping-car && node server/reset-admin.js votre@email.fr VotreM
 ```
 
 ⚠️ En accès libre, toute personne qui connaît l'adresse `/admin/` peut modifier l'application et voir les clients. Réservez ce mode aux tests, sans vraies données clients.
+
+## Recevoir un e-mail à chaque demande client
+
+Le serveur a besoin d'une adresse e-mail pour envoyer les notifications.
+
+1. Dans le panneau alwaysdata, menu **E-mails**, puis **Adresses**, cliquez sur **Ajouter une adresse**. Par exemple `notifications@appvdl.alwaysdata.net` (ou une adresse de votre domaine), avec un mot de passe.
+2. Dans le back-office, ouvrez **Paramètres**, puis **Envoi des e-mails**, et remplissez :
+   - Serveur SMTP : `smtp-appvdl.alwaysdata.net`
+   - Port : `465`
+   - Identifiant : l'adresse créée au point 1
+   - Mot de passe : celui de cette adresse
+   - Adresse d'expédition : `Compagnon de bord <l'adresse créée au point 1>`
+3. Tapez votre adresse dans « Adresse pour un test », puis cliquez sur **Envoyer un e-mail de test**.
+4. Dans **Concessions**, renseignez l'**e-mail** de chaque concession : c'est là que partent les nouvelles demandes.
+
+Si le nom du serveur SMTP est différent, il s'affiche dans **E-mails** sur alwaysdata.

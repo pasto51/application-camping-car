@@ -232,22 +232,67 @@ function register(router) {
     };
   });
 
-  // Workshop appointment request or problem, sent to the dealership.
+  function requestsOf(db, customerId) {
+    const reports = camelAll(db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY updated_at DESC, id DESC').all(customerId));
+    const msgs = db
+      .prepare('SELECT m.* FROM report_messages m JOIN reports r ON r.id = m.report_id WHERE r.customer_id = ? ORDER BY m.id')
+      .all(customerId);
+    for (const r of reports) r.messages = camelAll(msgs.filter((m) => m.report_id === r.id));
+    return reports;
+  }
+
+  // Workshop appointment request or problem, sent to the dealership (which is told by e-mail).
   router.post('/api/me/requests', (ctx) => {
     const customer = requireCustomer(ctx);
     const { db, body } = ctx;
     const title = reqStr(body.title, 'Motif', 150);
     const parts = [optStr(body.message, 4000), body.period ? `Délai souhaité : ${optStr(body.period, 50)}` : null, body.phone ? `Téléphone : ${optStr(body.phone, 40)}` : null];
-    const { lastInsertRowid } = db
-      .prepare('INSERT INTO reports (customer_id, title, description) VALUES (?, ?, ?)')
-      .run(customer.id, title, parts.filter(Boolean).join('\n\n'));
+    const description = parts.filter(Boolean).join('\n\n');
+    const { lastInsertRowid } = db.prepare('INSERT INTO reports (customer_id, title, description) VALUES (?, ?, ?)').run(customer.id, title, description);
     if (body.phone && !customer.phone) db.prepare('UPDATE customers SET phone = ? WHERE id = ?').run(optStr(body.phone, 40), customer.id);
-    return camel(db.prepare('SELECT * FROM reports WHERE id = ?').get(lastInsertRowid));
+    const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(lastInsertRowid);
+    const fresh = db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id);
+    ctx.notify.customerWrote({ report, customer: fresh, text: description, origin: ctx.origin, isNew: true }).catch(() => {});
+    return { ...camel(report), messages: [] };
   });
 
-  router.get('/api/me/requests', (ctx) => {
+  router.get('/api/me/requests', (ctx) => requestsOf(ctx.db, requireCustomer(ctx).id));
+
+  // The customer answers in the conversation of one of their requests.
+  router.post('/api/me/requests/:id/messages', (ctx) => {
     const customer = requireCustomer(ctx);
-    return camelAll(ctx.db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id));
+    const { db } = ctx;
+    const report = db.prepare('SELECT * FROM reports WHERE id = ? AND customer_id = ?').get(Number(ctx.params.id), customer.id);
+    if (!report) throw new HttpError(404, 'Demande introuvable');
+    const text = reqStr(ctx.body.body, 'Message', 4000);
+    db.prepare("INSERT INTO report_messages (report_id, author, body) VALUES (?, 'client', ?)").run(report.id, text);
+    // A new message from the customer puts the request back on the dealership's to-do list.
+    db.prepare("UPDATE reports SET status = CASE WHEN status = 'resolu' THEN 'nouveau' ELSE status END, updated_at = datetime('now') WHERE id = ?").run(report.id);
+    ctx.notify.customerWrote({ report, customer, text, origin: ctx.origin, isNew: false }).catch(() => {});
+    return requestsOf(db, customer.id).find((r) => r.id === report.id);
+  });
+
+  // Push notifications: the phone gives its subscription, the server keeps it for this customer.
+  router.get('/api/push/key', ({ config }) => ({ publicKey: config.vapid.publicKey }));
+
+  router.post('/api/me/push', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const s = ctx.body.subscription || {};
+    const endpoint = optStr(s.endpoint, 2000);
+    if (!endpoint || !/^https:\/\//.test(endpoint) || !s.keys || !s.keys.p256dh || !s.keys.auth) throw new HttpError(400, 'Abonnement invalide');
+    ctx.db
+      .prepare(
+        `INSERT INTO push_subscriptions (endpoint, customer_id, p256dh, auth) VALUES (?, ?, ?, ?)
+         ON CONFLICT(endpoint) DO UPDATE SET customer_id = excluded.customer_id, p256dh = excluded.p256dh, auth = excluded.auth`
+      )
+      .run(endpoint, customer.id, String(s.keys.p256dh).slice(0, 200), String(s.keys.auth).slice(0, 100));
+    return { ok: true };
+  });
+
+  router.delete('/api/me/push', (ctx) => {
+    const customer = requireCustomer(ctx);
+    ctx.db.prepare('DELETE FROM push_subscriptions WHERE customer_id = ? AND endpoint = ?').run(customer.id, String(ctx.body.endpoint || ''));
+    return { ok: true };
   });
 
   router.post('/api/me/logout', (ctx) => {

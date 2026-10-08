@@ -3,9 +3,13 @@ window.startCompagnon = function(DATA){
   var $ = function(s,r){return (r||document).querySelector(s)};
   var $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
   $(".hero-name").innerHTML = esc(DATA.vehicle.heroPrefix||"")+" <span>"+esc(DATA.vehicle.heroName||"")+"</span>";
-  function dlogoHtml(){return DATA.dealer.logoUrl ? '<div class="dlogo img" aria-hidden="true"><img src="'+esc(DATA.dealer.logoUrl)+'" alt=""></div>' : '<div class="dlogo" aria-hidden="true">'+esc(dealerInitials())+'</div>'}
+  function dlogoHtml(){return DATA.dealer.logoUrl ? '<div class="dlogo img'+(DATA.dealer.website?' link':'')+'" title="Site de la concession"><img src="'+esc(DATA.dealer.logoUrl)+'" alt=""></div>' : '<div class="dlogo" aria-hidden="true">'+esc(dealerInitials())+'</div>'}
   function dealerInitials(){return (DATA.dealer.name||"").split(/\s+/).filter(function(w){return w.length>2}).slice(0,2).map(function(w){return w.charAt(0)}).join("").toUpperCase() || "CDB"}
   $$(".dlogo").forEach(function(d){if(DATA.dealer.logoUrl){d.innerHTML = '<img src="'+esc(DATA.dealer.logoUrl)+'" alt="">'; d.classList.add("img")} else d.textContent = dealerInitials()});
+  // Dealership logo (header and dealership card) opens its website.
+  function dealerSite(e){var l = e.target.closest(".top .dlogo, .card .dlogo"); if(!l || !DATA.dealer.website) return; e.preventDefault(); e.stopPropagation(); window.open(DATA.dealer.website, "_blank", "noopener")}
+  document.addEventListener("click", dealerSite, true);
+  if(DATA.dealer.website) $$(".top .dlogo").forEach(function(d){d.classList.add("link"); d.setAttribute("role","link"); d.setAttribute("title","Site de "+(DATA.dealer.name||"la concession"))});
   (function(){var im = $("#planSvg image"); im.setAttribute("href",DATA.vehicle.planUrl || (DATA.vehicle.spots.length ? "/app/plan-van.svg" : "")); if(!DATA.vehicle.planUrl && !DATA.vehicle.spots.length) im.remove()})();
   var titles = {home:"Compagnon de bord",daily:"Gestes du quotidien",equip:"Mes équipements",rdv:"Rendez-vous atelier",weight:"Poids et charge",hand:"Mise en main",what:"C'est quoi, ça ?",diag:"J'ai un souci",game:"Missions"};
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

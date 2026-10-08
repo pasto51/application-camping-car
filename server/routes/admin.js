@@ -3,9 +3,11 @@
 const { HttpError } = require('../http');
 const { bumpContentVersion, getSetting, setSetting } = require('../db');
 const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter } = require('../auth');
-const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick } = require('../util');
+const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
 const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
+const { mailConfig, mailReady } = require('../notify');
+const { sendMail } = require('../mailer');
 
 const SEVERITIES = ['info', 'attention', 'urgent'];
 const STATUSES = ['nouveau', 'en_cours', 'resolu'];
@@ -43,6 +45,20 @@ function customerStateSummary(db, customerId) {
     handover: { steps: Object.keys(hand.steps || {}).filter((k) => hand.steps[k]).length, validatedOn: hand.date || null },
     stateUpdatedAt: Object.values(state).map((s) => s.updatedAt).sort().pop() || null,
   };
+}
+
+// Website of a dealership: "www.exemple.fr" becomes "https://www.exemple.fr"; only http(s) links are kept.
+function optUrl(value) {
+  const s = optStr(value, 300);
+  if (s == null) return s;
+  const url = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+  try {
+    const u = new URL(url);
+    if (!['http:', 'https:'].includes(u.protocol) || !u.hostname.includes('.')) throw new Error();
+    return u.href;
+  } catch {
+    throw new HttpError(400, 'Adresse du site web invalide');
+  }
 }
 
 function register(router) {
@@ -112,16 +128,52 @@ function register(router) {
 
   // ---- Settings ----
 
+  function settingsView(db) {
+    const c = mailConfig(db);
+    return {
+      announcement: getSetting(db, 'announcement', null),
+      mail: { host: c.host, port: c.port, user: c.user, from: c.from, copy: c.copy, passwordSet: !!c.pass, ready: mailReady(db) },
+      mailLast: safeJson(getSetting(db, 'mail_last', 'null'), null),
+    };
+  }
+
   router.get('/api/admin/settings', (ctx) => {
     auth(ctx);
-    return { announcement: getSetting(ctx.db, 'announcement', null) };
+    return settingsView(ctx.db);
   });
 
   router.put('/api/admin/settings', (ctx) => {
     adminOnly(ctx);
-    setSetting(ctx.db, 'announcement', optStr(ctx.body.announcement, 500));
-    bumpContentVersion(ctx.db);
-    return { announcement: getSetting(ctx.db, 'announcement', null) };
+    const { db, body } = ctx;
+    if (body.announcement !== undefined) {
+      setSetting(db, 'announcement', optStr(body.announcement, 500));
+      bumpContentVersion(db);
+    }
+    // Outgoing e-mail server (the password is only replaced when a new one is typed).
+    if (body.mail) {
+      const m = body.mail;
+      setSetting(db, 'mail_host', optStr(m.host, 200));
+      setSetting(db, 'mail_port', optInt(m.port) || 587);
+      setSetting(db, 'mail_user', optStr(m.user, 200));
+      if (m.pass) setSetting(db, 'mail_pass', String(m.pass).slice(0, 200));
+      setSetting(db, 'mail_from', optStr(m.from, 200));
+      setSetting(db, 'mail_copy', optEmail(m.copy));
+    }
+    return settingsView(db);
+  });
+
+  router.post('/api/admin/settings/test-email', async (ctx) => {
+    adminOnly(ctx);
+    const to = optEmail(ctx.body.to);
+    if (!to) throw new HttpError(400, 'Adresse e-mail obligatoire');
+    try {
+      await sendMail(mailConfig(ctx.db), { to: [to], subject: 'Test Compagnon de bord', text: 'Bonjour,\n\nL’envoi des e-mails du Compagnon de bord fonctionne.\n' });
+    } catch (err) {
+      setSetting(ctx.db, 'mail_last', JSON.stringify({ ok: false, at: new Date().toISOString(), to: [to], error: err.message }));
+      throw new HttpError(502, err.message);
+    }
+    setSetting(ctx.db, 'mail_last', JSON.stringify({ ok: true, at: new Date().toISOString(), to: [to] }));
+    return { ok: true };
   });
 
   // ---- Brands ----
@@ -524,7 +576,7 @@ function register(router) {
     const { db, body } = ctx;
     const code = dealershipCode(db, body.code || randomCode(6));
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO dealerships (name, code, city, phone, email, hours, logo_url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .prepare('INSERT INTO dealerships (name, code, city, phone, email, hours, website, logo_url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(
         reqStr(body.name, 'Nom de la concession', 120),
         code,
@@ -532,6 +584,7 @@ function register(router) {
         optStr(body.phone, 40),
         optEmail(body.email),
         optStr(body.hours, 200),
+        optUrl(body.website),
         ctx.uploads.resolveImage(body.logo, null),
         bool01(body.active, 1)
       );
@@ -543,13 +596,14 @@ function register(router) {
     adminOnly(ctx);
     const { db, body, params } = ctx;
     const d = getOr404(db, 'dealerships', params.id, 'Concession');
-    db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, hours = ?, logo_url = ?, active = ? WHERE id = ?').run(
+    db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, hours = ?, website = ?, logo_url = ?, active = ? WHERE id = ?').run(
       body.name === undefined ? d.name : reqStr(body.name, 'Nom de la concession', 120),
       body.code === undefined ? d.code : dealershipCode(db, body.code, d.id),
       pick(optStr(body.city, 80), d.city),
       pick(optStr(body.phone, 40), d.phone),
       pick(optEmail(body.email), d.email),
       pick(optStr(body.hours, 200), d.hours),
+      pick(optUrl(body.website), d.website),
       ctx.uploads.resolveImage(body.logo, d.logo_url),
       bool01(body.active, d.active),
       d.id
@@ -672,7 +726,7 @@ function register(router) {
       where.push('r.status = ?');
       args.push(status);
     }
-    return camelAll(
+    const list = camelAll(
       ctx.db
         .prepare(
           `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.plate, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
@@ -683,10 +737,18 @@ function register(router) {
            JOIN vehicles v ON v.id = c.vehicle_id
            JOIN brands b ON b.id = v.brand_id
            LEFT JOIN problems p ON p.id = r.problem_id
-           WHERE ${where.join(' AND ')} ORDER BY r.id DESC LIMIT 500`
+           WHERE ${where.join(' AND ')} ORDER BY r.updated_at DESC, r.id DESC LIMIT 500`
         )
         .all(...args)
     );
+    const ids = list.map((r) => r.id);
+    const msgs = ids.length ? camelAll(ctx.db.prepare(`SELECT * FROM report_messages WHERE report_id IN (${ids.map(() => '?').join(',')}) ORDER BY id`).all(...ids)) : [];
+    for (const r of list) {
+      r.messages = msgs.filter((m) => m.reportId === r.id);
+      // The customer wrote last: the dealership owes an answer.
+      r.waitingForDealer = r.messages.length ? r.messages[r.messages.length - 1].author === 'client' : r.status === 'nouveau';
+    }
+    return list;
   });
 
   router.put('/api/admin/reports/:id', (ctx) => {
@@ -694,15 +756,21 @@ function register(router) {
     const { db, body } = ctx;
     const s = scope(user, 'c.dealership_id');
     const report = db.prepare(`SELECT r.* FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.id = ? AND ${s.sql}`).get(Number(ctx.params.id), ...s.args);
-    if (!report) throw new HttpError(404, 'Signalement introuvable');
+    if (!report) throw new HttpError(404, 'Demande introuvable');
     const status = pick(optStr(body.status, 20), report.status);
     if (!STATUSES.includes(status)) throw new HttpError(400, 'Statut invalide');
-    db.prepare("UPDATE reports SET status = ?, dealer_reply = ?, updated_at = datetime('now') WHERE id = ?").run(
-      status,
-      pick(optStr(body.dealerReply, 4000), report.dealer_reply),
-      report.id
-    );
-    return camel(db.prepare('SELECT * FROM reports WHERE id = ?').get(report.id));
+    // A reply is a new message in the conversation; the customer is notified.
+    const reply = optStr(body.dealerReply ?? body.message, 4000);
+    if (reply) db.prepare("INSERT INTO report_messages (report_id, author, body) VALUES (?, 'concession', ?)").run(report.id, reply);
+    db.prepare("UPDATE reports SET status = ?, dealer_reply = ?, updated_at = datetime('now') WHERE id = ?").run(status, reply || report.dealer_reply, report.id);
+    if (reply) {
+      const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(report.customer_id);
+      ctx.notify.dealershipAnswered({ report, customer, text: reply, origin: ctx.origin }).catch(() => {});
+    }
+    return {
+      ...camel(db.prepare('SELECT * FROM reports WHERE id = ?').get(report.id)),
+      messages: camelAll(db.prepare('SELECT * FROM report_messages WHERE report_id = ? ORDER BY id').all(report.id)),
+    };
   });
 
   // ---- Back-office users ----

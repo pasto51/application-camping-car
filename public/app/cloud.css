@@ -28,3 +28,22 @@
 .cloud-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;max-width:calc(100% - 32px);background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:15px;text-align:center}
 .cloud-toast[hidden]{display:none}
 #device[hidden]{display:none}
+/* Requests: conversation with the dealership */
+.cloud-req{gap:8px}
+.cloud-req.unread{border-color:var(--accent)}
+.cloud-req-head{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;width:100%}
+.cloud-req-head:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.cloud-last{margin-top:2px}
+.cloud-new{display:inline-block;margin-left:6px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 9px;font-size:12px;letter-spacing:0;text-transform:none}
+.cloud-thread{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.cloud-msg{max-width:88%;border-radius:14px;padding:9px 12px;font-size:15px}
+.cloud-msg p{margin:0}
+.cloud-msg small{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
+.cloud-msg.client{align-self:flex-end;background:var(--soft)}
+.cloud-msg.concession{align-self:flex-start;background:var(--ok-bg);color:var(--ink)}
+.cloud-reply{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.tile{position:relative}
+.cloud-dot{position:absolute;top:8px;right:8px;min-width:22px;height:22px;border-radius:11px;background:#c0392b;color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.cloud-dot[hidden]{display:none}
+.dlogo.link{cursor:pointer}
+.cloud-reply .btn{flex:none}

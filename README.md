@@ -22,7 +22,11 @@ Marques au lancement : **Challenger** (avec le **V114 Road Edition 2027** comple
 ### Ce qui est sauvegardé dans le cloud
 Tout ce que le client enregistre dans l'application : équipements cochés ou ajoutés, **photos** (véhicule et équipements, modifiables), modèles et numéros de série, types d'équipements, poids et mesures, avancement de la mise en main. La sauvegarde est automatique. Hors connexion, l'application continue de fonctionner et envoie les modifications au retour du réseau.
 
-Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique « Demandes clients ». La réponse de la concession s'affiche dans l'application.
+Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique « Demandes clients ».
+- La concession est **prévenue par e-mail** de chaque nouvelle demande et de chaque nouveau message. L'envoi se règle dans Paramètres → Envoi des e-mails.
+- Le client et la concession **échangent des messages** dans la demande, comme une discussion.
+- Le client reçoit une **notification sur son téléphone** quand la concession répond, s'il l'a activée dans « Mon compte ». Sur iPhone, l'appli doit être ajoutée à l'écran d'accueil. Il reçoit aussi un e-mail s'il a donné son adresse.
+- En touchant le **logo de la concession**, le client ouvre le site web de celle-ci.
 
 ### Back-office
 - **Diagnostics (pannes)** : les 56 entrées (environ 2 000 fins de parcours) se présentent sous forme d'**organigramme modifiable** : questions, réponses, fin de parcours avec cause, geste, produit, sécurité, rendez-vous. Un mode avancé (JSON) est aussi disponible.

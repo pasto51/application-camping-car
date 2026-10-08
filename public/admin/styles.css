@@ -179,3 +179,18 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 .preset-cats legend { font-weight: 700; padding: 0 .3rem; }
 .preset-cats label.check { font-weight: 400; font-size: .88rem; }
 #preset-form .page-head { margin-bottom: .25rem; }
+
+/* Request conversations */
+.report.waiting { border-left: 4px solid var(--danger); }
+.thread { display: flex; flex-direction: column; gap: .5rem; margin: .6rem 0; }
+.msg { max-width: 80%; border-radius: 12px; padding: .55rem .8rem; }
+.msg p { margin: 0; }
+.msg small { display: block; color: var(--muted); font-size: .75rem; margin-top: .2rem; }
+.msg.client { align-self: flex-start; background: var(--bg); border: 1px solid var(--line); }
+.msg.concession { align-self: flex-end; background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.reply-form { display: flex; flex-direction: column; gap: .5rem; margin-top: .4rem; }
+.reply-form select { width: auto; }
+.warn-card { background: color-mix(in srgb, var(--warn) 12%, var(--card)); margin-bottom: 1rem; }
+.fields-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .75rem; }
+#mail-form .actions input { width: auto; flex: 1 1 200px; }
+.form { max-width: 820px; }
