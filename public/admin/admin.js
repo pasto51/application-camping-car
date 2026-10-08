@@ -45,6 +45,8 @@ const isAdmin = () => state.user?.role === 'admin';
 const isEditor = () => state.user?.role === 'editor';
 const canEditContent = () => isAdmin() || isEditor();
 // Responsable de concession (or administrator): reassigns customers, manages the team.
+// A detached store is independent: no access to the dealership's customers.
+const isDetachedStore = () => state.user?.role === 'store' && !!state.user?.storeDetached;
 const isManager = () => ['admin', 'manager', 'dealer'].includes(state.user?.role);
 const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur de contenu', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
 const ROLE_ORDER = ['manager', 'sales', 'sav', 'store', 'editor', 'admin'];
@@ -91,7 +93,7 @@ function sections() {
   const all = [
     ['dashboard', '📊', 'Tableau de bord', !isEditor()],
     ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales' && !isEditor()],
-    ['customers', '👥', 'Clients', !isEditor()],
+    ['customers', '👥', 'Clients', !isEditor() && !isDetachedStore()],
     ['vehicles', '🚐', 'Véhicules', canEditContent()],
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', canEditContent()],
     ['equipment', '🧰', 'Équipements', canEditContent()],
@@ -310,7 +312,7 @@ const VIEWS = {
     const s = await api('GET', '/api/admin/stats');
     const tiles = [
       ...(state.user.role === 'sales' ? [] : [[myService() ? `Demandes ${myService() === 'sav' ? 'SAV' : 'magasin'} à traiter` : 'Demandes à traiter', s.openReports, 'reports']]),
-      ['Clients', s.customers, 'customers'],
+      ...(isDetachedStore() ? [] : [['Clients', s.customers, 'customers']]),
       ...(isAdmin()
         ? [
             ['Diagnostics', s.diagnostics, 'diagnostics'],
@@ -721,7 +723,7 @@ const VIEWS = {
       </table><p class="muted" data-empty hidden>Aucun compte ne correspond à ces filtres.</p></div>
       <div class="card muted"><p><strong>Commercial</strong> : gère ses clients (fiche, code d’accès) et fait les mises en main. Il ne traite pas les demandes : il en voit le récap sur son tableau de bord.</p>
       <p><strong>SAV / atelier</strong> : voit les demandes de la concession, répond à celles du SAV (rendez-vous, soucis, pièces sous garantie) et peut les transférer au magasin.</p>
-      <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que les siennes.</p>
+      <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que ses demandes, et pas les clients de la concession.</p>
       <p><strong>Responsable de concession</strong> : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession), sans recevoir d’e-mails.</p>
       ${isAdmin() ? '<p><strong>Éditeur de contenu</strong> : modifie les contenus de l’appli (diagnostics et organigrammes, équipements, listes, véhicules et leurs photos, relevé, message / campagne affiché dans l’appli). Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes.</p><p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
     // Filtering happens in the page: typing does not reload the list nor lose the cursor.

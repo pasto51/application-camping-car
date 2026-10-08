@@ -38,7 +38,7 @@ Mot de passe de tous les comptes démo : `demo1234`. Les liens clients ne serven
    - **Commercial** (Julien) : ses clients et le récap de leurs demandes, sans e-mails inutiles.
    - Fiche client : **Modifier la garantie**, renvoyer le code d'accès.
 3. **Les arguments à montrer**
-   - **Magasin détaché** (concession de Rennes) : il ne voit que ses demandes, la concession ne les voit pas.
+   - **Magasin détaché** (concession de Rennes) : il ne voit que ses demandes et pas les clients de la concession ; la concession ne voit pas ses demandes.
    - **Garantie** : la demande va automatiquement au bon service.
    - **Données sensibles** : le VIN reste sur le téléphone du client, aucune immatriculation n'est enregistrée.
    - **Mise en main** : le commercial crée le compte du client depuis son téléphone avec le code concession.

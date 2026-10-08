@@ -402,6 +402,13 @@ test('roles: salespeople see the dealership but manage their own customers; the 
   await call('PUT', `/api/admin/dealerships/${d.id}`, { token: chef, body: { storeDetached: true, storePhone: '05 00 00 00 00' } });
   await mk('mag@equipe.fr', 'store', chef);
   const mag = await login('mag@equipe.fr', 'motdepasse1');
+  // A detached store does not see the dealership's customers
+  assert.equal((await call('GET', '/api/admin/customers', { token: mag })).status, 403);
+  assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: mag })).status, 403);
+  assert.equal((await call('POST', '/api/admin/customers', { token: mag, body: { vehicleId: catalog.vehicles[0].id, lastName: 'X' } })).status, 403);
+  assert.equal((await call('GET', '/api/admin/stats', { token: mag })).data.customers, null);
+  assert.equal((await call('GET', '/api/admin/me', { token: mag })).data.storeDetached, 1);
+  assert.equal((await call('GET', '/api/admin/customers', { token: sav })).status, 200, 'the SAV still sees them');
   const acc = (await call('POST', '/api/me/parts', { token: h.token, body: { need: 'accessoire', equipmentName: 'Auvent' } })).data;
   assert.equal(acc.service, 'magasin');
   assert.ok((await call('GET', '/api/admin/reports', { token: mag })).data.some((r) => r.id === acc.id));

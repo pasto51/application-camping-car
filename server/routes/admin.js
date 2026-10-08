@@ -72,7 +72,9 @@ function register(router) {
     const payload = verifyToken(header.startsWith('Bearer ') ? header.slice(7) : '', ctx.config.secret);
     let user;
     if (payload) {
-      user = ctx.db.prepare('SELECT id, email, name, role, dealership_id, phone FROM admins WHERE id = ?').get(payload.sub);
+      user = ctx.db
+        .prepare('SELECT id, email, name, role, dealership_id, phone, (SELECT store_detached FROM dealerships d WHERE d.id = admins.dealership_id) AS store_detached FROM admins WHERE id = ?')
+        .get(payload.sub);
       if (!user) throw new HttpError(401, 'Compte supprimé');
     } else if (ctx.config.isOpenAccess()) {
       user = ctx.db.prepare("SELECT id, email, name, role, dealership_id FROM admins WHERE role = 'admin' ORDER BY id LIMIT 1").get();
@@ -163,7 +165,8 @@ function register(router) {
     }
     // « Rester connecté » : 15 days on this device; otherwise the session ends after 12 hours.
     const token = signToken({ sub: user.id, role: user.role }, config.secret, body.remember ? 60 * 60 * 24 * 15 : 60 * 60 * 12);
-    return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id }) };
+    const storeDetached = db.prepare('SELECT store_detached FROM dealerships WHERE id = ?').get(user.dealership_id)?.store_detached ?? null;
+    return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id, store_detached: storeDetached }) };
   });
 
   router.get('/api/admin/me', (ctx) => ({ ...camel(auth(ctx)), openAccess: ctx.config.isOpenAccess() }));
@@ -179,7 +182,7 @@ function register(router) {
       equipment: count('SELECT COUNT(*) AS n FROM equipment'),
       diagnostics: count('SELECT COUNT(*) AS n FROM diagnostics'),
       dealerships: count('SELECT COUNT(*) AS n FROM dealerships'),
-      customers: count(`SELECT COUNT(*) AS n FROM customers c WHERE ${c.sql}`, c.args),
+      customers: seesCustomers(user) ? count(`SELECT COUNT(*) AS n FROM customers c WHERE ${c.sql}`, c.args) : null,
       // Requests the user handles (their service; everything for a manager), without salespeople's.
       openReports: (() => {
         const rs = reportScope(user);
@@ -803,7 +806,14 @@ function register(router) {
     JOIN vehicles v ON v.id = c.vehicle_id
     JOIN brands b ON b.id = v.brand_id`;
 
+  // A detached store is independent: it sees its own requests (with the customer's details), not the dealership's customers.
+  const seesCustomers = (user) => !(user.role === 'store' && user.store_detached);
+  function requireCustomers(user) {
+    if (!seesCustomers(user)) throw new HttpError(403, 'Magasin détaché : les clients de la concession ne sont pas visibles');
+  }
+
   function getCustomerScoped(ctx, id) {
+    requireCustomers(ctx.user);
     const s = scope(ctx.user, 'c.dealership_id');
     const row = ctx.db.prepare(`${CUSTOMER_SELECT} WHERE c.id = ? AND ${s.sql}`).get(Number(id), ...s.args);
     if (!row) throw new HttpError(404, 'Client introuvable');
@@ -812,6 +822,7 @@ function register(router) {
 
   router.get('/api/admin/customers', (ctx) => {
     const user = auth(ctx);
+    requireCustomers(user);
     const s = scope(user, 'c.dealership_id');
     const q = optStr(ctx.query.get('q'), 100);
     const where = [s.sql];
@@ -848,6 +859,7 @@ function register(router) {
   // Customer registered from the back-office (instead of the handover in the app): the access code is issued right away.
   router.post('/api/admin/customers', async (ctx) => {
     const user = auth(ctx);
+    requireCustomers(user);
     const { db, body } = ctx;
     const vehicleId = reqInt(body.vehicleId, 'Véhicule');
     const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(vehicleId);

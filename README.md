@@ -61,7 +61,7 @@ Le **code d'accès** est conservé chiffré : la fiche client du back-office l'a
   - *Administrateur* : tout (catalogue, concessions, utilisateurs).
   - *Éditeur de contenu* (compte créé par l'administrateur, sans concession) : modifie les contenus de l'appli — diagnostics et organigrammes, équipements, listes, véhicules, marques, photos et relevé, message / campagne affiché dans l'appli. Il ne voit ni les clients, ni les demandes, ni les concessions, ni les comptes, ne supprime pas de véhicule et ne touche pas aux réglages des e-mails.
   - *Responsable de concession* : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession sauf le code), sans recevoir d'e-mails ; confie ou bascule les clients entre commerciaux.
-  - *SAV / atelier* et *Magasin* : voient les demandes et répondent à celles de leur service.
+  - *SAV / atelier* et *Magasin* : voient les demandes et répondent à celles de leur service. Un *magasin détaché* ne voit que ses demandes, et pas les clients de la concession.
   - *Commercial* : gère ses clients et fait les mises en main ; ne traite pas les demandes (pas de menu Demandes, pas d'e-mail) mais en voit le récap sur son tableau de bord.
 - **Commercial du client** : choisi à la mise en main dans l'appli ou à la création dans le back-office (suivi interne, non affiché au client). Les anciens comptes « concession » deviennent responsables de concession.
 
