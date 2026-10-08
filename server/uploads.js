@@ -27,7 +27,7 @@ function createUploadStore(dir) {
   function remove(url) {
     if (!url || !String(url).startsWith('/uploads/')) return;
     const name = path.basename(url);
-    fs.rm(path.join(dir, name), { force: true }, () => {});
+    fs.rmSync(path.join(dir, name), { force: true });
   }
 
   // Resolves an image field from a request body:

@@ -119,7 +119,12 @@ function serveStatic(req, res, root, relPath, { cacheControl = 'no-cache', trans
   }
   res.writeHead(200, { ...headers, 'Content-Length': stat.size });
   if (req.method === 'HEAD') res.end();
-  else fs.createReadStream(filePath).pipe(res);
+  else {
+    // The file can disappear between stat and read (photo replaced meanwhile): never leave the response hanging.
+    fs.createReadStream(filePath)
+      .on('error', () => res.destroy())
+      .pipe(res);
+  }
   return true;
 }
 
