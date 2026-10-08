@@ -1,25 +1,22 @@
 // Service worker of the customer app. __APP_VERSION__ is replaced by the server on every deploy,
-// so a new deploy installs a new worker and the app offers the update.
+// so a new deploy installs a new worker, which takes over right away (open pages reload themselves).
 const VERSION = '__APP_VERSION__';
 const SHELL_CACHE = `shell-${VERSION}`;
 const PHOTO_CACHE = 'photos-v1';
 const SHELL = ['/app/', '/app/compagnon.js', '/app/cloud.js', '/app/cloud.css', '/app/manifest.webmanifest', '/app/icon.svg'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)));
+  // No waiting: an outdated app must never stay on screen (it may not understand the new server).
+  event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('shell-') && k !== SHELL_CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== SHELL_CACHE && k !== PHOTO_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {

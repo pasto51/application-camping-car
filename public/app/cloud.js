@@ -428,17 +428,13 @@
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { checkUpdates(false); loadRequests(); flush(); } });
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).then(function (reg) {
-      swReg = reg;
-      function waiting(w) { banner('Une nouvelle version de l’application est disponible.', function () { w.postMessage('SKIP_WAITING'); }); }
-      if (reg.waiting && navigator.serviceWorker.controller) waiting(reg.waiting);
-      reg.addEventListener('updatefound', function () {
-        var w = reg.installing;
-        if (w) w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) waiting(w); });
-      });
-    }).catch(function () {});
-    var reloading = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function () { if (!reloading) { reloading = true; location.reload(); } });
+    // A new version activates by itself; the page then reloads on it (not on the very first install).
+    var hadController = !!navigator.serviceWorker.controller, reloading = false;
+    navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).then(function (reg) { swReg = reg; }).catch(function () {});
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloading) { hadController = true; return; }
+      reloading = true; location.reload();
+    });
   }
 
   // ---------- Go ----------
