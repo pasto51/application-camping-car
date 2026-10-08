@@ -180,3 +180,16 @@ test('static apps and versioned service worker are served', async () => {
   assert.equal((await fetch(base + '/app/../server/app.js')).status, 404);
   assert.equal((await fetch(base + '/uploads/..%2F..%2Fpackage.json')).status, 404);
 });
+
+test('open access mode opens the back-office without a password', async () => {
+  assert.equal((await call('GET', '/api/admin/me')).status, 401);
+  const flag = path.join(dataDir, 'acces-libre');
+  fs.writeFileSync(flag, '');
+  const me = await call('GET', '/api/admin/me');
+  assert.equal(me.status, 200);
+  assert.equal(me.data.role, 'admin');
+  assert.equal(me.data.openAccess, true);
+  assert.equal((await call('GET', '/api/admin/stats')).status, 200);
+  fs.rmSync(flag);
+  assert.equal((await call('GET', '/api/admin/me')).status, 401);
+});

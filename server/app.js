@@ -33,6 +33,8 @@ function createApp(options = {}) {
   const config = {
     secret: options.secret || process.env.SECRET || loadOrCreateSecret(dataDir),
     appVersion: computeAppVersion(),
+    // Test mode: back-office opens without a password while the file data/acces-libre exists (or ACCES_LIBRE=1).
+    isOpenAccess: () => (options.openAccess ?? process.env.ACCES_LIBRE === '1') || fs.existsSync(path.join(dataDir, 'acces-libre')),
   };
   const db = options.db || openDatabase(options.dbFile || path.join(dataDir, 'app.db'));
   const uploads = createUploadStore(path.join(dataDir, 'uploads'));

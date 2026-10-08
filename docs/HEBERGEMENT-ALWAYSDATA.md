@@ -94,3 +94,20 @@ Vos données (clients, photos, modifications) ne sont **pas touchées** : elles 
 ## Sauvegarde
 
 Téléchargez de temps en temps le dossier `application-camping-car/data`, par exemple avec le gestionnaire de fichiers ou en FTP. Il contient toute la base et toutes les photos.
+
+## Accès libre au back-office (mode test)
+
+Pour ouvrir le back-office **sans mot de passe**, tapez dans la console :
+
+```
+touch ~/application-camping-car/data/acces-libre
+```
+
+Pour **remettre le mot de passe**, supprimez ce fichier et choisissez vos identifiants :
+
+```
+rm ~/application-camping-car/data/acces-libre
+cd ~/application-camping-car && node server/reset-admin.js votre@email.fr VotreMotDePasse
+```
+
+⚠️ En accès libre, toute personne qui connaît l'adresse `/admin/` peut modifier l'application et voir les clients. Réservez ce mode aux tests, sans vraies données clients.

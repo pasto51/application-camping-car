@@ -15,9 +15,14 @@ function register(router) {
   function auth(ctx) {
     const header = ctx.req.headers.authorization || '';
     const payload = verifyToken(header.startsWith('Bearer ') ? header.slice(7) : '', ctx.config.secret);
-    if (!payload) throw new HttpError(401, 'Connexion requise');
-    const user = ctx.db.prepare('SELECT id, email, name, role, dealership_id FROM admins WHERE id = ?').get(payload.sub);
-    if (!user) throw new HttpError(401, 'Compte supprimé');
+    let user;
+    if (payload) {
+      user = ctx.db.prepare('SELECT id, email, name, role, dealership_id FROM admins WHERE id = ?').get(payload.sub);
+      if (!user) throw new HttpError(401, 'Compte supprimé');
+    } else if (ctx.config.isOpenAccess()) {
+      user = ctx.db.prepare("SELECT id, email, name, role, dealership_id FROM admins WHERE role = 'admin' ORDER BY id LIMIT 1").get();
+    }
+    if (!user) throw new HttpError(401, 'Connexion requise');
     ctx.user = user;
     return user;
   }
@@ -50,7 +55,7 @@ function register(router) {
     return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id }) };
   });
 
-  router.get('/api/admin/me', (ctx) => camel(auth(ctx)));
+  router.get('/api/admin/me', (ctx) => ({ ...camel(auth(ctx)), openAccess: ctx.config.isOpenAccess() }));
 
   router.get('/api/admin/stats', (ctx) => {
     const user = auth(ctx);

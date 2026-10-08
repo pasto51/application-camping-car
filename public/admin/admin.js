@@ -89,12 +89,16 @@ function renderShell() {
       <div class="me">
         <strong>${esc(state.user.name || state.user.email)}</strong>
         <small>${isAdmin() ? 'Administrateur' : 'Concession'}</small>
-        <button class="btn small" id="logout">Se déconnecter</button>
+        ${
+          state.user.openAccess
+            ? '<small class="open-access">⚠️ Accès libre, sans mot de passe (mode test)</small>'
+            : '<button class="btn small" id="logout">Se déconnecter</button>'
+        }
       </div>
     </aside>
     <main class="content" id="content"></main>
   </div>`;
-  root.querySelector('#logout').addEventListener('click', logout);
+  root.querySelector('#logout')?.addEventListener('click', logout);
   showSection(state.section);
 }
 
@@ -834,7 +838,7 @@ async function customerDetail(el, id) {
 
 (async function start() {
   state.section = location.hash.slice(1) || 'dashboard';
-  if (!state.token) return renderLogin();
+  // Without a token, still try: the server may be in open-access (test) mode.
   try {
     state.user = await api('GET', '/api/admin/me');
     renderShell();
