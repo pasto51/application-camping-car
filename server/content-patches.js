@@ -7,7 +7,7 @@
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
 const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
-const { CONFORT } = require('./diagnostics-confort');
+const { CONFORT, CONFORT_2 } = require('./diagnostics-confort');
 // Store first: specialised products sold in the store instead of home remedies (see CLAUDE.md).
 const STORE_PRODUCTS = require('./seed/diag-magasin.json');
 const STORE_QUESTIONS = [
@@ -221,6 +221,22 @@ const PATCHES = [
       let changed = 0;
       let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
       for (const d of CONFORT) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      return changed;
+    },
+  },
+  {
+    // Second series of comfort problems (TV, tyre pressure, camping-car GPS, rattles, weight, dog, step, mats, outdoor shower,
+    // washing, winter storage, engine battery, 12 V appliances, drinking water, wind and awning, roof rack, scooter, lighting,
+    // cooking smells, extension lead).
+    key: '2026-10-13-problematiques-confort-2',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of CONFORT_2) {
         if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
         db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
         changed++;

@@ -30,7 +30,7 @@ Mot de passe de tous les comptes démo : `demo1234`. Les liens clients ne serven
    - Accueil : son véhicule, son plan, le SAV et le Magasin de **sa** concession, chacun avec « Appeler » et « Écrire » ; un espace client simple, en gros caractères.
    - « La concession vous a répondu » : il lit la réponse du SAV et répond.
    - **Diagnostic** : une panne guidée pas à pas, le client teste pièce par pièce (ex. « Mon store s'ouvre un peu en roulant », « Mon porte-vélos bouge en roulant »).
-   - **Confort = vente** : « J'ai de la buée sur le pare-brise », « Ma batterie ne tient pas deux jours », « Mon camping-car balance en virage »… l'appli conseille le produit (isolant extérieur, lithium ou solaire, suspensions pneumatiques) et « Demander au magasin » envoie la demande au magasin.
+   - **Confort = vente** : « J'ai de la buée sur le pare-brise », « Ma batterie ne tient pas deux jours », « Mon camping-car balance en virage », « Je ne sais jamais si mes pneus sont bien gonflés », « Monter dans la cellule est difficile »… (41 situations) l'appli conseille le produit (isolant extérieur, lithium ou solaire, suspensions pneumatiques, capteurs de pression, marchepied électrique) et « Demander au magasin » envoie la demande au magasin.
    - **🛒 Demander une pièce** : photo, modèle, référence. Sous garantie, la demande part **au SAV** ; hors garantie, **au magasin**.
    - **Mon espace client** : ses infos, sa garantie, son code, ses notifications, l'export ou la suppression de ses données (RGPD).
 2. **La concession, sur le PC**

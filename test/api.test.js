@@ -52,7 +52,7 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   assert.ok(v114 && v114.photoUrl, 'V114 with its photo');
   const admin = await login('admin@test.fr', 'motdepasse123');
   const diags = (await call('GET', '/api/admin/diagnostics', { token: admin })).data;
-  assert.equal(diags.length, 78);
+  assert.equal(diags.length, 98);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
   assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 188);
 
@@ -75,7 +75,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
   // Data the app runs on
   const { data } = await call('GET', '/api/app/data', { token });
   assert.equal(data.equipment.length, 188);
-  assert.equal(data.diagnostics.length, 78);
+  assert.equal(data.diagnostics.length, 98);
   // Written from the spare-parts catalogue: bike rack and the store parts that wear (no generator)
   assert.ok(data.diagnostics.some((x) => x.id === 'h_portevelos') && !data.diagnostics.some((x) => x.id === 'g_groupe'));
   // Comfort problems that lead to a product of the store
