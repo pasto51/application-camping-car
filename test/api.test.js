@@ -412,3 +412,11 @@ test('roles: salespeople see the dealership but manage their own customers; the 
   const app2 = (await call('GET', '/api/app/data', { token: h.token })).data;
   assert.equal(app2.dealer.store.phone, '05 00 00 00 00');
 });
+
+test('« rester connecté » gives a 15-day session, otherwise 12 hours', async () => {
+  const exp = (t) => JSON.parse(Buffer.from(t.split('.')[0], 'base64url').toString()).exp - Date.now() / 1000;
+  const long = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123', remember: true } })).data.token;
+  const short = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123' } })).data.token;
+  assert.ok(exp(long) > 14 * 86400 && exp(long) <= 15 * 86400);
+  assert.ok(exp(short) <= 12 * 3600);
+});

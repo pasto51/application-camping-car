@@ -163,3 +163,5 @@ textarea { font: inherit; color: var(--text); background: var(--card); border: 1
 .layout-card small.ok-l { color: var(--ok); font-weight: 600; }
 .layout-card small.ko-l { color: var(--danger); font-weight: 600; }
 .tick small.mdl { display: block; font-size: .8rem; color: var(--muted); font-weight: 600; }
+.remember { flex-direction: row; align-items: center; gap: 10px; color: var(--text); font-weight: 500; }
+.remember input { width: 20px; height: 20px; }

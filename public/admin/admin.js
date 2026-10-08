@@ -57,6 +57,7 @@ function renderLogin() {
       <h1>Back-office Camping-Car</h1>
       <label>E-mail<input name="email" type="email" required autocomplete="username"></label>
       <label>Mot de passe<input name="password" type="password" required autocomplete="current-password"></label>
+      <label class="check"><input type="checkbox" name="remember" checked> Rester connecté 15 jours sur cet appareil</label>
       <button class="btn primary">Se connecter</button>
     </form>
   </div>`;
@@ -64,7 +65,7 @@ function renderLogin() {
     e.preventDefault();
     const f = new FormData(e.target);
     try {
-      const res = await api('POST', '/api/admin/login', { email: f.get('email'), password: f.get('password') });
+      const res = await api('POST', '/api/admin/login', { email: f.get('email'), password: f.get('password'), remember: f.get('remember') === 'on' });
       setToken(res.token);
       state.user = res.user;
       renderShell();
@@ -104,7 +105,7 @@ function renderShell() {
         <strong>${esc(state.user.name || state.user.email)}</strong>
         <small>${esc(ROLE_LABELS[state.user.role] || 'Concession')}</small>
         ${
-          state.user.openAccess
+          state.user.openAccess && !state.token
             ? '<small class="open-access">⚠️ Accès libre, sans mot de passe (mode test)</small>'
             : '<button class="btn small" id="logout">Se déconnecter</button>'
         }

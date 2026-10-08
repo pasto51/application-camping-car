@@ -150,7 +150,8 @@ function register(router) {
     const email = String(body.email || '').trim().toLowerCase();
     const user = db.prepare('SELECT * FROM admins WHERE email = ?').get(email);
     if (!user || !verifyPassword(body.password || '', user.password_hash)) throw new HttpError(401, 'Identifiants incorrects');
-    const token = signToken({ sub: user.id, role: user.role }, config.secret);
+    // « Rester connecté » : 15 days on this device; otherwise the session ends after 12 hours.
+    const token = signToken({ sub: user.id, role: user.role }, config.secret, body.remember ? 60 * 60 * 24 * 15 : 60 * 60 * 12);
     return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id }) };
   });
 

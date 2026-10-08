@@ -67,13 +67,14 @@ function renderLogin() {
     <p class="muted" style="margin:0;text-align:center">Cochez les équipements et photographiez-les depuis le véhicule.</p>
     <label>E-mail<input name="email" type="email" required autocomplete="username"></label>
     <label>Mot de passe<input name="password" type="password" required autocomplete="current-password"></label>
+    <label class="remember"><input type="checkbox" name="remember" checked> Rester connecté 15 jours sur ce téléphone</label>
     <button class="btn primary block">Se connecter</button>
   </form></div>`;
   root.querySelector('#login').addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
     try {
-      const res = await api('POST', '/api/admin/login', { email: f.get('email'), password: f.get('password') });
+      const res = await api('POST', '/api/admin/login', { email: f.get('email'), password: f.get('password'), remember: f.get('remember') === 'on' });
       token = res.token;
       store.set(TOKEN_KEY, token);
       start();
@@ -107,9 +108,16 @@ async function renderVehicles() {
         })
         .join('')}
       <button class="btn block" id="newv" style="margin-top:20px">＋ Nouveau véhicule</button>
+      ${token ? '<button class="linkbtn" id="logout" style="display:block;margin:24px auto 0">Se déconnecter</button>' : ''}
     </div>`;
   root.querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => openVehicle(Number(b.dataset.v))));
   root.querySelector('#newv').onclick = () => newVehicle(brands);
+  root.querySelector('#logout')?.addEventListener('click', () => {
+    token = null;
+    store.set(TOKEN_KEY, null);
+    store.set(LAST_KEY, null);
+    renderLogin();
+  });
 }
 
 function newVehicle(brands) {

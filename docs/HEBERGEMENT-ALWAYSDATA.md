@@ -127,3 +127,13 @@ Le serveur a besoin d'une adresse e-mail pour envoyer les notifications.
 4. Dans **Concessions**, renseignez l'**e-mail** de chaque concession : c'est là que partent les nouvelles demandes.
 
 Si le nom du serveur SMTP est différent, il s'affiche dans **E-mails** sur alwaysdata.
+
+## Mettre un mot de passe au back-office (fin du mode test)
+
+Dans la console SSH :
+
+```
+cd ~/application-camping-car && node server/reset-admin.js 12345678 && rm -f data/acces-libre && echo OK
+```
+
+(remplacez 12345678 par le mot de passe voulu ; s'il y a plusieurs administrateurs, ajoutez l'e-mail avant le mot de passe). Puis **Web → Sites → Redémarrer**. À la connexion, « Rester connecté 15 jours » évite de retaper le mot de passe ; « Se déconnecter » est en bas du menu (et en bas de la liste des véhicules dans le Relevé).
