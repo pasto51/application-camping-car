@@ -13,6 +13,7 @@
 //   node server/demo.js --supprimer        → efface toute la démo
 //   SITE_URL=https://mon-site.fr node server/demo.js   → adresse du site dans les liens (par défaut appvdl.alwaysdata.net)
 
+const http = require('node:http');
 const { createApp } = require('./app');
 const { signToken, hashPassword } = require('./auth');
 
@@ -173,21 +174,56 @@ async function main() {
   await new Promise((r) => app.server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   const adminToken = signToken({ sub: admin.id, role: 'admin' }, config.secret, 600);
-  async function call(method, url, body, token = adminToken) {
-    const res = await fetch(base + url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        // Links in the answers point to the real site, not to this temporary server.
-        'X-Forwarded-Proto': SITE.protocol.replace(':', ''),
-        'X-Forwarded-Host': SITE.host,
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
+  // Plain HTTP on a fresh connection for each call (no fetch, no keep-alive, no proxy): the most robust on any host.
+  function request(method, url, body, token) {
+    const payload = body === undefined ? null : Buffer.from(JSON.stringify(body));
+    return new Promise((resolve, reject) => {
+      const req = http.request(
+        base + url,
+        {
+          method,
+          agent: false,
+          headers: {
+            'Content-Type': 'application/json',
+            Connection: 'close',
+            Authorization: `Bearer ${token}`,
+            // Links in the answers point to the real site, not to this temporary server.
+            'X-Forwarded-Proto': SITE.protocol.replace(':', ''),
+            'X-Forwarded-Host': SITE.host,
+            ...(payload ? { 'Content-Length': payload.length } : {}),
+          },
+        },
+        (res) => {
+          const chunks = [];
+          res.on('data', (c) => chunks.push(c));
+          res.on('end', () => {
+            let data = null;
+            try {
+              data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+            } catch {}
+            resolve({ status: res.statusCode, data });
+          });
+          res.on('error', reject);
+        }
+      );
+      req.setTimeout(60000, () => req.destroy(new Error('pas de réponse en 60 s')));
+      req.on('error', reject);
+      req.end(payload || undefined);
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(`${method} ${url} : ${data?.error || res.status}`);
-    return data;
+  }
+  async function call(method, url, body, token = adminToken) {
+    let res;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        res = await request(method, url, body, token);
+        break;
+      } catch (err) {
+        if (attempt >= 3) throw new Error(`${method} ${url} : connexion impossible au serveur de démo (${err.code || err.message})`);
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+      }
+    }
+    if (res.status < 200 || res.status >= 300) throw new Error(`${method} ${url} : ${res.data?.error || res.status}`);
+    return res.data;
   }
   const staffToken = (id, role) => signToken({ sub: id, role }, config.secret, 600);
   let v = 0;
@@ -425,6 +461,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('Erreur :', err.message);
+  console.error('Erreur :', err.message + (err.cause ? ` (${err.cause.code || err.cause.message})` : ''));
   process.exit(1);
 });
