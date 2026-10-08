@@ -231,6 +231,15 @@ def main():
     s = replace_once(s, 'function baseOwn(){var o = {}; EQUIP.forEach(function(q){if(q.base) o[q.id]=true}); V114_EXTRA.forEach(function(i){o[i]=true}); Object.keys(o).forEach(function(i){if(PHOTOS[i]==null) delete o[i]}); return o}',
                      'function baseOwn(){var o = {}; (DATA.vehicle.equipment||[]).forEach(function(i){if(eqById0(i)) o[i]=true}); return o}')
     s = replace_once(s, "+(q.base?'<small>De série</small>':'')", "")
+    # Store requests (spare part or replacement): a button on each equipment and on a diagnosis result.
+    s = replace_once(s, "+modBlock(it)+'</div>';\n  }", "+modBlock(it)+'<button class=\"btn alt partbtn\" type=\"button\" data-part=\"'+it.id+'\">🛒 Pièce ou remplacement</button></div>';\n  }")
+    s = replace_once(s, 'function modSave(){lsSet("cdb_mod",JSON.stringify(mods))}',
+                     'function modSave(){lsSet("cdb_mod",JSON.stringify(mods))}\n'
+                     '  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name:it.name, photo: UPH[id] || (PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null)), model:m.name||"", ref:m.ref||""}};\n'
+                     '  window.CDB_SETMOD = function(id,name,ref){if(!eqById(id)) return; var m = mods[id] = mods[id]||{}; m.name = String(name||"").slice(0,80); m.ref = String(ref||"").slice(0,80); modSave()};')
+    s = replace_once(s, '$("#whatbody").addEventListener("click",function(e){\n', '$("#whatbody").addEventListener("click",function(e){\n    var pb = e.target.closest("[data-part]"); if(pb){window.CDB_CLOUD.partRequest(pb.dataset.part); return}\n')
+    s = replace_once(s, '<button class="btn" data-act="shop">Voir en magasin</button>', '<button class="btn" data-act="shop">Demander au magasin</button>')
+    s = replace_once(s, 'else toast("Démo : la fiche produit s\'ouvrirait ici.");', 'else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0])}')
     # No "reset to the model's list" button: one touch would erase what the dealership set with the customer.
     s = replace_once(s, '$("#eqreset").addEventListener("click",function(){own = baseOwn(); syncImplied(); saveOwn(); renderEquip(); toast("Liste de série rétablie.")});', '')
     # Brand and model of each equipment: those noted for the vehicle (back-office / relevé) come pre-filled, the customer's own notes win.

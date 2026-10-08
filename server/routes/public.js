@@ -1,7 +1,7 @@
 'use strict';
 
 const { HttpError } = require('../http');
-const { transaction, getSetting } = require('../db');
+const { transaction, getSetting, stripVin } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter } = require('../auth');
 const { appData, readProfile } = require('../catalog');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
@@ -70,7 +70,7 @@ function register(router) {
       .prepare('SELECT v.id, v.name, v.model_year, b.name AS brand_name FROM vehicles v JOIN brands b ON b.id = v.brand_id WHERE v.id = ?')
       .get(customer.vehicle_id);
     const dealership = db.prepare('SELECT id, name, city, phone, email FROM dealerships WHERE id = ?').get(customer.dealership_id);
-    const { recovery_hash, ...publicCustomer } = customer;
+    const { recovery_hash, vin, ...publicCustomer } = customer;
     return {
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       customer: camel(publicCustomer),
@@ -154,7 +154,7 @@ function register(router) {
           optEmail(c.email),
           optStr(c.phone, 40),
           optStr(c.plate, 20),
-          optStr(c.vin, 40),
+          null, // the VIN stays on the phone
           optDate(c.handoverDate) || new Date().toISOString().slice(0, 10),
           // No usable code until the dealership validates the handover in the app.
           sha256(randomToken())
@@ -205,7 +205,8 @@ function register(router) {
     const customer = requireCustomer(ctx);
     const { db, params, body, uploads } = ctx;
     if (!STATE_KEYS.has(params.key)) throw new HttpError(400, 'Donnée inconnue');
-    const value = body.value == null ? null : String(body.value);
+    let value = body.value == null ? null : String(body.value);
+    if (params.key === 'cdb_hand' && value) value = stripVin(value);
     if (value && value.length > MAX_STATE_BYTES) throw new HttpError(413, 'Données trop volumineuses');
     const previous = db.prepare('SELECT value FROM customer_state WHERE customer_id = ? AND key = ?').get(customer.id, params.key)?.value ?? null;
     const stored = PHOTO_KEYS.has(params.key) ? storePhotos(uploads, params.key, value, previous) : value;
@@ -233,9 +234,9 @@ function register(router) {
     const expires = new Date(now);
     expires.setFullYear(expires.getFullYear() + ACCESS_YEARS);
     db.prepare(
-      `UPDATE customers SET recovery_hash = ?, access_code_at = ?, access_expires_at = ?, first_name = COALESCE(?, first_name), vin = COALESCE(?, vin),
+      `UPDATE customers SET recovery_hash = ?, access_code_at = ?, access_expires_at = ?, first_name = COALESCE(?, first_name),
        updated_at = datetime('now') WHERE id = ?`
-    ).run(sha256(core), now.toISOString(), expires.toISOString(), optStr(body.firstName, 100), optStr(body.vin, 40), customer.id);
+    ).run(sha256(core), now.toISOString(), expires.toISOString(), optStr(body.firstName, 100), customer.id);
     return {
       code: formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core),
       date: now.toLocaleDateString('fr-FR'),
@@ -248,9 +249,79 @@ function register(router) {
     const msgs = db
       .prepare('SELECT m.* FROM report_messages m JOIN reports r ON r.id = m.report_id WHERE r.customer_id = ? ORDER BY m.id')
       .all(customerId);
-    for (const r of reports) r.messages = camelAll(msgs.filter((m) => m.report_id === r.id));
+    for (const r of reports) {
+      r.messages = camelAll(msgs.filter((m) => m.report_id === r.id));
+      r.part = r.part ? JSON.parse(r.part) : null;
+    }
     return reports;
   }
+
+  // Vehicle details the store needs (never the VIN: it stays on the phone).
+  router.put('/api/me/info', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const { body, db } = ctx;
+    if (body.cellNumber !== undefined) db.prepare('UPDATE customers SET cell_number = ? WHERE id = ?').run(optStr(body.cellNumber, 40), customer.id);
+    if (body.vehicleYear !== undefined) db.prepare('UPDATE customers SET vehicle_year = ? WHERE id = ?').run(optStr(body.vehicleYear, 10), customer.id);
+    return session(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id)).customer;
+  });
+
+  const NEEDS = { piece: 'Pièce détachée', remplacement: 'Remplacement de l’équipement', accessoire: 'Accessoire ou consommable' };
+
+  // A photo for a store request: a new one taken now, or one the customer already has (theirs or their vehicle's).
+  // It is copied, so the request keeps it even if the original changes.
+  function partPhoto(ctx, customer, photo) {
+    if (typeof photo !== 'string' || !photo) return null;
+    if (photo.startsWith('data:')) return ctx.uploads.saveDataUrl(photo);
+    const vehicle = ctx.db.prepare('SELECT photo_url, profile FROM vehicles WHERE id = ?').get(customer.vehicle_id);
+    const allowed = new Set([...statePhotoUrls(ctx.db, customer.id), vehicle?.photo_url, ...(vehicle ? readProfile(vehicle).photos.map((p) => p.url) : [])].filter(Boolean));
+    return allowed.has(photo) ? ctx.uploads.copy(photo) : null;
+  }
+
+  // Spare part or replacement equipment: everything the store needs to identify it, sent to the store's e-mail.
+  router.post('/api/me/parts', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const { db, body } = ctx;
+    const need = NEEDS[body.need] ? body.need : 'piece';
+    const equipmentName = optStr(body.equipmentName, 120);
+    const product = optStr(body.product, 200);
+    if (!equipmentName && !product) throw new HttpError(400, 'Indiquez l’équipement ou la pièce');
+    const part = {
+      need,
+      equipmentId: optStr(body.equipmentId, 40),
+      equipmentName,
+      product,
+      model: optStr(body.model, 80),
+      ref: optStr(body.ref, 80),
+      cellNumber: optStr(body.cellNumber, 40),
+      vehicleYear: optStr(body.vehicleYear, 10),
+      photoUrl: partPhoto(ctx, customer, body.photo),
+      vinSent: !!optStr(body.vin, 40),
+    };
+    const message = optStr(body.message, 4000);
+    const title = `${need === 'remplacement' ? 'Remplacement' : 'Pièce'} : ${equipmentName || product}`.slice(0, 150);
+    const description = [
+      NEEDS[need],
+      equipmentName && `Équipement : ${equipmentName}`,
+      product && `Pièce ou produit : ${product}`,
+      part.model && `Marque et modèle : ${part.model}`,
+      part.ref && `Référence ou n° de série : ${part.ref}`,
+      part.cellNumber && `N° de cellule : ${part.cellNumber}`,
+      part.vehicleYear && `Année du véhicule : ${part.vehicleYear}`,
+      message,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const { lastInsertRowid } = db
+      .prepare("INSERT INTO reports (customer_id, title, description, kind, part, photos) VALUES (?, ?, ?, 'piece', ?, ?)")
+      .run(customer.id, title, description, JSON.stringify(part), JSON.stringify(part.photoUrl ? [part.photoUrl] : []));
+    if (part.cellNumber) db.prepare('UPDATE customers SET cell_number = ? WHERE id = ?').run(part.cellNumber, customer.id);
+    if (part.vehicleYear) db.prepare('UPDATE customers SET vehicle_year = ? WHERE id = ?').run(part.vehicleYear, customer.id);
+    const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(lastInsertRowid);
+    const fresh = db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id);
+    // The VIN goes in the e-mail to the store only: it is not saved anywhere by the application.
+    ctx.notify.customerWrote({ report, customer: fresh, text: description, origin: ctx.origin, isNew: true, part, vin: optStr(body.vin, 40) }).catch(() => {});
+    return { ...camel(report), part, messages: [] };
+  });
 
   // Workshop appointment request or problem, sent to the dealership (which is told by e-mail).
   router.post('/api/me/requests', (ctx) => {

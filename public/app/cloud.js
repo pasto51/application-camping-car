@@ -78,6 +78,23 @@
     } catch (e) { /* ignore */ }
   }
 
+  // The VIN never leaves this phone: it is kept apart (cdb_vin) and taken out of the handover checklist before saving.
+  var VIN_KEY = 'cdb_vin';
+  function stripVin(key, value) {
+    if (key !== 'cdb_hand' || value == null) return value;
+    try {
+      var o = JSON.parse(value);
+      if (typeof o.vin === 'string') { if (o.vin.trim()) lsSet(VIN_KEY, o.vin.trim().slice(0, 40)); else lsDel(VIN_KEY); }
+      delete o.vin;
+      return JSON.stringify(o);
+    } catch (e) { return value; }
+  }
+  function withLocalVin(key, value) {
+    if (key !== 'cdb_hand' || value == null) return value;
+    try { var o = JSON.parse(value); o.vin = lsGet(VIN_KEY) || ''; return JSON.stringify(o); } catch (e) { return value; }
+  }
+  function localVin() { return lsGet(VIN_KEY) || ''; }
+
   function flush() {
     timer = null;
     if (saving || !session) return;
@@ -91,7 +108,7 @@
         if (substitute(key, pending[key]) === value) {
           delete pending[key];
           // Keep the light version (photo URLs) on the phone.
-          if (res.value == null) lsDel(key); else lsSet(key, res.value);
+          if (res.value == null) lsDel(key); else lsSet(key, withLocalVin(key, res.value));
         }
         lsSet(PENDING_KEY, JSON.stringify(pending));
         lastSaved = new Date();
@@ -110,6 +127,7 @@
   window.CDB_SYNC = {
     changed: function (key, value) {
       if (STATE_KEYS.indexOf(key) < 0 || !session) return;
+      value = stripVin(key, value);
       pending[key] = value == null ? null : value;
       if (!lsSet(PENDING_KEY, JSON.stringify(pending))) lsDel(PENDING_KEY);
       clearTimeout(timer); timer = setTimeout(flush, 700);
@@ -122,10 +140,10 @@
   function applyState(state) {
     STATE_KEYS.forEach(function (k) {
       if (Object.prototype.hasOwnProperty.call(pending, k)) {
-        if (pending[k] == null) lsDel(k); else lsSet(k, pending[k]);
+        if (pending[k] == null) lsDel(k); else lsSet(k, withLocalVin(k, pending[k]));
         return;
       }
-      if (state && state[k] != null) lsSet(k, state[k]); else lsDel(k);
+      if (state && state[k] != null) lsSet(k, withLocalVin(k, state[k])); else lsDel(k);
     });
   }
 
@@ -151,7 +169,7 @@
     accessCode: function (info) {
       return askDealerCode('Valider la mise en main', 'Saisissez votre code concession pour générer le code d’accès du client.').then(function (code) {
         if (!code) return null;
-        return api('POST', '/api/me/access-code', { dealershipCode: code, firstName: info.firstName, vin: info.vin });
+        return api('POST', '/api/me/access-code', { dealershipCode: code, firstName: info.firstName });
       });
     },
     sendRequest: function (body) {
@@ -161,6 +179,93 @@
       return api('POST', '/api/me/requests', body).then(function (r) { openReq[r.id] = true; loadRequests(); return r; });
     },
   };
+
+  // ---------- Store request: spare part or replacement ----------
+
+  function vehicleYear() {
+    var c = (session && session.customer) || {};
+    var m = /\b(19|20)\d{2}\b/.exec((session && session.vehicle && session.vehicle.modelYear) || '');
+    return c.vehicleYear || (m ? m[0] : '');
+  }
+
+  function partRequest(id, product) {
+    var info = (id && window.CDB_PARTINFO && window.CDB_PARTINFO(id)) || { id: null, name: '', photo: null, model: '', ref: '' };
+    var c = (session && session.customer) || {}, vin = localVin(), photo = info.photo, newPhoto = null;
+    var m = document.createElement('div');
+    m.className = 'cloud-modal cloud-sheet';
+    m.innerHTML = '<form class="card" novalidate><p class="eyebrow">Demande au magasin</p><h3>' + esc(info.name || 'Pièce ou équipement') + '</h3>' +
+      '<div class="cloud-part-photo">' + (photo ? '<img src="' + esc(photo) + '" alt="">' : '<span>📷 Pas encore de photo</span>') + '</div>' +
+      '<label class="cloud-photo-btn btn alt">' + (photo ? 'Prendre une autre photo (pièce abîmée, étiquette…)' : 'Prendre la pièce en photo') + '<input type="file" accept="image/*" capture="environment" hidden data-photo></label>' +
+      '<p class="eyebrow">Il me faut</p><div class="cloud-need">' +
+      [['piece', 'Une pièce détachée'], ['remplacement', 'Remplacer l’équipement'], ['accessoire', 'Un accessoire ou consommable']].map(function (o, i) {
+        return '<label><input type="radio" name="need" value="' + o[0] + '"' + (i === 0 ? ' checked' : '') + '> ' + o[1] + '</label>';
+      }).join('') + '</div>' +
+      (info.name ? '' : '<label class="eyebrow">Équipement concerné</label><input class="search" name="equipmentName" maxlength="120" placeholder="ex : store, pompe à eau…">') +
+      '<label class="eyebrow">Pièce ou produit (si vous le savez)</label><input class="search" name="product" maxlength="200" value="' + esc(product || '') + '" placeholder="ex : joint, bouchon, thermostat…">' +
+      '<label class="eyebrow">Marque et modèle</label><input class="search" name="model" maxlength="80" value="' + esc(info.model) + '" placeholder="Sur l’étiquette de l’appareil">' +
+      '<label class="eyebrow">Référence ou numéro de série</label><input class="search" name="ref" maxlength="80" value="' + esc(info.ref) + '" placeholder="Sur l’étiquette ou la plaque">' +
+      '<label class="eyebrow">Numéro de cellule</label><input class="search" name="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Plaque du constructeur de la cellule">' +
+      '<small class="sub">Sur la plaque d’identification de la cellule (souvent près de la porte d’entrée ou dans un placard). Votre conseiller peut aussi vous le donner.</small>' +
+      '<label class="eyebrow">Année du véhicule</label><input class="search" name="vehicleYear" maxlength="10" inputmode="numeric" value="' + esc(vehicleYear()) + '">' +
+      '<label class="eyebrow">VIN (numéro de série du véhicule)</label><input class="search" name="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(vin) + '" placeholder="Carte grise, case E">' +
+      '<label class="cloud-check"><input type="checkbox" name="sendVin"' + (vin ? ' checked' : '') + '> Joindre mon VIN à l’e-mail envoyé au magasin</label>' +
+      '<small class="sub">Votre VIN reste sur ce téléphone : il n’est jamais enregistré sur nos serveurs, seulement transmis au magasin dans l’e-mail de cette demande si vous cochez la case.</small>' +
+      '<label class="eyebrow">Message</label><textarea class="search" name="message" rows="3" maxlength="4000" placeholder="Ce qui ne va pas, la quantité…"></textarea>' +
+      '<div class="btns"><button type="button" class="btn alt" data-x>Annuler</button><button class="btn">Envoyer au magasin</button></div></form>';
+    document.body.appendChild(m);
+    document.body.style.overflow = 'hidden';
+    function close() { m.remove(); document.body.style.overflow = ''; }
+    m.querySelector('[data-x]').onclick = close;
+    m.querySelector('[data-photo]').onchange = function (e) {
+      var f = e.target.files && e.target.files[0]; if (!f) return;
+      compress(f).then(function (url) {
+        newPhoto = url;
+        m.querySelector('.cloud-part-photo').innerHTML = '<img src="' + url + '" alt="">';
+      }).catch(function () { toast('Photo illisible'); });
+    };
+    m.querySelector('form').onsubmit = function (e) {
+      e.preventDefault();
+      var f = e.target, val = function (n) { return f.elements[n] ? f.elements[n].value.trim() : ''; };
+      var body = {
+        need: (f.querySelector('[name=need]:checked') || {}).value,
+        equipmentId: info.id, equipmentName: info.name || val('equipmentName'), product: val('product'),
+        model: val('model'), ref: val('ref'), cellNumber: val('cellNumber'), vehicleYear: val('vehicleYear'), message: val('message'),
+        photo: newPhoto || photo || null,
+        vin: f.elements.sendVin.checked ? val('vin') : '',
+      };
+      if (!body.equipmentName && !body.product) { toast('Indiquez l’équipement ou la pièce'); return; }
+      // What the customer typed is kept for next time: brand and reference on the equipment, VIN on this phone only.
+      if (info.id && window.CDB_SETMOD) window.CDB_SETMOD(info.id, body.model, body.ref);
+      if (val('vin')) lsSet(VIN_KEY, val('vin')); else lsDel(VIN_KEY);
+      var btn = f.querySelector('button:not([type=button])'); btn.disabled = true;
+      api('POST', '/api/me/parts', body).then(function (r) {
+        if (session.customer) { session.customer.cellNumber = body.cellNumber || session.customer.cellNumber; session.customer.vehicleYear = body.vehicleYear || session.customer.vehicleYear; saveSession(); }
+        openReq[r.id] = true; loadRequests();
+        f.innerHTML = '<p class="eyebrow">Demande au magasin</p><h3>Demande envoyée ✓</h3><p class="sub">' + esc((DATA && DATA.dealer && DATA.dealer.name) || 'Le magasin') + ' a reçu votre demande avec la photo et les références. La réponse arrivera dans « Mes demandes ».</p>' +
+          '<div class="btns"><button type="button" class="btn alt" data-x>Fermer</button><button type="button" class="btn" data-see>Voir mes demandes</button></div>';
+        f.querySelector('[data-x]').onclick = close;
+        f.querySelector('[data-see]').onclick = function () { close(); var t = document.querySelector('.tile[data-go="rdv"]'); if (t) t.click(); };
+      }).catch(function (err) { btn.disabled = false; toast(err.message); });
+    };
+  }
+
+  // Phone photo → light JPEG data URL.
+  function compress(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var k = Math.min(1, 1600 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+        var ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        resolve(cv.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('image')); };
+      img.src = url;
+    });
+  }
+
+  window.CDB_CLOUD.partRequest = partRequest;
 
   // ---------- Onboarding (before the app) ----------
 
@@ -232,7 +337,7 @@
         '<label class="eyebrow" for="c_tel">Téléphone</label><input class="search" id="c_tel" name="phone" type="tel" autocomplete="off">' +
         '<label class="eyebrow" for="c_mail">E-mail</label><input class="search" id="c_mail" name="email" type="email" autocomplete="off">' +
         '<label class="eyebrow" for="c_plate">Immatriculation</label><input class="search" id="c_plate" name="plate" autocapitalize="characters" autocomplete="off">' +
-        '<label class="eyebrow" for="c_vin">Numéro de série (VIN)</label><input class="search" id="c_vin" name="vin" autocapitalize="characters" autocomplete="off" placeholder="17 caractères">' +
+        '<label class="eyebrow" for="c_vin">Numéro de série (VIN)</label><input class="search" id="c_vin" name="vin" autocapitalize="characters" autocomplete="off" placeholder="17 caractères"><small class="sub">Gardé uniquement sur ce téléphone, jamais sur nos serveurs.</small>' +
         '<label class="eyebrow" for="c_date">Date de mise en main</label><input class="search" id="c_date" name="handoverDate" type="date" value="' + today + '">' +
         '<button class="btn">Créer le compte du client</button></form>' +
         '<p class="sub">Ensuite, l’appli ouvre l’Espace concession : cochez les équipements et vérifiez chaque point avec le client, puis générez son code d’accès.</p>';
@@ -282,7 +387,8 @@
         .catch(function (err) { done(); toast(err.message); });
     }
     if (form.dataset.f === 'client') {
-      api('POST', '/api/handover', { dealershipCode: flow.code, vehicleId: flow.vehicleId, customer: data })
+      var customer = {}; Object.keys(data).forEach(function (k) { if (k !== 'vin') customer[k] = data[k]; }); // the VIN stays on the phone
+      api('POST', '/api/handover', { dealershipCode: flow.code, vehicleId: flow.vehicleId, customer: customer })
         .then(function (res) {
           startSession(res);
           // The handover checklist starts with the customer's name and VIN.
@@ -301,7 +407,7 @@
   });
 
   function clearLocal() {
-    STATE_KEYS.concat([DATA_KEY, PENDING_KEY]).forEach(lsDel);
+    STATE_KEYS.concat([DATA_KEY, PENDING_KEY, VIN_KEY]).forEach(lsDel);
     pending = {};
   }
 
@@ -394,7 +500,7 @@
       return '<div class="card cloud-req' + (unread(r) ? ' unread' : '') + '">' + head +
         (last ? '<p class="sub cloud-last">' + esc(last.author === 'concession' ? dealer + ' : ' : 'Vous : ') + esc(last.body.slice(0, 110)) + (last.body.length > 110 ? '…' : '') + '</p>' : '<p class="sub cloud-last">En attente de la réponse de ' + esc(dealer) + '.</p>') + '</div>';
     }
-    var thread = '<div class="cloud-msg client"><p>' + esc(r.description || r.title).replace(/\n/g, '<br>') + '</p><small>Vous · ' + esc(fmt(r.createdAt)) + '</small></div>' +
+    var thread = '<div class="cloud-msg client">' + (r.part && r.part.photoUrl ? '<img class="cloud-msg-photo" src="' + esc(r.part.photoUrl) + '" alt="">' : '') + '<p>' + esc(r.description || r.title).replace(/\n/g, '<br>') + '</p><small>Vous · ' + esc(fmt(r.createdAt)) + '</small></div>' +
       msgs.map(function (m) {
         return '<div class="cloud-msg ' + esc(m.author) + '"><p>' + esc(m.body).replace(/\n/g, '<br>') + '</p><small>' + (m.author === 'concession' ? esc(dealer) : 'Vous') + ' · ' + esc(fmt(m.createdAt)) + '</small></div>';
       }).join('');
@@ -532,6 +638,13 @@
         api('DELETE', '/api/me').then(function () { session = null; saveSession(); clearLocal(); location.reload(); }).catch(function (err) { toast(err.message); });
       }
       if (b.dataset.acc === 'update') checkUpdates(true);
+      if (b.dataset.acc === 'info') {
+        var get = function (k) { var i = acc.querySelector('[data-info="' + k + '"]'); return i ? i.value.trim() : ''; };
+        if (get('vin')) lsSet(VIN_KEY, get('vin')); else lsDel(VIN_KEY);
+        api('PUT', '/api/me/info', { cellNumber: get('cellNumber'), vehicleYear: get('vehicleYear') })
+          .then(function (cust) { session.customer = cust; saveSession(); toast('Enregistré'); })
+          .catch(function (err) { toast(err.message); });
+      }
       if (b.dataset.acc === 'push-on') enablePush().then(function () { toast('Notifications activées'); renderAccount(); }).catch(function (err) { toast(err.message); renderAccount(); });
       if (b.dataset.acc === 'push-off') disablePush().then(function () { toast('Notifications désactivées'); renderAccount(); });
     });
@@ -540,14 +653,27 @@
 
   function renderAccount() {
     var el = document.getElementById('cloudacc'); if (!el || !session) return;
+    // Keep what is being typed in « Mon véhicule » when the card refreshes (it does on every save).
+    var typed = {}, veh = el.querySelector('details.cloud-veh'), wasOpen = veh && veh.open, focus = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.info;
+    Array.prototype.forEach.call(el.querySelectorAll('[data-info]'), function (i) { typed[i.dataset.info] = i.value; });
     var n = Object.keys(pending).length, c = session.customer || {};
     var status = n ? (navigator.onLine ? 'Sauvegarde en cours…' : 'Hors connexion : ' + n + ' modification' + (n > 1 ? 's' : '') + ' en attente, envoyée' + (n > 1 ? 's' : '') + ' au retour du réseau.')
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
     el.innerHTML = '<p class="eyebrow">Mon compte</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
       (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p><p class="sub">' + esc(status) + '</p>' +
       '<div id="cloudpush"></div>' +
+      '<details class="cloud-veh"><summary>Mon véhicule : références pour le magasin</summary>' +
+      '<label class="eyebrow">Année du véhicule</label><input class="search" data-info="vehicleYear" maxlength="10" inputmode="numeric" value="' + esc(vehicleYear()) + '">' +
+      '<label class="eyebrow">Numéro de cellule</label><input class="search" data-info="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Plaque du constructeur de la cellule">' +
+      '<label class="eyebrow">VIN (numéro de série du véhicule)</label><input class="search" data-info="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(localVin()) + '" placeholder="Carte grise, case E">' +
+      '<small class="sub">Le VIN reste sur ce téléphone : il n’est pas sauvegardé sur nos serveurs. Sur un nouveau téléphone, il faudra le saisir à nouveau.</small>' +
+      '<button class="btn alt" type="button" data-acc="info">Enregistrer</button></details>' +
       '<div class="btns"><button class="btn alt" data-acc="update">Vérifier les mises à jour</button><button class="btn alt" data-acc="logout">Se déconnecter</button></div>' +
       '<p style="text-align:center"><button class="lnk" data-acc="delete" type="button">Supprimer mon compte</button></p>';
+    if (veh) {
+      var nv = el.querySelector('details.cloud-veh'); nv.open = wasOpen;
+      Array.prototype.forEach.call(el.querySelectorAll('[data-info]'), function (i) { if (typed[i.dataset.info] != null) i.value = typed[i.dataset.info]; if (focus === i.dataset.info) i.focus(); });
+    }
     pushState().then(function (st) {
       var p = document.getElementById('cloudpush'); if (!p) return;
       var txt = {

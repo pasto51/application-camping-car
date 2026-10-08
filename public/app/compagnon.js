@@ -458,6 +458,8 @@ window.startCompagnon = function(DATA){
   }
   var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} var vm = DATA.vehicle.models||{}; Object.keys(vm).forEach(function(k){var m = o[k] = o[k]||{}; if(!m.name && vm[k]) m.name = vm[k]}); return o})();
   function modSave(){lsSet("cdb_mod",JSON.stringify(mods))}
+  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name:it.name, photo: UPH[id] || (PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null)), model:m.name||"", ref:m.ref||""}};
+  window.CDB_SETMOD = function(id,name,ref){if(!eqById(id)) return; var m = mods[id] = mods[id]||{}; m.name = String(name||"").slice(0,80); m.ref = String(ref||"").slice(0,80); modSave()};
   var PLATE = DATA.config.PLATE;
   var VARIANTS = DATA.config.VARIANTS;
   var V114_VARS = DATA.vehicle.vars || {};
@@ -480,7 +482,7 @@ window.startCompagnon = function(DATA){
       '<small>À relever '+esc(PLATE[it.id]||"sur l'étiquette ou la plaque de l'équipement, ou dans la notice")+'. Beaucoup de pièces (bonde, joint…) n\'ont pas de numéro : notez alors seulement la marque, ou prenez-les en photo. Tout s\'enregistre tout seul sur ce téléphone, vous n\'avez rien à valider.</small><p class="saved" aria-live="polite" hidden>✓ Enregistré</p></details>';
   }
   function card(it){
-    return '<div class="card">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class="tip">'+esc(it.tip)+'</div>':'')+(varOpt(it.id) && varOpt(it.id)[0]!=="ns" ? '<p class="vline">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+modBlock(it)+'</div>';
+    return '<div class="card">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class="tip">'+esc(it.tip)+'</div>':'')+(varOpt(it.id) && varOpt(it.id)[0]!=="ns" ? '<p class="vline">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+modBlock(it)+'<button class="btn alt partbtn" type="button" data-part="'+it.id+'">🛒 Pièce ou remplacement</button></div>';
   }
   function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
   function zoomTo(s){
@@ -571,6 +573,7 @@ window.startCompagnon = function(DATA){
     setUserPhoto(id,t.files[0],function(){showItem(id)});
   });
   $("#whatbody").addEventListener("click",function(e){
+    var pb = e.target.closest("[data-part]"); if(pb){window.CDB_CLOUD.partRequest(pb.dataset.part); return}
     var im = e.target.closest("img.pic"); if(im){im.classList.toggle("full"); if(im.parentNode.tagName==="FIGURE") im.parentNode.classList.toggle("full"); return}
     var pd = e.target.closest("[data-phdel]"); if(pd){delete UPH[pd.dataset.phdel]; uphSave(); toast("Photo retirée"); showItem(pd.dataset.phdel); return}
     var ed = e.target.closest("[data-eqdel]"); if(ed){
@@ -877,7 +880,7 @@ window.startCompagnon = function(DATA){
         (pro ? '<div class="safety"><b>À faire faire par un professionnel.</b> '+esc(SAFE_PRO)+'</div>' : '') +
         (r.sec ? '<div class="safety">'+esc(r.sec)+'</div>' : '') +
         (none ? '' : '<div class="shop"><b>En rayon</b><p>'+esc(r.prod)+'</p></div>') + keepBlock(s,r) +
-        '<div class="btns">'+(none?'':'<button class="btn" data-act="shop">Voir en magasin</button>')+'<button class="btn'+(none?'':' alt')+'" data-act="rdv">Rendez-vous atelier</button></div>' +
+        '<div class="btns">'+(none?'':'<button class="btn" data-act="shop">Demander au magasin</button>')+'<button class="btn'+(none?'':' alt')+'" data-act="rdv">Rendez-vous atelier</button></div>' +
         '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\'atelier.</p></div>' + back +
         '<button class="btn alt" id="dagain" style="width:100%;margin-top:12px">Un autre souci</button>';
   }
@@ -912,7 +915,7 @@ window.startCompagnon = function(DATA){
       else if(a.dataset.act==="rdvfree"){openRdv("souci","")}
       else if(a.dataset.act==="fill"){$("#wsearch").value = ""; go("what"); showItem(sj.eq)}
       else if(a.dataset.act==="copy"){var tx = keepText(sj,rr); try{navigator.clipboard.writeText(tx).then(function(){toast("Fiche copiée")},function(){toast(tx)})}catch(err){toast(tx)}}
-      else toast("Démo : la fiche produit s'ouvrirait ici.");
+      else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0])}
       return;
     }
     if(e.target.closest("#dagain")){renderDiagList()}

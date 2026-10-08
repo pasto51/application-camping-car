@@ -320,7 +320,9 @@ const VIEWS = {
   async reports(el) {
     const status = state.filter.reportStatus ?? 'open';
     const [all, settings] = await Promise.all([api('GET', '/api/admin/reports'), api('GET', '/api/admin/settings').catch(() => null)]);
-    const list = all.filter((r) => (status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status));
+    const list = all.filter((r) =>
+      status === 'piece' ? r.kind === 'piece' && r.status !== 'resolu' : status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status
+    );
     const toAnswer = all.filter((r) => r.waitingForDealer).length;
     const mailWarning = settings && !settings.mail.ready
       ? `<div class="card warn-card">✉️ Les e-mails de notification ne sont pas encore configurés : vous ne serez pas prévenu des nouvelles demandes. ${isAdmin() ? '<a href="#settings">Configurer l’envoi des e-mails</a>' : 'Demandez à l’administrateur de le configurer.'}</div>`
@@ -333,6 +335,7 @@ const VIEWS = {
         ['en_cours', 'En cours'],
         ['resolu', 'Clôturées'],
         ['all', 'Toutes'],
+        ['piece', '🛒 Magasin (pièces)'],
       ]
         .map(([v, l]) => `<button class="chip ${status === v ? 'active' : ''}" data-act="filter" data-value="${v}">${l}</button>`)
         .join('')}</div>
@@ -342,14 +345,15 @@ const VIEWS = {
               .map(
                 (r) => `<div class="card report ${r.waitingForDealer ? 'waiting' : ''}">
             <div class="report-head">
-              <div><strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${r.plate ? ` · ${esc(r.plate)}` : ''}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
+              <div>${r.kind === 'piece' ? '<span class="status piece">🛒 Magasin</span> ' : ''}<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${r.plate ? ` · ${esc(r.plate)}` : ''}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
               <span class="status ${esc(r.status)}">${STATUS[r.status]}</span>
             </div>
+            ${r.part ? partCard(r) : ''}
             <div class="thread">
               <div class="msg client"><p>${multiline(r.description || r.title)}</p><small>Client · ${formatDateTime(r.createdAt)}</small></div>
               ${r.messages.map((m) => `<div class="msg ${esc(m.author)}"><p>${multiline(m.body)}</p><small>${m.author === 'client' ? 'Client' : 'Concession'} · ${formatDateTime(m.createdAt)}</small></div>`).join('')}
             </div>
-            ${r.photos.length ? `<div class="photos">${r.photos.map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}
+            ${r.photos.length && !r.part ? `<div class="photos">${r.photos.map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}
             ${
               r.status === 'resolu'
                 ? `<p class="closed-note">🔒 Demande clôturée${r.closedAt ? ` le ${formatDateTime(r.closedAt)}` : ''} : le client ne peut plus y répondre (il peut faire une nouvelle demande). Pour la rouvrir, choisissez « En cours ».</p>`
@@ -387,6 +391,16 @@ const VIEWS = {
         state.filter.reportStatus = b.dataset.value;
         VIEWS.reports(el);
       },
+      copypart: async (id) => {
+        const r = all.find((x) => x.id === Number(id));
+        const text = partLines(r).map(([k, v]) => `${k} : ${v}`).join('\n');
+        try {
+          await navigator.clipboard.writeText(text);
+          toast('Fiche copiée : collez-la dans votre commande fournisseur');
+        } catch {
+          prompt('Copiez cette fiche :', text);
+        }
+      },
     });
   },
 
@@ -394,7 +408,7 @@ const VIEWS = {
     const q = state.filter.customerQuery || '';
     const list = await api('GET', `/api/admin/customers?q=${encodeURIComponent(q)}`);
     el.innerHTML = `${pageHeader('Clients', '<button class="btn primary" data-act="add">＋ Nouveau client</button>')}
-      <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, immatriculation, VIN…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
+      <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, immatriculation, n° de cellule…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
       <div class="table-wrap"><table>
         <thead><tr><th></th><th>Client</th><th>Véhicule</th><th>Immat.</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Mise en main</th><th>Signal.</th><th></th></tr></thead>
         <tbody>${list
@@ -568,6 +582,7 @@ const VIEWS = {
       { name: 'city', label: 'Ville' },
       { name: 'phone', label: 'Téléphone', type: 'tel' },
       { name: 'email', label: 'E-mail', type: 'email' },
+      { name: 'storeEmail', label: 'E-mail du magasin (demandes de pièces)', type: 'email', hint: 'Laissez vide pour les recevoir à l’e-mail de la concession.' },
       { name: 'hours', label: 'Horaires affichés dans l’appli', full: true },
       { name: 'website', label: 'Site web (ouvert en touchant le logo dans l’appli)', full: true, attrs: 'placeholder="www.ma-concession.fr"' },
       { name: 'logo', label: 'Logo de la concession (affiché dans l’appli)', type: 'image' },
@@ -747,6 +762,34 @@ const VIEWS = {
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.
+const NEEDS = { piece: 'Pièce détachée', remplacement: 'Remplacement de l’équipement', accessoire: 'Accessoire ou consommable' };
+
+// What the store needs to identify the part. The VIN is never stored: the customer may send it in the e-mail only.
+function partLines(r) {
+  const p = r.part || {};
+  return [
+    ['Besoin', NEEDS[p.need] || 'Pièce détachée'],
+    ['Client', [r.firstName, r.lastName].filter(Boolean).join(' ')],
+    ['Véhicule', `${r.brandName} ${r.vehicleName}`],
+    ['Année du véhicule', p.vehicleYear || r.vehicleYear || (/\b(19|20)\d{2}\b/.exec(r.modelYear || '') || ['—'])[0]],
+    ['N° de cellule', p.cellNumber || r.cellNumber || 'à demander au client'],
+    ['Immatriculation', r.plate || '—'],
+    ['Équipement', p.equipmentName || '—'],
+    ['Pièce ou produit', p.product || '—'],
+    ['Marque et modèle', p.model || '—'],
+    ['Référence ou n° de série', p.ref || '—'],
+    ['VIN', p.vinSent ? 'dans l’e-mail envoyé au magasin (non conservé ici)' : 'non communiqué : à demander au client (carte grise, case E)'],
+  ];
+}
+
+function partCard(r) {
+  return `<div class="part-card">
+    ${r.part.photoUrl ? `<a href="${esc(r.part.photoUrl)}" target="_blank"><img src="${esc(r.part.photoUrl)}" alt=""></a>` : '<div class="part-nophoto">Pas de photo</div>'}
+    <dl class="facts">${partLines(r).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+    <button type="button" class="btn small" data-act="copypart" data-id="${r.id}">Copier la fiche pièce</button>
+  </div>`;
+}
+
 async function newCustomer(el) {
   const [{ vehicles }, dealerships] = await Promise.all([loadCatalog(), isAdmin() ? api('GET', '/api/admin/dealerships') : Promise.resolve([])]);
   const active = vehicles.filter((v) => v.active);
@@ -763,7 +806,8 @@ async function newCustomer(el) {
       { name: 'email', label: 'E-mail', type: 'email' },
       { name: 'phone', label: 'Téléphone', type: 'tel' },
       { name: 'plate', label: 'Immatriculation' },
-      { name: 'vin', label: 'VIN (numéro de série)' },
+      { name: 'cellNumber', label: 'N° de cellule', hint: 'Plaque du constructeur de la cellule.' },
+      { name: 'vehicleYear', label: 'Année du véhicule' },
       { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
       { name: 'sendEmail', label: 'Envoyer au client son code d’accès et un bouton « Ouvrir mon application » par e-mail', type: 'checkbox', full: true },
     ],
@@ -831,7 +875,9 @@ async function customerDetail(el, id) {
         <dl class="facts">
           <div><dt>Véhicule</dt><dd>${esc(c.brandName)} ${esc(c.vehicleName)}</dd></div>
           <div><dt>Immatriculation</dt><dd>${esc(c.plate || '—')}</dd></div>
-          <div><dt>VIN</dt><dd>${esc(c.vin || '—')}</dd></div>
+          <div><dt>N° de cellule</dt><dd>${esc(c.cellNumber || '—')}</dd></div>
+          <div><dt>Année du véhicule</dt><dd>${esc(c.vehicleYear || (/\b(19|20)\d{2}\b/.exec(c.modelYear || '') || ['—'])[0])}</dd></div>
+          <div><dt>VIN</dt><dd class="muted">Conservé seulement sur le téléphone du client</dd></div>
           <div><dt>Mise en main</dt><dd>${formatDate(c.handoverDate)}</dd></div>
           <div><dt>Concession</dt><dd>${esc(c.dealershipName)}</dd></div>
           <div><dt>E-mail</dt><dd>${esc(c.email || '—')}</dd></div>
@@ -875,7 +921,8 @@ async function customerDetail(el, id) {
           { name: 'email', label: 'E-mail', type: 'email' },
           { name: 'phone', label: 'Téléphone', type: 'tel' },
           { name: 'plate', label: 'Immatriculation' },
-          { name: 'vin', label: 'VIN' },
+          { name: 'cellNumber', label: 'N° de cellule' },
+          { name: 'vehicleYear', label: 'Année du véhicule' },
           { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
           { name: 'vehicleId', label: 'Véhicule', type: 'select', options: vehicles.map((v) => [v.id, `${v.brandName} — ${v.name}`]) },
           ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: dealerships.map((d) => [d.id, d.name]) }] : []),

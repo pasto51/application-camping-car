@@ -210,12 +210,34 @@ const ADDED_COLUMNS = [
   ['reports', 'closed_at', 'TEXT'],
   ['customers', 'access_code_at', 'TEXT'],
   ['customers', 'access_expires_at', 'TEXT'],
+  ['customers', 'cell_number', 'TEXT'],
+  ['customers', 'vehicle_year', 'TEXT'],
+  ['reports', 'kind', 'TEXT'],
+  ['reports', 'part', 'TEXT'],
+  ['dealerships', 'store_email', 'TEXT'],
 ];
+
+// The VIN is never kept on the server: it stays on the customer's phone (see public/app/cloud.js).
+function stripVin(value) {
+  try {
+    const o = JSON.parse(value);
+    if (!o || typeof o !== 'object' || !('vin' in o)) return value;
+    delete o.vin;
+    return JSON.stringify(o);
+  } catch {
+    return value;
+  }
+}
 
 function migrate(db) {
   for (const [table, column, type] of ADDED_COLUMNS) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
+  // VINs saved by earlier versions are erased.
+  db.exec('UPDATE customers SET vin = NULL WHERE vin IS NOT NULL');
+  for (const r of db.prepare("SELECT customer_id, value FROM customer_state WHERE key = 'cdb_hand' AND value LIKE '%\"vin\"%'").all()) {
+    db.prepare("UPDATE customer_state SET value = ? WHERE customer_id = ? AND key = 'cdb_hand'").run(stripVin(r.value), r.customer_id);
   }
   // Answers given before conversations existed become the first message from the dealership.
   db.exec(`INSERT INTO report_messages (report_id, author, body, created_at)
@@ -253,4 +275,4 @@ function bumpContentVersion(db) {
   return next;
 }
 
-module.exports = { openDatabase, transaction, getSetting, setSetting, bumpContentVersion };
+module.exports = { openDatabase, transaction, getSetting, setSetting, bumpContentVersion, stripVin };

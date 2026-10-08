@@ -209,3 +209,45 @@ test('conversation: dealership is e-mailed, customer gets push + e-mail, website
   assert.match(welcomeHtml, /Ouvrir mon application/);
   assert.ok(welcomeHtml.includes(created.accessCode));
 });
+
+test('store request: photo, model, cell number, year; the VIN goes in the e-mail only', async () => {
+  const admin = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123' } })).data.token;
+  await call('PUT', '/api/admin/dealerships/1', { token: admin, body: { storeEmail: 'magasin@concession.fr' } });
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const h = await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Piece', vin: 'VF1SECRET1234567' } } });
+  const token = h.data.token;
+  assert.equal(h.data.customer.vin, undefined, 'the VIN is not kept at the handover');
+  // The handover checklist synced from the phone loses its VIN on the server
+  const st = await call('PUT', '/api/me/state/cdb_hand', { token, body: { value: JSON.stringify({ steps: {}, name: 'Paul', vin: 'VF1SECRET1234567' }) } });
+  assert.ok(!st.data.value.includes('VF1SECRET'));
+  const before = smtp.mails.length;
+  const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+  const r = await call('POST', '/api/me/parts', {
+    token,
+    body: { need: 'piece', equipmentId: 'trumac', equipmentName: 'Chauffage Truma', product: 'Thermostat', model: 'Truma Combi 4', ref: '30030-33600', cellNumber: 'CEL-12345', vehicleYear: '2024', photo: PNG, vin: 'VF1SECRET1234567', message: 'Il ne chauffe plus.' },
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.kind, 'piece');
+  assert.ok(r.data.part.photoUrl.startsWith('/uploads/'));
+  assert.equal(r.data.part.vinSent, true);
+  await waitFor(() => smtp.mails.length === before + 1);
+  const mail = smtp.mails[before];
+  assert.deepEqual(mail.rcpt, ['magasin@concession.fr']);
+  assert.match(bodyText(mail), /VF1SECRET1234567/);
+  assert.match(bodyText(mail), /CEL-12345/);
+  // Nowhere on the server
+  const dump = JSON.stringify([
+    app.db.prepare('SELECT * FROM reports').all(),
+    app.db.prepare('SELECT * FROM customers').all(),
+    app.db.prepare('SELECT * FROM customer_state').all(),
+  ]);
+  assert.ok(!dump.includes('VF1SECRET'), 'the VIN is stored nowhere');
+  const me = (await call('GET', '/api/me', { token })).data.customer;
+  assert.equal(me.cellNumber, 'CEL-12345');
+  assert.equal(me.vehicleYear, '2024');
+  const list = (await call('GET', '/api/admin/reports?kind=piece', { token: admin })).data;
+  assert.equal(list[0].part.model, 'Truma Combi 4');
+  // A photo URL that is not the customer's is refused
+  const other = await call('POST', '/api/me/parts', { token, body: { equipmentName: 'Store', photo: '/uploads/pas-a-moi.jpg' } });
+  assert.equal(other.data.part.photoUrl, null);
+});

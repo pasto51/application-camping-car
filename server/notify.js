@@ -53,7 +53,7 @@ const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;
 
 // E-mail layout: dealership header, message, one big button, dealership signature.
 // Tables and inline styles: the only layout every mail client (Gmail, Outlook, iPhone) displays the same way.
-function emailHtml({ dealer, intro, quote, button, url, note, footer }) {
+function emailHtml({ dealer, intro, quote, image, button, url, note, footer }) {
   const sig = [dealer.phone && `Tél. ${escHtml(dealer.phone)}`, dealer.hours && escHtml(dealer.hours), dealer.website && `<a href="${escHtml(dealer.website)}" style="color:#0a7c82">${escHtml(dealer.website.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a>`].filter(Boolean).join('<br>');
   return `<!doctype html><html lang="fr"><body style="margin:0;padding:0;background:#f3f7f6">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f7f6;padding:24px 12px"><tr><td align="center">
@@ -61,6 +61,7 @@ function emailHtml({ dealer, intro, quote, button, url, note, footer }) {
 <tr><td style="background:#0a7c82;border-radius:16px 16px 0 0;padding:18px 24px;color:#ffffff;font-size:20px;font-weight:bold">${escHtml(dealer.name || 'Votre concession')}</td></tr>
 <tr><td style="padding:24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 14px">${intro}</p>
+${image ? `<img src="${escHtml(image)}" alt="" width="472" style="display:block;width:100%;max-width:472px;border-radius:12px;margin:0 0 16px">` : ''}
 ${quote ? `<div style="background:#dff3e6;border-radius:12px;padding:14px 16px;margin:0 0 22px;font-size:16px">${escHtml(quote).replace(/\n/g, '<br>')}</div>` : ''}
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center" style="padding:4px 0 18px">
 <a href="${escHtml(url)}" style="display:block;background:#0a7c82;color:#ffffff;text-decoration:none;font-size:18px;font-weight:bold;padding:16px 20px;border-radius:12px;text-align:center">${escHtml(button)}</a>
@@ -91,7 +92,7 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
   }
 
   // A customer created a request or wrote in an existing one.
-  function customerWrote({ report, customer, text, origin, isNew }) {
+  function customerWrote({ report, customer, text, origin, isNew, part, vin }) {
     const vehicle = db.prepare('SELECT v.name, b.name AS brand FROM vehicles v JOIN brands b ON b.id = v.brand_id WHERE v.id = ?').get(customer.vehicle_id);
     const who = customerName(customer);
     const lines = [
@@ -103,6 +104,8 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
       customer.email ? `E-mail : ${customer.email}` : null,
       '',
       text || '',
+      vin ? `VIN : ${vin} (communiqué par le client pour cette demande, non conservé par l'application)` : null,
+      part?.photoUrl ? `Photo : ${origin}${part.photoUrl}` : null,
       '',
       `Répondre depuis le back-office : ${origin}/admin/#reports`,
     ].filter((l) => l !== null);
@@ -113,12 +116,19 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
       intro: isNew
         ? `<b>${escHtml(who)}</b> vient d'envoyer une demande : <b>${escHtml(report.title)}</b>.<br>Véhicule : ${escHtml([vehicle?.brand, vehicle?.name].filter(Boolean).join(' '))}${customer.plate ? ` (${escHtml(customer.plate)})` : ''}${customer.phone ? `<br>Téléphone : ${escHtml(customer.phone)}` : ''}`
         : `<b>${escHtml(who)}</b> a répondu dans sa demande <b>${escHtml(report.title)}</b>.`,
-      quote: text,
+      quote: vin ? `${text}\nVIN : ${vin}` : text,
+      image: part?.photoUrl ? `${origin}${part.photoUrl}` : null,
       button: 'Répondre dans le back-office',
       url,
-      note: 'Répondez depuis le back-office : le client reçoit votre réponse dans son application, et l’échange reste dans l’historique.',
+      note:
+        (vin ? 'Le VIN figure seulement dans cet e-mail : l’application ne le conserve pas. ' : '') +
+        'Répondez depuis le back-office : le client reçoit votre réponse dans son application, et l’échange reste dans l’historique.',
     });
-    return mail(db, dealershipRecipients(db, customer.dealership_id), `${isNew ? 'Nouvelle demande' : 'Nouveau message'} : ${report.title} – ${who}`, lines.join('\n'), log, {
+    // Requests for the store go to the store's address when the dealership has one.
+    const store = report.kind === 'piece' ? db.prepare('SELECT store_email FROM dealerships WHERE id = ?').get(customer.dealership_id)?.store_email : null;
+    const to = store ? [...new Set([store, mailConfig(db).copy].filter(Boolean))] : dealershipRecipients(db, customer.dealership_id);
+    const label = report.kind === 'piece' ? (isNew ? 'Demande au magasin' : 'Nouveau message (magasin)') : isNew ? 'Nouvelle demande' : 'Nouveau message';
+    return mail(db, to, `${label} : ${report.title} – ${who}`, lines.join('\n'), log, {
       html,
       fromName: 'Compagnon de bord',
       // A direct reply from the mailbox still reaches the customer instead of the notification address.

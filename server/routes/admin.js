@@ -639,13 +639,14 @@ function register(router) {
     const { db, body } = ctx;
     const code = dealershipCode(db, body.code || randomCode(6));
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO dealerships (name, code, city, phone, email, hours, website, logo_url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .prepare('INSERT INTO dealerships (name, code, city, phone, email, store_email, hours, website, logo_url, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(
         reqStr(body.name, 'Nom de la concession', 120),
         code,
         optStr(body.city, 80),
         optStr(body.phone, 40),
         optEmail(body.email),
+        optEmail(body.storeEmail),
         optStr(body.hours, 200),
         optUrl(body.website),
         ctx.uploads.resolveImage(body.logo, null),
@@ -659,12 +660,13 @@ function register(router) {
     adminOnly(ctx);
     const { db, body, params } = ctx;
     const d = getOr404(db, 'dealerships', params.id, 'Concession');
-    db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, hours = ?, website = ?, logo_url = ?, active = ? WHERE id = ?').run(
+    db.prepare('UPDATE dealerships SET name = ?, code = ?, city = ?, phone = ?, email = ?, store_email = ?, hours = ?, website = ?, logo_url = ?, active = ? WHERE id = ?').run(
       body.name === undefined ? d.name : reqStr(body.name, 'Nom de la concession', 120),
       body.code === undefined ? d.code : dealershipCode(db, body.code, d.id),
       pick(optStr(body.city, 80), d.city),
       pick(optStr(body.phone, 40), d.phone),
       pick(optEmail(body.email), d.email),
+      body.storeEmail === undefined ? d.store_email : optEmail(body.storeEmail),
       pick(optStr(body.hours, 200), d.hours),
       pick(optUrl(body.website), d.website),
       ctx.uploads.resolveImage(body.logo, d.logo_url),
@@ -686,7 +688,7 @@ function register(router) {
 
   // ---- Customers ----
 
-  const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.plate, c.vin,
+  const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.plate, c.cell_number, c.vehicle_year, v.model_year,
       c.handover_date, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
       d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
@@ -709,7 +711,7 @@ function register(router) {
     const where = [s.sql];
     const args = [...s.args];
     if (q) {
-      where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.plate LIKE ? OR c.vin LIKE ?)");
+      where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.plate LIKE ? OR c.cell_number LIKE ?)");
       args.push(...Array(5).fill(`%${q}%`));
     }
     return camelAll(ctx.db.prepare(`${CUSTOMER_SELECT} WHERE ${where.join(' AND ')} ORDER BY c.id DESC LIMIT 500`).all(...args));
@@ -734,8 +736,8 @@ function register(router) {
     expires.setFullYear(expires.getFullYear() + 2);
     const { lastInsertRowid } = db
       .prepare(
-        `INSERT INTO customers (dealership_id, vehicle_id, first_name, last_name, email, phone, plate, vin, handover_date, recovery_hash, access_code_at, access_expires_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO customers (dealership_id, vehicle_id, first_name, last_name, email, phone, plate, cell_number, vehicle_year, handover_date, recovery_hash, access_code_at, access_expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         dealershipId,
@@ -745,7 +747,8 @@ function register(router) {
         email,
         optStr(body.phone, 40),
         optStr(body.plate, 20),
-        optStr(body.vin, 40),
+        optStr(body.cellNumber, 40),
+        optStr(body.vehicleYear, 10),
         optStr(body.handoverDate, 10) || now.toISOString().slice(0, 10),
         sha256(core),
         now.toISOString(),
@@ -782,7 +785,7 @@ function register(router) {
       if (!db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId)) throw new HttpError(400, 'Concession inconnue');
     }
     db.prepare(
-      `UPDATE customers SET vehicle_id = ?, dealership_id = ?, first_name = ?, last_name = ?, email = ?, phone = ?, plate = ?, vin = ?,
+      `UPDATE customers SET vehicle_id = ?, dealership_id = ?, first_name = ?, last_name = ?, email = ?, phone = ?, plate = ?, cell_number = ?, vehicle_year = ?,
        handover_date = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(
       vehicleId,
@@ -792,7 +795,8 @@ function register(router) {
       pick(optEmail(body.email), customer.email),
       pick(optStr(body.phone, 40), customer.phone),
       pick(optStr(body.plate, 20), customer.plate),
-      pick(optStr(body.vin, 40), customer.vin),
+      body.cellNumber === undefined ? customer.cell_number : optStr(body.cellNumber, 40),
+      body.vehicleYear === undefined ? customer.vehicle_year : optStr(body.vehicleYear, 10),
       pick(optStr(body.handoverDate, 10), customer.handover_date),
       customer.id
     );
@@ -841,10 +845,11 @@ function register(router) {
       where.push('r.status = ?');
       args.push(status);
     }
+    if (ctx.query.get('kind') === 'piece') where.push("r.kind = 'piece'");
     const list = camelAll(
       ctx.db
         .prepare(
-          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.plate, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
+          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.plate, c.cell_number, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
              p.title AS problem_title
            FROM reports r
            JOIN customers c ON c.id = r.customer_id
@@ -860,6 +865,7 @@ function register(router) {
     const msgs = ids.length ? camelAll(ctx.db.prepare(`SELECT * FROM report_messages WHERE report_id IN (${ids.map(() => '?').join(',')}) ORDER BY id`).all(...ids)) : [];
     for (const r of list) {
       r.messages = msgs.filter((m) => m.reportId === r.id);
+      r.part = r.part ? JSON.parse(r.part) : null;
       // The customer wrote last: the dealership owes an answer.
       r.waitingForDealer = r.status !== 'resolu' && (r.messages.length ? r.messages[r.messages.length - 1].author === 'client' : r.status === 'nouveau');
     }

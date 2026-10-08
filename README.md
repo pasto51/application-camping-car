@@ -31,6 +31,12 @@ Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique �
 - **Coupe-circuit** : si le client répond directement à l'e-mail, sa réponse va à l'e-mail de la concession, jamais dans la boîte de notifications. Les réponses automatiques (« absent du bureau ») sont neutralisées.
 - En touchant le **logo de la concession**, le client ouvre le site web de celle-ci.
 
+### Demande au magasin (pièces et remplacements)
+- Sur chaque équipement (« C'est quoi, ça ? ») et à la fin d'un diagnostic (« Demander au magasin »), le client envoie une demande avec : **photo** (celle de l'équipement, ou une nouvelle), **marque et modèle**, **référence ou n° de série**, **n° de cellule**, **année du véhicule**, et ce qu'il lui faut (pièce, remplacement, accessoire).
+- Elle part à l'**e-mail du magasin** de la concession (Concessions → « E-mail du magasin ») et apparaît dans le back-office, filtre « 🛒 Magasin », avec une fiche pièce à copier pour la commande fournisseur.
+- Le n° de cellule et l'année se remplissent par le client (Mon compte → Mon véhicule) ou par le commercial (fiche client).
+- **VIN : jamais enregistré sur le serveur.** Il reste sur le téléphone du client ; il n'est transmis que dans l'e-mail d'une demande au magasin, si le client coche la case. Les VIN saisis par les versions précédentes ont été effacés.
+
 ### Back-office
 - **Diagnostics (pannes)** : les 56 entrées (environ 2 000 fins de parcours) se présentent sous forme d'**organigramme modifiable** : questions, réponses, fin de parcours avec cause, geste, produit, sécurité, rendez-vous. Un mode avancé (JSON) est aussi disponible.
 - **Équipements** : les 188 équipements du catalogue (nom, rubrique, types de véhicules concernés, zone du plan, explication, conseil).

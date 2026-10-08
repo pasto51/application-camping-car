@@ -24,6 +24,16 @@ function createUploadStore(dir) {
     return `/uploads/${name}`;
   }
 
+  // Copies a stored file under a new name (a request keeps its photo even if the original is replaced).
+  function copy(url) {
+    if (!url || !String(url).startsWith('/uploads/')) return null;
+    const src = path.join(dir, path.basename(url));
+    if (!fs.existsSync(src)) return null;
+    const name = `${Date.now().toString(36)}-${crypto.randomBytes(8).toString('hex')}${path.extname(src)}`;
+    fs.copyFileSync(src, path.join(dir, name));
+    return `/uploads/${name}`;
+  }
+
   function remove(url) {
     if (!url || !String(url).startsWith('/uploads/')) return;
     const name = path.basename(url);
@@ -46,7 +56,7 @@ function createUploadStore(dir) {
     return current;
   }
 
-  return { dir, saveDataUrl, remove, resolveImage };
+  return { dir, saveDataUrl, copy, remove, resolveImage };
 }
 
 function matchesSignature(mime, buf) {

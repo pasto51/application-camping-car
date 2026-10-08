@@ -204,3 +204,12 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 .copy-row input { flex: 1; font-size: .85rem; }
 .ok-note { color: var(--ok); font-weight: 600; }
 .warn-note { color: var(--warn); font-weight: 600; }
+
+/* Store requests (spare parts) */
+.status.piece { color: #b7791f; border-color: #f0c674; }
+.part-card { display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 1rem; align-items: start; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: .8rem; margin: .6rem 0; }
+.part-card img { width: 100%; border-radius: 10px; display: block; }
+.part-card .part-nophoto { aspect-ratio: 4/3; display: grid; place-items: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; }
+.part-card .facts { margin: 0; }
+.part-card .btn { grid-column: 1 / -1; justify-self: start; }
+@media (max-width: 640px) { .part-card { grid-template-columns: 1fr; } }
