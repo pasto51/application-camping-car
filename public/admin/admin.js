@@ -345,7 +345,7 @@ const VIEWS = {
               .map(
                 (r) => `<div class="card report ${r.waitingForDealer ? 'waiting' : ''}">
             <div class="report-head">
-              <div>${r.kind === 'piece' ? '<span class="status piece">🛒 Magasin</span> ' : ''}<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${r.plate ? ` · ${esc(r.plate)}` : ''}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
+              <div>${r.kind === 'piece' ? '<span class="status piece">🛒 Magasin</span> ' : ''}<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}</small></div>
               <span class="status ${esc(r.status)}">${STATUS[r.status]}</span>
             </div>
             ${r.part ? partCard(r) : ''}
@@ -410,14 +410,14 @@ const VIEWS = {
     el.innerHTML = `${pageHeader('Clients', '<button class="btn primary" data-act="add">＋ Nouveau client</button>')}
       <form class="search-bar" id="customer-search"><input name="q" type="search" placeholder="Nom, e-mail, immatriculation, n° de cellule…" value="${esc(q)}"><button class="btn">Rechercher</button></form>
       <div class="table-wrap"><table>
-        <thead><tr><th></th><th>Client</th><th>Véhicule</th><th>Immat.</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Mise en main</th><th>Signal.</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Client</th><th>Véhicule</th><th>N° cellule</th>${isAdmin() ? '<th>Concession</th>' : ''}<th>Mise en main</th><th>Signal.</th><th></th></tr></thead>
         <tbody>${list
           .map(
             (c) => `<tr>
           <td>${thumb(c.coverPhotoUrl)}</td>
           <td><strong>${esc([c.firstName, c.lastName].filter(Boolean).join(' '))}</strong><br><small class="muted">${esc(c.email || '')}</small></td>
           <td>${esc(c.brandName)} ${esc(c.vehicleName)}</td>
-          <td>${esc(c.plate || '')}</td>
+          <td>${esc(c.cellNumber || '')}</td>
           ${isAdmin() ? `<td>${esc(c.dealershipName)}</td>` : ''}
           <td>${formatDate(c.handoverDate)}</td>
           <td>${c.openReports ? `<span class="status nouveau">${c.openReports}</span>` : ''}</td>
@@ -773,7 +773,6 @@ function partLines(r) {
     ['Véhicule', `${r.brandName} ${r.vehicleName}`],
     ['Année du véhicule', p.vehicleYear || r.vehicleYear || (/\b(19|20)\d{2}\b/.exec(r.modelYear || '') || ['—'])[0]],
     ['N° de cellule', p.cellNumber || r.cellNumber || 'à demander au client'],
-    ['Immatriculation', r.plate || '—'],
     ['Équipement', p.equipmentName || '—'],
     ['Pièce ou produit', p.product || '—'],
     ['Marque et modèle', p.model || '—'],
@@ -784,7 +783,7 @@ function partLines(r) {
 
 function partCard(r) {
   return `<div class="part-card">
-    ${r.part.photoUrl ? `<a href="${esc(r.part.photoUrl)}" target="_blank"><img src="${esc(r.part.photoUrl)}" alt=""></a>` : '<div class="part-nophoto">Pas de photo</div>'}
+    ${r.part.photoUrl ? `<figure><a href="${esc(r.part.photoUrl)}" target="_blank"><img src="${esc(r.part.photoUrl)}" alt=""></a><figcaption class="muted">${r.part.photoKind === 'client' ? 'Photo du client' : 'Photo générique du modèle'}</figcaption></figure>` : '<div class="part-nophoto">Pas de photo</div>'}
     <dl class="facts">${partLines(r).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
     <button type="button" class="btn small" data-act="copypart" data-id="${r.id}">Copier la fiche pièce</button>
   </div>`;
@@ -805,7 +804,6 @@ async function newCustomer(el) {
       { name: 'lastName', label: 'Nom', required: true, hint: 'Le client le saisit avec son code d’accès.' },
       { name: 'email', label: 'E-mail', type: 'email' },
       { name: 'phone', label: 'Téléphone', type: 'tel' },
-      { name: 'plate', label: 'Immatriculation' },
       { name: 'cellNumber', label: 'N° de cellule', hint: 'Plaque du constructeur de la cellule.' },
       { name: 'vehicleYear', label: 'Année du véhicule' },
       { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
@@ -874,15 +872,20 @@ async function customerDetail(el, id) {
       <div class="card">
         <dl class="facts">
           <div><dt>Véhicule</dt><dd>${esc(c.brandName)} ${esc(c.vehicleName)}</dd></div>
-          <div><dt>Immatriculation</dt><dd>${esc(c.plate || '—')}</dd></div>
           <div><dt>N° de cellule</dt><dd>${esc(c.cellNumber || '—')}</dd></div>
           <div><dt>Année du véhicule</dt><dd>${esc(c.vehicleYear || (/\b(19|20)\d{2}\b/.exec(c.modelYear || '') || ['—'])[0])}</dd></div>
           <div><dt>VIN</dt><dd class="muted">Conservé seulement sur le téléphone du client</dd></div>
           <div><dt>Mise en main</dt><dd>${formatDate(c.handoverDate)}</dd></div>
           <div><dt>Concession</dt><dd>${esc(c.dealershipName)}</dd></div>
-          <div><dt>E-mail</dt><dd>${esc(c.email || '—')}</dd></div>
+          <div><dt>E-mail</dt><dd>${esc(c.email || '—')}${c.email && c.emailNotify === 0 ? ' <small class="muted">(ne veut pas recevoir les réponses par e-mail)</small>' : ''}</dd></div>
           <div><dt>Téléphone</dt><dd>${esc(c.phone || '—')}</dd></div>
-          <div><dt>Code d’accès</dt><dd>${c.accessExpiresAt ? `valable jusqu’au ${formatDate(c.accessExpiresAt.slice(0, 10))}` : 'pas encore généré'}</dd></div>
+          <div><dt>Code d’accès</dt><dd>${
+            c.accessCode
+              ? `<code class="code">${esc(c.accessCode)}</code> <button class="btn small" data-act="copycode">Copier</button> <button class="btn small primary" data-act="resend">Renvoyer au client</button><br><small class="muted">Valable jusqu’au ${formatDate(c.accessExpiresAt.slice(0, 10))}</small>`
+              : c.accessExpiresAt
+                ? `créé avant cette version, il ne peut pas être réaffiché : utilisez « Nouveau code d’accès » (valable jusqu’au ${formatDate(c.accessExpiresAt.slice(0, 10))})`
+                : 'pas encore généré'
+          }</dd></div>
           <div><dt>Contrôle de mise en main</dt><dd>${c.handover.steps}/5 points${c.handover.validatedOn ? ` · validée le ${esc(c.handover.validatedOn)}` : ''}</dd></div>
           <div><dt>Dernière sauvegarde de l’appli</dt><dd>${c.stateUpdatedAt ? formatDate(c.stateUpdatedAt) : '—'}</dd></div>
         </dl>
@@ -910,6 +913,23 @@ async function customerDetail(el, id) {
       }
     </div>`;
   bind(el, {
+    copycode: async () => {
+      try {
+        await navigator.clipboard.writeText(c.accessCode);
+        toast('Code copié');
+      } catch {
+        prompt('Code d’accès :', c.accessCode);
+      }
+    },
+    resend: async () => {
+      const sendEmail = !!c.email && confirm(`Renvoyer le code et le bouton « Ouvrir mon application » par e-mail à ${c.email} ?\n(Annuler : afficher le code et le lien à copier ou envoyer par SMS)`);
+      try {
+        const res = await api('POST', `/api/admin/customers/${id}/resend`, { sendEmail });
+        showAccess({ ...c, ...res }, res.accessCode, () => customerDetail(el, id));
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    },
     back: () => VIEWS.customers(el),
     edit: () =>
       openForm({
@@ -920,8 +940,7 @@ async function customerDetail(el, id) {
           { name: 'lastName', label: 'Nom', required: true },
           { name: 'email', label: 'E-mail', type: 'email' },
           { name: 'phone', label: 'Téléphone', type: 'tel' },
-          { name: 'plate', label: 'Immatriculation' },
-          { name: 'cellNumber', label: 'N° de cellule' },
+              { name: 'cellNumber', label: 'N° de cellule' },
           { name: 'vehicleYear', label: 'Année du véhicule' },
           { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
           { name: 'vehicleId', label: 'Véhicule', type: 'select', options: vehicles.map((v) => [v.id, `${v.brandName} — ${v.name}`]) },

@@ -458,7 +458,7 @@ window.startCompagnon = function(DATA){
   }
   var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} var vm = DATA.vehicle.models||{}; Object.keys(vm).forEach(function(k){var m = o[k] = o[k]||{}; if(!m.name && vm[k]) m.name = vm[k]}); return o})();
   function modSave(){lsSet("cdb_mod",JSON.stringify(mods))}
-  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name:it.name, photo: UPH[id] || (PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null)), model:m.name||"", ref:m.ref||""}};
+  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name:it.name, userPhoto: UPH[id] || null, genericPhoto: PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null), model:m.name||"", ref:m.ref||""}};
   window.CDB_SETMOD = function(id,name,ref){if(!eqById(id)) return; var m = mods[id] = mods[id]||{}; m.name = String(name||"").slice(0,80); m.ref = String(ref||"").slice(0,80); modSave()};
   var PLATE = DATA.config.PLATE;
   var VARIANTS = DATA.config.VARIANTS;
@@ -665,7 +665,7 @@ window.startCompagnon = function(DATA){
     var h = '<div class="card"><p class="eyebrow">Espace concession</p><p>Mise en main de <b>'+esc(DEALER.name)+'</b>. Vérifiez chaque point avec le client, puis générez son code d\'accès. Cet écran est réservé à la concession : son code est demandé pour valider.</p></div>';
     h += '<div class="card">'+
       '<div class="fld"><label for="h_name">Prénom du client (facultatif)</label><input class="search" id="h_name" type="text" autocomplete="off" value="'+esc(hand.name)+'"></div>'+
-      '<div class="fld"><label for="h_vin">Numéro de série du véhicule (VIN)</label><input class="search" id="h_vin" type="text" autocomplete="off" autocapitalize="characters" placeholder="17 caractères" value="'+esc(hand.vin)+'"></div></div>';
+      '<div class="fld"><label for="h_vin">Numéro de série du véhicule (VIN)</label><input class="search" id="h_vin" type="text" autocomplete="off" autocapitalize="characters" placeholder="17 caractères" value="'+esc(hand.vin)+'"><small class="sub">Reste sur ce téléphone, jamais enregistré sur nos serveurs.</small></div></div>';
     h += '<p class="eyebrow">À vérifier avec le client</p>';
     h += HSTEPS.map(function(s){
       var on = !!hand.steps[s.k];

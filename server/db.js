@@ -215,6 +215,8 @@ const ADDED_COLUMNS = [
   ['reports', 'kind', 'TEXT'],
   ['reports', 'part', 'TEXT'],
   ['dealerships', 'store_email', 'TEXT'],
+  ['customers', 'access_code_enc', 'TEXT'],
+  ['customers', 'email_notify', 'INTEGER DEFAULT 1'],
 ];
 
 // The VIN is never kept on the server: it stays on the customer's phone (see public/app/cloud.js).
@@ -234,8 +236,8 @@ function migrate(db) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
   }
-  // VINs saved by earlier versions are erased.
-  db.exec('UPDATE customers SET vin = NULL WHERE vin IS NOT NULL');
+  // VINs and number plates saved by earlier versions are erased: the application does not keep them.
+  db.exec('UPDATE customers SET vin = NULL, plate = NULL WHERE vin IS NOT NULL OR plate IS NOT NULL');
   for (const r of db.prepare("SELECT customer_id, value FROM customer_state WHERE key = 'cdb_hand' AND value LIKE '%\"vin\"%'").all()) {
     db.prepare("UPDATE customer_state SET value = ? WHERE customer_id = ? AND key = 'cdb_hand'").run(stripVin(r.value), r.customer_id);
   }

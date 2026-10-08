@@ -213,3 +213,4 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 .part-card .facts { margin: 0; }
 .part-card .btn { grid-column: 1 / -1; justify-self: start; }
 @media (max-width: 640px) { .part-card { grid-template-columns: 1fr; } }
+.part-card figure { margin: 0; } .part-card figcaption { font-size: .8rem; margin-top: .3rem; }

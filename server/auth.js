@@ -80,7 +80,30 @@ function createRateLimiter({ windowMs, max }) {
   };
 }
 
+// Reversible encryption (AES-256-GCM) of short secrets the dealership must be able to read again (the customer's access code).
+function sealText(text, secret) {
+  const key = crypto.createHash('sha256').update(`access-code:${secret}`).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const data = Buffer.concat([cipher.update(String(text), 'utf8'), cipher.final()]);
+  return [iv, cipher.getAuthTag(), data].map((b) => b.toString('base64url')).join('.');
+}
+
+function openText(sealed, secret) {
+  try {
+    const [iv, tag, data] = String(sealed || '').split('.').map((p) => Buffer.from(p, 'base64url'));
+    const key = crypto.createHash('sha256').update(`access-code:${secret}`).digest();
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
+  sealText,
+  openText,
   hashPassword,
   verifyPassword,
   sha256,

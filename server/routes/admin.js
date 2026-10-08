@@ -2,7 +2,7 @@
 
 const { HttpError } = require('../http');
 const { bumpContentVersion, getSetting, setSetting } = require('../db');
-const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter } = require('../auth');
+const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter, sealText, openText } = require('../auth');
 const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
 const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
@@ -688,7 +688,7 @@ function register(router) {
 
   // ---- Customers ----
 
-  const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.plate, c.cell_number, c.vehicle_year, v.model_year,
+  const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.cell_number, c.vehicle_year, c.email_notify, v.model_year,
       c.handover_date, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
       d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
@@ -711,8 +711,8 @@ function register(router) {
     const where = [s.sql];
     const args = [...s.args];
     if (q) {
-      where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.plate LIKE ? OR c.cell_number LIKE ?)");
-      args.push(...Array(5).fill(`%${q}%`));
+      where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.cell_number LIKE ?)");
+      args.push(...Array(4).fill(`%${q}%`));
     }
     return camelAll(ctx.db.prepare(`${CUSTOMER_SELECT} WHERE ${where.join(' AND ')} ORDER BY c.id DESC LIMIT 500`).all(...args));
   });
@@ -736,8 +736,8 @@ function register(router) {
     expires.setFullYear(expires.getFullYear() + 2);
     const { lastInsertRowid } = db
       .prepare(
-        `INSERT INTO customers (dealership_id, vehicle_id, first_name, last_name, email, phone, plate, cell_number, vehicle_year, handover_date, recovery_hash, access_code_at, access_expires_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO customers (dealership_id, vehicle_id, first_name, last_name, email, phone, cell_number, vehicle_year, handover_date, recovery_hash, access_code_at, access_expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         dealershipId,
@@ -746,7 +746,6 @@ function register(router) {
         lastName,
         email,
         optStr(body.phone, 40),
-        optStr(body.plate, 20),
         optStr(body.cellNumber, 40),
         optStr(body.vehicleYear, 10),
         optStr(body.handoverDate, 10) || now.toISOString().slice(0, 10),
@@ -754,8 +753,9 @@ function register(router) {
         now.toISOString(),
         expires.toISOString()
       );
-    const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
     const accessCode = formatAccessCode(readProfile(vehicle).codePrefix, core);
+    db.prepare('UPDATE customers SET access_code_enc = ? WHERE id = ?').run(sealText(accessCode, ctx.config.secret), lastInsertRowid);
+    const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
     // Single-use link that opens the app already signed in (to send by e-mail or SMS).
     const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
     let emailSent = false;
@@ -763,11 +763,29 @@ function register(router) {
     return { ...camel(getCustomerScoped(ctx, customer.id)), accessCode, appLink, emailSent, expiresAt: expires.toISOString().slice(0, 10) };
   });
 
+  // Sends the current access code again (no new code): e-mail with the « Ouvrir mon application » button, or a link to copy.
+  router.post('/api/admin/customers/:id/resend', async (ctx) => {
+    auth(ctx);
+    const customer = getCustomerScoped(ctx, ctx.params.id);
+    const row = ctx.db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id);
+    const accessCode = row.access_code_enc ? openText(row.access_code_enc, ctx.config.secret) : null;
+    if (!accessCode) throw new HttpError(409, 'Ce code a été créé avant que l’appli ne puisse le réafficher : générez un nouveau code d’accès.');
+    const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
+    let emailSent = false;
+    if (ctx.body.sendEmail) {
+      if (!row.email) throw new HttpError(400, 'Ce client n’a pas d’e-mail');
+      emailSent = await ctx.notify.welcome({ customer: row, code: accessCode, url: appLink });
+    }
+    return { ...camel(customer), accessCode, appLink, emailSent, sendEmail: !!ctx.body.sendEmail, expiresAt: row.access_expires_at ? row.access_expires_at.slice(0, 10) : null };
+  });
+
   router.get('/api/admin/customers/:id', (ctx) => {
     auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
+    const enc = ctx.db.prepare('SELECT access_code_enc FROM customers WHERE id = ?').get(customer.id).access_code_enc;
     return {
       ...camel(customer),
+      accessCode: enc ? openText(enc, ctx.config.secret) : null,
       ...customerStateSummary(ctx.db, customer.id),
       reports: camelAll(ctx.db.prepare('SELECT * FROM reports WHERE customer_id = ? ORDER BY id DESC').all(customer.id)),
     };
@@ -785,7 +803,7 @@ function register(router) {
       if (!db.prepare('SELECT id FROM dealerships WHERE id = ?').get(dealershipId)) throw new HttpError(400, 'Concession inconnue');
     }
     db.prepare(
-      `UPDATE customers SET vehicle_id = ?, dealership_id = ?, first_name = ?, last_name = ?, email = ?, phone = ?, plate = ?, cell_number = ?, vehicle_year = ?,
+      `UPDATE customers SET vehicle_id = ?, dealership_id = ?, first_name = ?, last_name = ?, email = ?, phone = ?, cell_number = ?, vehicle_year = ?,
        handover_date = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(
       vehicleId,
@@ -794,7 +812,6 @@ function register(router) {
       body.lastName === undefined ? customer.last_name : reqStr(body.lastName, 'Nom', 100),
       pick(optEmail(body.email), customer.email),
       pick(optStr(body.phone, 40), customer.phone),
-      pick(optStr(body.plate, 20), customer.plate),
       body.cellNumber === undefined ? customer.cell_number : optStr(body.cellNumber, 40),
       body.vehicleYear === undefined ? customer.vehicle_year : optStr(body.vehicleYear, 10),
       pick(optStr(body.handoverDate, 10), customer.handover_date),
@@ -817,6 +834,7 @@ function register(router) {
       .run(sha256(core), now.toISOString(), expires.toISOString(), customer.id);
     const vehicle = ctx.db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
     const recoveryCode = formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core);
+    ctx.db.prepare('UPDATE customers SET access_code_enc = ? WHERE id = ?').run(sealText(recoveryCode, ctx.config.secret), customer.id);
     const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
     let emailSent = false;
     if (ctx.body.sendEmail) {
@@ -849,7 +867,7 @@ function register(router) {
     const list = camelAll(
       ctx.db
         .prepare(
-          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.plate, c.cell_number, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
+          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.cell_number, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
              p.title AS problem_title
            FROM reports r
            JOIN customers c ON c.id = r.customer_id

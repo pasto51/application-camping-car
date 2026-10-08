@@ -78,3 +78,15 @@
 .cloud-veh{margin:10px 0}
 .cloud-veh summary{cursor:pointer;font-weight:700;padding:6px 0}
 .cloud-veh .btn{margin-top:10px;width:100%}
+.cloud-part-photo.generic img{opacity:.92}
+.cloud-generic-note{margin:6px 0 0;padding:8px 10px;border-radius:10px;background:var(--warn-bg,#fff4e0);color:var(--warn,#7a4b00);font-size:14px}
+.cloud-photos{display:flex;flex-direction:column;gap:8px}
+/* Client space */
+.cloud-acc .btns .btn{flex:1}
+.cloud-space .card{gap:6px}
+.cloud-space-head{display:flex;justify-content:space-between;align-items:center}
+.cloud-space form,.cloud-space section{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line,#d5e2e1);padding-top:12px;margin-top:8px}
+.cloud-space h3{margin:0}
+.cloud-space form .btn{margin-top:6px}
+.cloud-code{font:800 26px/1.2 ui-monospace,monospace;letter-spacing:.06em;text-align:center;padding:12px;border:2px dashed var(--line,#d5e2e1);border-radius:12px;margin:4px 0;user-select:all}
+.cloud-photos .cloud-photo-btn{display:block;height:auto;min-height:0;flex:none;padding:12px 14px}

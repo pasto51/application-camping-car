@@ -189,18 +189,31 @@
   }
 
   function partRequest(id, product) {
-    var info = (id && window.CDB_PARTINFO && window.CDB_PARTINFO(id)) || { id: null, name: '', photo: null, model: '', ref: '' };
-    var c = (session && session.customer) || {}, vin = localVin(), photo = info.photo, newPhoto = null;
+    var info = (id && window.CDB_PARTINFO && window.CDB_PARTINFO(id)) || { id: null, name: '', userPhoto: null, genericPhoto: null, model: '', ref: '' };
+    var c = (session && session.customer) || {}, vin = localVin(), newPhoto = null;
+    // The vehicle's photo is the same for every customer of this model: it is only sent when the customer has none of their own.
+    var vt = (DATA && DATA.vehicle && DATA.vehicle.type) || '';
+    var kind = vt === 'van' || vt === 'fourgon' ? 'fourgon' : vt ? 'camping-car' : 'véhicule';
+    function photoHtml() {
+      var mine = newPhoto || info.userPhoto;
+      return (mine
+        ? '<p class="eyebrow">Photo client</p><div class="cloud-part-photo"><img src="' + esc(mine) + '" alt=""></div>'
+        : (info.genericPhoto
+          ? '<p class="eyebrow">Photo générique</p><div class="cloud-part-photo generic"><img src="' + esc(info.genericPhoto) + '" alt=""></div>' +
+            '<p class="cloud-generic-note">Photo générique de ce modèle de ' + kind + ' : joignez une photo de votre produit s’il diffère.</p>'
+          : '<div class="cloud-part-photo"><span>📷 Pas encore de photo</span></div>')) +
+        '<label class="cloud-photo-btn btn alt">' + (mine ? 'Changer la photo client' : '📷 Ajouter une photo client') + '<input type="file" accept="image/*" capture="environment" hidden data-photo></label>';
+    }
     var m = document.createElement('div');
     m.className = 'cloud-modal cloud-sheet';
     m.innerHTML = '<form class="card" novalidate><p class="eyebrow">Demande au magasin</p><h3>' + esc(info.name || 'Pièce ou équipement') + '</h3>' +
-      '<div class="cloud-part-photo">' + (photo ? '<img src="' + esc(photo) + '" alt="">' : '<span>📷 Pas encore de photo</span>') + '</div>' +
-      '<label class="cloud-photo-btn btn alt">' + (photo ? 'Prendre une autre photo (pièce abîmée, étiquette…)' : 'Prendre la pièce en photo') + '<input type="file" accept="image/*" capture="environment" hidden data-photo></label>' +
+      '<div class="cloud-photos">' + photoHtml() + '</div>' +
       '<p class="eyebrow">Il me faut</p><div class="cloud-need">' +
       [['piece', 'Une pièce détachée'], ['remplacement', 'Remplacer l’équipement'], ['accessoire', 'Un accessoire ou consommable']].map(function (o, i) {
         return '<label><input type="radio" name="need" value="' + o[0] + '"' + (i === 0 ? ' checked' : '') + '> ' + o[1] + '</label>';
       }).join('') + '</div>' +
-      (info.name ? '' : '<label class="eyebrow">Équipement concerné</label><input class="search" name="equipmentName" maxlength="120" placeholder="ex : store, pompe à eau…">') +
+      (info.name ? '' : '<label class="eyebrow">Équipement concerné</label><select class="search" data-eq><option value="">— Choisir dans mes équipements —</option>' + myEquipment().map(function (q) { return '<option value="' + esc(q.id) + '">' + esc(q.name) + '</option>'; }).join('') + '<option value="__other">Autre (à préciser)</option></select>' +
+        '<input class="search" name="equipmentName" maxlength="120" placeholder="ex : store, pompe à eau…" hidden>') +
       '<label class="eyebrow">Pièce ou produit (si vous le savez)</label><input class="search" name="product" maxlength="200" value="' + esc(product || '') + '" placeholder="ex : joint, bouchon, thermostat…">' +
       '<label class="eyebrow">Marque et modèle</label><input class="search" name="model" maxlength="80" value="' + esc(info.model) + '" placeholder="Sur l’étiquette de l’appareil">' +
       '<label class="eyebrow">Référence ou numéro de série</label><input class="search" name="ref" maxlength="80" value="' + esc(info.ref) + '" placeholder="Sur l’étiquette ou la plaque">' +
@@ -216,11 +229,21 @@
     document.body.style.overflow = 'hidden';
     function close() { m.remove(); document.body.style.overflow = ''; }
     m.querySelector('[data-x]').onclick = close;
-    m.querySelector('[data-photo]').onchange = function (e) {
+    var eqSel = m.querySelector('[data-eq]');
+    if (eqSel) eqSel.onchange = function () {
+      var other = eqSel.value === '__other', picked = !other && eqSel.value && window.CDB_PARTINFO && window.CDB_PARTINFO(eqSel.value);
+      m.querySelector('[name=equipmentName]').hidden = !other;
+      info = picked || { id: null, name: '', userPhoto: null, genericPhoto: null, model: '', ref: '' };
+      m.querySelector('h3').textContent = info.name || 'Pièce ou équipement';
+      m.querySelector('[name=model]').value = info.model; m.querySelector('[name=ref]').value = info.ref;
+      m.querySelector('.cloud-photos').innerHTML = photoHtml();
+    };
+    m.querySelector('.cloud-photos').onchange = function (e) {
+      if (!e.target.matches('[data-photo]')) return;
       var f = e.target.files && e.target.files[0]; if (!f) return;
       compress(f).then(function (url) {
         newPhoto = url;
-        m.querySelector('.cloud-part-photo').innerHTML = '<img src="' + url + '" alt="">';
+        m.querySelector('.cloud-photos').innerHTML = photoHtml();
       }).catch(function () { toast('Photo illisible'); });
     };
     m.querySelector('form').onsubmit = function (e) {
@@ -230,7 +253,8 @@
         need: (f.querySelector('[name=need]:checked') || {}).value,
         equipmentId: info.id, equipmentName: info.name || val('equipmentName'), product: val('product'),
         model: val('model'), ref: val('ref'), cellNumber: val('cellNumber'), vehicleYear: val('vehicleYear'), message: val('message'),
-        photo: newPhoto || photo || null,
+        photo: newPhoto || info.userPhoto || info.genericPhoto || null,
+        photoKind: newPhoto || info.userPhoto ? 'client' : 'generique',
         vin: f.elements.sendVin.checked ? val('vin') : '',
       };
       if (!body.equipmentName && !body.product) { toast('Indiquez l’équipement ou la pièce'); return; }
@@ -247,6 +271,14 @@
         f.querySelector('[data-see]').onclick = function () { close(); var t = document.querySelector('.tile[data-go="rdv"]'); if (t) t.click(); };
       }).catch(function (err) { btn.disabled = false; toast(err.message); });
     };
+  }
+
+  // Equipment ticked by the customer (for « Demander une pièce » from the home screen).
+  function myEquipment() {
+    var own = readJson('cdb_own', null);
+    if (!own) { own = {}; ((DATA && DATA.vehicle && DATA.vehicle.equipment) || []).forEach(function (id) { own[id] = true; }); }
+    return ((DATA && DATA.equipment) || []).filter(function (q) { return own[q.id] && !(DATA.config.HIDDEN_EQ || {})[q.id]; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, 'fr'); });
   }
 
   // Phone photo → light JPEG data URL.
@@ -336,7 +368,6 @@
         '<label class="eyebrow" for="c_last">Nom *</label><input class="search" id="c_last" name="lastName" required autocomplete="off">' +
         '<label class="eyebrow" for="c_tel">Téléphone</label><input class="search" id="c_tel" name="phone" type="tel" autocomplete="off">' +
         '<label class="eyebrow" for="c_mail">E-mail</label><input class="search" id="c_mail" name="email" type="email" autocomplete="off">' +
-        '<label class="eyebrow" for="c_plate">Immatriculation</label><input class="search" id="c_plate" name="plate" autocapitalize="characters" autocomplete="off">' +
         '<label class="eyebrow" for="c_vin">Numéro de série (VIN)</label><input class="search" id="c_vin" name="vin" autocapitalize="characters" autocomplete="off" placeholder="17 caractères"><small class="sub">Gardé uniquement sur ce téléphone, jamais sur nos serveurs.</small>' +
         '<label class="eyebrow" for="c_date">Date de mise en main</label><input class="search" id="c_date" name="handoverDate" type="date" value="' + today + '">' +
         '<button class="btn">Créer le compte du client</button></form>' +
@@ -620,7 +651,7 @@
   function addAccountCard() {
     var home = document.getElementById('home'); if (!home || document.getElementById('cloudacc')) return;
     var req = document.createElement('div'); req.id = 'cloudhome'; req.hidden = true;
-    var acc = document.createElement('div'); acc.id = 'cloudacc'; acc.className = 'card';
+    var acc = document.createElement('div'); acc.id = 'cloudacc'; acc.className = 'card cloud-acc';
     if (DATA.announcement) {
       var ann = document.createElement('div'); ann.className = 'tip cloud-announce';
       ann.innerHTML = '<b>' + esc(DATA.dealer.name || 'Votre concession') + ' :</b> ' + esc(DATA.announcement);
@@ -629,61 +660,110 @@
     home.insertBefore(req, home.firstChild); home.appendChild(acc);
     acc.addEventListener('click', function (e) {
       var b = e.target.closest('[data-acc]'); if (!b) return;
-      if (b.dataset.acc === 'logout') {
-        if (!confirm('Se déconnecter de ce téléphone ? Vos données restent sauvegardées ; votre code d’accès permettra de les retrouver.')) return;
-        api('POST', '/api/me/logout').catch(function () {}).then(function () { session = null; saveSession(); clearLocal(); location.reload(); });
-      }
-      if (b.dataset.acc === 'delete') {
-        if (!confirm('Supprimer définitivement votre compte et toutes vos données (photos comprises) ?')) return;
-        api('DELETE', '/api/me').then(function () { session = null; saveSession(); clearLocal(); location.reload(); }).catch(function (err) { toast(err.message); });
-      }
-      if (b.dataset.acc === 'update') checkUpdates(true);
-      if (b.dataset.acc === 'info') {
-        var get = function (k) { var i = acc.querySelector('[data-info="' + k + '"]'); return i ? i.value.trim() : ''; };
-        if (get('vin')) lsSet(VIN_KEY, get('vin')); else lsDel(VIN_KEY);
-        api('PUT', '/api/me/info', { cellNumber: get('cellNumber'), vehicleYear: get('vehicleYear') })
-          .then(function (cust) { session.customer = cust; saveSession(); toast('Enregistré'); })
-          .catch(function (err) { toast(err.message); });
-      }
-      if (b.dataset.acc === 'push-on') enablePush().then(function () { toast('Notifications activées'); renderAccount(); }).catch(function (err) { toast(err.message); renderAccount(); });
-      if (b.dataset.acc === 'push-off') disablePush().then(function () { toast('Notifications désactivées'); renderAccount(); });
+      if (b.dataset.acc === 'space') openSpace();
+      if (b.dataset.acc === 'part') partRequest(null);
     });
     renderAccount();
   }
 
+  // Home card: who is signed in, backup status, and the two entries of the client space.
   function renderAccount() {
     var el = document.getElementById('cloudacc'); if (!el || !session) return;
-    // Keep what is being typed in « Mon véhicule » when the card refreshes (it does on every save).
-    var typed = {}, veh = el.querySelector('details.cloud-veh'), wasOpen = veh && veh.open, focus = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.info;
-    Array.prototype.forEach.call(el.querySelectorAll('[data-info]'), function (i) { typed[i.dataset.info] = i.value; });
     var n = Object.keys(pending).length, c = session.customer || {};
     var status = n ? (navigator.onLine ? 'Sauvegarde en cours…' : 'Hors connexion : ' + n + ' modification' + (n > 1 ? 's' : '') + ' en attente, envoyée' + (n > 1 ? 's' : '') + ' au retour du réseau.')
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
-    el.innerHTML = '<p class="eyebrow">Mon compte</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
+    el.innerHTML = '<p class="eyebrow">Mon espace client</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
       (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p><p class="sub">' + esc(status) + '</p>' +
-      '<div id="cloudpush"></div>' +
-      '<details class="cloud-veh"><summary>Mon véhicule : références pour le magasin</summary>' +
-      '<label class="eyebrow">Année du véhicule</label><input class="search" data-info="vehicleYear" maxlength="10" inputmode="numeric" value="' + esc(vehicleYear()) + '">' +
-      '<label class="eyebrow">Numéro de cellule</label><input class="search" data-info="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Plaque du constructeur de la cellule">' +
-      '<label class="eyebrow">VIN (numéro de série du véhicule)</label><input class="search" data-info="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(localVin()) + '" placeholder="Carte grise, case E">' +
-      '<small class="sub">Le VIN reste sur ce téléphone : il n’est pas sauvegardé sur nos serveurs. Sur un nouveau téléphone, il faudra le saisir à nouveau.</small>' +
-      '<button class="btn alt" type="button" data-acc="info">Enregistrer</button></details>' +
-      '<div class="btns"><button class="btn alt" data-acc="update">Vérifier les mises à jour</button><button class="btn alt" data-acc="logout">Se déconnecter</button></div>' +
-      '<p style="text-align:center"><button class="lnk" data-acc="delete" type="button">Supprimer mon compte</button></p>';
-    if (veh) {
-      var nv = el.querySelector('details.cloud-veh'); nv.open = wasOpen;
-      Array.prototype.forEach.call(el.querySelectorAll('[data-info]'), function (i) { if (typed[i.dataset.info] != null) i.value = typed[i.dataset.info]; if (focus === i.dataset.info) i.focus(); });
-    }
-    pushState().then(function (st) {
-      var p = document.getElementById('cloudpush'); if (!p) return;
-      var txt = {
-        on: '<p class="sub">🔔 Notifications activées : vous êtes prévenu quand votre concession répond.</p><button class="lnk" data-acc="push-off" type="button">Désactiver les notifications</button>',
-        off: '<button class="btn" data-acc="push-on" type="button">🔔 Être prévenu quand la concession répond</button>',
-        denied: '<p class="sub">🔕 Notifications bloquées : autorisez-les pour cette appli dans les réglages du téléphone.</p>',
-        'ios-install': '<p class="sub">🔔 Pour recevoir les notifications sur iPhone : touchez Partager puis « Sur l’écran d’accueil », et ouvrez l’appli depuis son icône.</p>',
-        unsupported: '',
-      }[st];
-      p.innerHTML = txt || '';
+      '<div class="btns"><button class="btn" data-acc="part" type="button">🛒 Demander une pièce</button><button class="btn alt" data-acc="space" type="button">👤 Mon espace client</button></div>';
+  }
+
+  // ---------- Client space: my details, my vehicle, my code, notifications, my data ----------
+
+  function pushHtml(st) {
+    return {
+      on: '<p class="sub">🔔 Activées sur ce téléphone : vous êtes prévenu quand votre concession répond.</p><button class="btn alt" data-sp="push-off" type="button">Désactiver sur ce téléphone</button>',
+      off: '<button class="btn" data-sp="push-on" type="button">🔔 Activer sur ce téléphone</button>',
+      denied: '<p class="sub">🔕 Bloquées : autorisez-les pour cette appli dans les réglages du téléphone.</p>',
+      'ios-install': '<p class="sub">Sur iPhone : touchez Partager puis « Sur l’écran d’accueil », et ouvrez l’appli depuis son icône pour pouvoir les activer.</p>',
+      unsupported: '<p class="sub">Ce navigateur ne permet pas les notifications.</p>',
+    }[st] || '';
+  }
+
+  function openSpace() {
+    var c = (session && session.customer) || {}, v = (DATA && DATA.vehicle) || {}, d = (DATA && DATA.dealer) || {};
+    var m = document.createElement('div');
+    m.className = 'cloud-modal cloud-sheet cloud-space';
+    m.innerHTML = '<div class="card"><div class="cloud-space-head"><p class="eyebrow">Mon espace client</p><button type="button" class="lnk" data-sp="close">Fermer ✕</button></div>' +
+      '<form data-spf="me"><h3>Mes informations</h3>' +
+      '<label class="eyebrow">Prénom</label><input class="search" name="firstName" maxlength="100" value="' + esc(c.firstName || '') + '">' +
+      '<label class="eyebrow">Nom</label><input class="search" value="' + esc(c.lastName || '') + '" disabled><small class="sub">Votre nom sert à retrouver votre compte avec votre code : demandez à votre concession pour le changer.</small>' +
+      '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" value="' + esc(c.email || '') + '">' +
+      '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" value="' + esc(c.phone || '') + '">' +
+      '<button class="btn alt">Enregistrer</button></form>' +
+      '<form data-spf="veh"><h3>Mon véhicule</h3><p class="sub">' + esc(v.fullName || '') + '</p>' +
+      '<label class="eyebrow">Année du véhicule</label><input class="search" name="vehicleYear" maxlength="10" inputmode="numeric" value="' + esc(vehicleYear()) + '">' +
+      '<label class="eyebrow">Numéro de cellule</label><input class="search" name="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Plaque du constructeur de la cellule">' +
+      '<label class="eyebrow">VIN (numéro de série du véhicule)</label><input class="search" name="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(localVin()) + '" placeholder="Carte grise, case E">' +
+      '<small class="sub">Le VIN reste sur ce téléphone : il n’est jamais enregistré sur nos serveurs. Sur un nouveau téléphone, il faudra le saisir à nouveau.</small>' +
+      '<button class="btn alt">Enregistrer</button></form>' +
+      '<section><h3>Mon code d’accès</h3><p class="sub">Avec votre nom, il retrouve vos données sur un autre téléphone (« J’ai déjà un code d’accès »).</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
+      '<section><h3>Notifications</h3><p class="eyebrow">Sur ce téléphone</p><div data-push></div>' +
+      '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses de ' + esc(d.name || 'la concession') + ' par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail)') + '</label></section>' +
+      '<section><h3>Mes données</h3><p class="sub">L’application enregistre, pour votre concession : vos coordonnées, votre véhicule (modèle, année, n° de cellule), vos équipements cochés, vos photos et notes de modèles, vos demandes et messages. Ni votre VIN ni votre immatriculation ne sont enregistrés sur nos serveurs.</p>' +
+      '<div class="btns"><button class="btn alt" type="button" data-sp="export">Télécharger mes données</button><a class="btn alt" href="/app/legal.html" target="_blank" rel="noopener">Confidentialité et mentions légales</a></div>' +
+      '<p style="text-align:center;margin-top:10px"><button class="lnk" data-sp="delete" type="button">Supprimer mon compte et mes données</button></p></section>' +
+      '<section><h3>Application</h3><div class="btns"><button class="btn alt" type="button" data-sp="update">Vérifier les mises à jour</button><button class="btn alt" type="button" data-sp="logout">Se déconnecter</button></div></section>' +
+      '</div>';
+    document.body.appendChild(m);
+    document.body.style.overflow = 'hidden';
+    function close() { m.remove(); document.body.style.overflow = ''; renderAccount(); }
+    function drawPush() { pushState().then(function (st) { var p = m.querySelector('[data-push]'); if (p) p.innerHTML = pushHtml(st); }); }
+    drawPush();
+    m.addEventListener('submit', function (e) {
+      var f = e.target.closest('[data-spf]'); if (!f) return;
+      e.preventDefault();
+      var val = function (n) { return f.elements[n] ? f.elements[n].value.trim() : undefined; }, body;
+      if (f.dataset.spf === 'me') body = { firstName: val('firstName'), email: val('email'), phone: val('phone') };
+      else {
+        if (val('vin')) lsSet(VIN_KEY, val('vin')); else lsDel(VIN_KEY);
+        body = { vehicleYear: val('vehicleYear'), cellNumber: val('cellNumber') };
+      }
+      api('PUT', '/api/me/info', body).then(function (cust) { session.customer = cust; saveSession(); toast('Enregistré'); }).catch(function (err) { toast(err.message); });
+    });
+    m.addEventListener('change', function (e) {
+      if (e.target.dataset.sp !== 'mailnotif') return;
+      api('PUT', '/api/me/info', { emailNotify: e.target.checked }).then(function (cust) { session.customer = cust; saveSession(); toast(e.target.checked ? 'Réponses par e-mail activées' : 'Plus d’e-mails de réponse'); }).catch(function (err) { toast(err.message); });
+    });
+    m.addEventListener('click', function (e) {
+      if (e.target === m) return close();
+      var b = e.target.closest('[data-sp]'); if (!b || b.tagName === 'INPUT') return;
+      var a = b.dataset.sp;
+      if (a === 'close') close();
+      if (a === 'code') {
+        api('GET', '/api/me/access').then(function (r) {
+          m.querySelector('[data-code]').innerHTML = r.accessCode
+            ? '<p class="cloud-code">' + esc(r.accessCode) + '</p><p class="sub">Valable jusqu’au ' + esc(new Date(r.expiresAt).toLocaleDateString('fr-FR')) + '. Notez-le en lieu sûr.</p>'
+            : '<p class="sub">Votre code ne peut pas être réaffiché : demandez-en un nouveau à ' + esc(d.name || 'votre concession') + '.</p>';
+        }).catch(function (err) { toast(err.message); });
+      }
+      if (a === 'push-on') enablePush().then(function () { toast('Notifications activées'); drawPush(); }).catch(function (err) { toast(err.message); drawPush(); });
+      if (a === 'push-off') disablePush().then(function () { toast('Notifications désactivées'); drawPush(); });
+      if (a === 'export') {
+        api('GET', '/api/me/export').then(function (data) {
+          var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'mes-donnees-compagnon-de-bord.json';
+          document.body.appendChild(link); link.click(); link.remove();
+        }).catch(function (err) { toast(err.message); });
+      }
+      if (a === 'update') checkUpdates(true);
+      if (a === 'logout') {
+        if (!confirm('Se déconnecter de ce téléphone ? Vos données restent sauvegardées ; votre code d’accès permettra de les retrouver.')) return;
+        api('POST', '/api/me/logout').catch(function () {}).then(function () { session = null; saveSession(); clearLocal(); location.reload(); });
+      }
+      if (a === 'delete') {
+        if (!confirm('Supprimer définitivement votre compte et toutes vos données (photos, demandes) ? Cette action est irréversible.')) return;
+        api('DELETE', '/api/me').then(function () { session = null; saveSession(); clearLocal(); location.reload(); }).catch(function (err) { toast(err.message); });
+      }
     });
   }
 

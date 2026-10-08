@@ -224,7 +224,7 @@ test('a customer registered from the back-office gets a working access code and 
   assert.equal((await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: v114.id, dealershipId: dealership.id, lastName: 'Bureau', sendEmail: true } })).status, 400);
   const res = await call('POST', '/api/admin/customers', {
     token: admin,
-    body: { vehicleId: v114.id, dealershipId: dealership.id, firstName: 'Paul', lastName: 'Bureau', plate: 'AB-123-CD' },
+    body: { vehicleId: v114.id, dealershipId: dealership.id, firstName: 'Paul', lastName: 'Bureau', cellNumber: 'CEL-1', plate: 'AB-123-CD' },
   });
   assert.equal(res.status, 200);
   assert.match(res.data.accessCode, /^V114-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
@@ -232,7 +232,8 @@ test('a customer registered from the back-office gets a working access code and 
   // The code restores the account in the app
   const restored = await call('POST', '/api/restore', { body: { lastName: 'bureau', code: res.data.accessCode } });
   assert.equal(restored.status, 200);
-  assert.equal(restored.data.customer.plate, 'AB-123-CD');
+  assert.equal(restored.data.customer.cellNumber, 'CEL-1');
+  assert.equal(restored.data.customer.plate, undefined, 'no number plate kept');
   // The link opens it once
   const token = new URL(res.data.appLink).searchParams.get('lien');
   assert.equal((await call('POST', '/api/link', { body: { token } })).status, 200);
@@ -327,4 +328,22 @@ test('brand and model noted for the vehicle are pre-filled in the app', async ()
   const token = (await call('POST', '/api/restore', { body: { lastName: 'Modele', code: c.accessCode } })).data.token;
   const { data } = await call('GET', '/api/app/data', { token });
   assert.deepEqual(data.vehicle.models, { trumac: 'Truma Combi 4', wc: 'Thetford C223' });
+});
+
+test('the access code can be read again by the dealership and the customer, and resent', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const v114 = catalog.vehicles.find((v) => v.name === 'V114');
+  const dealership = (await call('GET', '/api/admin/dealerships', { token: admin })).data[0];
+  const c = (await call('POST', '/api/admin/customers', { token: admin, body: { vehicleId: v114.id, dealershipId: dealership.id, lastName: 'Relire' } })).data;
+  assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: admin })).data.accessCode, c.accessCode);
+  const row = app.db.prepare('SELECT access_code_enc FROM customers WHERE id = ?').get(c.id);
+  assert.ok(row.access_code_enc && !row.access_code_enc.includes(c.accessCode.slice(-4)), 'stored encrypted');
+  const again = (await call('POST', `/api/admin/customers/${c.id}/resend`, { token: admin, body: {} })).data;
+  assert.equal(again.accessCode, c.accessCode, 'same code, not a new one');
+  const token = (await call('POST', '/api/link', { body: { token: new URL(again.appLink).searchParams.get('lien') } })).data.token;
+  assert.equal((await call('GET', '/api/me/access', { token })).data.accessCode, c.accessCode);
+  // A new code replaces it everywhere
+  const fresh = (await call('POST', `/api/admin/customers/${c.id}/recovery-code`, { token: admin, body: {} })).data;
+  assert.equal((await call('GET', `/api/admin/customers/${c.id}`, { token: admin })).data.accessCode, fresh.recoveryCode);
 });

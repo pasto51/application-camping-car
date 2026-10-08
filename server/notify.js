@@ -99,7 +99,7 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
       isNew ? `${who} vient d'envoyer une demande depuis l'application Compagnon de bord.` : `${who} a répondu dans sa demande « ${report.title} ».`,
       '',
       `Demande : ${report.title}`,
-      `Véhicule : ${[vehicle?.brand, vehicle?.name].filter(Boolean).join(' ')}${customer.plate ? ` (${customer.plate})` : ''}`,
+      `Véhicule : ${[vehicle?.brand, vehicle?.name].filter(Boolean).join(' ')}`,
       customer.phone ? `Téléphone : ${customer.phone}` : null,
       customer.email ? `E-mail : ${customer.email}` : null,
       '',
@@ -114,7 +114,7 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
     const html = emailHtml({
       dealer: { name: d.name },
       intro: isNew
-        ? `<b>${escHtml(who)}</b> vient d'envoyer une demande : <b>${escHtml(report.title)}</b>.<br>Véhicule : ${escHtml([vehicle?.brand, vehicle?.name].filter(Boolean).join(' '))}${customer.plate ? ` (${escHtml(customer.plate)})` : ''}${customer.phone ? `<br>Téléphone : ${escHtml(customer.phone)}` : ''}`
+        ? `<b>${escHtml(who)}</b> vient d'envoyer une demande : <b>${escHtml(report.title)}</b>.<br>Véhicule : ${escHtml([vehicle?.brand, vehicle?.name].filter(Boolean).join(' '))}${customer.phone ? `<br>Téléphone : ${escHtml(customer.phone)}` : ''}`
         : `<b>${escHtml(who)}</b> a répondu dans sa demande <b>${escHtml(report.title)}</b>.`,
       quote: vin ? `${text}\nVIN : ${vin}` : text,
       image: part?.photoUrl ? `${origin}${part.photoUrl}` : null,
@@ -141,7 +141,7 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
     const d = db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id) || {};
     const name = d.name || 'Votre concession';
     const pushed = await push(customer.id, { title: name, body: text.slice(0, 180), url: `/app/#demande-${report.id}`, tag: `demande-${report.id}` });
-    if (customer.email) {
+    if (customer.email && customer.email_notify !== 0) {
       // The button signs the customer in directly (single-use link), even in a browser where they never logged in.
       const token = createLoginLink(customer.id);
       const url = `${origin}/app/${token ? `?lien=${token}` : ''}#demande-${report.id}`;

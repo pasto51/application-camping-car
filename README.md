@@ -35,7 +35,13 @@ Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique �
 - Sur chaque équipement (« C'est quoi, ça ? ») et à la fin d'un diagnostic (« Demander au magasin »), le client envoie une demande avec : **photo** (celle de l'équipement, ou une nouvelle), **marque et modèle**, **référence ou n° de série**, **n° de cellule**, **année du véhicule**, et ce qu'il lui faut (pièce, remplacement, accessoire).
 - Elle part à l'**e-mail du magasin** de la concession (Concessions → « E-mail du magasin ») et apparaît dans le back-office, filtre « 🛒 Magasin », avec une fiche pièce à copier pour la commande fournisseur.
 - Le n° de cellule et l'année se remplissent par le client (Mon compte → Mon véhicule) ou par le commercial (fiche client).
-- **VIN : jamais enregistré sur le serveur.** Il reste sur le téléphone du client ; il n'est transmis que dans l'e-mail d'une demande au magasin, si le client coche la case. Les VIN saisis par les versions précédentes ont été effacés.
+- Photo : si le client a sa propre photo de l'équipement, c'est elle qui part ; sinon la photo du modèle est envoyée, signalée comme « photo générique », et le client est invité à joindre la sienne.
+- **VIN : jamais enregistré sur le serveur.** Saisi à la mise en main sur le téléphone du client, il y reste ; il n'est transmis que dans l'e-mail d'une demande au magasin, si le client coche la case. **L'immatriculation n'est plus demandée ni conservée.** Les VIN et immatriculations des versions précédentes ont été effacés.
+
+### Espace client (dans l'appli)
+Sur l'accueil : **🛒 Demander une pièce** et **👤 Mon espace client** : mes informations (prénom, e-mail, téléphone), mon véhicule (année, n° de cellule, VIN gardé sur le téléphone), mon code d'accès, notifications (téléphone et e-mails de réponse), mes données (téléchargement, suppression du compte), confidentialité et mentions légales (`public/app/legal.html`, éléments de l'éditeur à compléter).
+
+Le **code d'accès** est conservé chiffré : la fiche client du back-office l'affiche, avec « Copier » et « Renvoyer au client » (e-mail, ou lien et SMS).
 
 ### Back-office
 - **Diagnostics (pannes)** : les 56 entrées (environ 2 000 fins de parcours) se présentent sous forme d'**organigramme modifiable** : questions, réponses, fin de parcours avec cause, geste, produit, sécurité, rendez-vous. Un mode avancé (JSON) est aussi disponible.

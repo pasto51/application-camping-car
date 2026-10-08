@@ -214,7 +214,7 @@ test('store request: photo, model, cell number, year; the VIN goes in the e-mail
   const admin = (await call('POST', '/api/admin/login', { body: { email: 'admin@test.fr', password: 'motdepasse123' } })).data.token;
   await call('PUT', '/api/admin/dealerships/1', { token: admin, body: { storeEmail: 'magasin@concession.fr' } });
   const { data: catalog } = await call('GET', '/api/catalog');
-  const h = await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Piece', vin: 'VF1SECRET1234567' } } });
+  const h = await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Piece', vin: 'VF1SECRET1234567', plate: 'ZZ-999-ZZ' } } });
   const token = h.data.token;
   assert.equal(h.data.customer.vin, undefined, 'the VIN is not kept at the handover');
   // The handover checklist synced from the phone loses its VIN on the server
@@ -224,12 +224,13 @@ test('store request: photo, model, cell number, year; the VIN goes in the e-mail
   const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
   const r = await call('POST', '/api/me/parts', {
     token,
-    body: { need: 'piece', equipmentId: 'trumac', equipmentName: 'Chauffage Truma', product: 'Thermostat', model: 'Truma Combi 4', ref: '30030-33600', cellNumber: 'CEL-12345', vehicleYear: '2024', photo: PNG, vin: 'VF1SECRET1234567', message: 'Il ne chauffe plus.' },
+    body: { need: 'piece', equipmentId: 'trumac', equipmentName: 'Chauffage Truma', product: 'Thermostat', model: 'Truma Combi 4', ref: '30030-33600', cellNumber: 'CEL-12345', vehicleYear: '2024', photo: PNG, photoKind: 'client', vin: 'VF1SECRET1234567', message: 'Il ne chauffe plus.' },
   });
   assert.equal(r.status, 200);
   assert.equal(r.data.kind, 'piece');
   assert.ok(r.data.part.photoUrl.startsWith('/uploads/'));
   assert.equal(r.data.part.vinSent, true);
+  assert.equal(r.data.part.photoKind, 'client');
   await waitFor(() => smtp.mails.length === before + 1);
   const mail = smtp.mails[before];
   assert.deepEqual(mail.rcpt, ['magasin@concession.fr']);
@@ -242,6 +243,7 @@ test('store request: photo, model, cell number, year; the VIN goes in the e-mail
     app.db.prepare('SELECT * FROM customer_state').all(),
   ]);
   assert.ok(!dump.includes('VF1SECRET'), 'the VIN is stored nowhere');
+  assert.ok(!dump.includes('ZZ-999-ZZ'), 'nor the number plate');
   const me = (await call('GET', '/api/me', { token })).data.customer;
   assert.equal(me.cellNumber, 'CEL-12345');
   assert.equal(me.vehicleYear, '2024');

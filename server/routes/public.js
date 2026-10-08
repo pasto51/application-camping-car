@@ -2,7 +2,7 @@
 
 const { HttpError } = require('../http');
 const { transaction, getSetting, stripVin } = require('../db');
-const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter } = require('../auth');
+const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
@@ -70,7 +70,7 @@ function register(router) {
       .prepare('SELECT v.id, v.name, v.model_year, b.name AS brand_name FROM vehicles v JOIN brands b ON b.id = v.brand_id WHERE v.id = ?')
       .get(customer.vehicle_id);
     const dealership = db.prepare('SELECT id, name, city, phone, email FROM dealerships WHERE id = ?').get(customer.dealership_id);
-    const { recovery_hash, vin, ...publicCustomer } = customer;
+    const { recovery_hash, vin, plate, access_code_enc, ...publicCustomer } = customer;
     return {
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       customer: camel(publicCustomer),
@@ -153,7 +153,7 @@ function register(router) {
           lastName,
           optEmail(c.email),
           optStr(c.phone, 40),
-          optStr(c.plate, 20),
+          null, // no number plate
           null, // the VIN stays on the phone
           optDate(c.handoverDate) || new Date().toISOString().slice(0, 10),
           // No usable code until the dealership validates the handover in the app.
@@ -237,8 +237,11 @@ function register(router) {
       `UPDATE customers SET recovery_hash = ?, access_code_at = ?, access_expires_at = ?, first_name = COALESCE(?, first_name),
        updated_at = datetime('now') WHERE id = ?`
     ).run(sha256(core), now.toISOString(), expires.toISOString(), optStr(body.firstName, 100), customer.id);
+    const code = formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core);
+    // Kept encrypted so the dealership and the customer can read it again (lost code), never in clear.
+    db.prepare('UPDATE customers SET access_code_enc = ? WHERE id = ?').run(sealText(code, ctx.config.secret), customer.id);
     return {
-      code: formatAccessCode(vehicle ? readProfile(vehicle).codePrefix : 'CDB', core),
+      code,
       date: now.toLocaleDateString('fr-FR'),
       expiresAt: expires.toISOString().slice(0, 10),
     };
@@ -256,10 +259,20 @@ function register(router) {
     return reports;
   }
 
+  // The customer's own access code, for the client space (to note it, or sign in on another phone).
+  router.get('/api/me/access', (ctx) => {
+    const customer = requireCustomer(ctx);
+    return { accessCode: customer.access_code_enc ? openText(customer.access_code_enc, ctx.config.secret) : null, expiresAt: customer.access_expires_at ? customer.access_expires_at.slice(0, 10) : null };
+  });
+
   // Vehicle details the store needs (never the VIN: it stays on the phone).
   router.put('/api/me/info', (ctx) => {
     const customer = requireCustomer(ctx);
     const { body, db } = ctx;
+    if (body.firstName !== undefined) db.prepare('UPDATE customers SET first_name = ? WHERE id = ?').run(optStr(body.firstName, 100), customer.id);
+    if (body.email !== undefined) db.prepare('UPDATE customers SET email = ? WHERE id = ?').run(optEmail(body.email), customer.id);
+    if (body.phone !== undefined) db.prepare('UPDATE customers SET phone = ? WHERE id = ?').run(optStr(body.phone, 40), customer.id);
+    if (body.emailNotify !== undefined) db.prepare('UPDATE customers SET email_notify = ? WHERE id = ?').run(body.emailNotify ? 1 : 0, customer.id);
     if (body.cellNumber !== undefined) db.prepare('UPDATE customers SET cell_number = ? WHERE id = ?').run(optStr(body.cellNumber, 40), customer.id);
     if (body.vehicleYear !== undefined) db.prepare('UPDATE customers SET vehicle_year = ? WHERE id = ?').run(optStr(body.vehicleYear, 10), customer.id);
     return session(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id)).customer;
@@ -297,6 +310,8 @@ function register(router) {
       photoUrl: partPhoto(ctx, customer, body.photo),
       vinSent: !!optStr(body.vin, 40),
     };
+    // The vehicle's photo is generic (same for every customer of the model): the store is told so.
+    part.photoKind = part.photoUrl ? (body.photoKind === 'client' ? 'client' : 'generique') : null;
     const message = optStr(body.message, 4000);
     const title = `${need === 'remplacement' ? 'Remplacement' : 'Pièce'} : ${equipmentName || product}`.slice(0, 150);
     const description = [
@@ -307,6 +322,7 @@ function register(router) {
       part.ref && `Référence ou n° de série : ${part.ref}`,
       part.cellNumber && `N° de cellule : ${part.cellNumber}`,
       part.vehicleYear && `Année du véhicule : ${part.vehicleYear}`,
+      part.photoKind && `Photo : ${part.photoKind === 'client' ? 'prise par le client' : 'générique du modèle (le client n’a pas joint la sienne)'}`,
       message,
     ]
       .filter(Boolean)
@@ -385,6 +401,30 @@ function register(router) {
   });
 
   // Right to erasure: removes the customer, their sessions, saved data and photo files.
+  // Everything the application keeps about the customer, as a file (right of access and portability).
+  router.get('/api/me/export', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const { db } = ctx;
+    const s = session(db, customer);
+    const state = {};
+    for (const [k, v] of Object.entries(s.state)) {
+      try {
+        state[k] = JSON.parse(v);
+      } catch {
+        state[k] = v;
+      }
+    }
+    return {
+      exportedAt: new Date().toISOString(),
+      note: 'Données enregistrées par l’application Compagnon de bord. Le VIN n’y figure pas : il reste sur votre téléphone.',
+      customer: s.customer,
+      vehicle: s.vehicle,
+      dealership: s.dealership,
+      appData: state,
+      requests: requestsOf(db, customer.id),
+    };
+  });
+
   router.delete('/api/me', (ctx) => {
     const customer = requireCustomer(ctx);
     deleteCustomer(ctx.db, ctx.uploads, customer.id);
