@@ -161,11 +161,14 @@ function appData(db, { vehicleId, dealershipId }) {
       city: dealership?.city || '',
       logoUrl: dealership?.logo_url || null,
       website: dealership?.website || null,
-      // Who the customer calls: the SAV (workshop) and the store, each with its own number and hours.
-      sav: { phone: dealership?.sav_phone || dealership?.phone || '', hours: dealership?.sav_hours || dealership?.hours || '' },
-      store: dealership?.store_phone || dealership?.store_email || dealership?.store_address
-        ? { phone: dealership.store_phone || '', hours: dealership.store_hours || '', address: dealership.store_address || '', detached: !!dealership.store_detached }
-        : null,
+      // Who the customer contacts: the SAV (workshop) and the store, always both (a detached store too), by phone or e-mail.
+      // Same mailboxes as the requests: SAV → its e-mail or the dealership's; store → its e-mail, else the SAV's, else the dealership's.
+      sav: { phone: dealership?.sav_phone || dealership?.phone || '', email: dealership?.sav_email || dealership?.email || '' },
+      store: {
+        phone: dealership?.store_phone || dealership?.phone || '',
+        email: dealership?.store_email || dealership?.sav_email || dealership?.email || '',
+        detached: !!dealership?.store_detached,
+      },
     },
   };
   for (const key of CATALOG_KEYS) data[key] = getCatalogValue(db, key);

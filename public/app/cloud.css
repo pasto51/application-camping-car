@@ -92,6 +92,39 @@
 .cloud-photos .cloud-photo-btn{display:block;height:auto;min-height:0;flex:none;padding:12px 14px}
 .cloud-advisor{margin:4px 0;font-size:15px}
 .cloud-advisor a{color:var(--accent);font-weight:600;text-decoration:none}
-.cloud-contacts{display:flex;flex-direction:column;gap:8px;margin:8px 0}
-.cloud-contact{display:flex;flex-direction:column;align-items:flex-start;text-align:left;text-decoration:none;padding:10px 14px;min-height:0;height:auto;flex:none}
-.cloud-contact small{font-weight:400;font-size:13px;opacity:.85}
+
+/* Contacts: two discreet rows, SAV and Magasin, each with « Appeler » / « Écrire » */
+.cloud-contacts{display:flex;flex-direction:column;margin:10px 0}
+.cloud-contact{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.cloud-contact:last-child{border-bottom:1px solid var(--line)}
+.cloud-contact span{flex:1;font-weight:700;font-size:17px}
+.cloud-mini{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:15px;font-weight:600;background:transparent}
+.cloud-mini:active{background:var(--soft)}
+/* Home card */
+.cloud-who{font-size:18px;line-height:1.35;margin:4px 0}
+.cloud-acc-btns{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.cloud-acc-btns .btn{flex:none;width:100%;min-height:54px;font-size:17px}
+.cloud-saved{font-size:13px;margin:10px 0 0;text-align:center}
+/* Client space: larger text and fields, one thing per section, the rest folded away */
+.cloud-space{font-size:17px}
+.cloud-space-head{gap:10px}
+.cloud-space-head h2{margin:0;font-size:22px}
+.cloud-space-head .btn{flex:none;min-height:44px;padding:6px 16px}
+.cloud-space h3{font-size:19px}
+.cloud-space .search{font-size:17px;min-height:50px}
+.cloud-space .btn{flex:none;width:100%;min-height:52px;font-size:17px}
+.cloud-space .cloud-mini{width:auto}
+.cloud-big{font-size:18px;font-weight:700;margin:0}
+.cloud-more{display:flex;flex-direction:column;gap:6px}
+.cloud-more summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700;color:var(--accent);font-size:16px}
+.cloud-more[open]{display:flex}
+.cloud-more[open] > *:not(summary){margin-top:6px}
+.cloud-options{border-top:1px solid var(--line,#d5e2e1);padding-top:12px;margin-top:8px}
+.cloud-danger{border:0;background:none;color:#b3261e;text-decoration:underline;font-size:15px;min-height:44px;margin-top:6px}
+.cloud-close-bottom{margin-top:16px}
+.cloud-check{font-size:16px;min-height:44px;display:flex;align-items:center;gap:10px}
+.cloud-check input{width:24px;height:24px}
+.cloud-space .cloud-space-head .btn{width:auto;min-height:44px}
+.cloud-space a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box}
+.cloud-more > .btn,.cloud-more > a.btn{margin-top:8px}
+.cloud-danger{display:block;margin:12px auto 0}

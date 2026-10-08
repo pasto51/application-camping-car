@@ -27,7 +27,7 @@ Mot de passe de tous les comptes démo : `demo1234`. Les liens clients ne serven
 ## Déroulé conseillé (15 minutes)
 
 1. **Le client, sur le téléphone (Paul Morel)**
-   - Accueil : son véhicule, son plan, les boutons 📞 SAV et 📞 Magasin de **sa** concession.
+   - Accueil : son véhicule, son plan, le SAV et le Magasin de **sa** concession, chacun avec « Appeler » et « Écrire » ; un espace client simple, en gros caractères.
    - « La concession vous a répondu » : il lit la réponse du SAV et répond.
    - **Diagnostic** : une panne guidée pas à pas (« C'est quoi, ça ? », gestes du quotidien).
    - **🛒 Demander une pièce** : photo, modèle, référence. Sous garantie, la demande part **au SAV** ; hors garantie, **au magasin**.

@@ -680,19 +680,31 @@
     var n = Object.keys(pending).length, c = session.customer || {};
     var status = n ? (navigator.onLine ? 'Sauvegarde en cours…' : 'Hors connexion : ' + n + ' modification' + (n > 1 ? 's' : '') + ' en attente, envoyée' + (n > 1 ? 's' : '') + ' au retour du réseau.')
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
-    el.innerHTML = '<p class="eyebrow">Mon espace client</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
-      (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p><p class="sub">' + esc(status) + '</p>' + contactsHtml() +
-      '<div class="btns"><button class="btn" data-acc="part" type="button">🛒 Demander une pièce</button><button class="btn alt" data-acc="space" type="button">👤 Mon espace client</button></div>';
+    // Simple and large: who I am, who to contact, two buttons. The backup status stays small at the bottom.
+    el.innerHTML = '<p class="eyebrow">Mon espace client</p><p class="cloud-who"><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
+      (session.dealership ? '<br><span class="sub">' + esc(session.dealership.name) + '</span>' : '') + '</p>' + contactsHtml() +
+      '<div class="cloud-acc-btns"><button class="btn" data-acc="part" type="button">🛒 Demander une pièce</button><button class="btn alt" data-acc="space" type="button">👤 Mon espace client</button></div>' +
+      '<p class="sub cloud-saved">' + esc(status) + '</p>';
   }
 
-  // Who the customer calls: the SAV (workshop) and the store, with one-touch call.
+  // Who the customer contacts: the SAV (workshop) and the store, always both, with a discreet « Appeler » / « Écrire ».
   function telLink(phone) { return 'tel:' + String(phone).replace(/[^\d+]/g, ''); }
+  function mailLink(email) {
+    var c = (session && session.customer) || {}, v = (DATA && DATA.vehicle) || {};
+    var subject = 'Mon camping-car' + (v.fullName ? ' ' + v.fullName : '') + ' – ' + [c.firstName, c.lastName].filter(Boolean).join(' ');
+    return 'mailto:' + email + '?subject=' + encodeURIComponent(subject);
+  }
   function contactsHtml() {
-    var d = (DATA && DATA.dealer) || {}, sav = d.sav || {}, st = d.store;
-    var row = function (label, phone, hours, extra) {
-      return phone ? '<a class="btn alt cloud-contact" href="' + esc(telLink(phone)) + '">📞 ' + label + '<small>' + esc(phone) + (hours ? ' · ' + esc(hours) : '') + (extra ? '<br>' + esc(extra) : '') + '</small></a>' : '';
+    var d = (DATA && DATA.dealer) || {};
+    var row = function (label, x) {
+      x = x || {};
+      var phone = x.phone || d.tel, email = x.email || d.email;
+      if (!phone && !email) return '';
+      return '<div class="cloud-contact"><span>' + label + '</span>' +
+        (phone ? '<a class="cloud-mini" href="' + esc(telLink(phone)) + '" aria-label="Appeler le ' + label + '">📞 Appeler</a>' : '') +
+        (email ? '<a class="cloud-mini" href="' + esc(mailLink(email)) + '" aria-label="Écrire au ' + label + '">✉️ Écrire</a>' : '') + '</div>';
     };
-    var h = row('SAV / atelier', sav.phone, sav.hours) + (st ? row('Magasin', st.phone, st.hours, st.detached ? st.address : '') : '');
+    var h = row('SAV', d.sav) + row('Magasin', d.store);
     return h ? '<div class="cloud-contacts">' + h + '</div>' : '';
   }
 
@@ -718,27 +730,32 @@
     var c = (session && session.customer) || {}, v = (DATA && DATA.vehicle) || {}, d = (DATA && DATA.dealer) || {};
     var m = document.createElement('div');
     m.className = 'cloud-modal cloud-sheet cloud-space';
-    m.innerHTML = '<div class="card"><div class="cloud-space-head"><p class="eyebrow">Mon espace client</p><button type="button" class="lnk" data-sp="close">Fermer ✕</button></div>' +
-      '<section><h3>Contacter ' + esc(d.name || 'la concession') + '</h3>' + (contactsHtml() || '<p class="sub">Coordonnées non renseignées.</p>') + '</section>' +
-      '<form data-spf="me"><h3>Mes informations</h3>' +
-      '<label class="eyebrow">Prénom</label><input class="search" name="firstName" maxlength="100" value="' + esc(c.firstName || '') + '">' +
-      '<label class="eyebrow">Nom</label><input class="search" value="' + esc(c.lastName || '') + '" disabled><small class="sub">Votre nom sert à retrouver votre compte avec votre code : demandez à votre concession pour le changer.</small>' +
-      '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" value="' + esc(c.email || '') + '">' +
-      '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" value="' + esc(c.phone || '') + '">' +
-      '<button class="btn alt">Enregistrer</button></form>' +
-      '<form data-spf="veh"><h3>Mon véhicule</h3><p class="sub">' + esc(v.fullName || '') + '</p>' + warrantyHtml() +
+    m.innerHTML = '<div class="card"><div class="cloud-space-head"><h2>Mon espace client</h2><button type="button" class="btn alt" data-sp="close">Fermer</button></div>' +
+      '<section><h3>Contacter ma concession</h3><p class="sub">' + esc(d.name || '') + '</p>' + (contactsHtml() || '<p class="sub">Coordonnées non renseignées.</p>') + '</section>' +
+      '<form data-spf="veh"><h3>Mon véhicule</h3><p class="cloud-big">' + esc(v.fullName || '') + '</p>' + warrantyHtml() +
+      '<details class="cloud-more"' + (c.cellNumber && vehicleYear() ? '' : ' open') + '><summary>Année, n° de cellule, VIN</summary>' +
       '<label class="eyebrow">Année du véhicule</label><input class="search" name="vehicleYear" maxlength="10" inputmode="numeric" value="' + esc(vehicleYear()) + '">' +
-      '<label class="eyebrow">Numéro de cellule</label><input class="search" name="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Plaque du constructeur de la cellule">' +
-      '<label class="eyebrow">VIN (numéro de série du véhicule)</label><input class="search" name="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(localVin()) + '" placeholder="Carte grise, case E">' +
-      '<small class="sub">Le VIN reste sur ce téléphone : il n’est jamais enregistré sur nos serveurs. Sur un nouveau téléphone, il faudra le saisir à nouveau.</small>' +
-      '<button class="btn alt">Enregistrer</button></form>' +
-      '<section><h3>Mon code d’accès</h3><p class="sub">Avec votre nom, il retrouve vos données sur un autre téléphone (« J’ai déjà un code d’accès »).</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
-      '<section><h3>Notifications</h3><p class="eyebrow">Sur ce téléphone</p><div data-push></div>' +
-      '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses de ' + esc(d.name || 'la concession') + ' par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail)') + '</label></section>' +
-      '<section><h3>Mes données</h3><p class="sub">L’application enregistre, pour votre concession : vos coordonnées, votre véhicule (modèle, année, n° de cellule), vos équipements cochés, vos photos et notes de modèles, vos demandes et messages. Ni votre VIN ni votre immatriculation ne sont enregistrés sur nos serveurs.</p>' +
-      '<div class="btns"><button class="btn alt" type="button" data-sp="export">Télécharger mes données</button><a class="btn alt" href="/app/legal.html" target="_blank" rel="noopener">Confidentialité et mentions légales</a></div>' +
-      '<p style="text-align:center;margin-top:10px"><button class="lnk" data-sp="delete" type="button">Supprimer mon compte et mes données</button></p></section>' +
-      '<section><h3>Application</h3><div class="btns"><button class="btn alt" type="button" data-sp="update">Vérifier les mises à jour</button><button class="btn alt" type="button" data-sp="logout">Se déconnecter</button></div></section>' +
+      '<label class="eyebrow">Numéro de cellule</label><input class="search" name="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Sur la plaque de la cellule">' +
+      '<label class="eyebrow">VIN (numéro de série)</label><input class="search" name="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(localVin()) + '" placeholder="Carte grise, case E">' +
+      '<small class="sub">Le VIN reste sur ce téléphone, il n’est jamais envoyé sur internet (sauf dans une demande de pièce).</small>' +
+      '<button class="btn">Enregistrer</button></details></form>' +
+      '<form data-spf="me"><h3>Mes coordonnées</h3>' +
+      '<label class="eyebrow">Prénom</label><input class="search" name="firstName" maxlength="100" autocomplete="given-name" value="' + esc(c.firstName || '') + '">' +
+      '<label class="eyebrow">Nom</label><input class="search" value="' + esc(c.lastName || '') + '" disabled><small class="sub">Pour changer de nom, demandez à votre concession.</small>' +
+      '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" autocomplete="email" value="' + esc(c.email || '') + '">' +
+      '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" autocomplete="tel" value="' + esc(c.phone || '') + '">' +
+      '<button class="btn">Enregistrer</button></form>' +
+      '<section><h3>Être prévenu des réponses</h3><div data-push></div>' +
+      '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail ci-dessus)') + '</label></section>' +
+      '<section><h3>Mon code d’accès</h3><p class="sub">À garder : avec votre nom, il permet de retrouver l’application sur un autre téléphone.</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
+      '<details class="cloud-more cloud-options"><summary>Autres options</summary>' +
+      '<p class="sub">L’application enregistre pour votre concession : vos coordonnées, votre véhicule, vos équipements, vos photos, vos demandes et messages. Ni votre VIN ni votre immatriculation.</p>' +
+      '<button class="btn alt" type="button" data-sp="update">Vérifier les mises à jour</button>' +
+      '<button class="btn alt" type="button" data-sp="export">Télécharger mes données</button>' +
+      '<a class="btn alt" href="/app/legal.html" target="_blank" rel="noopener">Confidentialité et mentions légales</a>' +
+      '<button class="btn alt" type="button" data-sp="logout">Se déconnecter de ce téléphone</button>' +
+      '<button class="cloud-danger" data-sp="delete" type="button">Supprimer mon compte et mes données</button></details>' +
+      '<button type="button" class="btn alt cloud-close-bottom" data-sp="close">Fermer</button>' +
       '</div>';
     document.body.appendChild(m);
     document.body.style.overflow = 'hidden';
