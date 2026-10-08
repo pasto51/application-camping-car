@@ -63,6 +63,7 @@ L'application est un conteneur Docker unique. Les données (base SQLite et photo
 | `DATA_DIR` | Dossier persistant (`/data` dans le conteneur) |
 | `PORT` | Port HTTP (3000 par défaut) |
 
+- **alwaysdata (gratuit, guide pas à pas)** : voir [docs/HEBERGEMENT-ALWAYSDATA.md](docs/HEBERGEMENT-ALWAYSDATA.md).
 - **Render** : *New → Blueprint* sur ce dépôt (`render.yaml` fourni, disque persistant inclus).
 - **Serveur / VPS** : `SECRET=… ADMIN_PASSWORD=… docker compose up -d`, derrière un reverse proxy HTTPS (Caddy, Nginx…).
 - **Fly.io, Railway, Scaleway…** : utiliser le `Dockerfile` et monter un volume sur `/data`.
