@@ -260,8 +260,10 @@ h1,h2,h3{letter-spacing:.005em}
 .loadcard{border-left:6px solid var(--ok);padding:14px;gap:8px;margin-top:4px}.loadcard.is-warn{border-left-color:var(--sign)}.loadcard.is-bad{border-left-color:var(--bad);background:var(--bad-bg)}
 .lc-h{font-size:17px;font-weight:700;color:var(--ink)}.lc-badge{font-size:13px;font-weight:700;border-radius:99px;padding:3px 10px;background:var(--ok-bg);color:var(--ok);white-space:nowrap}
 .lc-badge.is-warn{background:var(--warn-bg);color:var(--warn)}.lc-badge.is-bad{background:var(--bad);color:#fff}
-.lc-more{font-size:15px;font-weight:700;color:var(--accent)}.wbad{color:var(--bad)}.wlines{margin:8px 0}.wpesadd{margin-top:10px}
-.lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#wpes .btn{flex:none;width:100%}
+.lc-more{font-size:15px;font-weight:700;color:var(--accent)}
+.lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#waff .btn{flex:none;width:100%}.wtiny{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0}
+.affrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.affrow:first-of-type{border-top:0}.affchk{flex:1;display:flex;align-items:center;gap:10px;font-size:16px;min-height:44px}.affchk input{width:24px;height:24px;accent-color:var(--accent);flex:none}.affrow .dimin input{width:70px}
+.affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .badmsg{background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:12px;font-size:15px}
 .vbadge{background:var(--ok-bg);color:var(--ok);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700;align-self:flex-start}
 .hstep.done{border-color:var(--ok)}
@@ -385,7 +387,7 @@ h1,h2,h3{letter-spacing:.005em}
       </div>
       <button class="mission" data-go="game"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg></span><span class="mtxt"><small>Mission du jour</small><strong>Préparer le départ</strong><span>3 minutes pour apprendre le bon ordre</span></span><span class="go" aria-hidden="true">›</span></button>
       <div class="tiles">
-        <button class="tile" data-go="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><strong>Gestes du quotidien</strong><span>Arrivée, départ et entretien</span></button>
+        <button class="tile" data-go="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><strong>Gestes du quotidien</strong><span>Arrivée et départ</span></button>
         <button class="tile" data-go="what"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg><strong>C'est quoi, ça&nbsp;?</strong><span>Touchez le plan pour comprendre</span></button>
         <button class="tile" data-go="diag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><strong>J'ai un souci</strong><span>On cherche la cause avec vous</span></button>
         <button class="tile" data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg><strong>Missions</strong><span>Apprendre en jouant</span></button>
@@ -400,7 +402,6 @@ h1,h2,h3{letter-spacing:.005em}
       <div class="seg" role="group" aria-label="Moment">
         <button data-list="arrivee" aria-pressed="true">Arrivée</button>
         <button data-list="depart" aria-pressed="false">Départ</button>
-        <button data-list="entretien" aria-pressed="false">Entretien</button>
       </div>
       <div id="checkpart">
         <div>

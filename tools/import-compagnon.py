@@ -267,8 +267,10 @@ def main():
         ".loadcard{border-left:6px solid var(--ok);padding:14px;gap:8px;margin-top:4px}.loadcard.is-warn{border-left-color:var(--sign)}.loadcard.is-bad{border-left-color:var(--bad);background:var(--bad-bg)}\n"
         ".lc-h{font-size:17px;font-weight:700;color:var(--ink)}.lc-badge{font-size:13px;font-weight:700;border-radius:99px;padding:3px 10px;background:var(--ok-bg);color:var(--ok);white-space:nowrap}\n"
         ".lc-badge.is-warn{background:var(--warn-bg);color:var(--warn)}.lc-badge.is-bad{background:var(--bad);color:#fff}\n"
-        ".lc-more{font-size:15px;font-weight:700;color:var(--accent)}.wbad{color:var(--bad)}.wlines{margin:8px 0}.wpesadd{margin-top:10px}\n"
-        ".lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#wpes .btn{flex:none;width:100%}")
+        ".lc-more{font-size:15px;font-weight:700;color:var(--accent)}\n"
+        ".lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#waff .btn{flex:none;width:100%}.wtiny{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0}\n"
+        ".affrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.affrow:first-of-type{border-top:0}.affchk{flex:1;display:flex;align-items:center;gap:10px;font-size:16px;min-height:44px}.affchk input{width:24px;height:24px;accent-color:var(--accent);flex:none}.affrow .dimin input{width:70px}\n"
+        ".affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}")
     head = replace_once(head, ".dlogo.sm{", ".dlogo.img{background:var(--panel);border:1px solid var(--line);overflow:hidden}.dlogo img{width:100%;height:100%;object-fit:contain}\n.dlogo.sm{")
 
     # Workshop screen = the single place to talk with the dealership: its card, the customer's requests
@@ -298,87 +300,79 @@ def main():
     var it = eqById(id); if(!it) return;
     """ + T + """("equip",{id:id,label:it.name});""")
 
-    # ---- Weight: more visible on the home screen, axle limits, and the weighings noted by the customer ----
+    # ---- Weight: more visible on the home screen, and « Ce que j'emporte », the little notebook of the customer ----
+    # Like the customer who writes everything in a notebook and adds it up before leaving: note once the weight of
+    # each thing, then tick before each trip what goes in the vehicle.
     s = replace_once(s, 'function wtSave(){lsSet("cdb_wt",JSON.stringify(wt))}', r'''function wtSave(){lsSet("cdb_wt",JSON.stringify(wt))}
-  // Maximum load per axle: given by the dealership (vehicle profile), otherwise noted by the customer (0 = not known).
-  function wax(k){var d = W_DEFAULT[k]; if(d>0) return d; var v = wt[k]; return (typeof v==="number" && v>0) ? v : 0}
-  // Weighings noted by the customer, latest first: {d: date, t: total, av: front axle, ar: rear axle, n: note}.
-  function wpes(){return Array.isArray(wt.pes) ? wt.pes : []}
-  function fday(d){return new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}
-  function wstate(rest){return rest < 0 ? "bad" : (rest < 100 ? "warn" : "ok")}
-  function wmsg(st){return st==="ok"?"ok":(st==="warn"?"safety":"badmsg")}''')
+  function waff(){return Array.isArray(wt.aff) ? wt.aff : []}
+  var AFF_IDEAS = [["Vélo",15],["Vélo électrique",25],["Valises et vêtements",40],["Nourriture et boissons",30],["Vaisselle et ustensiles",15],["Table et chaises de camping",12],["Barbecue ou plancha",10],["Câbles, cales et outils",15],["Jeux et affaires de plage",10],["Chien",20]];''')
+    s = replace_once(s, '{n:"Bagages, vélos, matériel",kg:wv("bag")}', r'''(waff().length ? {n:"Ce que j'emporte ("+waff().filter(function(a){return a.on}).length+" coché"+(waff().filter(function(a){return a.on}).length>1?"s":"")+")",kg:waff().reduce(function(t,a){return t+(a.on?a.kg:0)},0)} : {n:"Bagages, vélos, matériel",kg:wv("bag")})''')
     s = replace_once(s, r'''    el.innerHTML = '<span class="lc-top"><span class="k2">Charge restante</span><span class="lc-v '+c.st+'">'+(c.rest<0?"−":"")+kg(Math.abs(c.rest))+'</span></span><span class="gauge" aria-hidden="true"><i class="'+c.st+'" style="width:'+c.pct.toFixed(0)+'%"></i></span><span class="lc-sub">Estimé '+kg(c.total)+' sur '+kg(c.ptac)+' autorisés. Modifier ›</span>';''',
-    r'''    var p = wpes()[0];
-    el.className = "loadcard is-"+c.st;
-    el.innerHTML = '<span class="lc-top"><span class="lc-h">⚖️ Poids du véhicule</span><span class="lc-badge is-'+c.st+'">'+(c.st==="bad"?"Surcharge":(c.st==="warn"?"Peu de marge":"Dans la limite"))+'</span></span>' +
+    r'''    el.className = "loadcard is-"+c.st;
+    el.innerHTML = '<span class="lc-top"><span class="lc-h">⚖️ Poids du véhicule</span><span class="lc-badge is-'+c.st+'">'+(c.st==="bad"?"Trop lourd":(c.st==="warn"?"Peu de marge":"Dans la limite"))+'</span></span>' +
       '<span class="lc-top"><span class="lc-v '+c.st+'">'+(c.rest<0?"−":"")+kg(Math.abs(c.rest))+'</span><span class="lc-sub">'+(c.rest<0?"de trop":"encore possibles")+'</span></span>' +
       '<span class="gauge" aria-hidden="true"><i class="'+c.st+'" style="width:'+c.pct.toFixed(0)+'%"></i></span>' +
-      '<span class="lc-sub">Estimé '+kg(c.total)+' sur '+kg(c.ptac)+' autorisés.'+(p?' Dernière pesée : '+kg(p.t)+' le '+fday(p.d)+'.':' Aucune pesée notée.')+'</span><span class="lc-more">Ajuster mon chargement ›</span>';''')
-    s = replace_once(s, r'''    var h = '<div class="card" id="wgauge"></div>' +''', r'''    var h = '<div class="card" id="wgauge"></div>' +
-      '<h3 class="sech">Mes pesées</h3><div class="card" id="wpes"></div>' +''')
-    s = replace_once(s, r'''<small>Les sources divergent entre G et G.1. Vérifiez sur votre certificat de conformité ; si le conducteur n\'y est pas, décochez.</small></span></label></div>' +''',
-    r'''<small>Les sources divergent entre G et G.1. Vérifiez sur votre certificat de conformité ; si le conducteur n\'y est pas, décochez.</small></span></label>' +
-      fld("w_eav","Charge maximale sur l\'essieu avant",wax("eav")||"","kg",W_DEFAULT.eav>0?"Fourni par votre concession.":"Plaque du constructeur (montant de porte) ou certificat de conformité. Facultatif : sert à vérifier vos pesées essieu par essieu.",W_DEFAULT.eav>0) +
-      fld("w_ear","Charge maximale sur l\'essieu arrière",wax("ear")||"","kg",W_DEFAULT.ear>0?"Fourni par votre concession.":"Même endroit. L\'arrière est souvent le plus chargé : porte-vélos, soute, réserves.",W_DEFAULT.ear>0) + '</div>' +''')
+      '<span class="lc-sub">Estimé '+kg(c.total)+' sur '+kg(c.ptac)+' autorisés.</span><span class="lc-more">Avant de partir : cochez ce que vous emportez ›</span>';''')
+    s = replace_once(s, r'''      fld("w_bag","Bagages, vélos, matériel",wv("bag"),"kg","Pesez ou estimez : ça monte vite.") + '</div>' +''',
+    r'''      (waff().length ? '' : fld("w_bag","Bagages, vélos, matériel",wv("bag"),"kg","Estimation globale. Pour être plus précis, détaillez ci-dessous ce que vous emportez.")) + '</div>' +
+      '<h3 class="sech">Ce que j\'emporte</h3><div class="card" id="waff"></div>' +''')
+    s = replace_once(s, "Estimation seulement. Seule une pesée fait foi. Dépasser le PTAC est interdit.", "Estimation à partir de ce que vous avez noté. Dépasser le PTAC est interdit.")
+    s = replace_once(s, "Pesée : un pèse-caravane électronique (une mesure par essieu, moins de 150 € environ) ou un pont-bascule.<br><br>", "")
+    s = replace_once(s, "par exemple avec une charge lourde à l’arrière. Pesez essieu par essieu.", "par exemple avec une charge lourde à l’arrière (vélos, soute). Répartissez les charges lourdes.")
+    s = replace_once(s, "90 km/h sur autoroute.</small></div></details>';", "90 km/h sur autoroute.</small></div></details><p class=\"wtiny\">Pour un poids exact : un pont-bascule, par exemple dans une coopérative agricole.</p>';")
     s = replace_once(s, '''    renderHomeLoad();
   }
-  $("#weightbody").addEventListener("input",function(e){''', r'''    renderPesees();
-    renderHomeLoad();
+  $("#weightbody").addEventListener("input",function(e){
+    var id = e.target.id; if(!id) return;''', r'''    renderHomeLoad();
   }
-  function axleLine(name,v,max){
-    if(!v) return '';
-    var over = max && v > max;
-    return '<div class="ln"><span>'+name+(max?' (maximum '+kg(max)+')':'')+'</span><b class="'+(over?"wbad":"")+'">'+kg(v)+(max?(over?' ⚠':' ✓'):'')+'</b></div>';
-  }
-  function renderPesees(){
-    var el = $("#wpes"); if(!el) return;
-    var c = loadCalc(), P = wpes(), h = '';
-    var today = new Date().toISOString().slice(0,10);
-    if(P.length){
-      var p = P[0], rest = c.ptac - p.t, st = wstate(rest), diff = p.t - c.total;
-      h += '<p class="eyebrow">Dernière pesée, le '+fday(p.d)+'</p><p class="lc-v '+st+'">'+kg(p.t)+'</p>' +
-        '<p class="'+wmsg(st)+'">'+(rest<0?"Surcharge de "+kg(-rest)+" ce jour-là : allégez avant de reprendre la route.":"Ce jour-là, il restait "+kg(rest)+" sous le PTAC.")+'</p>';
-      var ax = axleLine("Essieu avant",p.av,wax("eav")) + axleLine("Essieu arrière",p.ar,wax("ear"));
-      if(ax) h += '<div class="wlines">'+ax+'</div>';
-      if((p.av && wax("eav") && p.av > wax("eav")) || (p.ar && wax("ear") && p.ar > wax("ear"))) h += '<p class="badmsg">Un essieu dépasse sa limite, même si le total est bon : répartissez la charge (plus lourd vers l\'avant si l\'arrière dépasse).</p>';
-      if(p.n) h += '<p class="sub">'+esc(p.n)+'</p>';
-      if(Math.abs(diff) >= 30) h += '<p class="sub">Votre estimation actuelle ('+kg(c.total)+') est '+(diff>0?"plus basse":"plus haute")+' de '+kg(Math.abs(diff))+'. Si vous étiez chargé comme d\'habitude ce jour-là, calez l\'estimation sur la pesée.</p><button class="btn alt" type="button" data-pes="cal">Caler mon estimation sur cette pesée</button>';
-      if(P.length > 1) h += '<details class="cat"><summary><span>Pesées précédentes ('+(P.length-1)+')</span></summary><div class="wlines">'+P.slice(1).map(function(q,i){return '<div class="ln"><span>'+fday(q.d)+(q.n?' · '+esc(q.n):'')+' <button class="lnk" type="button" data-pes="del" data-i="'+(i+1)+'">Retirer</button></span><b>'+kg(q.t)+'</b></div>'}).join("")+'</div></details>';
-      h += '<p><button class="lnk" type="button" data-pes="del" data-i="0">Retirer cette pesée</button></p>';
-    } else h += '<p class="sub">Seule une pesée dit le poids réel. Pont-bascule (déchetterie, coopérative, carrière…) ou pèse-essieux : notez le résultat ici pour suivre votre poids au fil des voyages.</p>';
-    h += '<details class="cat wpesadd"'+(P.length?'':' open')+'><summary><span>＋ Noter une pesée</span></summary>' +
-      '<div class="fld"><label for="pe_d">Date</label><span class="dimin"><input id="pe_d" type="date" value="'+today+'" max="'+today+'"></span></div>' +
-      fld("pe_t","Poids total",'',"kg","Ou remplissez seulement les deux essieux : le total se calcule.") +
-      fld("pe_av","Essieu avant (facultatif)",'',"kg","") + fld("pe_ar","Essieu arrière (facultatif)",'',"kg","") +
-      '<div class="fld"><label for="pe_n">Note (facultatif)</label><input id="pe_n" class="search" maxlength="120" placeholder="Lieu, plein d\'eau, vélos…"></div>' +
-      '<button class="btn" type="button" data-pes="save" style="width:100%">Enregistrer la pesée</button></details>';
-    if(window.CDB_CLOUD && window.CDB_CLOUD.partRequest) h += '<button class="btn alt" type="button" data-pes="shop" style="width:100%;margin-top:8px">🛒 Pèse-essieux : se peser soi-même</button>';
+  function renderAff(){
+    var el = $("#waff"); if(!el) return;
+    var A = waff(), on = A.filter(function(a){return a.on}), h = '';
+    if(A.length){
+      h += '<p class="sub">Cochez ce qui part avec vous pour ce voyage.</p>' + A.map(function(a,i){
+        return '<div class="affrow"><label class="affchk"><input type="checkbox" id="af_on_'+i+'"'+(a.on?' checked':'')+'><span>'+esc(a.n)+'</span></label>' +
+          '<span class="dimin"><input id="af_kg_'+i+'" type="number" inputmode="numeric" min="0" max="999" step="1" value="'+a.kg+'" aria-label="Poids : '+esc(a.n)+'"> kg</span>' +
+          '<button class="affdel" type="button" data-aff="del" data-i="'+i+'" aria-label="Retirer '+esc(a.n)+'">✕</button></div>';
+      }).join("") + '<div class="ln tot"><span>Total coché</span><b id="afftot">'+kg(on.reduce(function(t,a){return t+a.kg},0))+'</b></div>' +
+        '<div class="affbtns"><button class="lnk" type="button" data-aff="none">Tout décocher (nouveau voyage)</button><button class="lnk" type="button" data-aff="all">Tout cocher</button></div>';
+    } else h += '<p class="sub">Comme un petit carnet : notez une fois le poids de vos affaires, puis cochez avant chaque départ ce que vous emportez. L\'application fait le calcul pour vous.</p>';
+    var have = {}; A.forEach(function(a){have[a.n] = true});
+    var ideas = AFF_IDEAS.filter(function(x){return !have[x[0]]});
+    if(ideas.length) h += '<p class="eyebrow">Ajouter en un geste</p><div class="affideas">'+ideas.map(function(x){return '<button class="lnk" type="button" data-aff="idea" data-n="'+esc(x[0])+'" data-kg="'+x[1]+'">＋ '+esc(x[0])+' ('+x[1]+' kg)</button>'}).join("")+'</div>';
+    h += '<details class="cat"'+(A.length?'':' open')+'><summary><span>＋ Autre chose</span></summary><div class="card">' +
+      '<div class="fld"><label for="af_n">Quoi</label><input id="af_n" class="search" maxlength="60" placeholder="Kayak, groupe de froid, réserves…"></div>' +
+      fld("af_k","Poids",'',"kg","Le poids de l'objet, ou une estimation.") +
+      '<button class="btn" type="button" data-aff="add" style="width:100%">Ajouter à ma liste</button></div></details>';
     el.innerHTML = h;
   }
+  function affAdd(n,k){
+    n = String(n||"").trim().slice(0,60); k = Math.max(0,Math.min(999,Math.round(k||0)));
+    if(!n){toast("Indiquez ce que vous emportez."); return false}
+    wt.aff = waff().concat([{n:n,kg:k,on:true}]).slice(0,40); wtSave(); return true;
+  }
   $("#weightbody").addEventListener("click",function(e){
-    var b = e.target.closest("[data-pes]"); if(!b) return;
-    var a = b.dataset.pes, P = wpes().slice();
-    var val = function(id){var n = parseFloat(($("#"+id)||{}).value); return isNaN(n) ? 0 : Math.round(n)};
-    if(a==="save"){
-      var d = ($("#pe_d")||{}).value, t = val("pe_t"), av = val("pe_av"), ar = val("pe_ar");
-      if(!t && av && ar) t = av + ar;
-      if(!d || !t){toast("Indiquez la date et le poids total (ou les deux essieux)."); return}
-      if(t < 1000 || t > 9999 || av > 9999 || ar > 9999){toast("Poids en kilos, entre 1 000 et 9 999 kg."); return}
-      var q = {d:d,t:t}; if(av) q.av = av; if(ar) q.ar = ar;
-      var n = (($("#pe_n")||{}).value||"").trim().slice(0,120); if(n) q.n = n;
-      P.push(q); P.sort(function(x,y){return x.d < y.d ? 1 : (x.d > y.d ? -1 : 0)});
-      wt.pes = P.slice(0,30); wtSave(); renderWeightSummary(); toast("Pesée enregistrée.");
-    } else if(a==="del"){
-      P.splice(+b.dataset.i,1); wt.pes = P; wtSave(); renderWeightSummary(); toast("Pesée retirée.");
-    } else if(a==="cal" && P[0]){
-      var c = loadCalc();
-      wt.bag = Math.max(0, Math.min(9999, wv("bag") + P[0].t - c.total)); wtSave(); renderWeight(); toast("Estimation calée sur la pesée (ligne « Bagages »).");
-    } else if(a==="shop"){
-      window.CDB_CLOUD.partRequest(null,"Pèse-essieux (pesée roue par roue)","accessoire");
-    }
+    var b = e.target.closest("[data-aff]"); if(!b) return;
+    var a = b.dataset.aff, A = waff().slice(), first = !A.length;
+    if(a==="idea"){ if(!affAdd(b.dataset.n, +b.dataset.kg)) return; }
+    else if(a==="add"){ if(!affAdd(($("#af_n")||{}).value, parseFloat(($("#af_k")||{}).value))) return; toast("Ajouté à votre liste."); }
+    else if(a==="del"){ A.splice(+b.dataset.i,1); wt.aff = A; wtSave(); }
+    else if(a==="none" || a==="all"){ A.forEach(function(x){x.on = a==="all"}); wt.aff = A; wtSave(); }
+    if(first !== !waff().length) renderWeight(); else { renderAff(); renderWeightSummary(); }
   });
-  $("#weightbody").addEventListener("input",function(e){''')
-    s = replace_once(s, 'var map = {w_ptac:"ptac",w_mom:"mom",w_pax:"pax",w_eau:"eau",w_gaz:"gaz",w_bag:"bag"};', 'var map = {w_ptac:"ptac",w_mom:"mom",w_pax:"pax",w_eau:"eau",w_gaz:"gaz",w_bag:"bag",w_eav:"eav",w_ear:"ear"};')
+  $("#weightbody").addEventListener("input",function(e){
+    var id = e.target.id; if(!id) return;
+    var am = /^af_(on|kg)_(\d+)$/.exec(id);
+    if(am){
+      var A = waff(), x = A[+am[2]]; if(!x) return;
+      if(am[1]==="on") x.on = e.target.checked; else x.kg = Math.max(0,Math.min(999,Math.round(parseFloat(e.target.value)||0)));
+      wtSave(); renderWeightSummary();
+      var t = $("#afftot"); if(t) t.textContent = kg(A.reduce(function(s,a){return s+(a.on?a.kg:0)},0));
+      return;
+    }''')
+    s = replace_once(s, '''    $("#weightbody").innerHTML = h;
+    renderWeightSummary();''', '''    $("#weightbody").innerHTML = h;
+    renderAff();
+    renderWeightSummary();''')
 
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
@@ -391,6 +385,9 @@ def main():
     body_part = replace_once(body_part, '<image href="img/dessus.png" ', '<image ')
     body_part = replace_once(body_part, "Les équipements de série sont déjà cochés : décochez ce qui manque.", "Les équipements prévus pour ce modèle sont déjà cochés : ajoutez ou décochez avec la concession.")
     body_part = replace_once(body_part, '<button class="btn alt" id="eqreset">Liste de série</button>', '')
+    # The maintenance moved to the « Carnet d'entretien » of the home screen (dates, reminders, appointment): no more tab here.
+    body_part = replace_once(body_part, '\n        <button data-list="entretien" aria-pressed="false">Entretien</button>', '')
+    body_part = replace_once(body_part, '<strong>Gestes du quotidien</strong><span>Arrivée, départ et entretien</span>', '<strong>Gestes du quotidien</strong><span>Arrivée et départ</span>')
     body_part = replace_once(body_part, '<div class="device" id="device">', '<div id="cloud"></div>\n<div class="device" id="device" hidden>')
     page = (
         '<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'

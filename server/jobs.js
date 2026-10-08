@@ -6,7 +6,7 @@
 
 const { getSetting, setSetting } = require('./db');
 const { backupNow } = require('./backup');
-const { dueItems, logOf, NOTIFY_DAYS } = require('./entretien');
+const { dueItems, logOf, ownOf, NOTIFY_DAYS } = require('./entretien');
 const { SERVICES, serviceEmail, OVERDUE_SQL, WAITING_SINCE } = require('./services');
 
 const TASKS = [];
@@ -30,7 +30,7 @@ daily('rappels', async (app) => {
   const customers = db.prepare('SELECT DISTINCT c.* FROM customers c JOIN push_subscriptions p ON p.customer_id = c.id').all();
   let sent = 0;
   for (const c of customers) {
-    const item = dueItems(c, logOf(db, c.id), today).find(
+    const item = dueItems(c, logOf(db, c.id), today, ownOf(db, c.id)).find(
       (i) => i.due <= limit && !db.prepare('SELECT 1 FROM reminder_sent WHERE customer_id = ? AND kind = ? AND due = ?').get(c.id, i.kind, i.due)
     );
     if (!item) continue;

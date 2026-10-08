@@ -693,13 +693,12 @@
       home.insertBefore(ann, home.firstChild);
     }
     home.insertBefore(req, home.firstChild); home.appendChild(acc);
-    // Maintenance coming up (or late), near the top of the home screen.
-    var ent = document.createElement('div'); ent.id = 'cloudent'; ent.className = 'cloud-ent'; ent.hidden = true;
-    home.insertBefore(ent, req.nextSibling);
-    ent.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-ent-done]'); if (!b) return;
-      addLog({ kind: b.dataset.entDone }).then(function () { toast('Noté dans votre carnet d’entretien'); });
-    });
+    // The maintenance logbook, just under the weight of the vehicle, with a red dot when something is to be done.
+    var ent = document.createElement('button'); ent.id = 'cloudent'; ent.type = 'button'; ent.className = 'cloud-carnet';
+    var load = document.getElementById('loadcard');
+    if (load) load.parentNode.insertBefore(ent, load.nextSibling); else home.insertBefore(ent, req.nextSibling);
+    ent.addEventListener('click', openCarnet);
+    renderEntretien();
     loadEntretien();
     acc.addEventListener('click', function (e) {
       var b = e.target.closest('[data-acc]'); if (!b) return;
@@ -721,27 +720,58 @@
   function addLog(body) {
     return api('POST', '/api/me/entretien', body).then(function (r) { ENT = r; renderEntretien(); return r; }).catch(function (err) { toast(err.message); throw err; });
   }
-  // A discreet banner « Entretien à prévoir » on the home screen; touched, it opens the details and the buttons.
+  function dueNow() { return ENT ? ENT.items.filter(function (i) { return i.state !== 'later'; }) : []; }
+  // The home button: « Carnet d'entretien », the red dot counts what is to be done (late, or within 45 days).
   function renderEntretien() {
-    var el = document.getElementById('cloudent'); if (!el || !ENT) return;
-    var due = ENT.items.filter(function (i) { return i.state !== 'later'; }).slice(0, 3);
-    el.hidden = !due.length;
-    if (!due.length) return;
-    var was = el.querySelector('details'), open = was && was.open;
-    var late = due.some(function (i) { return i.state === 'late'; });
-    el.innerHTML = '<details class="cloud-entd' + (late ? ' late' : '') + '"' + (open ? ' open' : '') + '><summary>' +
-      '<span class="cloud-entd-ic" aria-hidden="true">🔧</span><span class="cloud-entd-t"><b>Entretien à prévoir</b><span>' +
-      esc(due.map(function (i) { return i.label; }).join(' · ')) + '</span></span><span class="cloud-entd-go" aria-hidden="true">›</span></summary>' +
-      due.map(function (i) {
-        return '<div class="cloud-ent-item' + (i.state === 'late' ? ' late' : '') + '"><p><b>' + esc(i.label) + '</b><br><span class="sub">' +
-          (i.state === 'late' ? 'Prévu le ' + esc(fmtDay(i.due)) + ' : à faire dès que possible' : 'À faire avant le ' + esc(fmtDay(i.due))) + '</span></p>' +
-          '<div class="cloud-ent-btns"><button class="btn" type="button" data-rdv="' + esc(i.rdv) + '" data-ctx="' + esc('Rappel : ' + i.label + ' à prévoir (le ' + fmtDay(i.due) + ').') + '">Prendre rendez-vous</button>' +
-          '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
-      }).join('') + '</details>';
+    var el = document.getElementById('cloudent'); if (!el) return;
+    var due = dueNow(), next = ENT && ENT.items[0];
+    el.innerHTML = '<span class="cloud-carnet-ic" aria-hidden="true">📒</span><span class="cloud-carnet-t"><b>Carnet d’entretien</b><span>' +
+      (due.length ? esc(due.map(function (i) { return i.label; }).join(' · ')) : next ? 'Prochain : ' + esc(next.label) + ', ' + esc(fmtDay(next.due)) : 'Ce qui est fait, ce qui est à prévoir') + '</span></span>' +
+      (due.length ? '<span class="cloud-dot" aria-label="' + due.length + ' à faire">' + due.length + '</span>' : '') + '<span class="cloud-carnet-go" aria-hidden="true">›</span>';
+  }
+  function todoHtml() {
+    var due = dueNow();
+    if (!due.length) return '<p class="ok">✓ Rien à prévoir dans les semaines qui viennent.</p>';
+    return '<p class="eyebrow">À faire</p>' + due.map(function (i) {
+      return '<div class="cloud-ent-item' + (i.state === 'late' ? ' late' : '') + '"><p><b>' + esc(i.label) + '</b><br><span class="sub">' +
+        (i.state === 'late' ? 'Prévu le ' + esc(fmtDay(i.due)) + ' : à faire dès que possible' : 'À faire avant le ' + esc(fmtDay(i.due))) + (i.why ? '. ' + esc(i.why) : '') + '</span></p>' +
+        '<div class="cloud-ent-btns"><button class="btn" type="button" data-rdv="' + esc(i.rdv || 'souci') + '" data-ctx="' + esc('Rappel : ' + i.label + ' à prévoir (le ' + fmtDay(i.due) + ').') + '">Prendre rendez-vous</button>' +
+        '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
+    }).join('');
+  }
+  function openCarnet() {
+    var m = document.createElement('div');
+    m.className = 'cloud-modal cloud-sheet cloud-space';
+    var draw = function () {
+      m.innerHTML = '<div class="card"><div class="cloud-space-head"><h2>Carnet d’entretien</h2><button type="button" class="btn alt" data-cn="close">Fermer</button></div>' +
+        '<p class="sub">Notez ce qui est fait : l’application calcule les prochaines dates et vous prévient sur le téléphone 15 jours avant.</p>' +
+        (ENT ? todoHtml() : '') + '<form data-spf="log">' + carnetHtml() + '</form>' +
+        (ENT && ENT.tips && ENT.tips.length ? '<p class="eyebrow">À vérifier vous-même</p><ul class="cloud-list">' + ENT.tips.map(function (t) { return '<li><b>' + esc(t.label) + '</b><br><span class="sub">' + esc(t.when) + '</span></li>'; }).join('') + '</ul>' : '') +
+        '<button type="button" class="btn alt cloud-close-bottom" data-cn="close">Fermer</button></div>';
+    };
+    draw();
+    document.body.appendChild(m); document.body.style.overflow = 'hidden';
+    function close() { m.remove(); document.body.style.overflow = ''; }
+    loadEntretien().then(draw);
+    m.addEventListener('submit', function (e) {
+      var f = e.target.closest('[data-spf]'); if (!f) return;
+      e.preventDefault();
+      var val = function (n) { return f.elements[n] ? f.elements[n].value.trim() : undefined; };
+      addLog({ kind: val('kind'), doneOn: val('doneOn'), note: val('note') }).then(function () { draw(); toast('Noté dans votre carnet'); });
+    });
+    m.addEventListener('click', function (e) {
+      if (e.target === m) return close();
+      if (e.target.closest('[data-rdv]')) return close(); // the appointment screen opens behind
+      var d = e.target.closest('[data-ent-done]');
+      if (d) return addLog({ kind: d.dataset.entDone }).then(function () { draw(); toast('Noté dans votre carnet d’entretien'); });
+      var b = e.target.closest('[data-cn],[data-sp="logdel"]'); if (!b) return;
+      if (b.dataset.cn === 'close') close();
+      if (b.dataset.sp === 'logdel') api('DELETE', '/api/me/entretien/' + b.dataset.id).then(function (r) { ENT = r; renderEntretien(); draw(); }).catch(function (err) { toast(err.message); });
+    });
   }
   function carnetHtml() {
     if (!ENT) return '<p class="sub">Chargement…</p>';
-    var next = ENT.items.map(function (i) {
+    var next = ENT.items.filter(function (i) { return i.state === 'later'; }).map(function (i) {
       return '<li><b>' + esc(i.label) + '</b> : ' + (i.state === 'late' ? '<span class="cloud-late">en retard (' + esc(fmtDay(i.due)) + ')</span>' : esc(fmtDay(i.due))) + '</li>';
     }).join('');
     var log = ENT.log.length ? ENT.log.map(function (e) {
@@ -749,7 +779,7 @@
         ' <button class="lnk cloud-del" type="button" data-sp="logdel" data-id="' + e.id + '" aria-label="Retirer">Retirer</button></li>';
     }).join('') : '<li class="sub">Rien de noté pour l’instant.</li>';
     var today = new Date().toISOString().slice(0, 10);
-    return '<p class="eyebrow">Prochaines échéances</p><ul class="cloud-list">' + next + '</ul>' +
+    return (next ? '<p class="eyebrow">Plus tard</p><ul class="cloud-list">' + next + '</ul>' : '') +
       '<p class="eyebrow">Ce qui a été fait</p><ul class="cloud-list">' + log + '</ul>' +
       '<details class="cloud-more"><summary>＋ Noter une intervention</summary>' +
       '<label class="eyebrow">Quoi</label><select class="search" name="kind">' + ENT.kinds.map(function (k) { return '<option value="' + esc(k[0]) + '">' + esc(k[1]) + '</option>'; }).join('') + '</select>' +
@@ -846,7 +876,6 @@
       '<section><h3>Conseils et offres</h3><label class="cloud-check"><input type="checkbox" data-sp="marketing"' + (c.marketingOptin === 1 ? ' checked' : '') + '> Recevoir les conseils de saison et les offres de ' + esc(d.name || 'ma concession') + '</label></section>' +
       '<section><h3>Être prévenu des réponses</h3><div data-push></div>' +
       '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail ci-dessus)') + '</label></section>' +
-      '<form data-spf="log"><h3>Mon carnet d’entretien</h3><p class="sub">Notez ce qui est fait : l’application calcule les prochaines dates et vous les rappelle.</p><div data-carnet>' + carnetHtml() + '</div></form>' +
       '<section><h3>Mon code d’accès</h3><p class="sub">À garder : avec votre nom, il permet de retrouver l’application sur un autre téléphone.</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
       '<details class="cloud-more cloud-options"><summary>Autres options</summary>' +
       '<p class="sub">L’application enregistre pour votre concession : vos coordonnées, votre véhicule, vos équipements, vos photos, vos demandes et messages, et des statistiques anonymes d’utilisation (ce qui est cherché, sans savoir qui). Ni votre VIN ni votre immatriculation.</p>' +
@@ -858,7 +887,6 @@
       '<button type="button" class="btn alt cloud-close-bottom" data-sp="close">Fermer</button>' +
       '</div>';
     document.body.appendChild(m);
-    loadEntretien().then(function () { var cb = m.querySelector('[data-carnet]'); if (cb) cb.innerHTML = carnetHtml(); });
     document.body.style.overflow = 'hidden';
     function close() { m.remove(); document.body.style.overflow = ''; renderAccount(); }
     function drawPush() { pushState().then(function (st) { var p = m.querySelector('[data-push]'); if (p) p.innerHTML = pushHtml(st); }); }
@@ -867,10 +895,6 @@
       var f = e.target.closest('[data-spf]'); if (!f) return;
       e.preventDefault();
       var val = function (n) { return f.elements[n] ? f.elements[n].value.trim() : undefined; }, body;
-      if (f.dataset.spf === 'log') {
-        addLog({ kind: val('kind'), doneOn: val('doneOn'), note: val('note') }).then(function () { m.querySelector('[data-carnet]').innerHTML = carnetHtml(); toast('Noté dans votre carnet'); });
-        return;
-      }
       if (f.dataset.spf === 'me') body = { firstName: val('firstName'), email: val('email'), phone: val('phone') };
       else {
         if (val('vin')) lsSet(VIN_KEY, val('vin')); else lsDel(VIN_KEY);
@@ -908,9 +932,6 @@
         }).catch(function (err) { toast(err.message); });
       }
       if (a === 'update') checkUpdates(true);
-      if (a === 'logdel') {
-        api('DELETE', '/api/me/entretien/' + b.dataset.id).then(function (r) { ENT = r; renderEntretien(); m.querySelector('[data-carnet]').innerHTML = carnetHtml(); }).catch(function (err) { toast(err.message); });
-      }
       if (a === 'logout') {
         if (!confirm('Se déconnecter de ce téléphone ? Vos données restent sauvegardées ; votre code d’accès permettra de les retrouver.')) return;
         api('POST', '/api/me/logout').catch(function () {}).then(function () { session = null; saveSession(); clearLocal(); location.reload(); });

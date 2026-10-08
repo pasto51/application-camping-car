@@ -521,6 +521,9 @@ test('maintenance: due dates from the handover and the logbook, reminders, conse
   const fresh = dueItems({ handover_date: '2026-09-26' }, [], '2026-10-08');
   assert.equal(fresh.find((i) => i.kind === 'hiv').due, '2026-10-15');
   assert.equal(fresh.find((i) => i.kind === 'chauf').due, '2027-10-01');
+  // The fridge revision only for a vehicle with a fridge (equipment checked by the customer).
+  assert.equal(fresh.find((i) => i.kind === 'frigo'), undefined);
+  assert.ok(dueItems({ handover_date: '2026-09-26' }, [], '2026-10-08', { frigo: true }).find((i) => i.kind === 'frigo'));
 
   const { data: catalog } = await call('GET', '/api/catalog');
   const h = (await call('POST', '/api/handover', { body: { dealershipCode: 'DEMO2026', vehicleId: catalog.vehicles[0].id, customer: { lastName: 'Carnet', handoverDate: '2025-01-10' } } })).data;

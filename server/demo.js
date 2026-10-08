@@ -357,16 +357,19 @@ async function main() {
   await ask('Anne', { title: 'Contrôle gaz', message: 'Je voudrais le contrôle gaz avant l’hiver.' });
 
   // ---- Maintenance logbooks kept by the customers, consent to offers, and requests left without answer ----
-  const logbook = (who, entries) => entries.forEach(([kind, monthsAgo, note]) => call('POST', '/api/me/entretien', { kind, doneOn: day(monthsAgo), note }, C[who].token));
+  const logbook = (who, entries) => Promise.all(entries.map(([kind, monthsAgo, note]) => call('POST', '/api/me/entretien', { kind, doneOn: day(monthsAgo), note }, C[who].token)));
   await Promise.all([
     logbook('Henri', [['etanch', 11, 'Concession, aucune trace d’humidité'], ['revision', 11, 'Vidange et filtres'], ['hiv', 12, null]]),
     logbook('Martine', [['revision', 14, 'Garage près de chez moi'], ['pneus', 20, '4 pneus neufs']]),
     logbook('Bernard', [['etanch', 13, null], ['gaz', 30, 'Détendeur changé']]),
   ]);
-  // Weighings noted in the app (« Poids du véhicule »): Isabelle's rear axle is over its limit, Henri is fine.
-  const weighings = (who, w) => call('PUT', '/api/me/state/cdb_wt', { value: JSON.stringify({ opt: {}, eav: 1850, ear: 2000, ...w }) }, C[who].token);
-  await weighings('Isabelle', { bag: 180, pes: [{ d: day(1), t: 3460, av: 1420, ar: 2040, n: 'Pont-bascule, départ en vacances, 4 vélos' }, { d: day(5), t: 3310, av: 1440, ar: 1870, n: 'Déchetterie' }] });
-  await weighings('Henri', { pes: [{ d: day(2), t: 3240, av: 1450, ar: 1790, n: 'Pont-bascule de la coopérative' }] });
+  // « Ce que j'emporte » (weight of the vehicle): the list of things noted once, ticked before each trip.
+  const carry = (who, w, items) => call('PUT', '/api/me/state/cdb_wt', { value: JSON.stringify({ opt: {}, ...w, aff: items.map(([n, kg, on]) => ({ n, kg, on })) }) }, C[who].token);
+  await carry('Isabelle', { pax: 1, eau: 80 }, [
+    ['Vélo électrique', 25, true], ['Vélo électrique', 25, true], ['Valises et vêtements', 40, true], ['Nourriture et boissons', 30, true],
+    ['Vaisselle et ustensiles', 15, true], ['Table et chaises de camping', 12, true], ['Barbecue ou plancha', 10, true], ['Kayak gonflable', 18, false],
+  ]);
+  await carry('Henri', { pax: 1 }, [['Valises et vêtements', 30, true], ['Nourriture et boissons', 25, true], ['Câbles, cales et outils', 15, true], ['Vélo', 15, false]]);
   await call('PUT', '/api/me/info', { marketing: true }, C.Paul.token);
   await call('PUT', '/api/me/info', { marketing: true }, C.Isabelle.token);
   await call('PUT', '/api/me/info', { marketing: false }, C.Martine.token);

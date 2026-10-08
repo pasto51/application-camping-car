@@ -33,7 +33,7 @@ function defaultProfile(vehicle) {
     fullName: vehicle ? vehicle.name : '',
     codePrefix: 'CDB',
     model: { l: 0, h: 0 },
-    weights: { ptac: 3500, mom: 2800, pax: 2, eau: 30, gaz: 0, bag: 100, eav: 0, ear: 0 }, // eav / ear: maximum load per axle (0 = not known)
+    weights: { ptac: 3500, mom: 2800, pax: 2, eau: 30, gaz: 0, bag: 100 },
     type: '', // silhouette: van, fourgon, compact, profile, integral, capucine (server/vehicle-types.js)
     layout: '', // implantation of that type (lit central, salon arrière…): picks the plan, see tools/make-plans.js
     models: {}, // brand and model of equipment on this vehicle (ex : truma → « Truma Combi 4 »), pre-filled for its customers
