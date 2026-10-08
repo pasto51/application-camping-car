@@ -962,8 +962,15 @@ async function start() {
   }
   if (me.role !== 'admin' && me.role !== 'editor') {
     root.innerHTML = `<div class="login"><div class="card stack"><h1>Réservé à l’administrateur et à l’éditeur de contenu</h1>
-      <p class="muted" style="margin:0">Les équipements et photos des modèles sont gérés par l’administrateur. La concession ajuste ensuite les équipements de chaque client lors de la mise en main.</p>
+      <p class="muted" style="margin:0">Le relevé (équipements et photos des modèles) se fait avec un compte administrateur ou éditeur de contenu. La concession ajuste ensuite les équipements de chaque client lors de la mise en main.</p>
+      <button class="btn primary block" id="switch">Se connecter avec un autre compte</button>
       <a class="btn block" href="/admin/">Retour au back-office</a></div></div>`;
+    root.querySelector('#switch').onclick = () => {
+      token = null;
+      store.set(TOKEN_KEY, null);
+      store.set(LAST_KEY, null);
+      renderLogin();
+    };
     return;
   }
   const fromHash = Number((location.hash.match(/v=(\d+)/) || [])[1]);

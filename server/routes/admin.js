@@ -597,7 +597,7 @@ function register(router) {
   });
 
   router.post('/api/admin/layouts/match', (ctx) => {
-    auth(ctx);
+    contentOnly(ctx);
     const text = optStr(ctx.body.text, 500) || '';
     const type = TYPE_IDS.includes(ctx.body.type) ? ctx.body.type : null;
     const found = matchLayouts(text, type);

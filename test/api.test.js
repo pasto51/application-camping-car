@@ -434,6 +434,16 @@ test('content editor: edits the app contents, not the customers, the requests or
   assert.equal((await call('POST', '/api/admin/users', { token: chef, body: { email: 'y@test.fr', password: 'motdepasse1', role: 'editor' } })).status, 403);
   assert.equal((await call('DELETE', `/api/admin/users/${ed.id}`, { token: chef })).status, 404);
   assert.equal((await call('PUT', '/api/admin/equipment/frigo', { token: chef, body: { tip: 'x' } })).status, 403);
+  // The relevé (equipment and photos of a model) is for the administrator and the content editor only
+  const vid = catalog.vehicles[0].id;
+  for (const token of [chef]) {
+    assert.equal((await call('POST', '/api/admin/vehicles', { token, body: { brandId: 1, name: 'X' } })).status, 403);
+    assert.equal((await call('PUT', `/api/admin/vehicles/${vid}/profile`, { token, body: { equipment: [] } })).status, 403);
+    assert.equal((await call('PUT', `/api/admin/vehicles/${vid}/photos/frigo`, { token, body: { image: null } })).status, 403);
+    assert.equal((await call('POST', '/api/admin/layouts/match', { token, body: { text: 'lit central' } })).status, 403);
+  }
+  assert.equal((await call('PUT', `/api/admin/vehicles/${vid}/profile`, { token: editor, body: { equipment: ['frigo'] } })).status, 200);
+  assert.equal((await call('POST', '/api/admin/layouts/match', { token: editor, body: { text: 'lit central' } })).status, 200);
   // The manager and the salesperson fix the warranty from the back-office
   const s = (await call('POST', '/api/admin/users', { token: chef, body: { email: 'vend@edition.fr', password: 'motdepasse1', role: 'sales' } })).data;
   const sales = await login('vend@edition.fr', 'motdepasse1');
