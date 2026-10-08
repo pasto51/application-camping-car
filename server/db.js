@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS admins (
   email TEXT NOT NULL UNIQUE,
   name TEXT,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales', 'sav', 'store')),
   dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
   phone TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -220,6 +220,19 @@ const ADDED_COLUMNS = [
   ['customers', 'email_notify', 'INTEGER DEFAULT 1'],
   ['customers', 'salesperson_id', 'INTEGER'], // the dealership's salesperson in charge (admins.id)
   ['admins', 'phone', 'TEXT'],
+  // After-sales (SAV) and store (magasin) of each dealership: who handles which request.
+  ['dealerships', 'sav_email', 'TEXT'],
+  ['dealerships', 'sav_phone', 'TEXT'],
+  ['dealerships', 'sav_hours', 'TEXT'],
+  ['dealerships', 'store_phone', 'TEXT'],
+  ['dealerships', 'store_hours', 'TEXT'],
+  ['dealerships', 'store_address', 'TEXT'],
+  ['dealerships', 'store_detached', 'INTEGER DEFAULT 0'], // independent store: the dealership does not see its requests
+  ['dealerships', 'warranty_years', 'INTEGER DEFAULT 2'], // usual warranty, from the handover date
+  ['customers', 'warranty_end', 'TEXT'], // date; empty = handover date + the dealership's usual warranty
+  ['customers', 'warranty_ext_end', 'TEXT'], // extended warranty, if taken
+  ['reports', 'service', 'TEXT'], // 'sav' or 'magasin'
+  ['reports', 'transfer_note', 'TEXT'],
 ];
 
 // The VIN is never kept on the server: it stays on the customer's phone (see public/app/cloud.js).
@@ -234,11 +247,12 @@ function stripVin(value) {
   }
 }
 
-// Roles: admin (everything), manager (« responsable de concession »: their dealership), sales (« commercial »: sees the
-// dealership, manages their own customers). The first version had a single « dealer » role: those accounts become managers.
+// Roles: admin (everything), manager (« responsable de concession »: their dealership), sales (« commercial »: their own
+// customers), sav (after-sales / workshop) and store (« magasin »: parts and products). The first version had a single
+// « dealer » role: those accounts become managers. The CHECK constraint changes, so the table is rebuilt once.
 function migrateRoles(db) {
   const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'admins'").get()?.sql || '';
-  if (!sql.includes("'dealer'")) return;
+  if (sql.includes("'store'")) return;
   const cols = db.prepare('PRAGMA table_info(admins)').all().map((c) => c.name);
   db.exec('PRAGMA foreign_keys = OFF');
   transaction(db, () => {
@@ -247,7 +261,7 @@ function migrateRoles(db) {
       email TEXT NOT NULL UNIQUE,
       name TEXT,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales')),
+      role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'sales', 'sav', 'store')),
       dealership_id INTEGER REFERENCES dealerships(id) ON DELETE SET NULL,
       phone TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -266,6 +280,8 @@ function migrate(db) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
   }
+  // Requests from before the SAV / store split: store requests to the store, the rest to the SAV.
+  db.exec("UPDATE reports SET service = CASE kind WHEN 'piece' THEN 'magasin' ELSE 'sav' END WHERE service IS NULL");
   // VINs and number plates saved by earlier versions are erased: the application does not keep them.
   db.exec('UPDATE customers SET vin = NULL, plate = NULL WHERE vin IS NOT NULL OR plate IS NOT NULL');
   for (const r of db.prepare("SELECT customer_id, value FROM customer_state WHERE key = 'cdb_hand' AND value LIKE '%\"vin\"%'").all()) {

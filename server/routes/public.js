@@ -4,6 +4,7 @@ const { HttpError } = require('../http');
 const { transaction, getSetting, stripVin } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
+const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
 // Storage keys of the Compagnon de bord app that are saved in the cloud.
@@ -76,9 +77,8 @@ function register(router) {
       .get(customer.vehicle_id);
     const dealership = db.prepare('SELECT id, name, city, phone, email FROM dealerships WHERE id = ?').get(customer.dealership_id);
     const { recovery_hash, vin, plate, access_code_enc, ...publicCustomer } = customer;
-    const salesperson = customer.salesperson_id ? db.prepare('SELECT name, email, phone FROM admins WHERE id = ?').get(customer.salesperson_id) : null;
     return {
-      salesperson: salesperson ? camel(salesperson) : null,
+      warranty: warrantyOf(db, customer),
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       customer: camel(publicCustomer),
       vehicle: camel(vehicle),
@@ -140,7 +140,8 @@ function register(router) {
 
   router.get('/api/dealerships/code/:code', ({ db, params, ip }) => {
     const d = findDealershipByCode(db, params.code, ip);
-    return { ...camel(d), salespeople: salespeopleOf(db, d.id) };
+    const w = db.prepare('SELECT warranty_years FROM dealerships WHERE id = ?').get(d.id);
+    return { ...camel(d), warrantyYears: w.warranty_years ?? 2, salespeople: salespeopleOf(db, d.id) };
   });
 
   // Handover ("mise en main"): the dealership enters its code, picks brand + vehicle, fills in the customer.
@@ -171,6 +172,8 @@ function register(router) {
           sha256(randomToken())
         );
       if (salesperson) db.prepare('UPDATE customers SET salesperson_id = ? WHERE id = ?').run(salesperson.id, lastInsertRowid);
+      // Warranty entered by the salesperson at the handover (end date, extension): it decides SAV or store for parts.
+      db.prepare('UPDATE customers SET warranty_end = ?, warranty_ext_end = ? WHERE id = ?').run(optDate(c.warrantyEnd), optDate(c.warrantyExtEnd), lastInsertRowid);
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
       return { token: createSession(db, customer.id), ...session(db, customer) };
     });
@@ -325,7 +328,11 @@ function register(router) {
     // The vehicle's photo is generic (same for every customer of the model): the store is told so.
     part.photoKind = part.photoUrl ? (body.photoKind === 'client' ? 'client' : 'generique') : null;
     const message = optStr(body.message, 4000);
-    const title = `${need === 'remplacement' ? 'Remplacement' : 'Pièce'} : ${equipmentName || product}`.slice(0, 150);
+    // Under warranty (or extension): the SAV; out of warranty, or an accessory: the store.
+    const route = routeRequest(db, customer, { kind: 'piece', need });
+    part.service = route.service;
+    part.route = route.reason;
+    const title = `${need === 'remplacement' ? 'Remplacement' : need === 'accessoire' ? 'Accessoire' : 'Pièce'} : ${equipmentName || product}`.slice(0, 150);
     const description = [
       NEEDS[need],
       equipmentName && `Équipement : ${equipmentName}`,
@@ -335,20 +342,21 @@ function register(router) {
       part.cellNumber && `N° de cellule : ${part.cellNumber}`,
       part.vehicleYear && `Année du véhicule : ${part.vehicleYear}`,
       part.photoKind && `Photo : ${part.photoKind === 'client' ? 'prise par le client' : 'générique du modèle (le client n’a pas joint la sienne)'}`,
+      route.service === 'sav' && `⚠️ ${route.reason}`,
       message,
     ]
       .filter(Boolean)
       .join('\n');
     const { lastInsertRowid } = db
-      .prepare("INSERT INTO reports (customer_id, title, description, kind, part, photos) VALUES (?, ?, ?, 'piece', ?, ?)")
-      .run(customer.id, title, description, JSON.stringify(part), JSON.stringify(part.photoUrl ? [part.photoUrl] : []));
+      .prepare("INSERT INTO reports (customer_id, title, description, kind, part, photos, service) VALUES (?, ?, ?, 'piece', ?, ?, ?)")
+      .run(customer.id, title, description, JSON.stringify(part), JSON.stringify(part.photoUrl ? [part.photoUrl] : []), route.service);
     if (part.cellNumber) db.prepare('UPDATE customers SET cell_number = ? WHERE id = ?').run(part.cellNumber, customer.id);
     if (part.vehicleYear) db.prepare('UPDATE customers SET vehicle_year = ? WHERE id = ?').run(part.vehicleYear, customer.id);
     const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(lastInsertRowid);
     const fresh = db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id);
     // The VIN goes in the e-mail to the store only: it is not saved anywhere by the application.
     ctx.notify.customerWrote({ report, customer: fresh, text: description, origin: ctx.origin, isNew: true, part, vin: optStr(body.vin, 40) }).catch(() => {});
-    return { ...camel(report), part, messages: [] };
+    return { ...camel(report), part, serviceName: SERVICES[route.service], messages: [] };
   });
 
   // Workshop appointment request or problem, sent to the dealership (which is told by e-mail).
@@ -358,7 +366,7 @@ function register(router) {
     const title = reqStr(body.title, 'Motif', 150);
     const parts = [optStr(body.message, 4000), body.period ? `Délai souhaité : ${optStr(body.period, 50)}` : null, body.phone ? `Téléphone : ${optStr(body.phone, 40)}` : null];
     const description = parts.filter(Boolean).join('\n\n');
-    const { lastInsertRowid } = db.prepare('INSERT INTO reports (customer_id, title, description) VALUES (?, ?, ?)').run(customer.id, title, description);
+    const { lastInsertRowid } = db.prepare("INSERT INTO reports (customer_id, title, description, service) VALUES (?, ?, ?, 'sav')").run(customer.id, title, description);
     if (body.phone && !customer.phone) db.prepare('UPDATE customers SET phone = ? WHERE id = ?').run(optStr(body.phone, 40), customer.id);
     const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(lastInsertRowid);
     const fresh = db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id);

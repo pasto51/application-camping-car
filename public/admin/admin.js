@@ -43,7 +43,10 @@ const root = document.getElementById('root');
 const isAdmin = () => state.user?.role === 'admin';
 // Responsable de concession (or administrator): reassigns customers, manages the team.
 const isManager = () => ['admin', 'manager', 'dealer'].includes(state.user?.role);
-const ROLE_LABELS = { admin: 'Administrateur', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial' };
+const ROLE_LABELS = { admin: 'Administrateur', manager: 'Responsable de concession', dealer: 'Responsable de concession', sales: 'Commercial', sav: 'SAV / atelier', store: 'Magasin' };
+const SERVICE_LABELS = { sav: '🛠️ SAV', magasin: '🛒 Magasin' };
+// The service a SAV or store account works for (requests shown first).
+const myService = () => ({ sav: 'sav', store: 'magasin' })[state.user?.role] || '';
 
 // ---------- Login ----------
 
@@ -76,7 +79,7 @@ function renderLogin() {
 function sections() {
   const all = [
     ['dashboard', '📊', 'Tableau de bord', true],
-    ['reports', '💬', 'Demandes clients', true],
+    ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales'],
     ['customers', '👥', 'Clients', true],
     ['vehicles', '🚐', 'Véhicules', isAdmin()],
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', true],
@@ -295,7 +298,7 @@ const VIEWS = {
   async dashboard(el) {
     const s = await api('GET', '/api/admin/stats');
     const tiles = [
-      ['Demandes à traiter', s.openReports, 'reports'],
+      ...(state.user.role === 'sales' ? [] : [[myService() ? `Demandes ${myService() === 'sav' ? 'SAV' : 'magasin'} à traiter` : 'Demandes à traiter', s.openReports, 'reports']]),
       ['Clients', s.customers, 'customers'],
       ['Diagnostics', s.diagnostics, 'diagnostics'],
       ['Équipements', s.equipment, 'equipment'],
@@ -338,9 +341,10 @@ const VIEWS = {
 
   async reports(el) {
     const status = state.filter.reportStatus ?? 'open';
+    const service = state.filter.reportService ?? myService();
     const [all, settings] = await Promise.all([api('GET', '/api/admin/reports'), api('GET', '/api/admin/settings').catch(() => null)]);
     const list = all.filter((r) =>
-      status === 'mine' ? r.salespersonId === state.user.id : status === 'piece' ? r.kind === 'piece' && r.status !== 'resolu' : status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status
+      (!service || r.service === service) && (status === 'open' ? r.status !== 'resolu' : status === 'all' || r.status === status)
     );
     const toAnswer = all.filter((r) => r.waitingForDealer).length;
     const mailWarning = settings && !settings.mail.ready
@@ -354,10 +358,15 @@ const VIEWS = {
         ['en_cours', 'En cours'],
         ['resolu', 'Clôturées'],
         ['all', 'Toutes'],
-        ['piece', '🛒 Magasin (pièces)'],
-        ...(isAdmin() ? [] : [['mine', 'Mes clients']]),
       ]
         .map(([v, l]) => `<button class="chip ${status === v ? 'active' : ''}" data-act="filter" data-value="${v}">${l}</button>`)
+        .join('')}</div>
+      <div class="filters">${[
+        ['', 'Tous les services'],
+        ['sav', SERVICE_LABELS.sav],
+        ['magasin', SERVICE_LABELS.magasin],
+      ]
+        .map(([v, l]) => `<button class="chip ${service === v ? 'active' : ''}" data-act="service" data-value="${v}">${l}</button>`)
         .join('')}</div>
       <div class="cards">${
         list.length
@@ -365,9 +374,12 @@ const VIEWS = {
               .map(
                 (r) => `<div class="card report ${r.waitingForDealer ? 'waiting' : ''}">
             <div class="report-head">
-              <div>${r.kind === 'piece' ? '<span class="status piece">🛒 Magasin</span> ' : ''}<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}${r.salespersonName ? ` · suivi par ${esc(r.salespersonName)}` : ''}</small></div>
+              <div><span class="status ${r.service === 'magasin' ? 'piece' : 'sav'}">${SERVICE_LABELS[r.service] || SERVICE_LABELS.sav}</span> ${
+                r.warranty?.until ? (r.warranty.active ? `<span class="status resolu">🛡️ Garantie jusqu’au ${formatDate(r.warranty.until)}</span> ` : '<span class="status">Hors garantie</span> ') : ''
+              }<strong>${esc(r.title)}</strong>${r.waitingForDealer ? ' <span class="status nouveau">À répondre</span>' : ''}<br><small class="muted">${formatDate(r.createdAt)} · ${esc([r.firstName, r.lastName].filter(Boolean).join(' '))} · ${esc(r.brandName)} ${esc(r.vehicleName)}${isAdmin() ? ` · ${esc(r.dealershipName)}` : ''}${r.salespersonName ? ` · suivi par ${esc(r.salespersonName)}` : ''}</small></div>
               <span class="status ${esc(r.status)}">${STATUS[r.status]}</span>
             </div>
+            ${r.transferNote ? `<p class="closed-note">↪︎ Transférée : ${esc(r.transferNote)}</p>` : ''}
             ${r.part ? partCard(r) : ''}
             <div class="thread">
               <div class="msg client"><p>${multiline(r.description || r.title)}</p><small>Client · ${formatDateTime(r.createdAt)}</small></div>
@@ -379,12 +391,13 @@ const VIEWS = {
                 ? `<p class="closed-note">🔒 Demande clôturée${r.closedAt ? ` le ${formatDateTime(r.closedAt)}` : ''} : le client ne peut plus y répondre (il peut faire une nouvelle demande). Pour la rouvrir, choisissez « En cours ».</p>`
                 : ''
             }
-            ${r.canManage ? '' : `<p class="closed-note">Client suivi par ${esc(r.salespersonName || 'un autre commercial')} : lecture seule.</p>`}
+            ${r.canManage ? '' : `<p class="closed-note">Demande traitée par le ${r.service === 'magasin' ? 'magasin' : 'SAV'} : lecture seule.</p>`}
             <form class="reply-form" data-reply="${r.id}" ${r.canManage ? '' : 'hidden'}>
               <textarea name="message" rows="2" placeholder="${r.status === 'resolu' ? 'Dernier message au client (facultatif)' : 'Votre réponse au client (il la reçoit dans son application)'}"></textarea>
               <div class="actions">
                 <select name="status">${Object.entries(STATUS).map(([v, l]) => `<option value="${v}" ${(r.status === 'nouveau' ? 'en_cours' : r.status) === v ? 'selected' : ''}>${v === 'resolu' ? 'Clôturer la demande' : l}</option>`).join('')}</select>
                 <button class="btn primary">Envoyer</button>
+                <button type="button" class="btn small" data-act="transfer" data-id="${r.id}" data-to="${r.service === 'magasin' ? 'sav' : 'magasin'}">Transférer au ${r.service === 'magasin' ? 'SAV' : 'magasin'}</button>
                 ${r.phone ? `<a class="btn small" href="tel:${esc(r.phone)}">📞 ${esc(r.phone)}</a>` : ''}
                 ${r.email ? `<a class="btn small" href="mailto:${esc(r.email)}">✉️ ${esc(r.email)}</a>` : ''}
               </div>
@@ -412,6 +425,21 @@ const VIEWS = {
         state.filter.reportStatus = b.dataset.value;
         VIEWS.reports(el);
       },
+      service: (_, b) => {
+        state.filter.reportService = b.dataset.value;
+        VIEWS.reports(el);
+      },
+      transfer: (id, b) =>
+        openForm({
+          title: `Transférer au ${b.dataset.to === 'sav' ? 'SAV' : 'magasin'}`,
+          submitLabel: 'Transférer',
+          fields: [{ name: 'transferNote', label: 'Motif (visible par les deux services)', required: true, full: true, attrs: 'placeholder="ex : hors garantie, pièce disponible au magasin…"' }],
+          onSubmit: async (data) => {
+            await api('PUT', `/api/admin/reports/${id}`, { service: b.dataset.to, transferNote: data.transferNote });
+            toast('Demande transférée : le service est prévenu par e-mail');
+            VIEWS.reports(el);
+          },
+        }),
       copypart: async (id) => {
         const r = all.find((x) => x.id === Number(id));
         const text = partLines(r).map(([k, v]) => `${k} : ${v}`).join('\n');
@@ -614,18 +642,26 @@ const VIEWS = {
       { name: 'city', label: 'Ville' },
       { name: 'phone', label: 'Téléphone', type: 'tel' },
       { name: 'email', label: 'E-mail', type: 'email' },
-      { name: 'storeEmail', label: 'E-mail du magasin (demandes de pièces)', type: 'email', hint: 'Laissez vide pour les recevoir à l’e-mail de la concession.' },
+      { name: 'warrantyYears', label: 'Garantie habituelle (années)', type: 'number', attrs: 'min="0" max="15"', hint: 'À partir de la mise en main. Ajustable pour chaque client.' },
+      { name: 'savEmail', label: 'SAV : e-mail (reçoit les demandes du SAV)', type: 'email', hint: 'Vide : l’e-mail de la concession.' },
+      { name: 'savPhone', label: 'SAV : téléphone (affiché au client)', type: 'tel' },
+      { name: 'savHours', label: 'SAV : horaires', full: true },
+      { name: 'storeEmail', label: 'Magasin : e-mail (reçoit les demandes du magasin)', type: 'email', hint: 'Vide : celui du SAV.' },
+      { name: 'storePhone', label: 'Magasin : téléphone (affiché au client)', type: 'tel' },
+      { name: 'storeHours', label: 'Magasin : horaires', full: true },
+      { name: 'storeAddress', label: 'Magasin : adresse (s’il est détaché)', full: true },
+      { name: 'storeDetached', label: 'Magasin détaché (indépendant : la concession ne voit pas ses demandes)', type: 'checkbox', full: true },
       { name: 'hours', label: 'Horaires affichés dans l’appli', full: true },
       { name: 'website', label: 'Site web (ouvert en touchant le logo dans l’appli)', full: true, attrs: 'placeholder="www.ma-concession.fr"' },
       { name: 'logo', label: 'Logo de la concession (affiché dans l’appli)', type: 'image' },
       { name: 'active', label: 'Active (le code fonctionne)', type: 'checkbox' },
-    ];
+    ].filter((f) => isAdmin() || !['code', 'active'].includes(f.name)); // the code stays with the administrator
     bind(el, {
       add: () =>
         openForm({
           title: 'Nouvelle concession',
           fields,
-          values: { active: true },
+          values: { active: true, warrantyYears: 2 },
           onSubmit: async (data) => {
             const d = await api('POST', '/api/admin/dealerships', data);
             toast(`Concession créée — code ${d.code}`);
@@ -666,10 +702,12 @@ const VIEWS = {
           )
           .join('')}</tbody>
       </table></div>
-      <div class="card muted"><p><strong>Commercial</strong> : voit tous les clients et demandes de sa concession, mais ne gère que ses clients (fiche, code d’accès, réponses). Il n’est pas prévenu par e-mail : il retrouve le récap de ses clients sur son tableau de bord.</p>
-      <p><strong>Responsable de concession</strong> : gère tous les clients de la concession, les confie à un commercial ou les bascule de l’un à l’autre, gère l’équipe et la fiche de la concession. Il reçoit les e-mails des demandes clients.</p>
+      <div class="card muted"><p><strong>Commercial</strong> : gère ses clients (fiche, code d’accès) et fait les mises en main. Il ne traite pas les demandes : il en voit le récap sur son tableau de bord.</p>
+      <p><strong>SAV / atelier</strong> : voit les demandes de la concession, répond à celles du SAV (rendez-vous, soucis, pièces sous garantie) et peut les transférer au magasin.</p>
+      <p><strong>Magasin</strong> : répond aux demandes du magasin (pièces hors garantie, produits, accessoires) et peut les transférer au SAV. Magasin détaché : il ne voit que les siennes.</p>
+      <p><strong>Responsable de concession</strong> : voit et gère tout dans sa concession (clients, demandes, équipe, fiche de la concession), sans recevoir d’e-mails.</p>
       ${isAdmin() ? '<p><strong>Administrateur</strong> : gère tout, dont le catalogue (véhicules, équipements, diagnostics) et les concessions.</p>' : ''}</div>`;
-    const roles = [['sales', 'Commercial'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['admin', 'Administrateur']] : [])];
+    const roles = [['sales', 'Commercial'], ['sav', 'SAV / atelier'], ['store', 'Magasin'], ['manager', 'Responsable de concession'], ...(isAdmin() ? [['admin', 'Administrateur']] : [])];
     const fields = (isNew) => [
       { name: 'name', label: 'Nom (affiché au client pour un commercial)' },
       { name: 'email', label: 'E-mail (identifiant)', type: 'email', required: true },
@@ -823,6 +861,7 @@ function partLines(r) {
     ['Besoin', NEEDS[p.need] || 'Pièce détachée'],
     ['Client', [r.firstName, r.lastName].filter(Boolean).join(' ')],
     ['Véhicule', `${r.brandName} ${r.vehicleName}`],
+    ['Garantie', r.warranty?.until ? (r.warranty.active ? `sous garantie jusqu’au ${formatDate(r.warranty.until)}` : `terminée le ${formatDate(r.warranty.until)}`) : '—'],
     ['Année du véhicule', p.vehicleYear || r.vehicleYear || (/\b(19|20)\d{2}\b/.exec(r.modelYear || '') || ['—'])[0]],
     ['N° de cellule', p.cellNumber || r.cellNumber || 'à demander au client'],
     ['Équipement', p.equipmentName || '—'],
@@ -865,6 +904,8 @@ async function newCustomer(el) {
       { name: 'phone', label: 'Téléphone', type: 'tel' },
       { name: 'cellNumber', label: 'N° de cellule', hint: 'Plaque du constructeur de la cellule.' },
       { name: 'vehicleYear', label: 'Année du véhicule' },
+      { name: 'warrantyEnd', label: 'Fin de garantie', type: 'date', hint: 'Vide : garantie habituelle de la concession à partir de la mise en main.' },
+      { name: 'warrantyExtEnd', label: 'Extension de garantie jusqu’au', type: 'date' },
       { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
       { name: 'sendEmail', label: 'Envoyer au client son code d’accès et un bouton « Ouvrir mon application » par e-mail', type: 'checkbox', full: true },
     ],
@@ -936,6 +977,11 @@ async function customerDetail(el, id) {
           <div><dt>Année du véhicule</dt><dd>${esc(c.vehicleYear || (/\b(19|20)\d{2}\b/.exec(c.modelYear || '') || ['—'])[0])}</dd></div>
           <div><dt>VIN</dt><dd class="muted">Conservé seulement sur le téléphone du client</dd></div>
           <div><dt>Mise en main</dt><dd>${formatDate(c.handoverDate)}</dd></div>
+          <div><dt>Garantie</dt><dd>${
+            c.warranty?.until
+              ? `${c.warranty.active ? '🛡️ ' : ''}${c.warranty.active ? 'Sous ' : 'Terminée : '}${c.warranty.extended ? 'extension ' : 'garantie '}${c.warranty.active ? 'jusqu’au ' : 'le '}${formatDate(c.warranty.until)}<br><small class="muted">Pendant la garantie, ses demandes de pièces vont au SAV ; ensuite au magasin.</small>`
+              : '—'
+          }</dd></div>
           <div><dt>Concession</dt><dd>${esc(c.dealershipName)}</dd></div>
           <div><dt>Commercial</dt><dd>${
             c.canReassign
@@ -1016,6 +1062,8 @@ async function customerDetail(el, id) {
           { name: 'phone', label: 'Téléphone', type: 'tel' },
               { name: 'cellNumber', label: 'N° de cellule' },
           { name: 'vehicleYear', label: 'Année du véhicule' },
+          { name: 'warrantyEnd', label: 'Fin de garantie', type: 'date', hint: 'Vide : garantie habituelle de la concession.' },
+          { name: 'warrantyExtEnd', label: 'Extension de garantie jusqu’au', type: 'date' },
           { name: 'handoverDate', label: 'Date de mise en main', type: 'date' },
           { name: 'vehicleId', label: 'Véhicule', type: 'select', options: vehicles.map((v) => [v.id, `${v.brandName} — ${v.name}`]) },
           ...(isAdmin() ? [{ name: 'dealershipId', label: 'Concession', type: 'select', options: dealerships.map((d) => [d.id, d.name]) }] : []),

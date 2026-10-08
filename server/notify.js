@@ -5,6 +5,7 @@
 
 const { getSetting, setSetting } = require('./db');
 const { sendMail } = require('./mailer');
+const { serviceEmail, SERVICES } = require('./services');
 const { sendPush } = require('./webpush');
 
 function mailConfig(db) {
@@ -36,14 +37,6 @@ async function mail(db, to, subject, text, log, extra = {}) {
     log('[e-mail]', err.message);
     return false;
   }
-}
-
-// The dealership's address and its managers. Salespeople get no e-mail: they see a recap of their customers in the back-office.
-function dealershipRecipients(db, dealershipId) {
-  const d = db.prepare('SELECT email FROM dealerships WHERE id = ?').get(dealershipId);
-  const users = db.prepare("SELECT email FROM admins WHERE dealership_id = ? AND role = 'manager'").all(dealershipId).map((u) => u.email);
-  const copy = mailConfig(db).copy;
-  return [...new Set([d?.email, ...users, copy].filter(Boolean))];
 }
 
 function customerName(c) {
@@ -125,10 +118,9 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
         (vin ? 'Le VIN figure seulement dans cet e-mail : l’application ne le conserve pas. ' : '') +
         'Répondez depuis le back-office : le client reçoit votre réponse dans son application, et l’échange reste dans l’historique.',
     });
-    // Requests for the store go to the store's address when the dealership has one.
-    const store = report.kind === 'piece' ? db.prepare('SELECT store_email FROM dealerships WHERE id = ?').get(customer.dealership_id)?.store_email : null;
-    const to = store ? [...new Set([store, mailConfig(db).copy].filter(Boolean))] : dealershipRecipients(db, customer.dealership_id);
-    const label = report.kind === 'piece' ? (isNew ? 'Demande au magasin' : 'Nouveau message (magasin)') : isNew ? 'Nouvelle demande' : 'Nouveau message';
+    // One mailbox per service: the SAV's or the store's (managers see everything in the back-office, without e-mails).
+    const to = [...new Set([serviceEmail(db, customer.dealership_id, report.service || 'sav'), mailConfig(db).copy].filter(Boolean))];
+    const label = `${SERVICES[report.service] || 'SAV'} · ${isNew ? 'Nouvelle demande' : 'Nouveau message'}`;
     return mail(db, to, `${label} : ${report.title} – ${who}`, lines.join('\n'), log, {
       html,
       fromName: 'Compagnon de bord',
@@ -140,7 +132,8 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
   // The dealership answered: push to the customer's phones, e-mail if the customer gave one.
   async function dealershipAnswered({ report, customer, text, origin }) {
     const d = db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id) || {};
-    const name = d.name || 'Votre concession';
+    // The answer comes from the SAV or from the store: the e-mail says which, and a direct reply reaches that service.
+    const name = `${d.name || 'Votre concession'}${report.service === 'magasin' ? ' · Magasin' : report.service === 'sav' ? ' · SAV' : ''}`;
     const pushed = await push(customer.id, { title: name, body: text.slice(0, 180), url: `/app/#demande-${report.id}`, tag: `demande-${report.id}` });
     if (customer.email && customer.email_notify !== 0) {
       // The button signs the customer in directly (single-use link), even in a browser where they never logged in.
@@ -172,7 +165,7 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
         html,
         fromName: `${name} via Compagnon de bord`,
         // Safety net: if the customer answers the e-mail itself, the dealership receives it (never the notification box).
-        replyTo: d.email || mailConfig(db).copy || undefined,
+        replyTo: serviceEmail(db, customer.dealership_id, report.service || 'sav') || mailConfig(db).copy || undefined,
       });
     }
     return pushed;

@@ -378,8 +378,12 @@ test('roles: salespeople see the dealership but manage their own customers; the 
   // (a session through the handover: the restore endpoint is rate-limited and other tests already use it)
   const ctoken = (await call('POST', '/api/handover', { body: { dealershipCode: 'EQUIPE01', vehicleId: catalog.vehicles[0].id, salespersonId: s1.id, customer: { lastName: 'Client2' } } })).data.token;
   const req = (await call('POST', '/api/me/requests', { token: ctoken, body: { title: 'Fuite', message: 'Ça goutte' } })).data;
-  assert.equal((await call('PUT', `/api/admin/reports/${req.id}`, { token: bruno, body: { status: 'en_cours', message: 'Bonjour' } })).status, 403);
-  assert.equal((await call('PUT', `/api/admin/reports/${req.id}`, { token: alice, body: { status: 'en_cours', message: 'Bonjour' } })).status, 200);
+  // Requests are handled by the SAV and the store, not by salespeople
+  assert.equal((await call('GET', '/api/admin/reports', { token: alice })).status, 403);
+  assert.equal((await call('PUT', `/api/admin/reports/${req.id}`, { token: alice, body: { status: 'en_cours', message: 'Bonjour' } })).status, 404);
+  await mk('sav@equipe.fr', 'sav', chef);
+  const sav = await login('sav@equipe.fr', 'motdepasse1');
+  assert.equal((await call('PUT', `/api/admin/reports/${req.id}`, { token: sav, body: { status: 'en_cours', message: 'Bonjour' } })).status, 200);
   // Alice's dashboard recap
   const stats = (await call('GET', '/api/admin/stats', { token: alice })).data;
   assert.equal(stats.mine.customers, 2);
@@ -389,11 +393,22 @@ test('roles: salespeople see the dealership but manage their own customers; the 
   assert.equal((await call('PUT', `/api/admin/customers/${c.id}`, { token: bruno, body: { phone: '0600000000' } })).status, 200);
   assert.equal((await call('DELETE', `/api/admin/users/${s2.id}`, { token: chef })).status, 409, 'transfer before deleting');
   assert.equal((await call('POST', `/api/admin/users/${s2.id}/transfer`, { token: chef, body: { toUserId: s1.id } })).data.moved, 1);
-  // The customer sees their advisor in the app
-  assert.equal((await call('GET', '/api/me', { token: ctoken })).data.salesperson.name, 'alice');
   // Handover in the app with a chosen advisor
   const dc = (await call('GET', '/api/dealerships/code/EQUIPE01')).data;
   assert.deepEqual(dc.salespeople.map((p) => p.name).sort(), ['alice', 'bruno', 'chef']);
   const h = (await call('POST', '/api/handover', { body: { dealershipCode: 'EQUIPE01', vehicleId: catalog.vehicles[0].id, salespersonId: s2.id, customer: { lastName: 'Main' } } })).data;
-  assert.equal(h.salesperson.name, 'bruno');
+  assert.equal(h.customer.salespersonId, s2.id);
+  // Detached store: its requests are its own, the dealership does not see them
+  await call('PUT', `/api/admin/dealerships/${d.id}`, { token: chef, body: { storeDetached: true, storePhone: '05 00 00 00 00' } });
+  await mk('mag@equipe.fr', 'store', chef);
+  const mag = await login('mag@equipe.fr', 'motdepasse1');
+  const acc = (await call('POST', '/api/me/parts', { token: h.token, body: { need: 'accessoire', equipmentName: 'Auvent' } })).data;
+  assert.equal(acc.service, 'magasin');
+  assert.ok((await call('GET', '/api/admin/reports', { token: mag })).data.some((r) => r.id === acc.id));
+  assert.ok(!(await call('GET', '/api/admin/reports', { token: mag })).data.some((r) => r.id === req.id), 'a detached store sees only its requests');
+  assert.ok(!(await call('GET', '/api/admin/reports', { token: chef })).data.some((r) => r.id === acc.id), 'the dealership does not see them');
+  assert.equal((await call('PUT', `/api/admin/reports/${acc.id}`, { token: sav, body: { message: 'x' } })).status, 404);
+  assert.equal((await call('PUT', `/api/admin/reports/${acc.id}`, { token: mag, body: { status: 'en_cours', message: 'On a ça en stock' } })).status, 200);
+  const app2 = (await call('GET', '/api/app/data', { token: h.token })).data;
+  assert.equal(app2.dealer.store.phone, '05 00 00 00 00');
 });

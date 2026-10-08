@@ -160,7 +160,7 @@ test('conversation: dealership is e-mailed, customer gets push + e-mail, website
   // Branded for the dealership, replies go to the dealership, a big button signs the customer in
   const m = smtp.mails[2].data;
   assert.match(m, /^From: =\?UTF-8\?B\?.+\?= <contact@test\.fr>$/m);
-  assert.equal(Buffer.from(m.match(/^From: =\?UTF-8\?B\?(.+)\?=/m)[1], 'base64').toString(), 'Concession de démonstration via Compagnon de bord');
+  assert.equal(Buffer.from(m.match(/^From: =\?UTF-8\?B\?(.+)\?=/m)[1], 'base64').toString(), 'Concession de démonstration · SAV via Compagnon de bord');
   assert.match(m, /^Reply-To: atelier@concession\.fr$/m);
   assert.match(m, /^Auto-Submitted: auto-generated$/m);
   const parts = m.split(/--cdb-[0-9a-f]+/);
@@ -233,7 +233,8 @@ test('store request: photo, model, cell number, year; the VIN goes in the e-mail
   assert.equal(r.data.part.photoKind, 'client');
   await waitFor(() => smtp.mails.length === before + 1);
   const mail = smtp.mails[before];
-  assert.deepEqual(mail.rcpt, ['magasin@concession.fr']);
+  assert.deepEqual(mail.rcpt, ['atelier@concession.fr'], 'under warranty: the SAV');
+  assert.equal(r.data.service, 'sav');
   assert.match(bodyText(mail), /VF1SECRET1234567/);
   assert.match(bodyText(mail), /CEL-12345/);
   // Nowhere on the server
@@ -249,6 +250,20 @@ test('store request: photo, model, cell number, year; the VIN goes in the e-mail
   assert.equal(me.vehicleYear, '2024');
   const list = (await call('GET', '/api/admin/reports?kind=piece', { token: admin })).data;
   assert.equal(list[0].part.model, 'Truma Combi 4');
+  // Accessory: always the store; out of warranty: the store
+  const acc = await call('POST', '/api/me/parts', { token, body: { need: 'accessoire', equipmentName: 'Porte-vélos' } });
+  assert.equal(acc.data.service, 'magasin');
+  await waitFor(() => smtp.mails.length === before + 2);
+  assert.deepEqual(smtp.mails[before + 1].rcpt, ['magasin@concession.fr']);
+  const cust = app.db.prepare("SELECT id FROM customers WHERE last_name = 'Piece'").get();
+  app.db.prepare("UPDATE customers SET warranty_end = '2020-01-01' WHERE id = ?").run(cust.id);
+  assert.equal((await call('POST', '/api/me/parts', { token, body: { need: 'piece', equipmentName: 'Pompe' } })).data.service, 'magasin');
+  app.db.prepare("UPDATE customers SET warranty_ext_end = '2099-01-01' WHERE id = ?").run(cust.id);
+  assert.equal((await call('POST', '/api/me/parts', { token, body: { need: 'remplacement', equipmentName: 'Frigo' } })).data.service, 'sav', 'extended warranty: the SAV');
+  // The SAV hands a request to the store, with the reason
+  const moved = await call('PUT', `/api/admin/reports/${r.data.id}`, { token: admin, body: { service: 'magasin', transferNote: 'Pièce disponible au magasin' } });
+  assert.equal(moved.data.service, 'magasin');
+  assert.match(moved.data.transferNote, /SAV → Magasin : Pièce disponible/);
   // A photo URL that is not the customer's is refused
   const other = await call('POST', '/api/me/parts', { token, body: { equipmentName: 'Store', photo: '/uploads/pas-a-moi.jpg' } });
   assert.equal(other.data.part.photoUrl, null);

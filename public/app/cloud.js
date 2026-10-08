@@ -180,6 +180,8 @@
     },
   };
 
+  function addYears(date, years) { var d = new Date(date + 'T12:00:00Z'); d.setUTCFullYear(d.getUTCFullYear() + years); return d.toISOString().slice(0, 10); }
+
   // ---------- Store request: spare part or replacement ----------
 
   function vehicleYear() {
@@ -209,7 +211,7 @@
     m.innerHTML = '<form class="card" novalidate><p class="eyebrow">Demande au magasin</p><h3>' + esc(info.name || 'Pièce ou équipement') + '</h3>' +
       '<div class="cloud-photos">' + photoHtml() + '</div>' +
       '<p class="eyebrow">Il me faut</p><div class="cloud-need">' +
-      [['piece', 'Une pièce détachée'], ['remplacement', 'Remplacer l’équipement'], ['accessoire', 'Un accessoire ou consommable']].map(function (o, i) {
+      [['piece', 'Une pièce détachée'], ['remplacement', 'Remplacer l’équipement'], ['accessoire', 'Ajouter un accessoire, ou un consommable']].map(function (o, i) {
         return '<label><input type="radio" name="need" value="' + o[0] + '"' + (i === 0 ? ' checked' : '') + '> ' + o[1] + '</label>';
       }).join('') + '</div>' +
       (info.name ? '' : '<label class="eyebrow">Équipement concerné</label><select class="search" data-eq><option value="">— Choisir dans mes équipements —</option>' + myEquipment().map(function (q) { return '<option value="' + esc(q.id) + '">' + esc(q.name) + '</option>'; }).join('') + '<option value="__other">Autre (à préciser)</option></select>' +
@@ -265,7 +267,7 @@
       api('POST', '/api/me/parts', body).then(function (r) {
         if (session.customer) { session.customer.cellNumber = body.cellNumber || session.customer.cellNumber; session.customer.vehicleYear = body.vehicleYear || session.customer.vehicleYear; saveSession(); }
         openReq[r.id] = true; loadRequests();
-        f.innerHTML = '<p class="eyebrow">Demande au magasin</p><h3>Demande envoyée ✓</h3><p class="sub">' + esc((DATA && DATA.dealer && DATA.dealer.name) || 'Le magasin') + ' a reçu votre demande avec la photo et les références. La réponse arrivera dans « Mes demandes ».</p>' +
+        f.innerHTML = '<p class="eyebrow">Demande au magasin</p><h3>Demande envoyée ✓</h3><p class="sub">' + esc((DATA && DATA.dealer && DATA.dealer.name) || 'Le magasin') + ' a reçu votre demande avec la photo et les références' + (r.service === 'sav' ? ' : elle est transmise au <b>SAV</b>, votre véhicule étant sous garantie.' : ' : elle est transmise au <b>magasin</b>.') + ' La réponse arrivera dans « Mes demandes ».</p>' +
           '<div class="btns"><button type="button" class="btn alt" data-x>Fermer</button><button type="button" class="btn" data-see>Voir mes demandes</button></div>';
         f.querySelector('[data-x]').onclick = close;
         f.querySelector('[data-see]').onclick = function () { close(); var t = document.querySelector('.tile[data-go="rdv"]'); if (t) t.click(); };
@@ -369,9 +371,11 @@
         '<label class="eyebrow" for="c_tel">Téléphone</label><input class="search" id="c_tel" name="phone" type="tel" autocomplete="off">' +
         '<label class="eyebrow" for="c_mail">E-mail</label><input class="search" id="c_mail" name="email" type="email" autocomplete="off">' +
         ((f.dealership && f.dealership.salespeople && f.dealership.salespeople.length)
-          ? '<label class="eyebrow" for="c_sales">Conseiller du client</label><select class="search" id="c_sales" name="salespersonId"><option value="">— Choisir —</option>' +
+          ? '<label class="eyebrow" for="c_sales">Commercial qui a vendu le véhicule</label><select class="search" id="c_sales" name="salespersonId"><option value="">— Choisir —</option>' +
             f.dealership.salespeople.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('') + '</select>'
           : '') +
+        '<label class="eyebrow" for="c_wend">Fin de garantie</label><input class="search" id="c_wend" name="warrantyEnd" type="date" value="' + addYears(today, (f.dealership && f.dealership.warrantyYears) || 2) + '"><small class="sub">Garantie habituelle de la concession à partir d’aujourd’hui : modifiez-la si besoin.</small>' +
+        '<label class="eyebrow" for="c_wext">Extension de garantie jusqu’au</label><input class="search" id="c_wext" name="warrantyExtEnd" type="date"><small class="sub">Laissez vide si le client n’a pas pris d’extension. Pendant la garantie, ses demandes de pièces vont au SAV.</small>' +
         '<label class="eyebrow" for="c_vin">Numéro de série (VIN)</label><input class="search" id="c_vin" name="vin" autocapitalize="characters" autocomplete="off" placeholder="17 caractères"><small class="sub">Gardé uniquement sur ce téléphone, jamais sur nos serveurs.</small>' +
         '<label class="eyebrow" for="c_date">Date de mise en main</label><input class="search" id="c_date" name="handoverDate" type="date" value="' + today + '">' +
         '<button class="btn">Créer le compte du client</button></form>' +
@@ -448,7 +452,7 @@
 
   function startSession(res) {
     clearLocal();
-    session = { token: res.token, customer: res.customer, vehicle: res.vehicle, dealership: res.dealership, salesperson: res.salesperson || null };
+    session = { token: res.token, customer: res.customer, vehicle: res.vehicle, dealership: res.dealership, warranty: res.warranty || null };
     saveSession();
     applyState(res.state);
   }
@@ -468,7 +472,7 @@
     var online = Promise.all([api('GET', '/api/app/data'), api('GET', '/api/me')]).then(function (r) {
       DATA = r[0];
       lsSet(DATA_KEY, JSON.stringify(DATA));
-      session.customer = r[1].customer; session.vehicle = r[1].vehicle; session.dealership = r[1].dealership; session.salesperson = r[1].salesperson || null; saveSession();
+      session.customer = r[1].customer; session.vehicle = r[1].vehicle; session.dealership = r[1].dealership; session.warranty = r[1].warranty || null; saveSession();
       applyState(r[1].state);
     });
     return online
@@ -677,16 +681,25 @@
     var status = n ? (navigator.onLine ? 'Sauvegarde en cours…' : 'Hors connexion : ' + n + ' modification' + (n > 1 ? 's' : '') + ' en attente, envoyée' + (n > 1 ? 's' : '') + ' au retour du réseau.')
       : '✓ Vos données sont sauvegardées' + (lastSaved ? ' (' + lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + '.';
     el.innerHTML = '<p class="eyebrow">Mon espace client</p><p><b>' + esc([c.firstName, c.lastName].filter(Boolean).join(' ')) + '</b>' +
-      (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p>' + advisorHtml() + '<p class="sub">' + esc(status) + '</p>' +
+      (session.dealership ? ' · ' + esc(session.dealership.name) : '') + '</p><p class="sub">' + esc(status) + '</p>' + contactsHtml() +
       '<div class="btns"><button class="btn" data-acc="part" type="button">🛒 Demander une pièce</button><button class="btn alt" data-acc="space" type="button">👤 Mon espace client</button></div>';
   }
 
-  // The customer's salesperson at the dealership, with one-touch call and e-mail.
-  function advisorHtml() {
-    var p = session && session.salesperson; if (!p) return '';
-    return '<p class="cloud-advisor">Votre conseiller : <b>' + esc(p.name || p.email) + '</b>' +
-      (p.phone ? ' · <a href="tel:' + esc(String(p.phone).replace(/[^\d+]/g, '')) + '">📞 ' + esc(p.phone) + '</a>' : '') +
-      (p.email ? ' · <a href="mailto:' + esc(p.email) + '">✉️ E-mail</a>' : '') + '</p>';
+  // Who the customer calls: the SAV (workshop) and the store, with one-touch call.
+  function telLink(phone) { return 'tel:' + String(phone).replace(/[^\d+]/g, ''); }
+  function contactsHtml() {
+    var d = (DATA && DATA.dealer) || {}, sav = d.sav || {}, st = d.store;
+    var row = function (label, phone, hours, extra) {
+      return phone ? '<a class="btn alt cloud-contact" href="' + esc(telLink(phone)) + '">📞 ' + label + '<small>' + esc(phone) + (hours ? ' · ' + esc(hours) : '') + (extra ? '<br>' + esc(extra) : '') + '</small></a>' : '';
+    };
+    var h = row('SAV / atelier', sav.phone, sav.hours) + (st ? row('Magasin', st.phone, st.hours, st.detached ? st.address : '') : '');
+    return h ? '<div class="cloud-contacts">' + h + '</div>' : '';
+  }
+
+  function warrantyHtml() {
+    var w = session && session.warranty; if (!w || !w.until) return '';
+    var date = new Date(w.until).toLocaleDateString('fr-FR');
+    return w.active ? '<p class="sub">🛡️ Véhicule sous ' + (w.extended ? 'extension de garantie' : 'garantie') + ' jusqu’au ' + esc(date) + '.</p>' : '<p class="sub">Garantie terminée le ' + esc(date) + '.</p>';
   }
 
   // ---------- Client space: my details, my vehicle, my code, notifications, my data ----------
@@ -706,14 +719,14 @@
     var m = document.createElement('div');
     m.className = 'cloud-modal cloud-sheet cloud-space';
     m.innerHTML = '<div class="card"><div class="cloud-space-head"><p class="eyebrow">Mon espace client</p><button type="button" class="lnk" data-sp="close">Fermer ✕</button></div>' +
-      (session.salesperson ? '<section><h3>Mon conseiller</h3>' + advisorHtml() + '</section>' : '') +
+      '<section><h3>Contacter ' + esc(d.name || 'la concession') + '</h3>' + (contactsHtml() || '<p class="sub">Coordonnées non renseignées.</p>') + '</section>' +
       '<form data-spf="me"><h3>Mes informations</h3>' +
       '<label class="eyebrow">Prénom</label><input class="search" name="firstName" maxlength="100" value="' + esc(c.firstName || '') + '">' +
       '<label class="eyebrow">Nom</label><input class="search" value="' + esc(c.lastName || '') + '" disabled><small class="sub">Votre nom sert à retrouver votre compte avec votre code : demandez à votre concession pour le changer.</small>' +
       '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" value="' + esc(c.email || '') + '">' +
       '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" value="' + esc(c.phone || '') + '">' +
       '<button class="btn alt">Enregistrer</button></form>' +
-      '<form data-spf="veh"><h3>Mon véhicule</h3><p class="sub">' + esc(v.fullName || '') + '</p>' +
+      '<form data-spf="veh"><h3>Mon véhicule</h3><p class="sub">' + esc(v.fullName || '') + '</p>' + warrantyHtml() +
       '<label class="eyebrow">Année du véhicule</label><input class="search" name="vehicleYear" maxlength="10" inputmode="numeric" value="' + esc(vehicleYear()) + '">' +
       '<label class="eyebrow">Numéro de cellule</label><input class="search" name="cellNumber" maxlength="40" value="' + esc(c.cellNumber || '') + '" placeholder="Plaque du constructeur de la cellule">' +
       '<label class="eyebrow">VIN (numéro de série du véhicule)</label><input class="search" name="vin" maxlength="40" autocapitalize="characters" autocomplete="off" value="' + esc(localVin()) + '" placeholder="Carte grise, case E">' +

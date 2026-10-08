@@ -8,6 +8,7 @@ const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
 const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
 const { matchLayouts } = require('../layouts');
+const { warrantyOf, SERVICES } = require('../services');
 const { mailConfig, mailReady } = require('../notify');
 const { sendMail } = require('../mailer');
 
@@ -89,7 +90,22 @@ function register(router) {
 
   // Roles: admin (everything) ; manager, « responsable de concession » (their dealership: customers, team, reassignments) ;
   // sales, « commercial » (sees their dealership, manages only their own customers).
-  const ROLES = ['admin', 'manager', 'sales'];
+  const ROLES = ['admin', 'manager', 'sales', 'sav', 'store'];
+  const SERVICE_OF_ROLE = { sav: 'sav', store: 'magasin' };
+
+  // Customer requests: the SAV and the store see those of their dealership and answer their own; a detached store is
+  // independent (its requests are not shown to the dealership, and it sees only them). Salespeople do not handle requests.
+  function reportScope(user) {
+    if (user.role === 'admin') return { sql: '1 = 1', args: [] };
+    const base = { sql: 'c.dealership_id = ?', args: [user.dealership_id ?? -1] };
+    if (user.role === 'store') return { sql: `${base.sql} AND (r.service = 'magasin' OR d.store_detached = 0 OR d.store_detached IS NULL)`, args: base.args };
+    if (user.role === 'manager' || user.role === 'sav') return { sql: `${base.sql} AND NOT (r.service = 'magasin' AND d.store_detached = 1)`, args: base.args };
+    return { sql: '0 = 1', args: [] };
+  }
+  function canAnswer(user, report) {
+    if (user.role === 'admin' || user.role === 'manager') return true;
+    return SERVICE_OF_ROLE[user.role] === (report.service || 'sav');
+  }
   const isManager = (user) => user.role === 'admin' || user.role === 'manager';
 
   function managerOnly(ctx) {
@@ -152,7 +168,11 @@ function register(router) {
       diagnostics: count('SELECT COUNT(*) AS n FROM diagnostics'),
       dealerships: count('SELECT COUNT(*) AS n FROM dealerships'),
       customers: count(`SELECT COUNT(*) AS n FROM customers c WHERE ${c.sql}`, c.args),
-      openReports: count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.status != 'resolu' AND ${c.sql}`, c.args),
+      // Requests the user handles (their service; everything for a manager), without salespeople's.
+      openReports: (() => {
+        const rs = reportScope(user);
+        return count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id JOIN dealerships d ON d.id = c.dealership_id WHERE r.status != 'resolu' AND ${rs.sql}${SERVICE_OF_ROLE[user.role] ? ' AND r.service = ?' : ''}`, [...rs.args, ...(SERVICE_OF_ROLE[user.role] ? [SERVICE_OF_ROLE[user.role]] : [])]);
+      })(),
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       // « Mes clients » recap, for whoever follows customers (no e-mail is sent to salespeople).
       mine: {
@@ -679,6 +699,26 @@ function register(router) {
     return code;
   }
 
+  // SAV and store contacts, detached store, usual warranty.
+  function serviceFields(db, id, body, d) {
+    const v = (key, col, fn) => (body[key] === undefined ? d[col] ?? null : fn(body[key]));
+    const years = body.warrantyYears === undefined ? d.warranty_years ?? 2 : optInt(body.warrantyYears) ?? 2;
+    if (years < 0 || years > 15) throw new HttpError(400, 'Durée de garantie invalide');
+    db.prepare(
+      'UPDATE dealerships SET sav_email = ?, sav_phone = ?, sav_hours = ?, store_phone = ?, store_hours = ?, store_address = ?, store_detached = ?, warranty_years = ? WHERE id = ?'
+    ).run(
+      v('savEmail', 'sav_email', optEmail),
+      v('savPhone', 'sav_phone', (x) => optStr(x, 40)),
+      v('savHours', 'sav_hours', (x) => optStr(x, 200)),
+      v('storePhone', 'store_phone', (x) => optStr(x, 40)),
+      v('storeHours', 'store_hours', (x) => optStr(x, 200)),
+      v('storeAddress', 'store_address', (x) => optStr(x, 200)),
+      body.storeDetached === undefined ? d.store_detached ?? 0 : body.storeDetached ? 1 : 0,
+      years,
+      id
+    );
+  }
+
   router.post('/api/admin/dealerships', (ctx) => {
     adminOnly(ctx);
     const { db, body } = ctx;
@@ -697,6 +737,7 @@ function register(router) {
         ctx.uploads.resolveImage(body.logo, null),
         bool01(body.active, 1)
       );
+    serviceFields(db, lastInsertRowid, body, {});
     bumpContentVersion(db);
     return camel(getOr404(db, 'dealerships', lastInsertRowid, 'Concession'));
   });
@@ -722,6 +763,7 @@ function register(router) {
       bool01(body.active, d.active),
       d.id
     );
+    serviceFields(db, d.id, body, d);
     bumpContentVersion(db);
     return camel(getOr404(db, 'dealerships', d.id, 'Concession'));
   });
@@ -738,7 +780,7 @@ function register(router) {
   // ---- Customers ----
 
   const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.cell_number, c.vehicle_year, c.email_notify, v.model_year,
-      c.handover_date, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
+      c.handover_date, c.warranty_end, c.warranty_ext_end, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
       d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name, c.salesperson_id, s.name AS salesperson_name, s.email AS salesperson_email,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
     FROM customers c
@@ -823,7 +865,13 @@ function register(router) {
         expires.toISOString()
       );
     const accessCode = formatAccessCode(readProfile(vehicle).codePrefix, core);
-    db.prepare('UPDATE customers SET access_code_enc = ?, salesperson_id = ? WHERE id = ?').run(sealText(accessCode, ctx.config.secret), salespersonId, lastInsertRowid);
+    db.prepare('UPDATE customers SET access_code_enc = ?, salesperson_id = ?, warranty_end = ?, warranty_ext_end = ? WHERE id = ?').run(
+      sealText(accessCode, ctx.config.secret),
+      salespersonId,
+      optStr(body.warrantyEnd, 10),
+      optStr(body.warrantyExtEnd, 10),
+      lastInsertRowid
+    );
     const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
     // Single-use link that opens the app already signed in (to send by e-mail or SMS).
     const appLink = `${ctx.origin}/app/?lien=${ctx.createLoginLink(customer.id)}`;
@@ -858,6 +906,7 @@ function register(router) {
       ...camel(customer),
       canManage: mine,
       canReassign: isManager(user),
+      warranty: warrantyOf(ctx.db, customer),
       // The code is shown to whoever may send it to the customer.
       accessCode: mine && enc ? openText(enc, ctx.config.secret) : null,
       ...customerStateSummary(ctx.db, customer.id),
@@ -892,6 +941,8 @@ function register(router) {
       pick(optStr(body.handoverDate, 10), customer.handover_date),
       customer.id
     );
+    if (body.warrantyEnd !== undefined) db.prepare('UPDATE customers SET warranty_end = ? WHERE id = ?').run(optStr(body.warrantyEnd, 10), customer.id);
+    if (body.warrantyExtEnd !== undefined) db.prepare('UPDATE customers SET warranty_ext_end = ? WHERE id = ?').run(optStr(body.warrantyExtEnd, 10), customer.id);
     // Only the manager (or the administrator) moves a customer from one salesperson to another.
     if (body.salespersonId !== undefined && Number(body.salespersonId || 0) !== (customer.salesperson_id || 0)) {
       if (!isManager(user)) throw new HttpError(403, 'Seul le responsable de la concession peut changer le commercial d’un client');
@@ -936,7 +987,8 @@ function register(router) {
 
   router.get('/api/admin/reports', (ctx) => {
     const user = auth(ctx);
-    const s = scope(user, 'c.dealership_id');
+    if (user.role === 'sales') throw new HttpError(403, 'Les demandes sont traitées par le SAV et le magasin');
+    const s = reportScope(user);
     const status = ctx.query.get('status');
     const where = [s.sql];
     const args = [...s.args];
@@ -945,6 +997,10 @@ function register(router) {
       args.push(status);
     }
     if (ctx.query.get('kind') === 'piece') where.push("r.kind = 'piece'");
+    if (SERVICES[ctx.query.get('service')]) {
+      where.push('r.service = ?');
+      args.push(ctx.query.get('service'));
+    }
     if (ctx.query.get('mine') === '1') {
       where.push('c.salesperson_id = ?');
       args.push(user.id);
@@ -952,7 +1008,8 @@ function register(router) {
     const list = camelAll(
       ctx.db
         .prepare(
-          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.cell_number, c.salesperson_id, c.dealership_id AS customer_dealership_id, s.name AS salesperson_name, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
+          `SELECT r.*, c.first_name, c.last_name, c.phone, c.email, c.cell_number, c.salesperson_id, c.dealership_id AS customer_dealership_id, s.name AS salesperson_name,
+             c.handover_date, c.warranty_end, c.warranty_ext_end, c.vehicle_year, v.model_year, d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name,
              p.title AS problem_title
            FROM reports r
            JOIN customers c ON c.id = r.customer_id
@@ -970,7 +1027,8 @@ function register(router) {
     for (const r of list) {
       r.messages = msgs.filter((m) => m.reportId === r.id);
       r.part = r.part ? JSON.parse(r.part) : null;
-      r.canManage = canManage(user, { dealership_id: r.customerDealershipId, salesperson_id: r.salespersonId });
+      r.canManage = canAnswer(user, r);
+      r.warranty = warrantyOf(ctx.db, { dealership_id: r.customerDealershipId, handover_date: r.handoverDate, warranty_end: r.warrantyEnd, warranty_ext_end: r.warrantyExtEnd });
       // The customer wrote last: the dealership owes an answer.
       r.waitingForDealer = r.status !== 'resolu' && (r.messages.length ? r.messages[r.messages.length - 1].author === 'client' : r.status === 'nouveau');
     }
@@ -980,10 +1038,23 @@ function register(router) {
   router.put('/api/admin/reports/:id', (ctx) => {
     const user = auth(ctx);
     const { db, body } = ctx;
-    const s = scope(user, 'c.dealership_id');
-    const report = db.prepare(`SELECT r.*, c.dealership_id, c.salesperson_id FROM reports r JOIN customers c ON c.id = r.customer_id WHERE r.id = ? AND ${s.sql}`).get(Number(ctx.params.id), ...s.args);
+    const s = reportScope(user);
+    const report = db
+      .prepare(`SELECT r.*, c.dealership_id, c.salesperson_id FROM reports r JOIN customers c ON c.id = r.customer_id JOIN dealerships d ON d.id = c.dealership_id WHERE r.id = ? AND ${s.sql}`)
+      .get(Number(ctx.params.id), ...s.args);
     if (!report) throw new HttpError(404, 'Demande introuvable');
-    requireManage(user, report);
+    // Sent to the other service (SAV ↔ store), with the reason: that service is told and handles it from now on.
+    if (body.service !== undefined && body.service !== report.service) {
+      if (!SERVICES[body.service]) throw new HttpError(400, 'Service inconnu');
+      if (!canAnswer(user, report)) throw new HttpError(403, 'Cette demande est traitée par un autre service');
+      const note = reqStr(body.transferNote, 'Motif du transfert', 300);
+      db.prepare("UPDATE reports SET service = ?, transfer_note = ?, updated_at = datetime('now') WHERE id = ?").run(body.service, `${SERVICES[report.service || 'sav']} → ${SERVICES[body.service]} : ${note}`, report.id);
+      const moved = db.prepare('SELECT * FROM reports WHERE id = ?').get(report.id);
+      const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(report.customer_id);
+      ctx.notify.customerWrote({ report: moved, customer, text: `Demande transférée par le ${SERVICES[report.service || 'sav']} : ${note}\n\n${report.description || ''}`, origin: ctx.origin, isNew: true, part: moved.part ? JSON.parse(moved.part) : null }).catch(() => {});
+      return camel(moved);
+    }
+    if (!canAnswer(user, report)) throw new HttpError(403, 'Cette demande est traitée par un autre service');
     const status = pick(optStr(body.status, 20), report.status);
     if (!STATUSES.includes(status)) throw new HttpError(400, 'Statut invalide');
     // A reply is a new message in the conversation; the customer is notified.

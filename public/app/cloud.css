@@ -92,3 +92,6 @@
 .cloud-photos .cloud-photo-btn{display:block;height:auto;min-height:0;flex:none;padding:12px 14px}
 .cloud-advisor{margin:4px 0;font-size:15px}
 .cloud-advisor a{color:var(--accent);font-weight:600;text-decoration:none}
+.cloud-contacts{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.cloud-contact{display:flex;flex-direction:column;align-items:flex-start;text-align:left;text-decoration:none;padding:10px 14px;min-height:0;height:auto;flex:none}
+.cloud-contact small{font-weight:400;font-size:13px;opacity:.85}
