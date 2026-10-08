@@ -9,6 +9,21 @@ const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAU
 const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
 // Store first: specialised products sold in the store instead of home remedies (see CLAUDE.md).
 const STORE_PRODUCTS = require('./seed/diag-magasin.json');
+const STORE_QUESTIONS = [
+  [['c_tank_niveau'], "Pouvez-vous accéder aux sondes du réservoir et les nettoyer à l'eau vinaigrée ?", 'Pouvez-vous accéder aux sondes du réservoir et les nettoyer avec un nettoyant détartrant spécial réservoirs (vendu en magasin) ?'],
+  [['g_trumad', 'g_truma', 'g_web'], "Couvrez le panneau solaire d'une bâche ou d'un carton puis relancez : le défaut a-t-il disparu ?", 'Couvrez le panneau solaire avec une housse de protection puis relancez : le défaut a-t-il disparu ?'],
+  [['h_wc'], "Videz et rincez la cassette à l'eau chaude, puis passez vinaigre blanc et bicarbonate. L'odeur a-t-elle disparu ?", "Videz et rincez la cassette à l'eau chaude, puis laissez agir un nettoyant détartrant spécial cassette (vendu en magasin). L'odeur a-t-elle disparu ?"],
+  [['h_clim'], 'Nettoyez le filtre à particules du diffuseur (chiffon doux ou aspirateur) et relancez. L\'air est-il plus frais ?', 'Nettoyez le filtre à particules du diffuseur avec un nettoyant spécial filtres de clim (vendu en magasin) et relancez. L\'air est-il plus frais ?'],
+  [['h_clim'], 'Changez les piles (LR3 neuves, bien orientées) et nettoyez les lamelles avec un chiffon sec. La clim répond-elle ?', 'Changez les piles (LR3 neuves, bien orientées) et nettoyez les lamelles avec une lingette microfibre. La clim répond-elle ?'],
+  [['h_solaire'], 'Nettoyez le panneau avec un chiffon humide et placez le véhicule en plein soleil, hors de toute ombre. La charge revient-elle ?', 'Nettoyez le panneau avec un nettoyant spécial panneaux solaires et placez le véhicule en plein soleil, hors de toute ombre. La charge revient-elle ?'],
+  [['h_solaire'], 'Nettoyez le panneau avec un chiffon humide : feuilles, fientes, saleté. La charge remonte-t-elle ?', 'Nettoyez le panneau avec un nettoyant spécial panneaux solaires : feuilles, fientes, saleté. La charge remonte-t-elle ?'],
+  [['h_eau'], "Nettoyez le joint d'ouvrant avec un chiffon humide et refermez bien la fenêtre. Le passage d'eau ou d'air continue-t-il ?", "Nettoyez le joint d'ouvrant avec un nettoyant pour joints et refermez bien la fenêtre. Le passage d'eau ou d'air continue-t-il ?"],
+  [['h_tv'], 'Essuyez le disque avec un chiffon doux. Se lit-il maintenant ?', 'Essuyez le disque avec une lingette microfibre. Se lit-il maintenant ?'],
+  [['h_tv'], "Éteignez l'écran et passez doucement un chiffon doux, sans produit. Le point a-t-il disparu ?", "Éteignez l'écran et passez doucement une lingette microfibre spéciale écrans. Le point a-t-il disparu ?"],
+  [['h_gaz'], "Pulvérisez de l'eau savonneuse sur les raccords, bouteille ouverte. Des bulles se forment-elles ?", 'Pulvérisez un spray détecteur de fuites de gaz (vendu en magasin) sur les raccords, bouteille ouverte. Des bulles se forment-elles ?'],
+  [['h_gaz'], "Fermez la bouteille et pulvérisez de l'eau savonneuse sur les raccords, puis rouvrez. Des bulles se forment-elles ?", 'Fermez la bouteille et pulvérisez un spray détecteur de fuites de gaz (vendu en magasin) sur les raccords, puis rouvrez. Des bulles se forment-elles ?'],
+];
+
 
 const PATCHES = [
   {
@@ -171,6 +186,27 @@ const PATCHES = [
         if (n) {
           db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(data), id);
           changed += n;
+        }
+      }
+      // The questions too: the test asked of the customer uses the store's product.
+      for (const [ids, from, to] of STORE_QUESTIONS) {
+        for (const id of ids) {
+          const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+          if (!row) continue;
+          const data = JSON.parse(row.data);
+          let n = 0;
+          (function walk(node) {
+            if (!node || !Array.isArray(node.n)) return;
+            if (node.t === from) {
+              node.t = to;
+              n++;
+            }
+            node.n.forEach(walk);
+          })(data.tree);
+          if (n) {
+            db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(data), id);
+            changed += n;
+          }
         }
       }
       return changed;

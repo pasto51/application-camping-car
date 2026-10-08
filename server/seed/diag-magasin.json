@@ -1,1 +1,6661 @@
-[]
+[
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   0,
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le brûleur du frigo est encrassé.",
+  "from": {
+   "prod": "Kit nettoyage brûleur"
+  },
+  "to": {
+   "prod": "Aucun produit : atelier"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Un nid d'insectes bouchait la cheminée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Dégagez la ventilation chaque année."
+  },
+  "to": {
+   "prod": "Grille anti-insectes pour cheminée de frigo",
+   "geste": "Dégagez la ventilation chaque année et posez une grille anti-insectes, vendue en magasin."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   0,
+   0,
+   1,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : l'injecteur est encrassé.",
+  "from": {
+   "prod": "Kit nettoyage brûleur"
+  },
+  "to": {
+   "prod": "Aucun produit : atelier"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   0,
+   0,
+   2,
+   1,
+   0
+  ],
+  "cause": "L'air ne circule plus à l'arrière du frigo.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Aérosol dépoussiérant"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint de porte laisse entrer de l'air chaud.",
+  "from": {
+   "prod": "Joint de porte pour frigo",
+   "geste": "Nettoyez le joint à l'eau tiède puis refaites le test. Voir le diagnostic « joint de porte »."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints, joint de porte de frigo si abîmé",
+   "geste": "Nettoyez le joint avec un nettoyant pour joints, vendu en magasin, puis refaites le test. Voir le diagnostic « joint de porte »."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Les aliments tièdes et les ouvertures de porte font monter la température.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Pains de glace (accumulateurs de froid)"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   2,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le frigo était mal réglé.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Thermomètre de frigo"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   3,
+   1,
+   0
+  ],
+  "cause": "Le frigo était réglé trop chaud.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Thermomètre de frigo"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   5,
+   1,
+   0
+  ],
+  "cause": "Le 12 V ne sait pas refroidir un frigo chaud : sa puissance est faible.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Pains de glace (accumulateurs de froid)"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   5,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le fusible 12 V du frigo était grillé.",
+  "from": {
+   "prod": "Fusibles de rechange"
+  },
+  "to": {
+   "prod": "Fusibles plats assortis"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   6,
+   0,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, jauge de niveau de gaz"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   7,
+   0,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, jauge de niveau de gaz"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   8,
+   0,
+   0
+  ],
+  "cause": "Le joint de porte ne ferme plus bien.",
+  "from": {
+   "prod": "Joint de porte de frigo",
+   "geste": "Nettoyez le joint. S'il est abîmé faites-le remplacer."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints, joint de porte de frigo si abîmé",
+   "geste": "Nettoyez le joint avec un nettoyant pour joints, vendu en magasin. S'il est abîmé faites-le remplacer."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   8,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le réglage du frigo ne demandait pas de froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Thermomètre de frigo"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   11,
+   0
+  ],
+  "cause": "Le soleil limite fortement le froid du frigo à absorption.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Ventilateur 12 V pour grilles de frigo"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   11,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le frigo atteint sa limite de refroidissement par forte chaleur.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Pains de glace (accumulateurs de froid)"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   0,
+   13,
+   1
+  ],
+  "cause": "Le 12 V ne fait que maintenir le froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Pains de glace (accumulateurs de froid)"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   4,
+   0,
+   1,
+   0,
+   0
+  ],
+  "cause": "Une cosse de la batterie cellule était desserrée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Brosse à cosses et spray protecteur de bornes"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   4,
+   0,
+   1,
+   0,
+   1
+  ],
+  "cause": "La batterie cellule fatiguée ne stabilise plus le 12 V.",
+  "from": {
+   "prod": "Chargeur de batterie"
+  },
+  "to": {
+   "prod": "Testeur de batterie, chargeur de batterie"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   4,
+   1,
+   0,
+   0
+  ],
+  "cause": "Une cosse de la batterie cellule était desserrée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Brosse à cosses et spray protecteur de bornes"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   4,
+   1,
+   0,
+   1
+  ],
+  "cause": "La batterie cellule fatiguée ne stabilise plus le 12 V.",
+  "from": {
+   "prod": "Chargeur de batterie"
+  },
+  "to": {
+   "prod": "Testeur de batterie, chargeur de batterie"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   7,
+   1,
+   1
+  ],
+  "cause": "Le câble de liaison entre le panneau et la carte est défectueux.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Thermomètre de frigo en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   9,
+   0
+  ],
+  "cause": "La sonde de température ne répond plus.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Thermomètre de frigo en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   0,
+   9,
+   1,
+   0
+  ],
+  "cause": "Les grilles de ventilation étaient obstruées.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Aérosol dépoussiérant"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   1,
+   4,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le 12 V du véhicule est instable.",
+  "from": {
+   "prod": "Chargeur de batterie"
+  },
+  "to": {
+   "prod": "Testeur de batterie, chargeur de batterie"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   1,
+   5,
+   0,
+   0
+  ],
+  "cause": "Le 12 V du véhicule est instable.",
+  "from": {
+   "prod": "Chargeur de batterie"
+  },
+  "to": {
+   "prod": "Testeur de batterie, chargeur de batterie"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   1,
+   7,
+   0,
+   0
+  ],
+  "cause": "Le câble 230 V enroulé faisait chuter la tension.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Rallonge 230 V camping de bonne section (2,5 mm²)"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   1,
+   7,
+   2
+  ],
+  "cause": "Le courant de l'onduleur n'est pas assez régulier pour le frigo.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Onduleur à sinus pur"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   1,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une cosse desserrée faisait chuter la tension.",
+  "from": {
+   "prod": "Fusibles plats assortis"
+  },
+  "to": {
+   "prod": "Fusibles plats assortis, brosse à cosses"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   2,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, jauge de niveau de gaz"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   2,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, jauge de niveau de gaz"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   2,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le vent dans les grilles souffle la flamme.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Garez le véhicule à l'abri du vent ou face au vent selon les grilles. Posez si possible un déflecteur."
+  },
+  "to": {
+   "prod": "Déflecteur de vent pour grille de frigo",
+   "geste": "Garez le véhicule à l'abri du vent ou face au vent selon les grilles. Posez si possible un déflecteur, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   2,
+   3,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, jauge de niveau de gaz"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   0,
+   1,
+   0
+  ],
+  "cause": "Un joint encrassé laissait entrer l'air humide.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Le givre pouvait aussi gêner la fermeture. Nettoyez le joint régulièrement et dégivrez dès que le givre épaissit."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints, lingettes microfibre",
+   "geste": "Le givre pouvait aussi gêner la fermeture. Nettoyez le joint régulièrement avec un nettoyant pour joints, vendu en magasin, et dégivrez dès que le givre épaissit."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   1,
+   0
+  ],
+  "cause": "La façade froide près du verrou fait de la condensation.",
+  "from": {
+   "prod": "Chiffon microfibre"
+  },
+  "to": {
+   "prod": "Lingettes microfibre en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   1,
+   1,
+   0
+  ],
+  "cause": "Un joint sale laissait entrer l'air humide.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Nettoyez le joint régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints, lingettes microfibre",
+   "geste": "Nettoyez le joint régulièrement avec un nettoyant pour joints, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le givre épais fond et fait couler de l'eau.",
+  "from": {
+   "prod": "Chiffon microfibre"
+  },
+  "to": {
+   "prod": "Spatule de dégivrage en plastique, lingettes microfibre absorbantes"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   2,
+   1,
+   0
+  ],
+  "cause": "Les grilles de ventilation étaient obstruées.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Aérosol dépoussiérant"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   3,
+   0,
+   0
+  ],
+  "cause": "Le joint de porte laisse entrer de l'air humide.",
+  "from": {
+   "geste": "Dégivrez et nettoyez le joint. S'il reste mou ou fendu, faites-le changer."
+  },
+  "to": {
+   "geste": "Dégivrez et nettoyez le joint avec un nettoyant pour joints, vendu en magasin. S'il reste mou ou fendu, faites-le changer."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   3,
+   0,
+   1,
+   0
+  ],
+  "cause": "Trop d'humidité entre dans le frigo.",
+  "from": {
+   "prod": "Boîtes alimentaires fermées"
+  },
+  "to": {
+   "prod": "Boîtes de conservation hermétiques"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   3,
+   1
+  ],
+  "cause": "La glace s'est accumulée normalement avec le temps.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Sans dégivrage elle réduit le froid. Éteignez le frigo, laissez la porte ouverte, essuyez l'eau. Ne grattez pas avec un objet pointu. Les Thetford à écran LCD dégivrent seuls toutes les 49 heures environ."
+  },
+  "to": {
+   "prod": "Spatule de dégivrage en plastique, lingettes microfibre",
+   "geste": "Sans dégivrage elle réduit le froid. Éteignez le frigo, laissez la porte ouverte, essuyez l'eau. Ne grattez pas avec un objet pointu : utilisez une spatule de dégivrage en plastique, vendue en magasin. Les Thetford à écran LCD dégivrent seuls toutes les 49 heures environ."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   4,
+   1,
+   0
+  ],
+  "cause": "Le joint de porte était sale.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Nettoyez le joint à l'eau tiède à chaque dégivrage."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints, lingettes microfibre",
+   "geste": "Nettoyez le joint avec un nettoyant pour joints, vendu en magasin, à chaque dégivrage."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   3,
+   5,
+   1,
+   0
+  ],
+  "cause": "Le givre empêchait la porte de fermer.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Dégivrez régulièrement. Ne grattez pas avec un objet pointu."
+  },
+  "to": {
+   "prod": "Spatule de dégivrage en plastique",
+   "geste": "Dégivrez régulièrement. Ne grattez pas avec un objet pointu : utilisez une spatule de dégivrage en plastique."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   4,
+   0
+  ],
+  "cause": "Le réglage du thermostat était trop fort.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Thermomètre de frigo"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   5,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le fusible de 2 A du frigo était grillé.",
+  "from": {
+   "prod": "Fusibles de rechange"
+  },
+  "to": {
+   "prod": "Fusibles de rechange assortis"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   5,
+   1,
+   0
+  ],
+  "cause": "Le compresseur consomme beaucoup au démarrage tant que le frigo est tiède.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Câble 230 V avec adaptateur de prise"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   5,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint de porte ne ferme plus bien.",
+  "from": {
+   "prod": "Joint de porte de frigo",
+   "geste": "Nettoyez le joint. S'il est abîmé faites-le remplacer."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints, joint de porte de frigo si abîmé",
+   "geste": "Nettoyez le joint avec un nettoyant pour joints, vendu en magasin. S'il est abîmé faites-le remplacer."
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   5,
+   3,
+   1
+  ],
+  "cause": "Vous êtes à jour.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Aérosol dépoussiérant, nettoyant pour joints"
+  }
+ },
+ {
+  "id": "h_frigo",
+  "path": [
+   5,
+   4,
+   0
+  ],
+  "cause": "Un frigo fermé et humide moisit.",
+  "from": {
+   "prod": "Caches hiver pour grilles de frigo",
+   "geste": "Éteignez le frigo, laissez la porte ouverte, dégivrez, nettoyez, laissez sécher. Posez les caches d'hivernage sur les grilles extérieures."
+  },
+  "to": {
+   "prod": "Caches hiver pour grilles de frigo, nettoyant spécial frigo",
+   "geste": "Éteignez le frigo, laissez la porte ouverte, dégivrez, nettoyez avec un nettoyant spécial frigo, vendu en magasin, laissez sécher. Posez les caches d'hivernage sur les grilles extérieures."
+  }
+ },
+ {
+  "id": "no230",
+  "path": [
+   1,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : la prise n'est plus alimentée.",
+  "from": {
+   "prod": "Prise 230 V"
+  },
+  "to": {
+   "prod": "Aucun produit : atelier"
+  }
+ },
+ {
+  "id": "no230",
+  "path": [
+   2,
+   1,
+   0
+  ],
+  "cause": "L'humidité sur la prise P17 provoque un défaut d'isolement.",
+  "from": {
+   "prod": "Chiffon sec",
+   "geste": "Débranchez, séchez fiche et prise, laissez sécher avant de rebrancher."
+  },
+  "to": {
+   "prod": "Capuchon de protection étanche pour prise P17",
+   "geste": "Débranchez, séchez fiche et prise, laissez sécher avant de rebrancher. Protégez ensuite la fiche avec un capuchon étanche, vendu en magasin."
+  }
+ },
+ {
+  "id": "taste",
+  "path": [
+   0,
+   1,
+   0
+  ],
+  "cause": "L'eau a stagné trop longtemps dans le réservoir.",
+  "from": {
+   "prod": "Produit de désinfection pour eau potable"
+  },
+  "to": {
+   "prod": "Produit de conservation pour eau potable, produit de désinfection"
+  }
+ },
+ {
+  "id": "taste",
+  "path": [
+   0,
+   1,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : un dépôt dans le réservoir persiste malgré le rinçage.",
+  "from": {
+   "prod": "Produit de désinfection pour eau potable",
+   "geste": "Faites un nettoyage et une désinfection complets ; sinon l'atelier nettoie le circuit."
+  },
+  "to": {
+   "prod": "Nettoyant spécial réservoirs d'eau propre, produit de désinfection pour eau potable",
+   "geste": "Faites un nettoyage complet avec un nettoyant spécial réservoirs, vendu en magasin, puis une désinfection ; sinon l'atelier nettoie le circuit."
+  }
+ },
+ {
+  "id": "taste",
+  "path": [
+   1,
+   1
+  ],
+  "cause": "Des bactéries se sont développées dans l'eau stagnante du réservoir.",
+  "from": {
+   "prod": "Produit de désinfection pour eau potable, filtre à eau",
+   "geste": "Ne buvez pas cette eau. Videz, nettoyez et désinfectez tout le circuit, puis rincez plusieurs fois."
+  },
+  "to": {
+   "prod": "Nettoyant spécial réservoirs d'eau propre, produit de désinfection pour eau potable, filtre à eau",
+   "geste": "Ne buvez pas cette eau. Videz, nettoyez avec un nettoyant spécial réservoirs, vendu en magasin, et désinfectez tout le circuit, puis rincez plusieurs fois."
+  }
+ },
+ {
+  "id": "c_tank_gel",
+  "path": [
+   0
+  ],
+  "cause": "L'eau a gelé dans le circuit d'eau.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Gaine isolante pour tuyaux d'eau"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   0,
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   3,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   3,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   3,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   0,
+   3,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   1,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   0,
+   0
+  ],
+  "cause": "Une bouteille presque vide ne tient plus la pression de gaz.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   0,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   1,
+   2
+  ],
+  "cause": "Le tube d'évacuation des gaz brûlés est abîmé.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   1,
+   3
+  ],
+  "cause": "Le tube d'évacuation des gaz brûlés est abîmé.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   2,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   2,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   2,
+   2,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   3,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une gaine d'air chaud est écrasée sur son trajet.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Colliers de fixation pour gaine d'air chaud"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   6,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   6,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop fatiguée pour tenir le chauffage toute la nuit.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie et chargeur 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   6,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   6,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop fatiguée pour tenir le chauffage toute la nuit.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie et chargeur 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   0,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   0,
+   3,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   0,
+   3,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   1,
+   3,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   8,
+   1,
+   3,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   9,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   9,
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   9,
+   1,
+   0
+  ],
+  "cause": "Une gaine d'air chaud est mal fixée et vibre.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Mousse de calage adhésive et colliers de fixation"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   10,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   10,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   11,
+   0,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   11,
+   0,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   11,
+   0,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   11,
+   0,
+   1,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   11,
+   1
+  ],
+  "cause": "L'électrovanne est bloquée ouverte.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de gaz pour camping-car en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   13,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   13,
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   13,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   13,
+   0,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   15,
+   0,
+   1
+  ],
+  "cause": "Le 230 V n'arrive pas jusqu'au véhicule.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Câble 230 V et adaptateurs de prise camping"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   17,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   17,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   17,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   17,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   18,
+   0
+  ],
+  "cause": "La cuve de 10 litres doit être vidée avant le gel.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Caches d'hivernage pour ventouse ou cheminée"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   18,
+   1
+  ],
+  "cause": "Le FrostControl doit être réarmé avant de remplir la cuve au printemps.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie et nettoyant spécial réservoirs d'eau propre"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   20,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   20,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   20,
+   1,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   20,
+   1,
+   1,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   22,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une gaine d'air chaud est écrasée sur son trajet.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Colliers de fixation pour gaine d'air chaud"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   23,
+   0,
+   2
+  ],
+  "cause": "Le tube d'évacuation des gaz brûlés est percé.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   23,
+   0,
+   3
+  ],
+  "cause": "Le tube d'évacuation des gaz brûlés est percé.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   23,
+   2,
+   1,
+   0
+  ],
+  "cause": "Une gaine d'air chaud est mal fixée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Mousse de calage adhésive et colliers de fixation"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   24,
+   0,
+   0
+  ],
+  "cause": "La ventouse est obstruée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   24,
+   0,
+   1
+  ],
+  "cause": "La ventouse du Truma est cassée.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   24,
+   0,
+   2
+  ],
+  "cause": "Un tube d'évacuation est déboîté à l'intérieur de l'appareil.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   24,
+   1
+  ],
+  "cause": "Une fuite de gaz est possible.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Détecteur de gaz pour camping-car"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   25,
+   2
+  ],
+  "cause": "La ventouse est abîmée.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   26,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V et testeur de batterie"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   26,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   26,
+   3,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   26,
+   3,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   26,
+   3,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le butane ne s'évapore plus assez par grand froid.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bouteille de propane"
+  }
+ },
+ {
+  "id": "g_truma",
+  "path": [
+   26,
+   3,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "h_gps",
+  "path": [
+   1,
+   1,
+   0
+  ],
+  "cause": "La mise à jour se fait avec une carte SD.",
+  "from": {
+   "prod": "Carte SD"
+  },
+  "to": {
+   "prod": "Carte SD pour la mise à jour de la cartographie"
+  }
+ },
+ {
+  "id": "h_gps",
+  "path": [
+   2,
+   1
+  ],
+  "cause": "La couverture de ces pays est partielle.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Atlas routier et guide des aires de camping-car"
+  }
+ },
+ {
+  "id": "h_gps",
+  "path": [
+   2,
+   2
+  ],
+  "cause": "Ces pays ne sont pas dans la carte de base.",
+  "from": {
+   "prod": "Carte SD"
+  },
+  "to": {
+   "prod": "Carte SD de cartographie complémentaire"
+  }
+ },
+ {
+  "id": "h_gps",
+  "path": [
+   3,
+   2
+  ],
+  "cause": "Votre modèle n'a pas d'entrée pour caméra de recul.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit caméra de recul avec écran"
+  }
+ },
+ {
+  "id": "nohotwater",
+  "path": [
+   0,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "Le chauffe-eau est entartré.",
+  "from": {
+   "prod": "Détartrant pour chauffe-eau, vinaigre blanc",
+   "geste": "Détartrez au vinaigre blanc dilué à 50 %, deux fois par an environ."
+  },
+  "to": {
+   "prod": "Détartrant spécial chauffe-eau",
+   "geste": "Détartrez avec un détartrant spécial chauffe-eau, vendu en magasin, deux fois par an environ."
+  }
+ },
+ {
+  "id": "nohotwater",
+  "path": [
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "La tension de la batterie est trop basse.",
+  "from": {
+   "prod": "Chargeur de batterie"
+  },
+  "to": {
+   "prod": "Chargeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "nohotwater",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Le 230 V n'arrive plus au véhicule.",
+  "from": {
+   "prod": "Câble 230 V"
+  },
+  "to": {
+   "prod": "Câble 230 V et adaptateurs de prise camping"
+  }
+ },
+ {
+  "id": "greydrain",
+  "path": [
+   0,
+   1,
+   0
+  ],
+  "cause": "Le siphon était bouché par des graisses et des résidus.",
+  "from": {
+   "prod": "Siphon de rechange, nettoyant pour circuit d'eaux grises",
+   "geste": "Nettoyez-le régulièrement et rincez à l'eau chaude."
+  },
+  "to": {
+   "prod": "Siphon de rechange et nettoyant spécial eaux grises",
+   "geste": "Nettoyez-le régulièrement avec un nettoyant spécial eaux grises, vendu en magasin, et rincez à l'eau chaude."
+  }
+ },
+ {
+  "id": "greydrain",
+  "path": [
+   0,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : le tuyau entre le siphon et le réservoir est obstrué.",
+  "from": {
+   "prod": "Nettoyant pour circuit d'eaux grises",
+   "geste": "Versez de l'eau chaude avec un nettoyant adapté ; sinon l'atelier débouche le tuyau."
+  },
+  "to": {
+   "prod": "Nettoyant spécial circuit d'eaux grises",
+   "geste": "Versez de l'eau chaude avec un nettoyant spécial circuit d'eaux grises, vendu en magasin ; sinon l'atelier débouche le tuyau."
+  }
+ },
+ {
+  "id": "c_tank_niveau",
+  "path": [
+   0,
+   0
+  ],
+  "cause": "Les sondes de niveau étaient encrassées par le calcaire.",
+  "from": {
+   "prod": "Vinaigre blanc",
+   "geste": "Pour l'éviter, nettoyez les sondes à l'eau vinaigrée régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant détartrant spécial réservoirs d'eau propre",
+   "geste": "Pour l'éviter, nettoyez régulièrement les sondes avec un nettoyant détartrant spécial réservoirs d'eau propre, vendu en magasin."
+  }
+ },
+ {
+  "id": "c_tank_niveau",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Un dépôt bloquait la sonde de niveau.",
+  "from": {
+   "prod": "Vinaigre blanc",
+   "geste": "Nettoyez régulièrement les sondes à l'eau vinaigrée pour éviter le retour du défaut."
+  },
+  "to": {
+   "prod": "Nettoyant détartrant spécial réservoirs d'eau propre",
+   "geste": "Nettoyez régulièrement les sondes avec un nettoyant détartrant spécial réservoirs d'eau propre, vendu en magasin, pour éviter le retour du défaut."
+  }
+ },
+ {
+  "id": "c_tank_odeur",
+  "path": [
+   0
+  ],
+  "cause": "L'eau stagnante s'est chargée de bactéries.",
+  "from": {
+   "prod": "Désinfectant pour réservoir d'eau potable",
+   "geste": "Vidangez, rincez, désinfectez le réservoir avec un produit prévu pour l'eau potable, puis rincez abondamment."
+  },
+  "to": {
+   "prod": "Désinfectant spécial réservoirs d'eau potable et conservateur d'eau",
+   "geste": "Vidangez, rincez, désinfectez le réservoir avec un désinfectant spécial eau potable, vendu en magasin, puis rincez abondamment. Ensuite, un conservateur d'eau garde l'eau saine plus longtemps."
+  }
+ },
+ {
+  "id": "c_tank_odeur",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Le filtre à eau est encrassé.",
+  "from": {
+   "prod": "Filtre à eau, désinfectant pour réservoir d'eau potable"
+  },
+  "to": {
+   "prod": "Filtre à eau de rechange et désinfectant spécial réservoirs d'eau potable"
+  }
+ },
+ {
+  "id": "c_tank_odeur",
+  "path": [
+   1,
+   1
+  ],
+  "cause": "Les tuyaux du circuit sont encrassés.",
+  "from": {
+   "prod": "Désinfectant pour réservoir d'eau potable"
+  },
+  "to": {
+   "prod": "Désinfectant spécial circuit d'eau potable"
+  }
+ },
+ {
+  "id": "c_tank_odeur",
+  "path": [
+   1,
+   2
+  ],
+  "cause": "Les tuyaux du circuit sont encrassés.",
+  "from": {
+   "prod": "Désinfectant pour réservoir d'eau potable"
+  },
+  "to": {
+   "prod": "Désinfectant spécial circuit d'eau potable"
+  }
+ },
+ {
+  "id": "c_tank_odeur",
+  "path": [
+   1,
+   3
+  ],
+  "cause": "Le filtre à eau est peut-être encrassé.",
+  "from": {
+   "prod": "Filtre à eau, désinfectant pour réservoir d'eau potable"
+  },
+  "to": {
+   "prod": "Filtre à eau de rechange et désinfectant spécial réservoirs d'eau potable"
+  }
+ },
+ {
+  "id": "e_man_pointage",
+  "path": [
+   0
+  ],
+  "cause": "Astra 1 se trouve vers le sud un peu à l'est.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Boussole et pointeur satellite"
+  }
+ },
+ {
+  "id": "e_man_pointage",
+  "path": [
+   1
+  ],
+  "cause": "Eutelsat 5° Ouest se trouve un peu à l'ouest du sud.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Boussole et pointeur satellite"
+  }
+ },
+ {
+  "id": "e_man_pointage",
+  "path": [
+   2
+  ],
+  "cause": "Chaque satellite occupe une place précise dans le ciel.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Boussole et pointeur satellite"
+  }
+ },
+ {
+  "id": "f_pneus_gonfle",
+  "path": [
+   1
+  ],
+  "cause": "Un gonfleur ordinaire peut ne pas monter jusqu'à cette pression.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Compresseur 12 V haute pression et manomètre"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   0,
+   1,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   0,
+   1,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   0,
+   2,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   0,
+   2,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   1,
+   0
+  ],
+  "cause": "Il n'y a pas assez de carburant : le chauffage pompe à vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Jerrican homologué pour carburant"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "L'alimentation en carburant est irrégulière dans cette situation.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Cales de mise à niveau"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   1,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   4,
+   0,
+   0
+  ],
+  "cause": "L'échappement du chauffage renvoie des gaz dans la cellule.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   5,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   5,
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   5,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   5,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   5,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   5,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   6,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   6,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   6,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   6,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   7,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   7,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   9,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une gaine d'air chaud est écrasée sur son trajet.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Colliers de fixation pour gaine d'air chaud"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   9,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le filtre d'entrée d'air est encrassé.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Nettoyez-le chauffage froid, laissez refroidir, éteignez au moins 2 secondes puis relancez."
+  },
+  "to": {
+   "prod": "Filtre d'entrée d'air de rechange",
+   "geste": "Nettoyez-le ou remplacez-le par un filtre neuf vendu en magasin, chauffage froid. Laissez refroidir, éteignez au moins 2 secondes puis relancez."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   11,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   11,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   11,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   11,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   13,
+   2
+  ],
+  "cause": "Le chauffage doit être éteint à la pompe à carburant et dans tout lieu clos.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Additif antigel pour gazole"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   13,
+   3
+  ],
+  "cause": "L'échangeur de chaleur arrive en fin de vie.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Détecteur de monoxyde de carbone en attendant l'atelier"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   14,
+   1,
+   0
+  ],
+  "cause": "Il n'y a pas assez de carburant (il faut au moins 8 litres).",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Jerrican homologué pour carburant"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   14,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   14,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   14,
+   3,
+   0
+  ],
+  "cause": "Le chauffe-eau a chauffé sans eau.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Tuyau de remplissage d'eau propre"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   15,
+   0,
+   0
+  ],
+  "cause": "Il n'y a pas assez de carburant.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Jerrican homologué pour carburant"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   15,
+   1,
+   0
+  ],
+  "cause": "Le niveau de liquide de refroidissement est trop bas.",
+  "from": {
+   "prod": "Liquide de refroidissement"
+  },
+  "to": {
+   "prod": "Liquide de refroidissement adapté au chauffage"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   15,
+   2,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   15,
+   2,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   15,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_web",
+  "path": [
+   15,
+   2,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Gardez-la chargée : roulez régulièrement ou branchez le câble 230 V quand c'est possible."
+  },
+  "to": {
+   "prod": "Panneau solaire nomade et testeur de batterie 12 V",
+   "geste": "Gardez-la chargée : roulez régulièrement, branchez le câble 230 V quand c'est possible, ou ajoutez un panneau solaire nomade vendu en magasin."
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   0,
+   0,
+   0
+  ],
+  "cause": "La pile avait dépassé sa température limite.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Grille d'aération pour coffre"
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   3,
+   1,
+   0
+  ],
+  "cause": "La tension de démarrage était trop faible parce que la pile était trop chaude.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Grille d'aération pour coffre"
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   5,
+   0
+  ],
+  "cause": "La cartouche de méthanol était vide.",
+  "from": {
+   "prod": "Une cartouche de méthanol pour pile à combustible"
+  },
+  "to": {
+   "prod": "Cartouches de méthanol pour pile à combustible"
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   6,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le niveau du fluide de service était trop bas.",
+  "from": {
+   "prod": "Un fluide de service pour pile à combustible"
+  },
+  "to": {
+   "prod": "Fluide de service pour pile à combustible"
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   8,
+   0,
+   0
+  ],
+  "cause": "La batterie était trop déchargée pour la pile.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   8,
+   2,
+   1,
+   0
+  ],
+  "cause": "La tension de la batterie était trop basse.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "g_efoy",
+  "path": [
+   9,
+   0
+  ],
+  "cause": "Le méthanol dépassait 35 °C et formait des bulles d'air dans le conduit.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Grille d'aération pour coffre"
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "cause": "Les piles de la télécommande étaient usées.",
+  "from": {
+   "prod": "Piles"
+  },
+  "to": {
+   "prod": "Piles de rechange pour télécommande"
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   0,
+   3
+  ],
+  "cause": "Les articulations manquent de lubrifiant.",
+  "from": {
+   "prod": "Spray silicone",
+   "geste": "Nettoyez et vaporisez un lubrifiant silicone sur les articulations."
+  },
+  "to": {
+   "prod": "Nettoyant spécial store et spray silicone",
+   "geste": "Nettoyez les articulations avec un nettoyant spécial store, puis vaporisez un spray silicone, vendus en magasin."
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   3,
+   0,
+   1,
+   0
+  ],
+  "cause": "Les piles de la télécommande du store étaient usées.",
+  "from": {
+   "prod": "Piles neuves (selon télécommande)"
+  },
+  "to": {
+   "prod": "Piles de rechange pour télécommande"
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   3,
+   2,
+   1,
+   0
+  ],
+  "cause": "La batterie de la cellule est trop faible pour le moteur du store.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie 12 V"
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   4,
+   0
+  ],
+  "cause": "La toile est déchirée.",
+  "from": {
+   "prod": "Aucun produit : atelier",
+   "geste": "Rentrez-la. Une réparation de petite taille est parfois possible, sinon remplacez la toile."
+  },
+  "to": {
+   "prod": "Kit de réparation de toile de store en attendant l'atelier",
+   "geste": "Rentrez-la. Un petit trou se répare avec un kit de réparation de toile vendu en magasin ; sinon, faites remplacer la toile."
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   5,
+   0
+  ],
+  "cause": "Les bras sont la partie la plus sollicitée du store.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit tempête pour store"
+  }
+ },
+ {
+  "id": "h_store",
+  "path": [
+   5,
+   1
+  ],
+  "cause": "De l'eau peut s'accumuler dans la toile et tirer sur les bras.",
+  "from": {
+   "prod": "Chiffon doux",
+   "geste": "Si vous le laissez sorti, inclinez-le pour que l'eau s'écoule. Séchez la toile avant de la rentrer pour longtemps."
+  },
+  "to": {
+   "prod": "Tendeur de toile anti-pluie et lingettes microfibre",
+   "geste": "Si vous le laissez sorti, inclinez-le ou posez un tendeur anti-pluie pour que l'eau s'écoule. Séchez la toile avec une lingette microfibre avant de la rentrer pour longtemps."
+  }
+ },
+ {
+  "id": "h_air",
+  "path": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "cause": "La pression des coussins était trop basse.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Manomètre de contrôle de pression"
+  }
+ },
+ {
+  "id": "h_air",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "La pression doit être cohérente avec la charge.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Manomètre de contrôle de pression"
+  }
+ },
+ {
+  "id": "h_air",
+  "path": [
+   1,
+   1
+  ],
+  "cause": "Une pression trop haute à vide durcit la suspension.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Manomètre de contrôle de pression"
+  }
+ },
+ {
+  "id": "h_air",
+  "path": [
+   4,
+   0,
+   0
+  ],
+  "cause": "Les pressions des deux côtés étaient différentes.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Manomètre de contrôle de pression"
+  }
+ },
+ {
+  "id": "h_vae",
+  "path": [
+   1,
+   0,
+   0
+  ],
+  "cause": "De l'humidité perturbait les connectiques du boîtier de gestion.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Ne lavez pas le vélo au jet sur le pédalier et la roue arrière."
+  },
+  "to": {
+   "prod": "Housse de protection pour vélos",
+   "geste": "Ne lavez pas le vélo au jet sur le pédalier et la roue arrière. En route, protégez-le avec une housse pour vélos vendue en magasin."
+  }
+ },
+ {
+  "id": "h_vae",
+  "path": [
+   1,
+   0,
+   1
+  ],
+  "cause": "Une connectique du boîtier de gestion est desserrée.",
+  "from": {
+   "prod": "Ruban adhésif",
+   "geste": "Clé sur OFF. L'atelier ouvre le cache côté pédalier, contrôle toutes les fiches et les fixe avec du ruban adhésif si besoin."
+  },
+  "to": {
+   "prod": "Aucun produit : atelier",
+   "geste": "Clé sur OFF. L'atelier ouvre le cache côté pédalier, contrôle toutes les fiches et les fixe si besoin."
+  }
+ },
+ {
+  "id": "h_vae",
+  "path": [
+   1,
+   1
+  ],
+  "cause": "Une connectique du boîtier de gestion est desserrée.",
+  "from": {
+   "prod": "Ruban adhésif",
+   "geste": "Clé sur OFF. L'atelier ouvre le cache côté pédalier, contrôle toutes les fiches, les rebranche et les fixe avec du ruban adhésif si besoin."
+  },
+  "to": {
+   "prod": "Aucun produit : atelier",
+   "geste": "Clé sur OFF. L'atelier ouvre le cache côté pédalier, contrôle toutes les fiches, les rebranche et les fixe si besoin."
+  }
+ },
+ {
+  "id": "h_vae",
+  "path": [
+   4,
+   1,
+   1
+  ],
+  "cause": "Un fil du boîtier de gestion est dénudé et touche la masse.",
+  "from": {
+   "prod": "Ruban adhésif isolant",
+   "geste": "Clé sur OFF. L'atelier isole la partie abîmée avec du ruban adhésif ou change le fil."
+  },
+  "to": {
+   "prod": "Aucun produit : atelier",
+   "geste": "Clé sur OFF. L'atelier isole la partie abîmée avec une gaine thermorétractable ou change le fil."
+  }
+ },
+ {
+  "id": "humid",
+  "path": [
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Les vitres froides condensent : c'est normal par temps froid.",
+  "from": {
+   "prod": "Absorbeur d'humidité",
+   "geste": "Essuyez les vitres, utilisez un absorbeur d'humidité."
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité, isolant thermique de pare-brise, lingettes microfibre",
+   "geste": "Essuyez les vitres avec une lingette microfibre et utilisez un absorbeur d'humidité. Un isolant thermique de pare-brise limite la buée."
+  }
+ },
+ {
+  "id": "humid",
+  "path": [
+   0,
+   1,
+   1,
+   1
+  ],
+  "cause": "Une infiltration est possible.",
+  "from": {
+   "prod": "Aucun produit : prenez rendez-vous pour un contrôle d'étanchéité"
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité en attendant l'atelier"
+  }
+ },
+ {
+  "id": "humid",
+  "path": [
+   1,
+   2,
+   1
+  ],
+  "cause": "Une infiltration d'origine inconnue est possible.",
+  "from": {
+   "prod": "Aucun produit : prenez rendez-vous pour un contrôle d'étanchéité"
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité en attendant l'atelier"
+  }
+ },
+ {
+  "id": "humid",
+  "path": [
+   1,
+   4
+  ],
+  "cause": "Une infiltration d'origine inconnue est possible.",
+  "from": {
+   "prod": "Aucun produit : prenez rendez-vous pour un contrôle d'étanchéité"
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité en attendant l'atelier"
+  }
+ },
+ {
+  "id": "humid",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Une infiltration d'eau abîme la paroi.",
+  "from": {
+   "prod": "Aucun produit : prenez rendez-vous pour un contrôle d'étanchéité"
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité en attendant l'atelier"
+  }
+ },
+ {
+  "id": "humid",
+  "path": [
+   2,
+   2
+  ],
+  "cause": "L'origine de l'humidité est inconnue.",
+  "from": {
+   "prod": "Aucun produit : prenez rendez-vous pour un contrôle d'étanchéité"
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité en attendant l'atelier"
+  }
+ },
+ {
+  "id": "start",
+  "path": [
+   0,
+   1,
+   0
+  ],
+  "cause": "Une cosse était desserrée.",
+  "from": {
+   "prod": "Nettoyant pour cosses",
+   "geste": "Contrôlez-les régulièrement."
+  },
+  "to": {
+   "prod": "Brosse à cosses et spray protecteur de bornes",
+   "geste": "Contrôlez-les régulièrement et protégez-les avec un spray de bornes."
+  }
+ },
+ {
+  "id": "start",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Le réservoir est vide.",
+  "from": {
+   "prod": "Carburant"
+  },
+  "to": {
+   "prod": "Jerrican homologué pour carburant"
+  }
+ },
+ {
+  "id": "h_portevelos",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Les vélos n’étaient pas assez serrés sur le porte-vélos.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Sangles de serrage pour porte-vélos"
+  }
+ },
+ {
+  "id": "evier",
+  "path": [
+   0
+  ],
+  "cause": "Le siphon s'était vidé : son bouchon d'eau ne fermait plus le passage des odeurs.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Clapet anti-odeurs pour évier"
+  }
+ },
+ {
+  "id": "evier",
+  "path": [
+   1,
+   1,
+   0
+  ],
+  "cause": "Des graisses et des résidus s'étaient accumulés dans le siphon.",
+  "from": {
+   "prod": "Siphon de rechange, nettoyant pour circuit d'eaux grises",
+   "geste": "Nettoyez le siphon de temps en temps et versez de l'eau chaude dans l'évier."
+  },
+  "to": {
+   "prod": "Nettoyant pour circuit d'eaux grises, siphon de rechange",
+   "geste": "Nettoyez le siphon de temps en temps avec un nettoyant pour circuit d'eaux grises, vendu en magasin, puis versez de l'eau chaude dans l'évier."
+  }
+ },
+ {
+  "id": "blind",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Les glissières étaient sales.",
+  "from": {
+   "prod": "Chiffon sec, spray silicone léger sur les rails",
+   "geste": "Ces stores se manipulent sans crainte à la main, sans tirer de biais."
+  },
+  "to": {
+   "prod": "Lingettes microfibre et spray silicone léger pour rails",
+   "geste": "Nettoyez les glissières avec une lingette microfibre et un peu de spray silicone. Ces stores se manipulent sans crainte à la main, sans tirer de biais."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le fusible de la chasse était grillé.",
+  "from": {
+   "prod": "Fusibles plats"
+  },
+  "to": {
+   "prod": "Fusibles plats assortis"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   0,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le réservoir d'eau propre de la toilette est vide : la pompe tourne à vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Additif pour eau de chasse"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   0,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le tuyau d'arrivée d'eau s'est décroché de la pompe.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Coupez le 12 V, remettez le tuyau à fond sur son embout, puis réessayez."
+  },
+  "to": {
+   "prod": "Colliers de serrage",
+   "geste": "Coupez le 12 V, remettez le tuyau à fond sur son embout et serrez-le avec un collier de serrage, puis réessayez."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   0,
+   4,
+   1,
+   0
+  ],
+  "cause": "Le réservoir d'eau propre de la toilette est vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Additif pour eau de chasse"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   0,
+   5,
+   2,
+   0
+  ],
+  "cause": "Le réservoir d'eau propre de la toilette est vide.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Additif pour eau de chasse"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   0,
+   5,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le tuyau d'arrivée d'eau s'est décroché de la pompe.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Remettez-le à fond sur son embout, puis réessayez."
+  },
+  "to": {
+   "prod": "Colliers de serrage",
+   "geste": "Remettez-le à fond sur son embout et serrez-le avec un collier de serrage, puis réessayez."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   0,
+   0
+  ],
+  "cause": "Le réservoir trop plein suinte.",
+  "from": {
+   "prod": "Additif sanitaire"
+  },
+  "to": {
+   "prod": "Additif sanitaire pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "Le joint était mal positionné.",
+  "from": {
+   "prod": "Lubrifiant pour joints de cassette"
+  },
+  "to": {
+   "prod": "Spray d'entretien pour joints de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint était sec.",
+  "from": {
+   "prod": "Lubrifiant pour joints de cassette"
+  },
+  "to": {
+   "prod": "Spray d'entretien pour joints de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le réservoir trop plein suinte.",
+  "from": {
+   "prod": "Additif sanitaire"
+  },
+  "to": {
+   "prod": "Additif sanitaire pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint était mal positionné.",
+  "from": {
+   "prod": "Lubrifiant pour joints de cassette"
+  },
+  "to": {
+   "prod": "Spray d'entretien pour joints de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   2,
+   0
+  ],
+  "cause": "Le réservoir trop plein déborde à la vidange.",
+  "from": {
+   "prod": "Additif sanitaire"
+  },
+  "to": {
+   "prod": "Additif sanitaire pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   0,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le joint était mal positionné.",
+  "from": {
+   "prod": "Lubrifiant pour joints de cassette"
+  },
+  "to": {
+   "prod": "Spray d'entretien pour joints de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   1,
+   0,
+   1,
+   0
+  ],
+  "cause": "Le joint de clapet est usé.",
+  "from": {
+   "prod": "Joint de clapet Thetford"
+  },
+  "to": {
+   "prod": "Joint de clapet de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint de clapet est usé.",
+  "from": {
+   "prod": "Joint de clapet Thetford"
+  },
+  "to": {
+   "prod": "Joint de clapet de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "La cassette était trop pleine.",
+  "from": {
+   "prod": "Additif sanitaire"
+  },
+  "to": {
+   "prod": "Additif sanitaire pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint de la cuvette était sec.",
+  "from": {
+   "prod": "Graisse pour joints"
+  },
+  "to": {
+   "prod": "Graisse silicone pour joints"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "La cassette était trop pleine.",
+  "from": {
+   "prod": "Additif sanitaire"
+  },
+  "to": {
+   "prod": "Additif sanitaire pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   0,
+   1,
+   1
+  ],
+  "cause": "La cassette n'a pas été nettoyée assez souvent.",
+  "from": {
+   "prod": "Nettoyant cassette",
+   "geste": "Rincez à l'eau chaude et nettoyez-la deux à trois fois par an."
+  },
+  "to": {
+   "prod": "Nettoyant spécial cassette",
+   "geste": "Rincez à l'eau chaude et nettoyez-la deux à trois fois par an avec un nettoyant spécial cassette, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   1,
+   0
+  ],
+  "cause": "Des résidus se sont accumulés dans la cassette.",
+  "from": {
+   "prod": "Nettoyant cassette, vinaigre blanc",
+   "geste": "Videz, rincez à l'eau chaude, laissez agir du vinaigre blanc avec du bicarbonate quelques heures, rincez bien."
+  },
+  "to": {
+   "prod": "Nettoyant détartrant spécial cassette",
+   "geste": "Videz, rincez à l'eau chaude, laissez agir quelques heures un nettoyant détartrant spécial cassette, vendu en magasin, puis rincez bien."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   1,
+   1
+  ],
+  "cause": "Sans additif, les bactéries se développent vite.",
+  "from": {
+   "prod": "Additif sanitaire, papier toilette à dissolution rapide",
+   "geste": "Videz, nettoyez, ajoutez un additif à chaque remplissage avec un papier à dissolution rapide."
+  },
+  "to": {
+   "prod": "Additif sanitaire pour cassette, papier toilette à dissolution rapide",
+   "geste": "Videz, nettoyez, puis ajoutez un additif sanitaire à chaque remplissage et utilisez du papier à dissolution rapide, vendus en magasin."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   2,
+   0
+  ],
+  "cause": "Des résidus avaient séché dans la cassette.",
+  "from": {
+   "prod": "Nettoyant cassette",
+   "geste": "Videz et rincez avant chaque stockage."
+  },
+  "to": {
+   "prod": "Nettoyant spécial cassette",
+   "geste": "Videz et rincez avant chaque stockage, avec un nettoyant spécial cassette."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   2,
+   1,
+   0
+  ],
+  "cause": "Les joints étaient desséchés.",
+  "from": {
+   "prod": "Graisse pour joints"
+  },
+  "to": {
+   "prod": "Graisse silicone pour joints"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   0,
+   2,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : un joint est à remplacer.",
+  "from": {
+   "prod": "Joint de rechange"
+  },
+  "to": {
+   "prod": "Joint de rechange pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le filtre à charbon est saturé.",
+  "from": {
+   "prod": "Filtre à charbon pour toilette Thetford"
+  },
+  "to": {
+   "prod": "Filtre à charbon pour toilette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   0,
+   1,
+   1,
+   1
+  ],
+  "cause": "Un joint de la toilette laisse échapper les odeurs malgré la ventilation.",
+  "from": {
+   "prod": "Désodorisant pour cassette, joint de clapet"
+  },
+  "to": {
+   "prod": "Joint de clapet de cassette, additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "La cassette n'est pas rincée à fond : les dépôts sentent.",
+  "from": {
+   "prod": "Désodorisant pour cassette"
+  },
+  "to": {
+   "prod": "Additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'évent de la cassette est mal fermé.",
+  "from": {
+   "prod": "Aucun produit : atelier",
+   "geste": "Nettoyez le bouton d'évent et son joint, puis remettez-les bien en place. S'il est abîmé, faites-le remplacer."
+  },
+  "to": {
+   "prod": "Spray d'entretien pour joints de cassette",
+   "geste": "Nettoyez le bouton d'évent et son joint, entretenez le joint avec un spray spécial joints de cassette, puis remettez-les bien en place. S'il est abîmé, faites-le remplacer."
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le joint de clapet est usé.",
+  "from": {
+   "prod": "Joint de clapet Thetford"
+  },
+  "to": {
+   "prod": "Joint de clapet de cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "cause": "Un défaut d'étanchéité de la cassette laisse passer les odeurs : seul l'atelier peut le localiser.",
+  "from": {
+   "prod": "Désodorisant pour cassette"
+  },
+  "to": {
+   "prod": "Additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   2,
+   0
+  ],
+  "cause": "La cassette est mal entretenue : les dépôts sentent.",
+  "from": {
+   "prod": "Désodorisant pour cassette"
+  },
+  "to": {
+   "prod": "Additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le joint du clapet est usé.",
+  "from": {
+   "prod": "Désodorisant pour cassette, joint de clapet"
+  },
+  "to": {
+   "prod": "Joint de clapet de cassette, additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   2,
+   1,
+   2,
+   1,
+   1
+  ],
+  "cause": "Un défaut d'étanchéité de la toilette laisse passer les odeurs : seul l'atelier peut le localiser.",
+  "from": {
+   "prod": "Désodorisant pour cassette"
+  },
+  "to": {
+   "prod": "Additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   3,
+   4,
+   0
+  ],
+  "cause": "Les voyants n'affichent rien parce qu'il n'y a plus d'eau.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Additif pour eau de chasse"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   4,
+   0,
+   1,
+   0
+  ],
+  "cause": "Le filtre à charbon est saturé.",
+  "from": {
+   "prod": "Filtre à charbon pour toilette Thetford, désodorisant pour cassette"
+  },
+  "to": {
+   "prod": "Filtre à charbon pour toilette, additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_wc",
+  "path": [
+   4,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "La cassette n'est pas rincée à fond.",
+  "from": {
+   "prod": "Désodorisant pour cassette"
+  },
+  "to": {
+   "prod": "Additif désodorisant pour cassette"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   0,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le circuit de protection avait coupé la batterie après une décharge totale.",
+  "from": {
+   "prod": "Un moniteur de batterie"
+  },
+  "to": {
+   "prod": "Moniteur de batterie"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   0,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le relais de sécurité était resté ouvert après la décharge totale.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Évitez de vider complètement la batterie."
+  },
+  "to": {
+   "prod": "Moniteur de batterie",
+   "geste": "Évitez de vider complètement la batterie : un moniteur de batterie, vendu en magasin, aide à surveiller son niveau."
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   0,
+   2,
+   1,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : la batterie est trop profondément déchargée pour repartir seule.",
+  "from": {
+   "prod": "Un voltmètre simple"
+  },
+  "to": {
+   "prod": "Testeur de batterie (voltmètre)"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   0,
+   3,
+   1,
+   0
+  ],
+  "cause": "Un appareil laissé branché vidait la batterie.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Éteignez tout à l'arrêt et regardez les voyants avant de partir."
+  },
+  "to": {
+   "prod": "Moniteur de batterie",
+   "geste": "Éteignez tout à l'arrêt et regardez les voyants avant de partir. Un moniteur de batterie montre ce qui consomme."
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "L'alternateur est piloté : le coupleur ne convient pas avec lui.",
+  "from": {
+   "prod": "Un chargeur de batterie en roulant"
+  },
+  "to": {
+   "prod": "Chargeur de batterie en roulant (booster)"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Un alternateur fournit peu de courant au ralenti et sur de courts trajets.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'alternateur est piloté : le coupleur ne suffit pas à bien charger la batterie.",
+  "from": {
+   "prod": "Un chargeur de batterie en roulant"
+  },
+  "to": {
+   "prod": "Chargeur de batterie en roulant (booster)"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   2,
+   0
+  ],
+  "cause": "Les trajets étaient trop courts pour finir la charge.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   2,
+   1,
+   0
+  ],
+  "cause": "L'alternateur est piloté : il baisse sa tension et la batterie lithium ne se remplit pas complètement.",
+  "from": {
+   "prod": "Un chargeur de batterie en roulant"
+  },
+  "to": {
+   "prod": "Chargeur de batterie en roulant (booster)"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   3,
+   0,
+   1
+  ],
+  "cause": "Rien n'a suffi : la fin de charge du chargeur est trop basse.",
+  "from": {
+   "prod": "Un chargeur compatible lithium"
+  },
+  "to": {
+   "prod": "Chargeur compatible lithium"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   1,
+   3,
+   1,
+   1
+  ],
+  "cause": "Un régulateur PWM est mal adapté à la batterie lithium.",
+  "from": {
+   "prod": "Un régulateur solaire MPPT"
+  },
+  "to": {
+   "prod": "Régulateur solaire MPPT"
+  }
+ },
+ {
+  "id": "h_lith",
+  "path": [
+   3,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie est trop basse : la tension chute et le convertisseur coupe.",
+  "from": {
+   "prod": "Aucun produit nécessaire",
+   "geste": "Rechargez la batterie avant d'utiliser le convertisseur."
+  },
+  "to": {
+   "prod": "Moniteur de batterie",
+   "geste": "Rechargez la batterie avant d'utiliser le convertisseur. Un moniteur de batterie vous montre son niveau."
+  }
+ },
+ {
+  "id": "h_pompe",
+  "path": [
+   1,
+   0,
+   0,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Un raccord côté aspiration de la pompe est mal serré et aspire de l'air.",
+  "from": {
+   "prod": "Colliers, raccords rapides"
+  },
+  "to": {
+   "prod": "Colliers de serrage, raccords rapides"
+  }
+ },
+ {
+  "id": "h_pompe",
+  "path": [
+   1,
+   0,
+   1,
+   0,
+   0
+  ],
+  "cause": "Un raccord du circuit sous pression fuit.",
+  "from": {
+   "prod": "Colliers, raccords rapides"
+  },
+  "to": {
+   "prod": "Colliers de serrage, raccords rapides"
+  }
+ },
+ {
+  "id": "h_pompe",
+  "path": [
+   1,
+   2,
+   1,
+   2
+  ],
+  "cause": "Les membranes de la pompe sont encrassées par des dépôts.",
+  "from": {
+   "geste": "Rien n'a suffi. À l'atelier, on démonte la pompe, on nettoie les clapets et les membranes à l'eau et au savon, puis on rince bien : le savon colle en séchant."
+  },
+  "to": {
+   "geste": "Rien n'a suffi. À l'atelier, on démonte la pompe, on nettoie les clapets et les membranes, puis on rince bien."
+  }
+ },
+ {
+  "id": "h_pompe",
+  "path": [
+   1,
+   3,
+   0
+  ],
+  "cause": "Le filtre d'admission de la pompe est bouché par des impuretés.",
+  "from": {
+   "geste": "Coupez l'alimentation de la pompe. Dévissez le capot transparent, nettoyez le filtre à l'air ou à l'eau et au savon avec une brosse, rincez bien, puis remettez le joint blanc et le capot avec précaution."
+  },
+  "to": {
+   "geste": "Coupez l'alimentation de la pompe. Dévissez le capot transparent, nettoyez le filtre à l'eau claire avec une petite brosse douce, puis remettez le joint blanc et le capot avec précaution. Changez le filtre s'il est abîmé."
+  }
+ },
+ {
+  "id": "h_solaire",
+  "path": [
+   0,
+   1,
+   0
+  ],
+  "cause": "Le panneau ne recevait pas assez de lumière.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Gardez le panneau propre et évitez l'ombre pendant la journée."
+  },
+  "to": {
+   "prod": "Nettoyant spécial panneaux solaires, lingettes microfibre",
+   "geste": "Gardez le panneau propre avec un nettoyant spécial panneaux solaires, vendu en magasin, et évitez l'ombre pendant la journée."
+  }
+ },
+ {
+  "id": "h_solaire",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Un dépôt sur le panneau réduit encore la production.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Nettoyez et dégagez le panneau avec un chiffon doux."
+  },
+  "to": {
+   "prod": "Nettoyant spécial panneaux solaires, lingettes microfibre",
+   "geste": "Dégagez le panneau et nettoyez-le avec un nettoyant spécial panneaux solaires et une lingette microfibre, vendus en magasin."
+  }
+ },
+ {
+  "id": "h_solaire",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Des dépôts créaient de petites ombres sur le panneau.",
+  "from": {
+   "prod": "Chiffon microfibre",
+   "geste": "Nettoyez le panneau régulièrement avec un chiffon humide."
+  },
+  "to": {
+   "prod": "Nettoyant spécial panneaux solaires, lingettes microfibre",
+   "geste": "Nettoyez le panneau régulièrement avec un nettoyant spécial panneaux solaires et une lingette microfibre, vendus en magasin."
+  }
+ },
+ {
+  "id": "h_solaire",
+  "path": [
+   5,
+   0
+  ],
+  "cause": "Un régulateur PWM convient aux petites installations mais ne tire pas tout le courant du panneau.",
+  "from": {
+   "prod": "Un régulateur solaire MPPT"
+  },
+  "to": {
+   "prod": "Régulateur solaire MPPT"
+  }
+ },
+ {
+  "id": "h_solaire",
+  "path": [
+   6,
+   0,
+   1
+  ],
+  "cause": "Rien n'a suffi : la batterie a perdu de la capacité avec l'âge.",
+  "from": {
+   "prod": "Un testeur de batterie simple"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_solaire",
+  "path": [
+   6,
+   1,
+   1
+  ],
+  "cause": "La capacité réelle de la batterie est inférieure à celle attendue.",
+  "from": {
+   "prod": "Un testeur de batterie simple"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "plaque",
+  "path": [
+   0,
+   0,
+   0
+  ],
+  "cause": "La pile de l'allumeur était usée.",
+  "from": {
+   "prod": "Piles"
+  },
+  "to": {
+   "prod": "Piles de rechange pour allumeur"
+  }
+ },
+ {
+  "id": "plaque",
+  "path": [
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "La bougie d'allumage était sale.",
+  "from": {
+   "prod": "Brosse douce, chiffon sec"
+  },
+  "to": {
+   "prod": "Brosse douce, lingettes microfibre"
+  }
+ },
+ {
+  "id": "plaque",
+  "path": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "cause": "Rien n'a suffi : l'allumeur est en défaut.",
+  "from": {
+   "prod": "Bougie d'allumage",
+   "geste": "Allumez en attendant à l'allumette, selon la notice, bouton enfoncé. L'atelier teste l'allumeur."
+  },
+  "to": {
+   "prod": "Briquet allume-gaz en attendant l'atelier",
+   "geste": "En attendant, allumez avec un briquet allume-gaz, selon la notice, bouton enfoncé. L'atelier teste l'allumeur."
+  }
+ },
+ {
+  "id": "plaque",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Le brûleur est humide.",
+  "from": {
+   "prod": "Chiffon sec"
+  },
+  "to": {
+   "prod": "Lingettes microfibre"
+  }
+ },
+ {
+  "id": "no12v",
+  "path": [
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une cosse de la batterie cellule faisait mauvais contact.",
+  "from": {
+   "prod": "Nettoyant pour cosses"
+  },
+  "to": {
+   "prod": "Nettoyant pour cosses, brosse à bornes"
+  }
+ },
+ {
+  "id": "no12v",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Le fusible de cet appareil était grillé.",
+  "from": {
+   "prod": "Fusibles plats de même calibre"
+  },
+  "to": {
+   "prod": "Fusibles plats assortis"
+  }
+ },
+ {
+  "id": "lant",
+  "path": [
+   0,
+   0
+  ],
+  "cause": "Une saleté gênait la fermeture.",
+  "from": {
+   "prod": "Chiffon, graisse silicone",
+   "geste": "Nettoyez le cadre avant de fermer."
+  },
+  "to": {
+   "prod": "Lingettes microfibre, graisse silicone",
+   "geste": "Nettoyez le cadre avant de fermer et entretenez le joint avec de la graisse silicone, vendue en magasin."
+  }
+ },
+ {
+  "id": "batdrain",
+  "path": [
+   0,
+   0
+  ],
+  "cause": "Un appareil en veille consomme la nuit.",
+  "from": {
+   "prod": "Interrupteur général, moniteur de batterie"
+  },
+  "to": {
+   "prod": "Coupe-batterie, moniteur de batterie"
+  }
+ },
+ {
+  "id": "batdrain",
+  "path": [
+   1
+  ],
+  "cause": "La consommation de ces appareils dépasse ce que la batterie peut fournir.",
+  "from": {
+   "prod": "Panneau solaire, chargeur en roulant (B2B), batterie de plus grande capacité"
+  },
+  "to": {
+   "prod": "Kit panneau solaire, chargeur de batterie en roulant, batterie de plus grande capacité"
+  }
+ },
+ {
+  "id": "c_tank_vidange",
+  "path": [
+   0,
+   0
+  ],
+  "cause": "La vanne de vidange est gelée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Housse isolante antigel pour vanne de vidange"
+  }
+ },
+ {
+  "id": "c_tank_vidange",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "L'eau est gelée dans la sortie de vidange.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Housse isolante antigel pour vanne de vidange"
+  }
+ },
+ {
+  "id": "c_tank_vidange",
+  "path": [
+   1,
+   1
+  ],
+  "cause": "Un bouchon de graisse et de saletés obstrue la sortie.",
+  "from": {
+   "prod": "Nettoyant pour tuyaux",
+   "geste": "Rincez à l'eau chaude et décapez avec un déboucheur adapté. Si rien ne passe, passez à l'atelier."
+  },
+  "to": {
+   "prod": "Nettoyant spécial réservoir d'eaux grises",
+   "geste": "Rincez à l'eau chaude et utilisez un nettoyant spécial eaux grises, vendu en magasin. Si rien ne passe, passez à l'atelier."
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "Une borne faible ne suffit pas à démarrer le compresseur.",
+  "from": {
+   "prod": "Câble 230 V, adaptateur adapté"
+  },
+  "to": {
+   "prod": "Câble 230 V et adaptateur de prise camping"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Les piles de la télécommande étaient usées.",
+  "from": {
+   "prod": "Piles"
+  },
+  "to": {
+   "prod": "Piles de rechange pour télécommande"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   1,
+   2
+  ],
+  "cause": "Le démarrage du compresseur demande une pointe de puissance que le groupe ne fournit pas toujours.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Démarreur progressif pour climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   2,
+   0
+  ],
+  "cause": "La télécommande était en mode ventilation.",
+  "from": {
+   "prod": "Piles de la télécommande"
+  },
+  "to": {
+   "prod": "Aucun produit nécessaire"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   2,
+   1,
+   0
+  ],
+  "cause": "Les filtres de la clim étaient encrassés.",
+  "from": {
+   "prod": "Filtres de clim"
+  },
+  "to": {
+   "prod": "Filtres de rechange et nettoyant spécial climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   4,
+   0
+  ],
+  "cause": "Les filtres et le bac étaient encrassés.",
+  "from": {
+   "prod": "Nettoyant filtres",
+   "geste": "Nettoyez-les régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant désinfectant spécial climatisation",
+   "geste": "Nettoyez-les régulièrement avec un nettoyant spécial clim, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   0,
+   0,
+   4,
+   1,
+   0
+  ],
+  "cause": "L'évacuation des condensats était bouchée.",
+  "from": {
+   "prod": "Nettoyant filtres"
+  },
+  "to": {
+   "prod": "Nettoyant désinfectant spécial climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "Le filtre à particules était encrassé.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre",
+   "geste": "Nettoyez-le régulièrement, surtout après un séjour poussiéreux."
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation",
+   "geste": "Nettoyez-le régulièrement avec un nettoyant spécial filtres de clim, vendu en magasin, surtout après un séjour poussiéreux."
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   1,
+   2,
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'air circulait mal dans l'appareil.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre"
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'air circulait mal et l'appareil chauffait jusqu'à se mettre en sécurité.",
+  "from": {
+   "prod": "Chiffon ou aspirateur"
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   2,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le filtre était encrassé.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre",
+   "geste": "Nettoyez-le régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation",
+   "geste": "Nettoyez-le régulièrement avec un nettoyant spécial filtres de clim, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   2,
+   3,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le filtre à particules était encrassé.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre",
+   "geste": "Nettoyez-le régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation",
+   "geste": "Nettoyez-le régulièrement avec un nettoyant spécial filtres de clim, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   2,
+   5,
+   0,
+   0
+  ],
+  "cause": "Le filtre était encrassé et l'évaporateur a gelé.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre",
+   "geste": "Nettoyez le filtre régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation",
+   "geste": "Nettoyez le filtre régulièrement avec un nettoyant spécial filtres de clim, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   2,
+   5,
+   1,
+   0
+  ],
+  "cause": "L'air ne circulait plus assez dans l'appareil.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre"
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   2,
+   6,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'air circulait mal et l'appareil a chauffé jusqu'à sa protection.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre"
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation"
+  }
+ },
+ {
+  "id": "h_clim",
+  "path": [
+   4,
+   2,
+   1,
+   0
+  ],
+  "cause": "L'air circulait mal et l'appareil s'est mis en sécurité.",
+  "from": {
+   "prod": "Chiffon doux ou aspirateur pour le filtre"
+  },
+  "to": {
+   "prod": "Nettoyant spécial filtres de climatisation"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop faible pour l'écran (minimum 12 V).",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Moniteur de batterie"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop faible pour le démodulateur (minimum 12 V).",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Moniteur de batterie"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   1,
+   0,
+   0,
+   0,
+   0
+  ],
+  "cause": "Le fusible de la parabole avait sauté.",
+  "from": {
+   "prod": "Fusible de même calibre"
+  },
+  "to": {
+   "prod": "Fusibles plats assortis"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   1,
+   0,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "Un obstacle bloquait la parabole.",
+  "from": {
+   "prod": "Lubrifiant"
+  },
+  "to": {
+   "prod": "Lubrifiant sec PTFE"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   1,
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le câble coaxial était mal branché.",
+  "from": {
+   "prod": "Câble coaxial"
+  },
+  "to": {
+   "prod": "Câble coaxial et fiches F à visser"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le câble coaxial était mal branché.",
+  "from": {
+   "prod": "Câble coaxial"
+  },
+  "to": {
+   "prod": "Câble coaxial et fiches F à visser"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour l'écran.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Moniteur de batterie"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   3,
+   1,
+   0
+  ],
+  "cause": "La couverture TNT est faible à cet endroit.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Amplificateur d'antenne TNT"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   3,
+   1,
+   1,
+   1,
+   1
+  ],
+  "cause": "L'antenne TNT n'est pas assez efficace dans cette zone.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Antenne TNT amplifiée ou kit satellite"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   4,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le disque était sale.",
+  "from": {
+   "prod": "Chiffon doux"
+  },
+  "to": {
+   "prod": "Lingettes microfibre"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   4,
+   1,
+   1,
+   0
+  ],
+  "cause": "La première clé est défectueuse.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Clé USB de rechange"
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   4,
+   2,
+   0
+  ],
+  "cause": "Une poussière était collée sur l'écran.",
+  "from": {
+   "prod": "Chiffon doux",
+   "geste": "Nettoyez l'écran de temps en temps avec un chiffon doux."
+  },
+  "to": {
+   "prod": "Lingettes microfibre spéciales écrans",
+   "geste": "Nettoyez l'écran de temps en temps avec une lingette microfibre spéciale écrans, vendue en magasin."
+  }
+ },
+ {
+  "id": "h_tv",
+  "path": [
+   4,
+   3,
+   0,
+   1,
+   0
+  ],
+  "cause": "Le disque dur n'est pas assez alimenté par l'appareil.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Disque dur USB auto-alimenté"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   2,
+   1,
+   2,
+   1
+  ],
+  "cause": "Le tuyau de gaz est en bon état.",
+  "from": {
+   "prod": "Produit détecteur de fuites de gaz"
+  },
+  "to": {
+   "prod": "Spray détecteur de fuites de gaz"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   3,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   4,
+   0,
+   0
+  ],
+  "cause": "Le chauffage et le chauffe-eau consomment beaucoup de gaz.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   4,
+   1
+  ],
+  "cause": "La consommation est normale : 13 kg correspondent à environ 160 à 180 kWh.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Indicateur de niveau de gaz pour bouteille"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   5,
+   1,
+   0,
+   0
+  ],
+  "cause": "Le raccord de la bouteille était mal serré.",
+  "from": {
+   "prod": "Produit détecteur de fuites de gaz",
+   "geste": "Après chaque changement, revissez à fond à la main et passez de l'eau savonneuse sur le raccord."
+  },
+  "to": {
+   "prod": "Spray détecteur de fuites de gaz",
+   "geste": "Après chaque changement, revissez à fond à la main et vérifiez le raccord avec un spray détecteur de fuites de gaz, vendu en magasin."
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   8,
+   0
+  ],
+  "cause": "Des objets dans le coffre bloquent l'aération et peuvent provoquer des étincelles.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Bacs de rangement pour soute"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   8,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Les grilles d'aération du coffre sont bouchées.",
+  "from": {
+   "prod": "Aérosol dépoussiérant"
+  },
+  "to": {
+   "prod": "Aucun produit nécessaire"
+  }
+ },
+ {
+  "id": "h_gaz",
+  "path": [
+   9,
+   1,
+   0
+  ],
+  "cause": "Le raccord du détendeur n'était pas serré à fond.",
+  "from": {
+   "prod": "Produit détecteur de fuites de gaz",
+   "geste": "Fermez la bouteille, revissez à la main, rouvrez puis passez de l'eau savonneuse sur le raccord. N'utilisez pas de clé."
+  },
+  "to": {
+   "prod": "Spray détecteur de fuites de gaz",
+   "geste": "Fermez la bouteille, revissez à la main, rouvrez puis vérifiez le raccord avec un spray détecteur de fuites de gaz, vendu en magasin. N'utilisez pas de clé."
+  }
+ },
+ {
+  "id": "heater",
+  "path": [
+   0,
+   0,
+   0,
+   1,
+   0
+  ],
+  "cause": "La bouteille en service était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz, indicateur de niveau de gaz"
+  }
+ },
+ {
+  "id": "nocharge",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le câble 230 V d'origine est défectueux.",
+  "from": {
+   "prod": "Câble 230 V"
+  },
+  "to": {
+   "prod": "Câble 230 V de rechange (rallonge camping)"
+  }
+ },
+ {
+  "id": "nocharge",
+  "path": [
+   2,
+   1,
+   0
+  ],
+  "cause": "Le panneau était encrassé.",
+  "from": {
+   "prod": "Chiffon doux",
+   "geste": "Nettoyez-le à l'eau claire."
+  },
+  "to": {
+   "prod": "Nettoyant spécial panneaux solaires",
+   "geste": "Nettoyez-le avec un nettoyant spécial panneaux solaires, vendu en magasin."
+  }
+ },
+ {
+  "id": "step",
+  "path": [
+   1,
+   1,
+   0
+  ],
+  "cause": "Le capteur de porte ne détectait pas la fermeture.",
+  "from": {
+   "prod": "Capteur magnétique de porte, graisse lithium"
+  },
+  "to": {
+   "prod": "Capteur magnétique de porte"
+  }
+ },
+ {
+  "id": "step",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Un débris bloquait le mécanisme.",
+  "from": {
+   "prod": "Graisse lithium",
+   "geste": "Nettoyez régulièrement."
+  },
+  "to": {
+   "prod": "Nettoyant dégraissant et graisse lithium",
+   "geste": "Nettoyez régulièrement puis graissez les articulations avec une graisse lithium, vendue en magasin."
+  }
+ },
+ {
+  "id": "winter",
+  "path": [
+   0,
+   1
+  ],
+  "cause": "Le circuit d'eau doit être remis en route proprement.",
+  "from": {
+   "prod": "Produit de désinfection pour eau potable, filtre à eau",
+   "geste": "Remplissez le réservoir, désinfectez le circuit, ouvrez les robinets un à un pour purger, et cherchez des fuites sous l'évier."
+  },
+  "to": {
+   "prod": "Nettoyant désinfectant spécial réservoirs d'eau propre, filtre à eau",
+   "geste": "Remplissez le réservoir, désinfectez le circuit avec un nettoyant spécial réservoirs, vendu en magasin, ouvrez les robinets un à un pour purger, et cherchez des fuites sous l'évier."
+  }
+ },
+ {
+  "id": "winter",
+  "path": [
+   4
+  ],
+  "cause": "L'humidité s'est installée pendant l'hiver.",
+  "from": {
+   "prod": "Aucun produit : prenez rendez-vous"
+  },
+  "to": {
+   "prod": "Absorbeur d'humidité en attendant l'atelier"
+  }
+ },
+ {
+  "id": "gasalarm",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "La pile du détecteur était faible.",
+  "from": {
+   "prod": "Pile"
+  },
+  "to": {
+   "prod": "Pile de rechange pour détecteur"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   0,
+   1,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop faible pour alimenter l'antenne.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   1,
+   0
+  ],
+  "cause": "Un obstacle masque le satellite.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Boussole pour repérer le sud"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour la recherche.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   2,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour le moteur d'élévation.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   3,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour le moteur.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   3,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour le moteur.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   4,
+   0
+  ],
+  "cause": "La batterie cellule est trop faible : le moteur manque de courant.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   4,
+   1,
+   0
+  ],
+  "cause": "Un obstacle freine le bras de l'antenne.",
+  "from": {
+   "prod": "Chiffon doux",
+   "geste": "Éteignez l'antenne. Attendez la fonte ou nettoyez doucement avec un chiffon, sans forcer. Relancez une fois dégagé."
+  },
+  "to": {
+   "prod": "Lingettes microfibre",
+   "geste": "Éteignez l'antenne. Attendez la fonte ou nettoyez doucement avec une lingette microfibre, vendue en magasin, sans forcer. Relancez une fois dégagé."
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   5,
+   0
+  ],
+  "cause": "Un obstacle empêche la fermeture.",
+  "from": {
+   "prod": "Chiffon doux"
+  },
+  "to": {
+   "prod": "Balai télescopique à poils doux"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   5,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour fermer l'antenne.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   0,
+   6,
+   0
+  ],
+  "cause": "La batterie cellule était trop faible pour le moteur.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   1,
+   0,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'antenne s'était décalée du satellite.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Cales de mise à niveau"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   1,
+   1,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule se vide avec le temps et la tension devient trop basse.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Panneau solaire pour recharger la batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   1,
+   1,
+   1,
+   0,
+   1
+  ],
+  "cause": "Un obstacle masque le satellite à cet endroit.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Boussole pour repérer le sud"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   1,
+   3,
+   1,
+   0
+  ],
+  "cause": "La carte prépayée est arrivée au bout de ses 4 ans.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Aucun produit nécessaire"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   1,
+   3,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le démodulateur lisait mal la carte à cause d'une tension trop basse.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   1,
+   4,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une fiche du câble coaxial est oxydée.",
+  "from": {
+   "prod": "Fiche F à visser pour câble satellite"
+  },
+  "to": {
+   "prod": "Fiches F à visser et capuchons étanches pour câble satellite"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   2,
+   1,
+   0
+  ],
+  "cause": "Le moteur force contre un obstacle et consomme trop de courant.",
+  "from": {
+   "prod": "Chiffon doux"
+  },
+  "to": {
+   "prod": "Balai télescopique à poils doux"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   2,
+   1,
+   1,
+   0
+  ],
+  "cause": "La tension de la batterie était trop faible.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   2,
+   2,
+   1,
+   0
+  ],
+  "cause": "Le moteur a trop chauffé en forçant contre un obstacle.",
+  "from": {
+   "prod": "Chiffon doux"
+  },
+  "to": {
+   "prod": "Balai télescopique à poils doux"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   2,
+   3,
+   0
+  ],
+  "cause": "La batterie est trop basse pour que le système fonctionne.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_sat",
+  "path": [
+   3,
+   2,
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La tension du véhicule était trop basse.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   0,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   0,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   1,
+   1,
+   0
+  ],
+  "cause": "La pompe doseuse n'alimente pas bien le brûleur quand le véhicule est incliné.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Cales de mise à niveau"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   2,
+   0,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   2,
+   0,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   3,
+   0,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   3,
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   4,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Une gaine d'air chaud est écrasée sur son trajet.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Colliers de fixation pour gaine d'air chaud"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   5,
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   5,
+   0,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   5,
+   0,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   5,
+   0,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   6,
+   0,
+   0
+  ],
+  "cause": "Une gaine est mal fixée et vibre.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Colliers de fixation pour gaine d'air chaud"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   6,
+   1,
+   1,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   6,
+   1,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   6,
+   1,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   6,
+   1,
+   2,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   7,
+   0
+  ],
+  "cause": "La batterie cellule est trop déchargée pour le chauffage.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "g_trumad",
+  "path": [
+   7,
+   2,
+   0
+  ],
+  "cause": "La batterie cellule était trop déchargée.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Kit panneau solaire pour garder la batterie chargée"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   0,
+   0
+  ],
+  "cause": "Une batterie scellée est sans entretien.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur de batterie"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "Le niveau est correct : aucune action nécessaire.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Eau déminéralisée pour les prochains contrôles"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   1,
+   0,
+   0
+  ],
+  "cause": "La batterie restait trop peu chargée : du sulfate de plomb se déposait sur les plaques.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur de batterie avec fonction désulfatage"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   1,
+   1,
+   0
+  ],
+  "cause": "Les décharges profondes répétées ont usé la batterie.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Batterie AGM ou gel pour camping-car"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Une décharge profonde réduit fortement le nombre de cycles de la batterie.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Moniteur de batterie"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   2,
+   1
+  ],
+  "cause": "C'est un bon compromis entre autonomie et durée de vie.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Moniteur de batterie"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   3,
+   0,
+   0
+  ],
+  "cause": "Ce chargeur ne maintient pas la charge et peut abîmer la batterie s'il reste branché en permanence.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur à maintien de charge (type UI)"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   3,
+   1,
+   1
+  ],
+  "cause": "Une batterie laissée seule se décharge et se détériore si elle reste à plat.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Petit panneau solaire d'entretien de batterie"
+  }
+ },
+ {
+  "id": "h_bat",
+  "path": [
+   4,
+   2
+  ],
+  "cause": "Des charges trop rares abîment les batteries au plomb.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Chargeur à maintien de charge (type UI)"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   0,
+   0,
+   0
+  ],
+  "cause": "Le joint du lanterneau laisse passer l'eau.",
+  "from": {
+   "prod": "Aucun produit : un test d'étanchéité à l'atelier est la bonne suite"
+  },
+  "to": {
+   "prod": "Housse de protection camping-car en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   0,
+   0,
+   1
+  ],
+  "cause": "La fixation d'un accessoire laisse passer l'eau.",
+  "from": {
+   "prod": "Aucun produit : un test d'étanchéité à l'atelier est la bonne suite"
+  },
+  "to": {
+   "prod": "Housse de protection camping-car en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   0,
+   0,
+   3,
+   1
+  ],
+  "cause": "Une infiltration par le toit est probable.",
+  "from": {
+   "prod": "Aucun produit : un test d'étanchéité à l'atelier est la bonne suite"
+  },
+  "to": {
+   "prod": "Housse de protection camping-car en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   1,
+   0
+  ],
+  "cause": "Le joint posé sur la bande de mastic butyl est abîmé et laisse passer l'eau.",
+  "from": {
+   "prod": "Aucun produit : atelier"
+  },
+  "to": {
+   "prod": "Housse de protection camping-car en attendant l'atelier"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   2,
+   2,
+   0
+  ],
+  "cause": "Le joint d'ouvrant était sale.",
+  "from": {
+   "prod": "Chiffon doux",
+   "geste": "Nettoyez-le régulièrement avec un chiffon humide."
+  },
+  "to": {
+   "prod": "Nettoyant pour joints caoutchouc et lingettes microfibre",
+   "geste": "Nettoyez-le régulièrement avec un nettoyant pour joints et une lingette microfibre, vendus en magasin."
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   4,
+   0,
+   0
+  ],
+  "cause": "Des moisissures s'étaient développées sur le joint.",
+  "from": {
+   "prod": "Chiffon doux",
+   "geste": "Aérez après la douche et séchez le joint pour éviter leur retour."
+  },
+  "to": {
+   "prod": "Nettoyant anti-moisissures spécial sanitaires",
+   "geste": "Aérez après la douche et séchez le joint. Un nettoyant anti-moisissures, vendu en magasin, évite leur retour."
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   4,
+   0,
+   1
+  ],
+  "cause": "Le joint est taché en profondeur.",
+  "from": {
+   "prod": "Silicone sanitaire neutre fongicide"
+  },
+  "to": {
+   "prod": "Silicone sanitaire neutre fongicide et décapant pour joints"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   4,
+   1
+  ],
+  "cause": "Le joint a perdu son adhérence.",
+  "from": {
+   "prod": "Silicone sanitaire neutre fongicide"
+  },
+  "to": {
+   "prod": "Silicone sanitaire neutre fongicide et décapant pour joints"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   5,
+   1
+  ],
+  "cause": "Une infiltration se voit d'abord à l'intérieur.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Testeur d'humidité pour parois"
+  }
+ },
+ {
+  "id": "h_eau",
+  "path": [
+   6,
+   1
+  ],
+  "cause": "Le silicone neutre fongicide convient pour ce joint.",
+  "from": {
+   "prod": "Silicone sanitaire neutre fongicide"
+  },
+  "to": {
+   "prod": "Silicone sanitaire neutre fongicide et décapant pour joints"
+  }
+ },
+ {
+  "id": "nogas",
+  "path": [
+   0,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille en service était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, indicateur de niveau de gaz"
+  }
+ },
+ {
+  "id": "nogas",
+  "path": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "La bouteille en service était vide.",
+  "from": {
+   "prod": "Bouteille de gaz"
+  },
+  "to": {
+   "prod": "Bouteille de gaz de rechange, indicateur de niveau de gaz"
+  }
+ },
+ {
+  "id": "e_man_nobip",
+  "path": [
+   1,
+   1,
+   0
+  ],
+  "cause": "Un obstacle masque le satellite.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Boussole pour repérer le sud"
+  }
+ },
+ {
+  "id": "e_man_nobip",
+  "path": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "cause": "L'antenne n'était pas pointée sur le satellite.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Pointeur satellite (satfinder)"
+  }
+ },
+ {
+  "id": "e_man_skew",
+  "path": [
+   1
+  ],
+  "cause": "L'angle de la tête LNB dépend de votre zone et du satellite.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Pointeur satellite (satfinder)"
+  }
+ },
+ {
+  "id": "e_man_skew",
+  "path": [
+   2,
+   0
+  ],
+  "cause": "Une fiche coaxiale laisse passer un signal incomplet.",
+  "from": {
+   "prod": "Aucun produit nécessaire"
+  },
+  "to": {
+   "prod": "Fiche F à visser pour câble satellite"
+  }
+ }
+]
