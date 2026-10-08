@@ -24,11 +24,11 @@ function mailReady(db) {
   return !!(c.host && c.from);
 }
 
-async function mail(db, to, subject, text, log) {
+async function mail(db, to, subject, text, log, extra = {}) {
   const config = mailConfig(db);
   if (!config.host || !config.from || !to.length) return false;
   try {
-    await sendMail(config, { to, subject, text });
+    await sendMail(config, { to, subject, text, ...extra });
     setSetting(db, 'mail_last', JSON.stringify({ ok: true, at: new Date().toISOString(), to }));
     return true;
   } catch (err) {
@@ -49,7 +49,29 @@ function customerName(c) {
   return [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Un client';
 }
 
-function createNotifier({ db, vapid, log = console.log }) {
+const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// E-mail layout: dealership header, message, one big button, dealership signature.
+// Tables and inline styles: the only layout every mail client (Gmail, Outlook, iPhone) displays the same way.
+function emailHtml({ dealer, intro, quote, button, url, note, footer }) {
+  const sig = [dealer.phone && `Tél. ${escHtml(dealer.phone)}`, dealer.hours && escHtml(dealer.hours), dealer.website && `<a href="${escHtml(dealer.website)}" style="color:#0a7c82">${escHtml(dealer.website.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a>`].filter(Boolean).join('<br>');
+  return `<!doctype html><html lang="fr"><body style="margin:0;padding:0;background:#f3f7f6">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f7f6;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #d5e2e1;border-radius:16px;font-family:Helvetica,Arial,sans-serif;color:#0c2b33">
+<tr><td style="background:#0a7c82;border-radius:16px 16px 0 0;padding:18px 24px;color:#ffffff;font-size:20px;font-weight:bold">${escHtml(dealer.name || 'Votre concession')}</td></tr>
+<tr><td style="padding:24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 14px">${intro}</p>
+${quote ? `<div style="background:#dff3e6;border-radius:12px;padding:14px 16px;margin:0 0 22px;font-size:16px">${escHtml(quote).replace(/\n/g, '<br>')}</div>` : ''}
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center" style="padding:4px 0 18px">
+<a href="${escHtml(url)}" style="display:block;background:#0a7c82;color:#ffffff;text-decoration:none;font-size:18px;font-weight:bold;padding:16px 20px;border-radius:12px;text-align:center">${escHtml(button)}</a>
+</td></tr></table>
+${note ? `<p style="margin:0;color:#4d6a70;font-size:14px">${note}</p>` : ''}
+</td></tr>
+${sig || footer ? `<tr><td style="border-top:1px solid #d5e2e1;padding:16px 24px;color:#4d6a70;font-size:13px;line-height:1.5"><b style="color:#0c2b33">${escHtml(dealer.name || '')}</b><br>${sig}${footer ? `<br><br>${footer}` : ''}</td></tr>` : ''}
+</table></td></tr></table></body></html>`;
+}
+
+function createNotifier({ db, vapid, log = console.log, createLoginLink = () => null }) {
   const subject = () => `mailto:${(mailConfig(db).from || 'contact@compagnon-de-bord.fr').replace(/.*<|>.*/g, '')}`;
 
   async function push(customerId, payload) {
@@ -84,21 +106,63 @@ function createNotifier({ db, vapid, log = console.log }) {
       '',
       `Répondre depuis le back-office : ${origin}/admin/#reports`,
     ].filter((l) => l !== null);
-    return mail(db, dealershipRecipients(db, customer.dealership_id), `${isNew ? 'Nouvelle demande' : 'Nouveau message'} : ${report.title} – ${who}`, lines.join('\n'), log);
+    const url = `${origin}/admin/#reports`;
+    const d = db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id) || {};
+    const html = emailHtml({
+      dealer: { name: d.name },
+      intro: isNew
+        ? `<b>${escHtml(who)}</b> vient d'envoyer une demande : <b>${escHtml(report.title)}</b>.<br>Véhicule : ${escHtml([vehicle?.brand, vehicle?.name].filter(Boolean).join(' '))}${customer.plate ? ` (${escHtml(customer.plate)})` : ''}${customer.phone ? `<br>Téléphone : ${escHtml(customer.phone)}` : ''}`
+        : `<b>${escHtml(who)}</b> a répondu dans sa demande <b>${escHtml(report.title)}</b>.`,
+      quote: text,
+      button: 'Répondre dans le back-office',
+      url,
+      note: 'Répondez depuis le back-office : le client reçoit votre réponse dans son application, et l’échange reste dans l’historique.',
+    });
+    return mail(db, dealershipRecipients(db, customer.dealership_id), `${isNew ? 'Nouvelle demande' : 'Nouveau message'} : ${report.title} – ${who}`, lines.join('\n'), log, {
+      html,
+      fromName: 'Compagnon de bord',
+      // A direct reply from the mailbox still reaches the customer instead of the notification address.
+      replyTo: customer.email || undefined,
+    });
   }
 
   // The dealership answered: push to the customer's phones, e-mail if the customer gave one.
   async function dealershipAnswered({ report, customer, text, origin }) {
-    const d = db.prepare('SELECT name FROM dealerships WHERE id = ?').get(customer.dealership_id);
-    const pushed = await push(customer.id, { title: d?.name || 'Votre concession', body: text.slice(0, 180), url: '/app/#demandes', tag: `demande-${report.id}` });
+    const d = db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id) || {};
+    const name = d.name || 'Votre concession';
+    const pushed = await push(customer.id, { title: name, body: text.slice(0, 180), url: `/app/#demande-${report.id}`, tag: `demande-${report.id}` });
     if (customer.email) {
-      await mail(
-        db,
-        [customer.email],
-        `${d?.name || 'Votre concession'} a répondu : ${report.title}`,
-        `Bonjour,\n\n${d?.name || 'Votre concession'} a répondu à votre demande « ${report.title} » :\n\n${text}\n\nRépondez depuis l'application : ${origin}/app/\n`,
-        log
-      );
+      // The button signs the customer in directly (single-use link), even in a browser where they never logged in.
+      const token = createLoginLink(customer.id);
+      const url = `${origin}/app/${token ? `?lien=${token}` : ''}#demande-${report.id}`;
+      const html = emailHtml({
+        dealer: { name, phone: d.phone, hours: d.hours, website: d.website },
+        intro: `Bonjour${customer.first_name ? ' ' + escHtml(customer.first_name) : ''},<br><b>${escHtml(name)}</b> a répondu à votre demande <b>« ${escHtml(report.title)} »</b> :`,
+        quote: text,
+        button: 'Consulter la réponse dans mon application',
+        url,
+        note: 'Pour répondre, utilisez le bouton ci-dessus : votre message arrive directement à la concession et reste dans l’historique de votre demande.',
+        footer: 'E-mail envoyé par l’application Compagnon de bord.',
+      });
+      const plain = [
+        `Bonjour${customer.first_name ? ' ' + customer.first_name : ''},`,
+        '',
+        `${name} a répondu à votre demande « ${report.title} » :`,
+        '',
+        text,
+        '',
+        `Consulter la réponse dans mon application : ${url}`,
+        '',
+        'Pour répondre, utilisez l’application : votre message arrive directement à la concession.',
+        '',
+        [name, d.phone, d.hours, d.website].filter(Boolean).join(' · '),
+      ].join('\n');
+      await mail(db, [customer.email], `${name} a répondu : ${report.title}`, plain, log, {
+        html,
+        fromName: `${name} via Compagnon de bord`,
+        // Safety net: if the customer answers the e-mail itself, the dealership receives it (never the notification box).
+        replyTo: d.email || mailConfig(db).copy || undefined,
+      });
     }
     return pushed;
   }
@@ -106,4 +170,4 @@ function createNotifier({ db, vapid, log = console.log }) {
   return { customerWrote, dealershipAnswered, push };
 }
 
-module.exports = { createNotifier, mailConfig, mailReady };
+module.exports = { createNotifier, mailConfig, mailReady, emailHtml };

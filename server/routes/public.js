@@ -175,6 +175,17 @@ function register(router) {
     return { token: createSession(db, customer.id), ...session(db, customer) };
   });
 
+  // "Consulter la réponse" button of an e-mail: the single-use link opens a session on this phone or browser.
+  router.post('/api/link', ({ db, body, ip }) => {
+    if (restoreLimiter(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
+    const hash = sha256(String(body.token || ''));
+    const link = db.prepare("SELECT * FROM login_links WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')").get(hash);
+    if (!link) throw new HttpError(410, 'Ce lien a déjà servi ou a expiré : ouvrez l’application, ou utilisez votre code d’accès.');
+    db.prepare("UPDATE login_links SET used_at = datetime('now') WHERE token_hash = ?").run(hash);
+    const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(link.customer_id);
+    return { token: createSession(db, customer.id), ...session(db, customer) };
+  });
+
   // ---- Customer session ----
 
   router.get('/api/me', (ctx) => session(ctx.db, requireCustomer(ctx)));

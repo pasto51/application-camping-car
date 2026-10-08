@@ -165,6 +165,14 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Single-use links sent by e-mail ("Consulter la réponse") that sign the customer in.
+CREATE TABLE IF NOT EXISTS login_links (
+  token_hash TEXT PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL,
+  used_at TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_report_messages ON report_messages(report_id);
 CREATE INDEX IF NOT EXISTS idx_vehicles_brand ON vehicles(brand_id);
 CREATE INDEX IF NOT EXISTS idx_problems_scope ON problems(brand_id, vehicle_id);

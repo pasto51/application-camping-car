@@ -12,6 +12,7 @@ const { seedCatalog, ensureEquipmentPresets } = require('./catalog');
 const { applyContentPatches } = require('./content-patches');
 const { loadVapidKeys } = require('./webpush');
 const { createNotifier } = require('./notify');
+const { randomToken, sha256 } = require('./auth');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 
@@ -49,7 +50,14 @@ function createApp(options = {}) {
   ensureEquipmentPresets(db);
   applyContentPatches(db, log);
   config.vapid = loadVapidKeys(dataDir);
-  const notify = options.notify || createNotifier({ db, vapid: config.vapid, log });
+  const LINK_DAYS = 14;
+  const createLoginLink = (customerId) => {
+    const token = randomToken(24);
+    db.prepare("DELETE FROM login_links WHERE expires_at < datetime('now')").run();
+    db.prepare(`INSERT INTO login_links (token_hash, customer_id, expires_at) VALUES (?, ?, datetime('now', '+${LINK_DAYS} days'))`).run(sha256(token), customerId);
+    return token;
+  };
+  const notify = options.notify || createNotifier({ db, vapid: config.vapid, log, createLoginLink });
 
   const router = createRouter();
   publicRoutes.register(router);

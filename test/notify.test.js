@@ -45,7 +45,11 @@ function fakeSmtp() {
 }
 
 const subject = (m) => Buffer.from((m.data.match(/^Subject: =\?UTF-8\?B\?(.+)\?=$/m) || [])[1] || '', 'base64').toString();
-const bodyText = (m) => Buffer.from(m.data.split('\n\n').slice(1).join('').replace(/\s/g, ''), 'base64').toString();
+// Text of the e-mail (the text/plain part when the message also has an HTML version).
+const bodyText = (m) => {
+  const part = m.data.includes('multipart/alternative') ? m.data.split(/--cdb-[0-9a-f]+/).find((x) => x.includes('text/plain')) : m.data;
+  return Buffer.from(part.split('\n\n').slice(1).join('').replace(/\s/g, ''), 'base64').toString();
+};
 const waitFor = async (fn, ms = 3000) => { const t = Date.now(); while (!fn()) { if (Date.now() - t > ms) throw new Error('délai dépassé'); await new Promise((r) => setTimeout(r, 20)); } };
 
 let app, base, dataDir, smtp;
@@ -153,6 +157,24 @@ test('conversation: dealership is e-mailed, customer gets push + e-mail, website
   assert.equal(pushes[0].opts.headers['Content-Encoding'], 'aes128gcm');
   assert.match(pushes[0].opts.headers.Authorization, /^vapid t=/);
   assert.deepEqual(smtp.mails[2].rcpt, ['paul@client.fr']);
+  // Branded for the dealership, replies go to the dealership, a big button signs the customer in
+  const m = smtp.mails[2].data;
+  assert.match(m, /^From: =\?UTF-8\?B\?.+\?= <contact@test\.fr>$/m);
+  assert.equal(Buffer.from(m.match(/^From: =\?UTF-8\?B\?(.+)\?=/m)[1], 'base64').toString(), 'Concession de démonstration via Compagnon de bord');
+  assert.match(m, /^Reply-To: atelier@concession\.fr$/m);
+  assert.match(m, /^Auto-Submitted: auto-generated$/m);
+  const parts = m.split(/--cdb-[0-9a-f]+/);
+  const html = Buffer.from(parts.find((x) => x.includes('text/html')).split('\n\n').slice(1).join('').replace(/\s/g, ''), 'base64').toString();
+  assert.match(html, /Consulter la réponse dans mon application/);
+  const link = html.match(/href="([^"]*\?lien=[^"]+)"/)[1].replace(/&amp;/g, '&');
+  assert.match(link, new RegExp(`#demande-${req.id}$`));
+  const linkToken = new URL(link).searchParams.get('lien');
+  const signed = await call('POST', '/api/link', { body: { token: linkToken } });
+  assert.equal(signed.status, 200);
+  assert.equal(signed.data.customer.lastName, 'Morel');
+  assert.equal((await call('POST', '/api/link', { body: { token: linkToken } })).status, 410, 'single use');
+  // The dealership's e-mail has its own button, and replies from the mailbox go to the customer
+  assert.match(smtp.mails[1].data, /^Reply-To: paul@client\.fr$/m);
 
   // Customer replies in the conversation -> dealership e-mailed again, request back to "à répondre"
   const after = (await call('POST', `/api/me/requests/${req.id}/messages`, { token, body: { body: 'Parfait, à mardi.' } })).data;

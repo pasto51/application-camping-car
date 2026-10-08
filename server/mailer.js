@@ -11,7 +11,16 @@ function encodeHeader(text) {
   return /^[\x20-\x7e]*$/.test(text) ? text : `=?UTF-8?B?${Buffer.from(text, 'utf8').toString('base64')}?=`;
 }
 
-function buildMessage({ from, to, subject, text, replyTo }) {
+// "Name <address>" with the name encoded when it has accents; the address alone stays as is.
+function formatAddress(name, address) {
+  if (!name) return address;
+  const safe = String(name).replace(/[\r\n"<>]/g, ' ').trim();
+  return `${/^[\x20-\x7e]*$/.test(safe) ? `"${safe}"` : encodeHeader(safe)} <${address}>`;
+}
+
+const b64 = (text) => Buffer.from(text, 'utf8').toString('base64').replace(/.{76}/g, '$&\r\n');
+
+function buildMessage({ from, to, subject, text, html, replyTo }) {
   const lines = [
     `From: ${from}`,
     `To: ${to.join(', ')}`,
@@ -19,17 +28,26 @@ function buildMessage({ from, to, subject, text, replyTo }) {
     `Date: ${new Date().toUTCString()}`,
     `Message-ID: <${crypto.randomBytes(12).toString('hex')}@${(from.match(/@([^>\s]+)/) || [])[1] || 'localhost'}>`,
     'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset=utf-8',
-    'Content-Transfer-Encoding: base64',
+    // Automatic message: out-of-office replies must not answer it (no mail loops).
+    'Auto-Submitted: auto-generated',
+    'X-Auto-Response-Suppress: All',
   ];
   if (replyTo) lines.push(`Reply-To: ${replyTo}`);
-  const body = Buffer.from(text, 'utf8').toString('base64').replace(/.{76}/g, '$&\r\n');
-  return lines.join('\r\n') + '\r\n\r\n' + body + '\r\n';
+  if (!html) {
+    lines.push('Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64');
+    return lines.join('\r\n') + '\r\n\r\n' + b64(text) + '\r\n';
+  }
+  const boundary = `cdb-${crypto.randomBytes(10).toString('hex')}`;
+  lines.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+  const part = (type, content) => `--${boundary}\r\nContent-Type: ${type}; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${b64(content)}\r\n`;
+  return lines.join('\r\n') + '\r\n\r\n' + part('text/plain', text) + part('text/html', html) + `--${boundary}--\r\n`;
 }
 
 // Sends one e-mail; resolves when the server accepted it, rejects with a readable error otherwise.
 function sendMail(config, mail, { timeoutMs = 20000 } = {}) {
-  const { host, port = 587, user, pass, from } = config;
+  const { host, port = 587, user, pass } = config;
+  // The sender address never changes (deliverability); only the displayed name can (e.g. the dealership).
+  const from = config.from && mail.fromName ? formatAddress(mail.fromName, (String(config.from).match(/<([^>]+)>/) || [null, config.from])[1].trim()) : config.from;
   const secure = config.secure ?? Number(port) === 465; // SSL from the start (465), otherwise STARTTLS when offered
   const to = (Array.isArray(mail.to) ? mail.to : [mail.to]).filter(Boolean);
   if (!host || !from) return Promise.reject(new Error('Envoi des e-mails non configuré'));
@@ -99,7 +117,7 @@ function sendMail(config, mail, { timeoutMs = 20000 } = {}) {
       await cmd(`MAIL FROM:<${address(from)}>`, [250]);
       for (const rcpt of to) await cmd(`RCPT TO:<${address(rcpt)}>`, [250, 251]);
       await cmd('DATA', [354]);
-      const data = buildMessage({ from, to, subject: mail.subject, text: mail.text, replyTo: mail.replyTo }).replace(/\r\n\./g, '\r\n..');
+      const data = buildMessage({ from, to, subject: mail.subject, text: mail.text, html: mail.html, replyTo: mail.replyTo }).replace(/\r\n\./g, '\r\n..');
       await cmd(data + '\r\n.', [250]);
       socket.write('QUIT\r\n');
       done = true;
@@ -110,4 +128,4 @@ function sendMail(config, mail, { timeoutMs = 20000 } = {}) {
   });
 }
 
-module.exports = { sendMail, buildMessage };
+module.exports = { sendMail, buildMessage, formatAddress };

@@ -362,7 +362,19 @@
 
   function loadRequests() {
     if (!session) return;
-    api('GET', '/api/me/requests').then(function (r) { requests = r; renderRequests(); }).catch(function () { /* offline */ });
+    api('GET', '/api/me/requests').then(function (r) {
+      requests = r;
+      // Link to one request (#demande-12, from an e-mail or a notification): open it and show it.
+      var want = (location.hash.match(/^#demande-(\d+)/) || [])[1];
+      if (want && requests.some(function (x) { return x.id === Number(want); })) {
+        openReq[want] = true;
+        history.replaceState(null, '', location.pathname);
+        renderRequests();
+        setTimeout(function () { var el = document.querySelector('[data-req="' + want + '"]'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 300);
+        return;
+      }
+      renderRequests();
+    }).catch(function () { /* offline */ });
   }
 
   function dateOf(t) { return new Date(String(t).replace(' ', 'T') + 'Z'); }
@@ -527,6 +539,14 @@
 
   // ---------- Go ----------
 
-  if (session && session.token) boot();
+  // Arriving from the "Consulter la réponse" button of an e-mail: sign in with the link, then open the request.
+  var linkToken = new URLSearchParams(location.search).get('lien');
+  if (linkToken) history.replaceState(null, '', location.pathname + location.hash);
+  if (linkToken && !(session && session.token)) {
+    root.innerHTML = '<div class="cloud-loading">Connexion…</div>';
+    api('POST', '/api/link', { token: linkToken })
+      .then(function (res) { startSession(res); return boot(); })
+      .catch(function (err) { renderWelcome(); toast(err.message); });
+  } else if (session && session.token) boot();
   else renderWelcome();
 })();

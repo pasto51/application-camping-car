@@ -26,6 +26,9 @@ Les **demandes de rendez-vous atelier** arrivent dans le back-office, rubrique �
 - La concession est **prévenue par e-mail** de chaque nouvelle demande et de chaque nouveau message. L'envoi se règle dans Paramètres → Envoi des e-mails.
 - Le client et la concession **échangent des messages** dans la demande, comme une discussion.
 - Le client reçoit une **notification sur son téléphone** quand la concession répond, s'il l'a activée dans « Mon compte ». Sur iPhone, l'appli doit être ajoutée à l'écran d'accueil. Il reçoit aussi un e-mail s'il a donné son adresse.
+- Les e-mails partent toujours de l'adresse de notifications, mais **au nom de la concession** (« Concession X via Compagnon de bord »), avec sa signature.
+- Leur gros bouton **« Consulter la réponse dans mon application »** connecte le client directement. Ce lien ne sert qu'une fois et expire au bout de 14 jours.
+- **Coupe-circuit** : si le client répond directement à l'e-mail, sa réponse va à l'e-mail de la concession, jamais dans la boîte de notifications. Les réponses automatiques (« absent du bureau ») sont neutralisées.
 - En touchant le **logo de la concession**, le client ouvre le site web de celle-ci.
 
 ### Back-office
