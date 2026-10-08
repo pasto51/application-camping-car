@@ -31,19 +31,18 @@ export function registerCatalogViews(VIEWS, h) {
     const q = state.eqFilter.toLowerCase();
     const shown = list.filter((x) => (!state.eqCat || x.cat === state.eqCat) && (!q || [x.name, x.text, x.kw, x.id].some((t) => (t || '').toLowerCase().includes(q))));
     el.innerHTML = `${pageHeader(`Équipements (${list.length})`, isAdmin() ? '<button class="btn primary" data-act="add">＋ Nouvel équipement</button>' : '')}
-      <p class="muted">Le catalogue commun à tous les véhicules : ce que le client coche dans « Mes équipements » et retrouve dans « C’est quoi, ça ? ». Les photos se règlent par véhicule (Véhicules → Profil appli).</p>
+      <p class="muted">Le catalogue commun à tous les véhicules. Ce qui est pré-coché, et les photos, se règlent pour chaque véhicule (Véhicules → Profil appli et photos).</p>
       <form class="search-bar" id="eq-search"><input name="q" type="search" placeholder="Chercher : Truma, frigo, marchepied…" value="${esc(state.eqFilter)}"><button class="btn">Filtrer</button></form>
       <div class="filters"><button class="chip ${!state.eqCat ? 'active' : ''}" data-act="cat" data-value="">Toutes</button>${cats
         .map(([id, n]) => `<button class="chip ${state.eqCat === id ? 'active' : ''}" data-act="cat" data-value="${esc(id)}">${esc(n)}</button>`)
         .join('')}</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Équipement</th><th>Rubrique</th><th>De série</th><th>Zone du plan</th><th></th></tr></thead>
+        <thead><tr><th>Équipement</th><th>Rubrique</th><th>Zone du plan</th><th></th></tr></thead>
         <tbody>${shown
           .map(
             (x) => `<tr>
           <td><strong>${esc(x.name)}</strong><br><small class="muted">${esc(x.text || '').slice(0, 110)}${(x.text || '').length > 110 ? '…' : ''}</small></td>
           <td>${esc(catName[x.cat] || x.cat)}</td>
-          <td>${x.base ? '✓' : ''}</td>
           <td>${esc(x.spot || '')}</td>
           <td class="row-actions">${isAdmin() ? `<button class="btn small" data-act="edit" data-key="${esc(x.id)}">Modifier</button><button class="btn small danger" data-act="del" data-key="${esc(x.id)}">Supprimer</button>` : ''}</td>
         </tr>`
@@ -54,7 +53,6 @@ export function registerCatalogViews(VIEWS, h) {
       { name: 'name', label: 'Nom', required: true, full: true },
       { name: 'cat', label: 'Rubrique', type: 'select', options: cats },
       { name: 'spot', label: 'Zone du plan (cab, din, cui, sdb, toit, ent, lit, tech, ext, extb)' },
-      { name: 'base', label: 'De série (coché d’office)', type: 'checkbox' },
       { name: 'text', label: 'Explication (« C’est quoi, ça ? »)', type: 'textarea', rows: 4 },
       { name: 'tip', label: 'Conseil', type: 'textarea', rows: 2 },
       { name: 'kw', label: 'Mots-clés de recherche', full: true },
@@ -471,11 +469,12 @@ export function registerCatalogViews(VIEWS, h) {
   // ---------- Vehicle profile and photos ----------
 
   VIEWS.vehicleProfile = async (el, vehicleId, back) => {
-    const [vehicles, profile, equipment, config] = await Promise.all([
+    const [vehicles, profile, equipment, config, cats] = await Promise.all([
       api('GET', '/api/admin/vehicles'),
       api('GET', `/api/admin/vehicles/${vehicleId}/profile`),
       api('GET', '/api/admin/equipment'),
       api('GET', '/api/admin/catalog/config').then((r) => r.value),
+      api('GET', '/api/admin/catalog/cats').then((r) => r.value),
     ]);
     const v = vehicles.find((x) => x.id === vehicleId);
     const photoOf = Object.fromEntries(profile.photos.map((p) => [p.id, p.url]));
@@ -492,19 +491,37 @@ export function registerCatalogViews(VIEWS, h) {
             <div><dt>Préfixe des codes clients</dt><dd>${esc(profile.codePrefix)}</dd></div>
             ${Object.entries(W).map(([k, l]) => `<div><dt>${esc(l)}</dt><dd>${esc(profile.weights[k])}</dd></div>`).join('')}
           </dl>
-          <p class="muted">Équipements en plus de la série : ${esc(profile.extra.map((i) => eqName[i] || i).join(', ') || '—')}</p>
           <p class="muted">Types connus : ${esc(Object.entries(profile.vars).map(([k, val]) => `${config.VARIANTS?.[k]?.q || k} : ${(config.VARIANTS?.[k]?.o || []).find((o) => o[0] === val)?.[1] || val}`).join(' · ') || '—')}</p>
         </div>
         <div class="card">
           <h2>Plan vu du dessus (« C’est quoi, ça ? »)</h2>
-          ${profile.planUrl ? `<img class="cover" src="${esc(profile.planUrl)}" alt="">` : '<p class="muted">Aucun plan : l’image du plan n’était pas dans le dossier fourni. Ajoutez-la (format 800 × 360 conseillé).</p>'}
+          ${
+            profile.planUrl
+              ? `<img class="cover" src="${esc(profile.planUrl)}" alt="">`
+              : profile.spots.length
+                ? '<img class="cover" src="/app/plan-van.svg" alt=""><p class="muted">Plan schématique par défaut. Remplacez-le par le vrai plan du véhicule (format 800 × 360, cabine à droite).</p>'
+                : '<p class="muted">Pas de plan pour ce véhicule.</p>'
+          }
           <p class="muted">${profile.spots.length} zones numérotées.</p>
           <div class="actions"><button class="btn" data-act="plan">${profile.planUrl ? 'Changer le plan' : 'Ajouter le plan'}</button>${profile.planUrl ? '<button class="btn danger" data-act="noplan">Retirer</button>' : ''}</div>
         </div>
       </div>
+      <form class="card" id="preset-form">
+        <div class="page-head"><h2>Équipements pré-cochés pour ce véhicule (<span id="preset-n">${profile.equipment.length}</span>)</h2>
+          <div class="actions"><button type="button" class="btn small" data-act="none">Tout décocher</button><button class="btn primary">Enregistrer la liste</button></div></div>
+        <p class="muted">Ce que le client trouve déjà coché à la mise en main. La concession ajuste ensuite tout avec lui (ajouter, décocher) pour son véhicule.</p>
+        <div class="preset-cats">${cats
+          .map(
+            ([cid, cname]) => `<fieldset><legend>${esc(cname)}</legend>${equipment
+              .filter((q) => q.cat === cid)
+              .map((q) => `<label class="check"><input type="checkbox" name="eq" value="${esc(q.id)}" ${profile.equipment.includes(q.id) ? 'checked' : ''}> ${esc(q.name)}</label>`)
+              .join('')}</fieldset>`
+          )
+          .join('')}</div>
+      </form>
       <div class="card">
         <h2>Photos des équipements (${profile.photos.length})</h2>
-        <p class="muted">Sur ce véhicule, un équipement de série n’est coché d’office que s’il a sa photo. Cliquez sur une photo pour la remplacer.</p>
+        <p class="muted">Photos de ce véhicule, affichées dans « C’est quoi, ça ? ». Cliquez sur une photo pour la remplacer.</p>
         <div class="eq-photos">${equipment
           .map(
             (q) => `<div class="eq-photo ${photoOf[q.id] ? '' : 'none'}">
@@ -517,8 +534,25 @@ export function registerCatalogViews(VIEWS, h) {
       </div>`;
 
     const reload = () => VIEWS.vehicleProfile(el, vehicleId, back);
+    const presetForm = el.querySelector('#preset-form');
+    const count = () => (el.querySelector('#preset-n').textContent = presetForm.querySelectorAll('input[name=eq]:checked').length);
+    presetForm.addEventListener('change', count);
+    presetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const ids = [...presetForm.querySelectorAll('input[name=eq]:checked')].map((i) => i.value);
+      try {
+        await api('PUT', `/api/admin/vehicles/${vehicleId}/profile`, { equipment: ids });
+        toast(`Liste enregistrée : ${ids.length} équipements pré-cochés`);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
     bindKeys(el, {
       back: () => back(),
+      none: () => {
+        presetForm.querySelectorAll('input[name=eq]').forEach((i) => (i.checked = false));
+        count();
+      },
       plan: async () => {
         const img = await pickImage();
         if (!img) return;
@@ -556,7 +590,6 @@ export function registerCatalogViews(VIEWS, h) {
             l: profile.model.l,
             h: profile.model.h,
             ...Object.fromEntries(Object.keys(W).map((k) => [`w_${k}`, profile.weights[k]])),
-            extra: profile.extra.join(', '),
             ...Object.fromEntries(Object.entries(profile.vars).map(([k, val]) => [`var_${k}`, val])),
           },
           fields: [
@@ -567,7 +600,6 @@ export function registerCatalogViews(VIEWS, h) {
             { name: 'l', label: 'Longueur (m)', type: 'number', attrs: 'step="0.01"' },
             { name: 'h', label: 'Hauteur (m)', type: 'number', attrs: 'step="0.01"' },
             ...Object.entries(W).map(([k, l]) => ({ name: `w_${k}`, label: l, type: 'number' })),
-            { name: 'extra', label: 'Équipements en plus de la série (identifiants séparés par des virgules)', full: true },
             ...variantFields,
           ],
           onSubmit: async (data) => {
@@ -580,7 +612,6 @@ export function registerCatalogViews(VIEWS, h) {
               codePrefix: data.codePrefix,
               model: { l: data.l, h: data.h },
               weights: Object.fromEntries(Object.keys(W).map((k) => [k, data[`w_${k}`]])),
-              extra: data.extra.split(',').map((s) => s.trim()).filter(Boolean),
               vars,
             });
             toast('Profil enregistré : visible dans les applications');

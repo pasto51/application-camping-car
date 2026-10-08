@@ -3,7 +3,7 @@
 const VERSION = '__APP_VERSION__';
 const SHELL_CACHE = `shell-${VERSION}`;
 const PHOTO_CACHE = 'photos-v1';
-const SHELL = ['/app/', '/app/compagnon.js', '/app/cloud.js', '/app/cloud.css', '/app/manifest.webmanifest', '/app/icon.svg'];
+const SHELL = ['/app/', '/app/compagnon.js', '/app/cloud.js', '/app/cloud.css', '/app/manifest.webmanifest', '/app/icon.svg', '/app/plan-van.svg'];
 
 self.addEventListener('install', (event) => {
   // No waiting: an outdated app must never stay on screen (it may not understand the new server).

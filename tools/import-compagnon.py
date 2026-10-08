@@ -162,7 +162,7 @@ def main():
         '  function dlogoHtml(){return DATA.dealer.logoUrl ? \'<div class="dlogo img" aria-hidden="true"><img src="\'+esc(DATA.dealer.logoUrl)+\'" alt=""></div>\' : \'<div class="dlogo" aria-hidden="true">\'+esc(dealerInitials())+\'</div>\'}\n'
         '  function dealerInitials(){return (DATA.dealer.name||"").split(/\\s+/).filter(function(w){return w.length>2}).slice(0,2).map(function(w){return w.charAt(0)}).join("").toUpperCase() || "CDB"}\n'
         '  $$(".dlogo").forEach(function(d){if(DATA.dealer.logoUrl){d.innerHTML = \'<img src="\'+esc(DATA.dealer.logoUrl)+\'" alt="">\'; d.classList.add("img")} else d.textContent = dealerInitials()});\n'
-        '  (function(){var im = $("#planSvg image"); if(DATA.vehicle.planUrl) im.setAttribute("href",DATA.vehicle.planUrl); else im.remove()})();')
+        '  (function(){var im = $("#planSvg image"); im.setAttribute("href",DATA.vehicle.planUrl || (DATA.vehicle.spots.length ? "/app/plan-van.svg" : "")); if(!DATA.vehicle.planUrl && !DATA.vehicle.spots.length) im.remove()})();')
     # esc is declared after $$ in the original: make the call order safe by hoisting esc.
     s = replace_once(s, '  function esc(t){return String(t).replace(', '  function esc(t){return String(t==null?"":t).replace(')
 
@@ -181,6 +181,56 @@ def main():
     s = replace_once(s, " Démonstration : dans l\\'appli réelle, cet écran est réservé aux vendeurs.",
                      " Cet écran est réservé à la concession : son code est demandé pour valider.")
     s = replace_once(s, """<div class="dlogo" aria-hidden="true">LOGO</div><div><b style=""", """'+dlogoHtml()+'<div><b style=""")
+    # Diagnostics may suggest "atelier", which is not a listed reason: it becomes "J'ai un souci" (message kept).
+    s = replace_once(s, "function openRdv(id,ctx){rdv.m = id;", "function openRdv(id,ctx){rdv.m = motifById(id) ? id : \"souci\";")
+    # Search: word sets weighted by rarity (a word present in every diagnostic counts little),
+    # first answers of each flowchart count as keywords, a danger matching the description comes first.
+    old_search = s[s.index("  function dIndex(s){"):s.index("  function present(id){")]
+    s = s.replace(old_search, r'''  function wset(t){var o = {}; norm(t).replace(/[’']/g," ").split(/[^a-z0-9]+/).forEach(function(w){if(w && STOP.indexOf(w)<0) o[stem(w)] = 1}); return o}
+  function topText(n,d){return (n && n.n && d<2) ? n.o.join(" ")+" "+n.n.map(function(x){return topText(x,d+1)}).join(" ") : ""}
+  var DF = null;
+  function dIndex(s){
+    if(s._ix) return s._ix;
+    var cat = DCATS.filter(function(c){return c[0]===s.cat})[0], eq = s.eq && eqById(s.eq);
+    s._ix = {a:wset(s.label), b:wset((s.kw||"")+" "+(eq?eq.name:"")+" "+(cat?cat[1]:"")+" "+topText(s.tree,0)), c:wset(treeText(s.tree))};
+    s._ix.na = Object.keys(s._ix.a).length;
+    return s._ix;
+  }
+  function idf(w){
+    if(!DF){DF = {}; SOUCIS.forEach(function(s){var ix = dIndex(s), all = {}; [ix.a,ix.b,ix.c].forEach(function(x){Object.keys(x).forEach(function(k){all[k] = 1})}); Object.keys(all).forEach(function(k){DF[k] = (DF[k]||0)+1})})}
+    return Math.log(1 + SOUCIS.length/(DF[w]||SOUCIS.length));
+  }
+  function dScore(s,toks){
+    var ix = dIndex(s), sc = 0, hit = 0, inLabel = 0, seen = {};
+    toks.forEach(function(t){
+      var st = stem(t.w), k = t.syn ? 0.6 : 1, h = 0;
+      if(seen[st]) return; seen[st] = 1;
+      if(ix.a[st]){h = 3; inLabel++} else if(ix.b[st]) h = 1.5; else if(ix.c[st]) h = 0.4;
+      if(h){sc += h*idf(st)*k; hit++}
+    });
+    if(!hit) return 0;
+    sc += 2.5*inLabel/Math.max(1,ix.na) + (relevant(s)?1:0);
+    if(s.urgent && inLabel>=2) sc += 6;
+    return sc;
+  }
+''')
+    s = replace_once(s, '''      out.push(w);
+      if(SYN[w]) SYN[w].split(" ").forEach(function(x){if(x && out.indexOf(x)<0) out.push(x)});''',
+        '''      out.push({w:w});
+      if(SYN[w]) SYN[w].split(" ").forEach(function(x){if(x && !out.some(function(o){return o.w===x})) out.push({w:x,syn:true})});''')
+    s = replace_once(s, "res = res.filter(function(x){return x.k >= Math.max(top*0.55,3)})", "res = res.filter(function(x){return x.k >= Math.max(top*0.55,1)})")
+    s = replace_once(s, "  function stem(w){", '''  Object.assign(SYN,{fuient:"fuite",fuit:"fuite",fuite:"fuite",brule:"brule fumee",fume:"fumee",chauffe:"chauffe",prise:"230",prises:"230",borne:"230 branche",branche:"branche 230",robinet:"robinet eau",goutte:"fuite",gout:"gout",douche:"douche eau",froide:"froide chaude tiede",vide:"decharge",television:"tv",tele:"tv",demarre:"demarre demarrage moteur",velo:"velo",jauge:"niveau"});
+  function stem(w){''')
+
+    # No "factory" equipment: each vehicle has its own pre-checked list, set in the back-office;
+    # the dealership then adjusts everything with the customer.
+    s = replace_once(s, 'function baseOwn(){var o = {}; EQUIP.forEach(function(q){if(q.base) o[q.id]=true}); V114_EXTRA.forEach(function(i){o[i]=true}); Object.keys(o).forEach(function(i){if(PHOTOS[i]==null) delete o[i]}); return o}',
+                     'function baseOwn(){var o = {}; (DATA.vehicle.equipment||[]).forEach(function(i){if(eqById0(i)) o[i]=true}); return o}')
+    s = replace_once(s, "+(q.base?'<small>De série</small>':'')", "")
+    s = replace_once(s, 'toast("Liste de série rétablie.")', 'toast("Liste du modèle rétablie.")')
+    s = replace_once(s, '" équipements cochés (de série et options). Comparez avec le bon de commande."', '" équipements cochés pour ce véhicule. Comparez avec le bon de commande et ajustez la liste."')
+    s = replace_once(s, "function present(id){var it = eqById(id); return !!(ownA(id) || (it && it.base))}", "function present(id){return !!ownA(id)}")
+
     # Workshop requests really reach the dealership.
     s = replace_once(
         s, 'if(e.target.closest("#rsend")){rdv.sent = true; renderRdv(); window.scrollTo(0,0); return}',
@@ -202,6 +252,8 @@ def main():
     if "<html" in head_part.lower() or "<body" in body_part.lower():
         die("la page contient déjà <html> ou <body> : adaptez tools/import-compagnon.py")
     body_part = replace_once(body_part, '<image href="img/dessus.png" ', '<image ')
+    body_part = replace_once(body_part, "Les équipements de série sont déjà cochés : décochez ce qui manque.", "Les équipements prévus pour ce modèle sont déjà cochés : ajoutez ou décochez avec la concession.")
+    body_part = replace_once(body_part, '<button class="btn alt" id="eqreset">Liste de série</button>', '<button class="btn alt" id="eqreset">Liste du modèle</button>')
     body_part = replace_once(body_part, '<div class="device" id="device">', '<div id="cloud"></div>\n<div class="device" id="device" hidden>')
     page = (
         '<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'

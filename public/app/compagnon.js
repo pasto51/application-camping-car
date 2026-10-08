@@ -6,7 +6,7 @@ window.startCompagnon = function(DATA){
   function dlogoHtml(){return DATA.dealer.logoUrl ? '<div class="dlogo img" aria-hidden="true"><img src="'+esc(DATA.dealer.logoUrl)+'" alt=""></div>' : '<div class="dlogo" aria-hidden="true">'+esc(dealerInitials())+'</div>'}
   function dealerInitials(){return (DATA.dealer.name||"").split(/\s+/).filter(function(w){return w.length>2}).slice(0,2).map(function(w){return w.charAt(0)}).join("").toUpperCase() || "CDB"}
   $$(".dlogo").forEach(function(d){if(DATA.dealer.logoUrl){d.innerHTML = '<img src="'+esc(DATA.dealer.logoUrl)+'" alt="">'; d.classList.add("img")} else d.textContent = dealerInitials()});
-  (function(){var im = $("#planSvg image"); if(DATA.vehicle.planUrl) im.setAttribute("href",DATA.vehicle.planUrl); else im.remove()})();
+  (function(){var im = $("#planSvg image"); im.setAttribute("href",DATA.vehicle.planUrl || (DATA.vehicle.spots.length ? "/app/plan-van.svg" : "")); if(!DATA.vehicle.planUrl && !DATA.vehicle.spots.length) im.remove()})();
   var titles = {home:"Compagnon de bord",daily:"Gestes du quotidien",equip:"Mes équipements",rdv:"Rendez-vous atelier",weight:"Poids et charge",hand:"Mise en main",what:"C'est quoi, ça ?",diag:"J'ai un souci",game:"Missions"};
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -151,7 +151,7 @@ window.startCompagnon = function(DATA){
   function addCustom(c){var q = {id:c.id,cat:c.cat,name:c.name,base:false,spot:null,text:c.text||"Équipement ajouté par vous. Notez son modèle et ajoutez une photo pour le retrouver facilement.",tip:"",img:"",kw:"",custom:true}; q.idx = norm(q.name+" "+q.text); EQUIP.push(q); return q}
   UEQ.forEach(addCustom);
 
-  function baseOwn(){var o = {}; EQUIP.forEach(function(q){if(q.base) o[q.id]=true}); V114_EXTRA.forEach(function(i){o[i]=true}); Object.keys(o).forEach(function(i){if(PHOTOS[i]==null) delete o[i]}); return o}
+  function baseOwn(){var o = {}; (DATA.vehicle.equipment||[]).forEach(function(i){if(eqById0(i)) o[i]=true}); return o}
   var own = (function(){
     var s = lsGet("cdb_own"); if(s){try{var o = JSON.parse(s); if(o && typeof o==="object") return o}catch(e){}}
     return baseOwn();
@@ -308,7 +308,7 @@ window.startCompagnon = function(DATA){
             var lab = DIMS[q.id].t==="l" ? "Dépassement à l'arrière" : "Hauteur au-dessus du toit";
             row = '<div class="dimrow" data-dr="'+q.id+'"'+(own[q.id]?'':' hidden')+'><label for="di_'+q.id+'">'+lab+'</label><span class="dimin"><input id="di_'+q.id+'" type="number" inputmode="numeric" min="0" max="300" step="1" data-di="'+q.id+'" value="'+dimVal(q.id)+'"> cm</span><small>Mesurez sur votre véhicule. La plus grande valeur est retenue pour la '+(DIMS[q.id].t==="l"?'longueur':'hauteur')+' totale.</small></div>';
           }
-          return '<label class="eqitem"><input type="checkbox" data-e="'+q.id+'"'+(own[q.id]?' checked':'')+'><span><b>'+esc(q.name)+'</b>'+(q.base?'<small>De série</small>':'')+'</span></label>'+row+varRow(q)+implRow(q);
+          return '<label class="eqitem"><input type="checkbox" data-e="'+q.id+'"'+(own[q.id]?' checked':'')+'><span><b>'+esc(q.name)+'</b>'+'</span></label>'+row+varRow(q)+implRow(q);
         }).join("") + '</details>';
     });
     if(!total) html = '<div class="empty"><p>'+(eqMode==="mine" && !query ? "Aucun équipement coché pour le moment." : "Aucun équipement ne correspond. Essayez un autre mot, par exemple « chauffage », « batterie » ou « antenne ».")+'</p></div>';
@@ -377,7 +377,7 @@ window.startCompagnon = function(DATA){
       $("#addeq").open = false; $("#esearch").value = ""; renderEquip();
     });
   })();
-  $("#eqreset").addEventListener("click",function(){own = baseOwn(); syncImplied(); saveOwn(); renderEquip(); toast("Liste de série rétablie.")});
+  $("#eqreset").addEventListener("click",function(){own = baseOwn(); syncImplied(); saveOwn(); renderEquip(); toast("Liste du modèle rétablie.")});
 
   /* ---------- C'est quoi, ça ? : plan réel du V114 vu du dessus ---------- */
   var SPOTS = DATA.vehicle.spots;
@@ -600,7 +600,7 @@ window.startCompagnon = function(DATA){
     }
     return t;
   }
-  function openRdv(id,ctx){rdv.m = id; rdv.ctx = ctx||""; rdv.msg = buildMsg(); rdv.sent = false; go("rdv")}
+  function openRdv(id,ctx){rdv.m = motifById(id) ? id : "souci"; rdv.ctx = ctx||""; rdv.msg = buildMsg(); rdv.sent = false; go("rdv")}
   function dealerCard(){
     return '<div class="card" style="flex-direction:row;align-items:center;gap:14px">'+dlogoHtml()+'<div><b style="font-family:var(--font-display);font-size:18px">'+esc(DEALER.name)+'</b><p class="sub">'+esc(DEALER.hours)+'<br>'+esc(DEALER.tel)+'</p></div></div>';
   }
@@ -645,7 +645,7 @@ window.startCompagnon = function(DATA){
     return base + best/100;
   }
   var HSTEPS = [
-    {k:"eq",t:"Équipements du véhicule",go:"equip",goLabel:"Ouvrir la liste",sum:function(){return ownCount()+" équipements cochés (de série et options). Comparez avec le bon de commande."}},
+    {k:"eq",t:"Équipements du véhicule",go:"equip",goLabel:"Ouvrir la liste",sum:function(){return ownCount()+" équipements cochés pour ce véhicule. Comparez avec le bon de commande et ajustez la liste."}},
     {k:"wt",t:"Poids et PTAC",go:"weight",goLabel:"Ouvrir le poids",sum:function(){var c = loadCalc(); return "PTAC "+kg(c.ptac)+", masse en ordre de marche "+kg(wv("mom"))+". À comparer avec la fiche technique."}},
     {k:"dim",t:"Longueur et hauteur",go:"home",goLabel:"Voir l'accueil",sum:function(){return "Longueur "+fm(dimTot("l",MODEL.l))+", hauteur "+fm(dimTot("h",MODEL.h))+". Mesures des accessoires saisies ?"}},
     {k:"liv",t:"Points oubliés par les premiers clients",go:"daily",goLabel:"Voir les gestes",sum:function(){return "Clim : 230 V uniquement, réversible (chaud et froid), avec télécommande. Stores et rideaux : se manipulent doucement, sans crainte. Départ : câble P17, cales, marchepied, antenne, lanterneaux."}},
@@ -794,37 +794,45 @@ window.startCompagnon = function(DATA){
   }
   var STOP = "le la les un une des de du d l au aux et ou a ai as ont est sont mon ma mes ton ta ses son sa je j tu il elle on nous vous ils elles ne n pas plus ca ce cet cette qui que qu quoi dans sur sous avec sans pour par en y se s m t c quand tres trop bien mal fait fais font veut veux peut peux comment pourquoi puis alors aussi encore toujours jamais rien tout tous toute meme apres avant depuis cest jai marche fonctionne".split(" ");
   var SYN = {skydome:"lanterneau aerateur",ficelle:"store plisse cordon",cordon:"store plisse",rideau:"store plisse occultant",chaudiere:"chauffage",boiler:"eau chaude chauffe-eau",radiateur:"chauffage",froid:"refroidit",frigidaire:"frigo",refrigerateur:"frigo",glaciere:"frigo",courant:"electricite 12v 230",electricite:"electricite 12v 230",jus:"batterie",batt:"batterie",ampoule:"led lumiere",lumiere:"led 12v",lumieres:"led 12v",puante:"odeur",pue:"odeur",puent:"odeur",senteur:"odeur",sent:"odeur",coule:"fuite",goutte:"fuite",gouttes:"fuite",inonde:"fuite",tuyau:"fuite",moisissure:"moisi humidite",humide:"humidite",buee:"condensation",toilette:"wc",toilettes:"wc cassette",chiotte:"wc",chiottes:"wc",rechaud:"plaque gaz",feux:"plaque gaz",gaz:"gaz bouteille",bouteille:"gaz",marchepied:"marche pied",demarre:"allume demarrage",demarrer:"allume demarrage",allume:"allumage demarre",panne:"souci",bloque:"coince",coince:"bloque",tele:"tv",pneus:"pneu",crevaison:"pneu",gonfle:"pression pneu",coupe:"disjoncte",saute:"disjoncte",grille:"fusible",voyant:"voyant tableau",orange:"voyant",rouge:"voyant",alarme:"detecteur alarme",bip:"detecteur",hiver:"hivernage",hivernage:"hivernage sortie",parabole:"tv satellite antenne",clim:"climatisation clim",climatiseur:"climatisation clim"};
+  Object.assign(SYN,{fuient:"fuite",fuit:"fuite",fuite:"fuite",brule:"brule fumee",fume:"fumee",chauffe:"chauffe",prise:"230",prises:"230",borne:"230 branche",branche:"branche 230",robinet:"robinet eau",goutte:"fuite",gout:"gout",douche:"douche eau",froide:"froide chaude tiede",vide:"decharge",television:"tv",tele:"tv",demarre:"demarre demarrage moteur",velo:"velo",jauge:"niveau"});
   function stem(w){return w.length>5 ? w.slice(0,5) : w.replace(/[sx]$/,"")}
   function qTokens(q){
     var out = [];
     norm(q).replace(/[’']/g," ").split(/[^a-z0-9]+/).forEach(function(w){
       if(!w || STOP.indexOf(w)>=0) return;
-      out.push(w);
-      if(SYN[w]) SYN[w].split(" ").forEach(function(x){if(x && out.indexOf(x)<0) out.push(x)});
+      out.push({w:w});
+      if(SYN[w]) SYN[w].split(" ").forEach(function(x){if(x && !out.some(function(o){return o.w===x})) out.push({w:x,syn:true})});
     });
     return out;
   }
+  function wset(t){var o = {}; norm(t).replace(/[’']/g," ").split(/[^a-z0-9]+/).forEach(function(w){if(w && STOP.indexOf(w)<0) o[stem(w)] = 1}); return o}
+  function topText(n,d){return (n && n.n && d<2) ? n.o.join(" ")+" "+n.n.map(function(x){return topText(x,d+1)}).join(" ") : ""}
+  var DF = null;
   function dIndex(s){
     if(s._ix) return s._ix;
     var cat = DCATS.filter(function(c){return c[0]===s.cat})[0], eq = s.eq && eqById(s.eq);
-    s._ix = {
-      a:norm(s.label).replace(/[’']/g," "),
-      b:norm((s.kw||"")+" "+(eq?eq.name:"")+" "+(cat?cat[1]:"")).replace(/[’']/g," "),
-      c:norm(treeText(s.tree)).replace(/[’']/g," ")
-    };
+    s._ix = {a:wset(s.label), b:wset((s.kw||"")+" "+(eq?eq.name:"")+" "+(cat?cat[1]:"")+" "+topText(s.tree,0)), c:wset(treeText(s.tree))};
+    s._ix.na = Object.keys(s._ix.a).length;
     return s._ix;
   }
-  function dScore(s,toks){
-    var ix = dIndex(s), sc = 0, hit = 0;
-    toks.forEach(function(w){
-      var st = stem(w), h = 0;
-      if(ix.a.indexOf(st)>=0) h = 4; else if(ix.b.indexOf(st)>=0) h = 3; else if(ix.c.indexOf(st)>=0) h = 1;
-      if(h && w.length>5){ if(ix.a.indexOf(w)>=0) h += 3; else if(ix.b.indexOf(w)>=0) h += 2; else if(ix.c.indexOf(w)>=0) h += 1 }
-      if(h){sc += h; hit++}
-    });
-    return hit ? sc + hit*0.5 + (relevant(s)?1.5:0) : 0;
+  function idf(w){
+    if(!DF){DF = {}; SOUCIS.forEach(function(s){var ix = dIndex(s), all = {}; [ix.a,ix.b,ix.c].forEach(function(x){Object.keys(x).forEach(function(k){all[k] = 1})}); Object.keys(all).forEach(function(k){DF[k] = (DF[k]||0)+1})})}
+    return Math.log(1 + SOUCIS.length/(DF[w]||SOUCIS.length));
   }
-  function present(id){var it = eqById(id); return !!(ownA(id) || (it && it.base))}
+  function dScore(s,toks){
+    var ix = dIndex(s), sc = 0, hit = 0, inLabel = 0, seen = {};
+    toks.forEach(function(t){
+      var st = stem(t.w), k = t.syn ? 0.6 : 1, h = 0;
+      if(seen[st]) return; seen[st] = 1;
+      if(ix.a[st]){h = 3; inLabel++} else if(ix.b[st]) h = 1.5; else if(ix.c[st]) h = 0.4;
+      if(h){sc += h*idf(st)*k; hit++}
+    });
+    if(!hit) return 0;
+    sc += 2.5*inLabel/Math.max(1,ix.na) + (relevant(s)?1:0);
+    if(s.urgent && inLabel>=2) sc += 6;
+    return sc;
+  }
+  function present(id){return !!ownA(id)}
   function vOK(s){if(!s.vonly) return true; var v = vars[s.vonly[0]]; return !v || v==="ns" || s.vonly[1].indexOf(v)>=0}
   function relevant(s){return (!s.eq || present(s.eq)) && vOK(s)}
   function eqName(s){var it = s.eq && eqById(s.eq); return it ? it.name : "Autres"}
@@ -833,7 +841,7 @@ window.startCompagnon = function(DATA){
   function drawDiagList(q){
     var el = $("#dlist"), h = ""; if(!el) return;
     if(q){
-      var tk = qTokens(q), res = SOUCIS.map(function(s){return {s:s,k:dScore(s,tk)}}).filter(function(x){return x.k>0}).sort(function(a,b){return b.k-a.k || (a.s.urgent?1:0)-(b.s.urgent?1:0)}); var top = res.length ? res[0].k : 0; res = res.filter(function(x){return x.k >= Math.max(top*0.55,3)}).slice(0,8).map(function(x){return x.s});
+      var tk = qTokens(q), res = SOUCIS.map(function(s){return {s:s,k:dScore(s,tk)}}).filter(function(x){return x.k>0}).sort(function(a,b){return b.k-a.k || (a.s.urgent?1:0)-(b.s.urgent?1:0)}); var top = res.length ? res[0].k : 0; res = res.filter(function(x){return x.k >= Math.max(top*0.55,1)}).slice(0,8).map(function(x){return x.s});
       el.innerHTML = res.length ? '<p class="eyebrow">'+res.length+' proposition'+(res.length>1?'s':'')+', la plus proche en premier</p><div class="opts" style="margin-top:8px">'+res.map(dBtn).join("")+'</div><p class="sub" style="margin-top:12px">Ce n\'est pas tout à fait ça ? Reformulez avec d\'autres mots, ou passez à l\'atelier.</p><button class="btn alt" data-act="rdvfree" style="width:100%">Rendez-vous atelier</button>' : '<div class="empty"><p>Aucun souci ne correspond. Essayez un autre mot, par exemple « gaz », « batterie » ou « odeur », ou passez à l\'atelier.</p><button class="btn" data-act="rdvfree">Rendez-vous atelier</button></div>';
       return;
     }

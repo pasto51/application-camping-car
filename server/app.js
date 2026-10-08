@@ -8,7 +8,8 @@ const { openDatabase } = require('./db');
 const { createUploadStore } = require('./uploads');
 const { HttpError, createRouter, readJsonBody, sendJson, serveStatic } = require('./http');
 const { seed } = require('./seed');
-const { seedCatalog } = require('./catalog');
+const { seedCatalog, ensureEquipmentPresets } = require('./catalog');
+const { applyContentPatches } = require('./content-patches');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 
@@ -43,6 +44,8 @@ function createApp(options = {}) {
 
   seed(db, { adminEmail: options.adminEmail ?? process.env.ADMIN_EMAIL, adminPassword: options.adminPassword ?? process.env.ADMIN_PASSWORD, log });
   seedCatalog(db, uploads, log);
+  ensureEquipmentPresets(db);
+  applyContentPatches(db, log);
 
   const router = createRouter();
   publicRoutes.register(router);

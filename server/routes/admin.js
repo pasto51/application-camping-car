@@ -265,7 +265,6 @@ function register(router) {
       ...current,
       cat,
       name: body.name === undefined ? current.name : reqStr(body.name, 'Nom', 120),
-      base: body.base === undefined ? !!current.base : !!body.base,
       spot: body.spot === undefined ? current.spot ?? null : optStr(body.spot, 20) || null,
       text: pick(optStr(body.text, 2000), current.text ?? '') ?? '',
       tip: pick(optStr(body.tip, 1000), current.tip ?? '') ?? '',
@@ -460,7 +459,12 @@ function register(router) {
       model: body.model ? { l: num(body.model.l, p.model.l, 'Longueur'), h: num(body.model.h, p.model.h, 'Hauteur') } : p.model,
       weights: Object.fromEntries(Object.entries(p.weights).map(([k, v]) => [k, num(w[k], v, 'Poids')])),
     };
-    for (const key of ['extra', 'spots']) {
+    if (body.equipment !== undefined) {
+      if (!Array.isArray(body.equipment)) throw new HttpError(400, 'Format invalide');
+      const known = new Set(db.prepare('SELECT id FROM equipment').all().map((r) => r.id));
+      next.equipment = [...new Set(body.equipment.map(String))].filter((id) => known.has(id));
+    }
+    for (const key of ['spots']) {
       if (body[key] !== undefined) {
         if (!Array.isArray(body[key])) throw new HttpError(400, 'Format invalide');
         next[key] = body[key];

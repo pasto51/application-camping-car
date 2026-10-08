@@ -33,7 +33,7 @@ function defaultProfile(vehicle) {
     codePrefix: 'CDB',
     model: { l: 0, h: 0 },
     weights: { ptac: 3500, mom: 2800, pax: 2, eau: 30, gaz: 0, bag: 100 },
-    extra: [],
+    equipment: [], // pre-checked for this vehicle; the dealership adjusts it with each customer
     vars: {},
     spotOverrides: {},
     spots: [],
@@ -94,6 +94,22 @@ function seedCatalog(db, uploads, log = console.log) {
   log(`[seed] Compagnon de bord : ${seed.equipment.length} équipements, ${seed.diagnostics.length} diagnostics, véhicule Challenger V114 créé.`);
 }
 
+// Each vehicle has its own pre-checked equipment list. Vehicles created before this existed get the list
+// they used to show (equipment marked as standard in the V48 app, plus the vehicle's additions, with a photo).
+function ensureEquipmentPresets(db) {
+  const vehicles = db.prepare('SELECT id, profile FROM vehicles').all();
+  const catalog = db.prepare('SELECT data FROM equipment').all().map((r) => JSON.parse(r.data));
+  for (const v of vehicles) {
+    const p = safeJson(v.profile || '{}', {});
+    if (Array.isArray(p.equipment)) continue;
+    const photos = new Set((p.photos || []).map((x) => x.id));
+    const ids = new Set([...catalog.filter((q) => q.base).map((q) => q.id), ...(p.extra || [])]);
+    p.equipment = [...ids].filter((id) => photos.has(id));
+    delete p.extra;
+    db.prepare('UPDATE vehicles SET profile = ? WHERE id = ?').run(JSON.stringify(p), v.id);
+  }
+}
+
 function getCatalogValue(db, key) {
   const row = db.prepare('SELECT value FROM catalog WHERE key = ?').get(key);
   return row ? JSON.parse(row.value) : null;
@@ -129,4 +145,4 @@ function appData(db, { vehicleId, dealershipId }) {
   return data;
 }
 
-module.exports = { seedCatalog, appData, readProfile, defaultProfile, getCatalogValue, CATALOG_KEYS };
+module.exports = { seedCatalog, ensureEquipmentPresets, appData, readProfile, defaultProfile, getCatalogValue, CATALOG_KEYS };

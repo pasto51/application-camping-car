@@ -172,3 +172,10 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 .eq-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .eq-photo.none > button:first-child { border-style: dashed; }
 .linkbtn { border: 0; background: none; color: var(--danger); padding: 0; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; }
+
+/* Pre-checked equipment of a vehicle */
+.preset-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .75rem; }
+.preset-cats fieldset { border: 1px solid var(--line); border-radius: 10px; padding: .5rem .75rem .7rem; margin: 0; display: flex; flex-direction: column; gap: .25rem; }
+.preset-cats legend { font-weight: 700; padding: 0 .3rem; }
+.preset-cats label.check { font-weight: 400; font-size: .88rem; }
+#preset-form .page-head { margin-bottom: .25rem; }

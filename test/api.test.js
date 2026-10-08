@@ -55,6 +55,14 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   assert.equal(diags.length, 56);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
   assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 122);
+
+  // Content corrections from the simulations are applied
+  const truma = (await call('GET', '/api/admin/diagnostics/g_truma', { token: admin })).data;
+  const leaf = (function find(n) {
+    if (Array.isArray(n.n)) for (const c of n.n) { const f = find(c); if (f) return f; }
+    return n.cause && n.cause.startsWith('Des saletés gênent') ? n : null;
+  })(truma.tree);
+  assert.match(leaf.sec, /aérez/);
 });
 
 test('handover, app data, cloud save of the app storage and restore on another phone', async () => {
@@ -150,6 +158,10 @@ test('back-office edits the catalogue and the app receives it', async () => {
 
   // Vehicle profile and an equipment photo
   assert.equal((await call('PUT', `/api/admin/vehicles/${v114.id}/profile`, { token: admin, body: { model: { l: '6,36', h: 2.7 }, weights: { ptac: 3500 } } })).status, 200);
+  const preset = (await call('GET', `/api/admin/vehicles/${v114.id}/profile`, { token: admin })).data.equipment;
+  assert.ok(preset.length > 20, 'the V114 keeps the list of its V48 app');
+  const chosen = await call('PUT', `/api/admin/vehicles/${v114.id}/profile`, { token: admin, body: { equipment: ['frigo', 'wc', 'inconnu', 'frigo'] } });
+  assert.deepEqual(chosen.data.equipment, ['frigo', 'wc']);
   const photo = await call('PUT', `/api/admin/vehicles/${v114.id}/photos/frigo`, { token: admin, body: { image: PNG } });
   assert.match(photo.data.url, /^\/uploads\//);
 
@@ -161,6 +173,7 @@ test('back-office edits the catalogue and the app receives it', async () => {
   assert.ok(data.lists.arrivee.items.includes('Cales rangées'));
   assert.deepEqual(data.vehicle.model, { l: 6.36, h: 2.7 });
   assert.equal(data.vehicle.photos.find((p) => p.id === 'frigo').url, photo.data.url);
+  assert.deepEqual(data.vehicle.equipment, ['frigo', 'wc']);
 
   // Dealer accounts cannot change the catalogue
   await call('POST', '/api/admin/users', { token: admin, body: { email: 'vendeur@test.fr', password: 'vendeur1234', role: 'dealer', dealershipId: 1 } });
