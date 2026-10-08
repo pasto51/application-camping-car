@@ -190,7 +190,8 @@
     return c.vehicleYear || (m ? m[0] : '');
   }
 
-  function partRequest(id, product) {
+  // need: « accessoire » when the request comes from a comfort problem (a product to buy): it goes to the store.
+  function partRequest(id, product, need) {
     var info = (id && window.CDB_PARTINFO && window.CDB_PARTINFO(id)) || { id: null, name: '', userPhoto: null, genericPhoto: null, model: '', ref: '' };
     var c = (session && session.customer) || {}, vin = localVin(), newPhoto = null;
     // The vehicle's photo is the same for every customer of this model: it is only sent when the customer has none of their own.
@@ -212,7 +213,7 @@
       '<div class="cloud-photos">' + photoHtml() + '</div>' +
       '<p class="eyebrow">Il me faut</p><div class="cloud-need">' +
       [['piece', 'Une pièce détachée'], ['remplacement', 'Remplacer l’équipement'], ['accessoire', 'Ajouter un accessoire, ou un consommable']].map(function (o, i) {
-        return '<label><input type="radio" name="need" value="' + o[0] + '"' + (i === 0 ? ' checked' : '') + '> ' + o[1] + '</label>';
+        return '<label><input type="radio" name="need" value="' + o[0] + '"' + ((need ? o[0] === need : i === 0) ? ' checked' : '') + '> ' + o[1] + '</label>';
       }).join('') + '</div>' +
       (info.name ? '' : '<label class="eyebrow">Équipement concerné</label><select class="search" data-eq><option value="">— Choisir dans mes équipements —</option>' + myEquipment().map(function (q) { return '<option value="' + esc(q.id) + '">' + esc(q.name) + '</option>'; }).join('') + '<option value="__other">Autre (à préciser)</option></select>' +
         '<input class="search" name="equipmentName" maxlength="120" placeholder="ex : store, pompe à eau…" hidden>') +

@@ -874,14 +874,14 @@ window.startCompagnon = function(DATA){
   }
   function resultHTML(s,r,back,autoTxt,vnote){
     var pro = r.pro || s.pro, none = r.prod.indexOf("Aucun")===0;
-    return '<div class="result"><p class="eyebrow">'+(s.urgent?"Danger : agissez maintenant":"Cause probable")+'</p><h3>'+esc(s.label)+'</h3>' +
+    return '<div class="result"><p class="eyebrow">'+(s.urgent?"Danger : agissez maintenant":r.achat?"Notre conseil":"Cause probable")+'</p><h3>'+esc(s.label)+'</h3>' +
         '<div class="block"><b>Ce qui se passe sans doute</b><p>'+esc(r.cause)+'</p></div>' +
         '<div class="block"><b>Ce que vous pouvez faire</b><p>'+esc(r.geste)+'</p></div>' + vnote + autoTxt +
         (pro ? '<div class="safety"><b>À faire faire par un professionnel.</b> '+esc(SAFE_PRO)+'</div>' : '') +
         (r.sec ? '<div class="safety">'+esc(r.sec)+'</div>' : '') +
         (none ? '' : '<div class="shop"><b>En rayon</b><p>'+esc(r.prod)+'</p></div>') + keepBlock(s,r) +
         '<div class="btns">'+(none?'':'<button class="btn" data-act="shop">Demander au magasin</button>')+'<button class="btn'+(none?'':' alt')+'" data-act="rdv">Rendez-vous atelier</button></div>' +
-        '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\'atelier.</p></div>' + back +
+        (r.achat ? '<p class="sub">Le magasin vous conseille le modèle adapté à votre véhicule.</p></div>' : '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\'atelier.</p></div>') + back +
         '<button class="btn alt" id="dagain" style="width:100%;margin-top:12px">Un autre souci</button>';
   }
   function renderDiagStep(){
@@ -915,7 +915,7 @@ window.startCompagnon = function(DATA){
       else if(a.dataset.act==="rdvfree"){openRdv("souci","")}
       else if(a.dataset.act==="fill"){$("#wsearch").value = ""; go("what"); showItem(sj.eq)}
       else if(a.dataset.act==="copy"){var tx = keepText(sj,rr); try{navigator.clipboard.writeText(tx).then(function(){toast("Fiche copiée")},function(){toast(tx)})}catch(err){toast(tx)}}
-      else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0])}
+      else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0], rr.achat ? "accessoire" : null)}
       return;
     }
     if(e.target.closest("#dagain")){renderDiagList()}

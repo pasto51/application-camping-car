@@ -241,6 +241,8 @@ async function main() {
   await answer(N.magasin, r6, { service: 'sav', transferNote: 'Pose avec passage de câbles : à voir avec l’atelier' });
 
   await part('Isabelle', { need: 'piece', equipmentName: 'Chauffage', model: 'Truma Combi 4', message: 'Code erreur E517H.' });
+  // Comfort problem in the app (« Mon camping-car balance en virage ») → product of the store, even under warranty.
+  await part('Isabelle', { need: 'accessoire', product: 'Suspensions pneumatiques auxiliaires', message: 'Conseillé par l’appli : mon camping-car penche et balance en virage.' });
   const r8 = await part('Bernard', { need: 'piece', equipmentName: 'Lanterneau', product: 'Lanterneau 40x40', model: 'Dometic Mini Heki' });
   await answer(R.magasin, r8, { status: 'resolu', message: 'Bonjour, lanterneau commandé, réception jeudi. Pose possible au magasin.' });
   await part('Bernard', { need: 'accessoire', equipmentName: 'Panneau solaire', product: 'Kit solaire 150 W' });

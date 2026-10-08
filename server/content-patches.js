@@ -7,6 +7,7 @@
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
 const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
+const { CONFORT } = require('./diagnostics-confort');
 // Store first: specialised products sold in the store instead of home remedies (see CLAUDE.md).
 const STORE_PRODUCTS = require('./seed/diag-magasin.json');
 const STORE_QUESTIONS = [
@@ -208,6 +209,21 @@ const PATCHES = [
             changed += n;
           }
         }
+      }
+      return changed;
+    },
+  },
+  {
+    // Everyday comfort problems that lead to a product of the store (forum research): condensation, heat, cold, gas,
+    // battery autonomy, internet, water, cassette, roll, manoeuvres, levelling, theft, insects, shade, storage, light, sleep.
+    key: '2026-10-12-problematiques-confort',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of CONFORT) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
       }
       return changed;
     },
