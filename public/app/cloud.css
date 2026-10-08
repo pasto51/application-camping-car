@@ -43,7 +43,7 @@
 .cloud-msg.concession{align-self:flex-start;background:var(--ok-bg);color:var(--ink)}
 .cloud-reply{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .tile{position:relative}
-.cloud-dot{position:absolute;top:8px;right:8px;min-width:22px;height:22px;border-radius:11px;background:#c0392b;color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 6px}
-.cloud-dot[hidden]{display:none}
+.tile .cloud-dot{position:absolute;top:8px;right:8px;min-width:22px;height:22px;border-radius:11px;background:#c0392b;color:#fff;font-size:13px;line-height:1;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.tile .cloud-dot[hidden]{display:none}
 .dlogo.link{cursor:pointer}
 .cloud-reply .btn{flex:none}
