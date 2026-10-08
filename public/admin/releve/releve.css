@@ -93,3 +93,33 @@ dialog img { width: 100%; max-height: 60vh; object-fit: contain; border-radius: 
 .toast { position: fixed; left: 50%; top: 16px; transform: translate(-50%, -150%); background: var(--text); color: var(--bg); padding: .6rem 1rem; border-radius: 12px; font-weight: 600; transition: transform .2s; z-index: 50; max-width: 90vw; text-align: center; }
 .toast.show { transform: translate(-50%, calc(env(safe-area-inset-top))); }
 .toast.error { background: var(--danger); color: #fff; }
+
+/* Guided vehicle form */
+.progress { max-width: 640px; margin: 10px auto 0; height: 6px; border-radius: 3px; background: rgba(255,255,255,.25); overflow: hidden; }
+.progress span { display: block; height: 100%; background: #fff; border-radius: 3px; transition: width .2s; }
+.step-title { font-size: 1.3rem; margin-top: 4px; }
+.hint { font-weight: 400; font-size: .82rem; color: var(--muted); }
+.wiz-nav { display: flex; gap: 10px; margin-top: 8px; }
+.wiz-nav .btn { flex: 1; }
+.wiz-nav .btn.primary { flex: 2; }
+.linkbtn { background: none; border: 0; color: var(--muted); font: inherit; text-decoration: underline; padding: 8px; cursor: pointer; align-self: center; }
+.hero-shot { width: 100%; aspect-ratio: 4 / 3; border-radius: 16px; border: 2px dashed var(--line); background: var(--card); color: var(--muted); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 0; overflow: hidden; display: grid; place-items: center; }
+.hero-shot span { font-size: 1rem; line-height: 1.6; }
+.hero-shot span::first-line { font-size: 2.6rem; }
+.hero-shot.has { border-style: solid; border-color: var(--ok); }
+.hero-shot img { width: 100%; height: 100%; object-fit: cover; }
+.row2 { display: flex; gap: 10px; }
+.row2 .btn { flex: 1; }
+fieldset.choice { border: 1px solid var(--line); border-radius: 16px; background: var(--card); padding: 8px 12px 12px; margin: 0; }
+fieldset.choice legend { font-weight: 700; padding: 0 6px; }
+.opt { flex-direction: row; align-items: center; gap: 12px; color: var(--text); font-weight: 500; font-size: 1rem; padding: 10px 4px; border-top: 1px solid var(--line); cursor: pointer; }
+.opt:first-of-type { border-top: 0; }
+.opt input { width: 22px; height: 22px; flex: none; accent-color: var(--accent); }
+.recap { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.recap img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.recap .error { padding: 12px 16px 0; }
+.recap dl { margin: 0; padding: 8px 16px 12px; }
+.recap dl div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.recap dl div:first-child { border-top: 0; }
+.recap dt { color: var(--muted); }
+.recap dd { margin: 0; text-align: right; }

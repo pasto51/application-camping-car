@@ -109,15 +109,14 @@ function newVehicle(brands) {
       <h2>Nouveau véhicule</h2>
       <label>Marque<select name="brandId">${brands.map((b) => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select></label>
       <label>Nom du véhicule<input name="name" required maxlength="120" placeholder="ex : V114 Road Edition"></label>
-      <label>Millésime<input name="modelYear" maxlength="20" inputmode="numeric" placeholder="ex : 2027"></label>
-      <div class="stack"><button class="btn primary block" value="ok">Créer et commencer le relevé</button><button class="btn block" value="" formnovalidate>Annuler</button></div>
+      <div class="stack"><button class="btn primary block" value="ok">Créer et remplir sa fiche</button><button class="btn block" value="" formnovalidate>Annuler</button></div>
     </form>`,
     async (dlg, value) => {
       if (value !== 'ok') return;
       const f = new FormData(dlg.querySelector('form'));
       try {
-        const v = await api('POST', '/api/admin/vehicles', { brandId: Number(f.get('brandId')), name: f.get('name'), modelYear: f.get('modelYear') });
-        openVehicle(v.id);
+        const v = await api('POST', '/api/admin/vehicles', { brandId: Number(f.get('brandId')), name: f.get('name') });
+        openWizard(v.id);
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -127,7 +126,7 @@ function newVehicle(brands) {
 
 // ---------- Survey ----------
 
-async function openVehicle(id) {
+async function openVehicle(id, skipWizard = false) {
   if (S.vehicle?.id !== id && hasPending()) {
     toast('Des envois sont en attente, patientez un instant', 'error');
     return;
@@ -141,6 +140,7 @@ async function openVehicle(id) {
   ]);
   const v = vehicles.find((x) => x.id === id);
   if (!v) return renderVehicles();
+  if (!skipWizard && !v.photoUrl && !profile.model.h) return openWizard(id);
   Object.assign(S, {
     vehicle: v,
     equipment,
@@ -152,7 +152,7 @@ async function openVehicle(id) {
   history.replaceState(null, '', `#v=${id}`);
   root.innerHTML = `<div class="bar">
       <div class="bar-row"><button id="back" aria-label="Changer de véhicule">‹</button>
-        <h1>${esc(v.brandName)} ${esc(v.name)}<small id="count"></small></h1></div>
+        <h1>${esc(v.brandName)} ${esc(v.name)}<small id="count"></small></h1><button id="fiche">📝 Fiche</button></div>
       <div class="tools">
         <input id="search" type="search" placeholder="Rechercher un équipement…" value="${esc(S.search)}">
         <div class="chips">${[
@@ -168,6 +168,7 @@ async function openVehicle(id) {
     <div class="wrap" id="list"></div>
     <div class="pending" id="pending" hidden></div>`;
   root.querySelector('#back').onclick = () => (hasPending() ? toast('Des envois sont en attente, patientez un instant', 'error') : renderVehicles());
+  root.querySelector('#fiche').onclick = () => (hasPending() ? toast('Des envois sont en attente, patientez un instant', 'error') : openWizard(id));
   root.querySelector('#search').oninput = (e) => {
     S.search = e.target.value;
     renderList();
@@ -360,6 +361,224 @@ function addEquipment(cat) {
       }
     }
   );
+}
+
+// ---------- Guided vehicle form: one question per screen, then the equipment survey ----------
+
+const WEIGHTS = [
+  ['ptac', 'PTAC (kg)', 'Poids total autorisé en charge, sur la carte grise (case F.2).', 3500],
+  ['mom', 'Masse en ordre de marche (kg)', 'Poids à vide avec conducteur, carte grise case G.', 2800],
+  ['pax', 'Nombre de passagers habituel', 'Valeur de départ du calcul de charge.', 2],
+  ['eau', 'Eau propre au départ (L)', 'Litres d’eau propre que le client emporte en général.', 30],
+  ['gaz', 'Gaz au départ (kg)', 'Laissez 0 si la masse en ordre de marche inclut déjà le gaz.', 0],
+  ['bag', 'Bagages (kg)', 'Valeur de départ du calcul de charge.', 100],
+];
+
+// Accepts "2,90", "2.9" or "290" (cm) and returns metres.
+function metres(value) {
+  const n = Number(String(value || '').replace(',', '.').trim());
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n > 20 ? Math.round(n) / 100 : n;
+}
+const numOrNull = (value) => {
+  const n = Number(String(value ?? '').replace(',', '.').replace(/\s/g, ''));
+  return String(value ?? '').trim() !== '' && Number.isFinite(n) && n >= 0 ? n : null;
+};
+const prefixOf = (text) => String(text || '').toUpperCase().normalize('NFD').replace(/[^A-Z0-9]/g, '').slice(0, 8);
+
+async function openWizard(id, step = 0) {
+  root.innerHTML = '<p class="pad muted">Chargement…</p>';
+  const [brands, vehicles, profile, config] = await Promise.all([
+    api('GET', '/api/admin/brands'),
+    api('GET', '/api/admin/vehicles'),
+    api('GET', `/api/admin/vehicles/${id}/profile`),
+    api('GET', '/api/admin/catalog/config').then((r) => r.value || {}),
+  ]);
+  const v = vehicles.find((x) => x.id === id);
+  if (!v) return renderVehicles();
+  store.set(LAST_KEY, String(id));
+  history.replaceState(null, '', `#v=${id}`);
+  const W = { v, profile, brands, variants: config.VARIANTS || {}, photo: v.photoUrl || null };
+  showStep(W, step);
+}
+
+const STEPS = [
+  {
+    title: 'Le nom du véhicule',
+    html: ({ v, profile, brands }) => {
+      const brand = brands.find((b) => b.id === v.brandId)?.name || '';
+      const short = profile.heroName && profile.heroName !== v.name ? profile.heroName : profile.heroName || v.name;
+      return `<label>Marque<select name="brandId">${brands.map((b) => `<option value="${b.id}" ${b.id === v.brandId ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select></label>
+        <label>Nom du modèle<input name="name" required maxlength="120" value="${esc(v.name)}" placeholder="ex : V114 Road Edition"></label>
+        <label>Millésime<input name="modelYear" maxlength="20" inputmode="numeric" value="${esc(v.modelYear || '')}" placeholder="ex : 2027"></label>
+        <label>Nom court sur l’accueil de l’appli<input name="heroName" maxlength="60" value="${esc(short)}" placeholder="ex : V114"><span class="hint">Écrit en grand sur l’écran d’accueil du client.</span></label>
+        <label>Mot avant le nom court<input name="heroPrefix" maxlength="30" value="${esc(profile.heroPrefix)}" placeholder="ex : Van, Profilé, Fourgon"></label>
+        <label>Nom complet<input name="fullName" maxlength="120" value="${esc(profile.fullName && profile.fullName !== v.name ? profile.fullName : [brand, v.name, v.modelYear].filter(Boolean).join(' '))}" placeholder="ex : Challenger V114 Road Edition 2027"><span class="hint">Utilisé dans les textes et les demandes de rendez-vous.</span></label>`;
+    },
+    // The full name follows brand, model and year until it is typed by hand.
+    bind: ({ v, profile, brands }, el) => {
+      const full = el.querySelector('[name=fullName]');
+      const hero = el.querySelector('[name=heroName]');
+      const auto = () => [brands.find((b) => b.id === Number(el.querySelector('[name=brandId]').value))?.name, el.querySelector('[name=name]').value.trim(), el.querySelector('[name=modelYear]').value.trim()].filter(Boolean).join(' ');
+      let fullAuto = !profile.fullName || profile.fullName === v.name || full.value === auto();
+      let heroAuto = hero.value === v.name;
+      full.oninput = () => (fullAuto = false);
+      hero.oninput = () => (heroAuto = false);
+      el.oninput = (e) => {
+        if (fullAuto && e.target !== full) full.value = auto();
+        if (heroAuto && e.target.name === 'name') hero.value = e.target.value;
+      };
+      el.querySelector('[name=brandId]').onchange = () => fullAuto && (full.value = auto());
+    },
+    save: async ({ v, profile }, f) => {
+      const name = f.get('name').trim();
+      if (!name) throw new Error('Le nom du modèle est obligatoire');
+      const heroName = f.get('heroName').trim() || name;
+      await api('PUT', `/api/admin/vehicles/${v.id}`, { brandId: Number(f.get('brandId')), name, modelYear: f.get('modelYear') });
+      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, {
+        heroName,
+        heroPrefix: f.get('heroPrefix'),
+        fullName: f.get('fullName').trim() || name,
+        // Customer access codes start with this (ex : V114-ABCD-EFGH); keep one already chosen.
+        codePrefix: profile.codePrefix && profile.codePrefix !== 'CDB' ? profile.codePrefix : prefixOf(heroName) || 'CDB',
+      });
+    },
+  },
+  {
+    title: 'La photo du véhicule',
+    html: ({ photo }) => `<p class="muted" style="margin:0">Une vue d’ensemble, de trois-quarts avant de préférence. C’est la grande photo de l’accueil de l’appli.</p>
+      <button type="button" class="hero-shot ${photo ? 'has' : ''}" data-hero>${photo ? `<img src="${esc(photo)}" alt="">` : '<span>📷<br>Prendre la photo</span>'}</button>
+      ${photo ? '<div class="row2"><button type="button" class="btn" data-hero>📷 Reprendre</button><button type="button" class="btn" data-hero-gallery>🖼️ Galerie</button></div>' : '<button type="button" class="btn" data-hero-gallery>🖼️ Choisir dans la galerie</button>'}`,
+    bind: (W, el) => {
+      const pick = async (camera) => {
+        const img = await takePhoto(camera);
+        if (!img) return;
+        W.newPhoto = img;
+        W.photo = img;
+        showStep(W, W.step);
+      };
+      el.querySelectorAll('[data-hero]').forEach((b) => (b.onclick = () => pick(true)));
+      el.querySelectorAll('[data-hero-gallery]').forEach((b) => (b.onclick = () => pick(false)));
+    },
+    save: async (W) => {
+      if (!W.newPhoto) return;
+      const res = await api('PUT', `/api/admin/vehicles/${W.v.id}`, { photo: W.newPhoto });
+      W.newPhoto = null;
+      W.photo = res.photoUrl;
+      W.v.photoUrl = res.photoUrl;
+    },
+  },
+  {
+    title: 'Les dimensions',
+    html: ({ profile }) => `<label>Hauteur (m)<input name="h" inputmode="decimal" value="${profile.model.h || ''}" placeholder="ex : 2,90"><span class="hint">Hauteur totale, sans les équipements de toit (l’appli les ajoute). Sert pour les ponts et les parkings.</span></label>
+      <label>Longueur (m)<input name="l" inputmode="decimal" value="${profile.model.l || ''}" placeholder="ex : 5,99"><span class="hint">Sans attelage ni porte-vélos (l’appli les ajoute).</span></label>`,
+    save: async ({ v, profile }, f) => {
+      const h = metres(f.get('h'));
+      const l = metres(f.get('l'));
+      if (f.get('h') && !h) throw new Error('Hauteur invalide');
+      if (f.get('l') && !l) throw new Error('Longueur invalide');
+      if (h && h > 5) throw new Error('Hauteur invalide : indiquez-la en mètres (ex : 2,90)');
+      if (l && l > 15) throw new Error('Longueur invalide : indiquez-la en mètres (ex : 5,99)');
+      profile.model = { l: l || 0, h: h || 0 };
+      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { model: profile.model });
+    },
+  },
+  {
+    title: 'Les poids',
+    html: ({ profile }) =>
+      WEIGHTS.map(
+        ([k, label, hint]) => `<label>${esc(label)}<input name="${k}" inputmode="numeric" value="${esc(profile.weights[k] ?? '')}"><span class="hint">${esc(hint)}</span></label>`
+      ).join(''),
+    save: async ({ v, profile }, f) => {
+      const weights = {};
+      for (const [k, label] of WEIGHTS) {
+        const n = numOrNull(f.get(k));
+        if (n === null) throw new Error(`${label} : nombre attendu`);
+        weights[k] = n;
+      }
+      if (weights.mom >= weights.ptac) throw new Error('La masse en ordre de marche doit être inférieure au PTAC');
+      profile.weights = weights;
+      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { weights });
+    },
+  },
+  {
+    title: 'Les types d’équipements',
+    html: ({ profile, variants }) =>
+      `<p class="muted" style="margin:0">L’appli adapte ses explications et ses dépannages à ces réponses. Le client peut les corriger ensuite.</p>` +
+      Object.entries(variants)
+        .map(
+          ([k, V]) => `<fieldset class="choice"><legend>${esc(V.q)}</legend>${[...V.o.filter((o) => o[0] !== 'ns'), ['', 'Je ne sais pas / à préciser par le client']]
+            .map((o) => `<label class="opt"><input type="radio" name="var_${esc(k)}" value="${esc(o[0])}" ${(profile.vars[k] || '') === o[0] ? 'checked' : ''}><span>${esc(o[1])}</span></label>`)
+            .join('')}</fieldset>`
+        )
+        .join(''),
+    save: async ({ v, profile, variants }, f) => {
+      const vars = {};
+      for (const k of Object.keys(variants)) if (f.get(`var_${k}`)) vars[k] = f.get(`var_${k}`);
+      profile.vars = vars;
+      await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { vars });
+    },
+  },
+  {
+    title: 'C’est prêt',
+    html: ({ v, profile, photo, variants }) => `<div class="recap">
+        ${photo ? `<img src="${esc(photo)}" alt="">` : '<p class="error" style="margin:0">Pas de photo du véhicule.</p>'}
+        <dl>
+          <div><dt>Nom complet</dt><dd>${esc(profile.fullName || v.name)}</dd></div>
+          <div><dt>Accueil de l’appli</dt><dd>${esc(profile.heroPrefix)} <strong>${esc(profile.heroName)}</strong></dd></div>
+          <div><dt>Hauteur · longueur</dt><dd>${profile.model.h ? `${Number(profile.model.h).toFixed(2).replace('.', ',')} m` : '—'} · ${profile.model.l ? `${Number(profile.model.l).toFixed(2).replace('.', ',')} m` : '—'}</dd></div>
+          <div><dt>PTAC · ordre de marche</dt><dd>${esc(profile.weights.ptac)} kg · ${esc(profile.weights.mom)} kg</dd></div>
+          <div><dt>Types renseignés</dt><dd>${Object.keys(profile.vars).length} sur ${Object.keys(variants).length}</dd></div>
+          <div><dt>Codes clients</dt><dd>${esc(profile.codePrefix)}-XXXX-XXXX</dd></div>
+        </dl>
+      </div>
+      <p class="muted" style="margin:0">Étape suivante : cochez les équipements présents et photographiez-les.</p>`,
+  },
+];
+
+function showStep(W, step) {
+  W.step = Math.max(0, Math.min(step, STEPS.length - 1));
+  document.getElementById('toast')?.classList.remove('show');
+  const S0 = STEPS[W.step];
+  const last = W.step === STEPS.length - 1;
+  root.innerHTML = `<div class="bar"><div class="bar-row"><button id="wback" aria-label="Retour">‹</button>
+      <h1>${esc(W.v.brandName)} ${esc(W.v.name)}<small>Fiche du véhicule · étape ${W.step + 1} sur ${STEPS.length}</small></h1></div>
+      <div class="progress"><span style="width:${((W.step + 1) / STEPS.length) * 100}%"></span></div></div>
+    <form class="wrap stack" id="wiz" novalidate>
+      <h2 class="step-title">${esc(S0.title)}</h2>
+      ${S0.html(W)}
+      <div class="wiz-nav">
+        ${W.step ? '<button type="button" class="btn" data-prev>Précédent</button>' : ''}
+        <button class="btn primary">${last ? 'Commencer le relevé des équipements' : 'Suivant'}</button>
+      </div>
+      ${last ? '' : '<button type="button" class="linkbtn" data-skip>Passer cette étape</button>'}
+    </form>`;
+  const form = root.querySelector('#wiz');
+  S0.bind?.(W, form);
+  root.querySelector('#wback').onclick = () => (W.step ? showStep(W, W.step - 1) : renderVehicles());
+  form.querySelector('[data-prev]')?.addEventListener('click', () => showStep(W, W.step - 1));
+  form.querySelector('[data-skip]')?.addEventListener('click', () => showStep(W, W.step + 1));
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('.wiz-nav .primary');
+    btn.disabled = true;
+    try {
+      await S0.save?.(W, new FormData(form));
+      if (last) return openVehicle(W.v.id, true);
+      if (W.step === 0) {
+        // Names may have changed: reload them for the title and the recap.
+        const [vehicles, profile] = await Promise.all([api('GET', '/api/admin/vehicles'), api('GET', `/api/admin/vehicles/${W.v.id}/profile`)]);
+        W.v = vehicles.find((x) => x.id === W.v.id) || W.v;
+        W.profile = profile;
+      }
+      showStep(W, W.step + 1);
+      window.scrollTo(0, 0);
+    } catch (err) {
+      btn.disabled = false;
+      toast(err.message, 'error');
+    }
+  });
+  form.querySelector('input:not([type=radio])')?.focus({ preventScroll: true });
 }
 
 // ---------- Saving (one request at a time, retried when the network comes back) ----------
