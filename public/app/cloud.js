@@ -830,11 +830,19 @@
   // Arriving from the "Consulter la réponse" button of an e-mail: sign in with the link, then open the request.
   var linkToken = new URLSearchParams(location.search).get('lien');
   if (linkToken) history.replaceState(null, '', location.pathname + location.hash);
-  if (linkToken && !(session && session.token)) {
+  if (linkToken) {
+    // A link for another customer than the one open on this device switches to that customer.
     root.innerHTML = '<div class="cloud-loading">Connexion…</div>';
     api('POST', '/api/link', { token: linkToken })
-      .then(function (res) { startSession(res); return boot(); })
-      .catch(function (err) { renderWelcome(); toast(err.message); });
+      .then(function (res) {
+        if (!(session && session.token && session.customer && res.customer && session.customer.id === res.customer.id)) startSession(res);
+        return boot();
+      })
+      .catch(function (err) {
+        // Link already used or expired: stay on the account open on this device, if any.
+        if (session && session.token) boot(); else renderWelcome();
+        toast(err.message);
+      });
   } else if (session && session.token) boot();
   else renderWelcome();
 })();

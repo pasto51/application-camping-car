@@ -69,6 +69,20 @@ Le **code d'accès** est conservé chiffré : la fiche client du back-office l'a
 - **Contenu** : chaque enregistrement dans le back-office est publié. L'application le reçoit à sa prochaine ouverture, ou propose « Mettre à jour ».
 - **Application** : à chaque déploiement du serveur, le *service worker* détecte la nouvelle version et le client voit « Mettre à jour ». Rien à republier sur les stores.
 
+## Démo pour essayer en vrai
+
+Sur le serveur, dans le dossier de l'application :
+
+```bash
+node server/demo.js vous@gmail.com   # crée 3 concessions DÉMO, leurs équipes, 9 clients et leurs demandes, puis affiche les accès
+node server/demo.js --supprimer      # efface toute la démo (la concession DEMO2026 et les vraies données ne sont pas touchées)
+```
+
+- Comptes du back-office en `@demo.test`, mot de passe `demo1234`.
+- Pour chaque client : un lien qui ouvre son appli (une seule fois, 14 jours) et son nom + code d'accès (« J'ai déjà un compte »). Ouvrir le lien d'un autre client dans le même navigateur change de client.
+- Avec votre adresse en argument, les e-mails des services et des clients démo arrivent chez vous (`vous+sav-nantes@gmail.com`, `vous+client-paul@gmail.com`…), une fois l'envoi des e-mails configuré.
+- Relancer la commande recrée une démo propre.
+
 ## Importer une nouvelle version de l'application (V49…)
 
 Le moteur de l'application est généré à partir du fichier HTML unique fourni par son créateur :
