@@ -406,7 +406,7 @@ function register(router) {
     };
   }
   router.get('/api/admin/equipment', (ctx) => {
-    auth(ctx);
+    contentOnly(ctx);
     return ctx.db.prepare('SELECT sort, data FROM equipment ORDER BY sort, id').all().map((r) => ({ ...JSON.parse(r.data), sort: r.sort }));
   });
 
@@ -488,7 +488,7 @@ function register(router) {
   }
 
   router.get('/api/admin/diagnostics', (ctx) => {
-    auth(ctx);
+    contentOnly(ctx);
     return ctx.db
       .prepare('SELECT id, sort, data, updated_at FROM diagnostics ORDER BY sort, id')
       .all()
@@ -499,7 +499,7 @@ function register(router) {
   });
 
   router.get('/api/admin/diagnostics/:id', (ctx) => {
-    auth(ctx);
+    contentOnly(ctx);
     const row = ctx.db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(ctx.params.id);
     if (!row) throw new HttpError(404, 'Diagnostic introuvable');
     return JSON.parse(row.data);
@@ -535,7 +535,7 @@ function register(router) {
 
   // Lists (arrival/departure), reminders, workshop reasons, game steps, equipment sections, settings.
   router.get('/api/admin/catalog/:key', (ctx) => {
-    auth(ctx);
+    contentOnly(ctx);
     if (!CATALOG_KEYS.includes(ctx.params.key)) throw new HttpError(404, 'Rubrique inconnue');
     return { key: ctx.params.key, value: getCatalogValue(ctx.db, ctx.params.key) };
   });

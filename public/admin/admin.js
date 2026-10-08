@@ -93,9 +93,9 @@ function sections() {
     ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales' && !isEditor()],
     ['customers', '👥', 'Clients', !isEditor()],
     ['vehicles', '🚐', 'Véhicules', canEditContent()],
-    ['diagnostics', '🛠️', 'Diagnostics (pannes)', true],
-    ['equipment', '🧰', 'Équipements', true],
-    ['content', '📋', 'Contenus de l’appli', true],
+    ['diagnostics', '🛠️', 'Diagnostics (pannes)', canEditContent()],
+    ['equipment', '🧰', 'Équipements', canEditContent()],
+    ['content', '📋', 'Contenus de l’appli', canEditContent()],
     ['brands', '🏷️', 'Marques', canEditContent()],
     ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor()],
     ['users', '🔑', isAdmin() ? 'Utilisateurs' : 'Mon équipe', isManager()],
@@ -311,10 +311,10 @@ const VIEWS = {
     const tiles = [
       ...(state.user.role === 'sales' ? [] : [[myService() ? `Demandes ${myService() === 'sav' ? 'SAV' : 'magasin'} à traiter` : 'Demandes à traiter', s.openReports, 'reports']]),
       ['Clients', s.customers, 'customers'],
-      ['Diagnostics', s.diagnostics, 'diagnostics'],
-      ['Équipements', s.equipment, 'equipment'],
       ...(isAdmin()
         ? [
+            ['Diagnostics', s.diagnostics, 'diagnostics'],
+            ['Équipements', s.equipment, 'equipment'],
             ['Véhicules', s.vehicles, 'vehicles'],
             ['Marques', s.brands, 'brands'],
             ['Concessions', s.dealerships, 'dealerships'],

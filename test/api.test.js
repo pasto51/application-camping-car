@@ -179,7 +179,7 @@ test('back-office edits the catalogue and the app receives it', async () => {
   await call('POST', '/api/admin/users', { token: admin, body: { email: 'vendeur@test.fr', password: 'vendeur1234', role: 'dealer', dealershipId: 1 } });
   const dealer = await login('vendeur@test.fr', 'vendeur1234');
   assert.equal((await call('PUT', '/api/admin/equipment/frigo', { token: dealer, body: { tip: 'x' } })).status, 403);
-  assert.equal((await call('GET', '/api/admin/diagnostics', { token: dealer })).status, 200);
+  for (const url of ['/api/admin/diagnostics', '/api/admin/equipment', '/api/admin/catalog/lists']) assert.equal((await call('GET', url, { token: dealer })).status, 403, url);
 });
 
 test('a dealer only sees its own customers', async () => {
