@@ -7,10 +7,10 @@
 //   node server/demo.js                    → crée (ou recrée) la démo et affiche les accès
 //   node server/demo.js vous@gmail.com     → idem, et les e-mails des services et des clients arrivent chez vous
 //                                            (vous+sav-nantes@gmail.com, vous+client-paul@gmail.com…)
+//   node server/demo.js --nom "Camping-Cars Dupont"  → la 1re concession porte le nom du prospect (présentation commerciale)
 //   node server/demo.js --supprimer        → efface toute la démo
 //   SITE_URL=https://mon-site.fr node server/demo.js   → adresse du site dans les liens (par défaut appvdl.alwaysdata.net)
 
-const http = require('node:http');
 const { createApp } = require('./app');
 const { signToken } = require('./auth');
 
@@ -18,7 +18,10 @@ const PASSWORD = 'demo1234';
 const SITE = new URL(process.env.SITE_URL || 'https://appvdl.alwaysdata.net');
 const args = process.argv.slice(2);
 const remove = args.includes('--supprimer');
-const inbox = args.find((a) => a.includes('@'));
+const inbox = args.find((a) => a.includes('@') && !a.startsWith('--'));
+// Prospect's name for a sales presentation: shown on the first dealership (the one with SAV and store on site).
+const nameAt = args.indexOf('--nom');
+const prospect = nameAt >= 0 ? String(args[nameAt + 1] || '').trim().slice(0, 80) : '';
 
 // Plus addressing (vous+tag@domaine): every demo e-mail reaches the person testing, with its destination in the address.
 const mailbox = (tag) => {
@@ -93,7 +96,7 @@ async function main() {
   const DEALERS = [
     {
       key: 'nantes',
-      name: 'DÉMO – Évasion Loisirs Nantes',
+      name: prospect ? `DÉMO – ${prospect}` : 'DÉMO – Évasion Loisirs Nantes',
       code: 'DEMONANT',
       city: 'Nantes',
       phone: '02 40 00 00 00',

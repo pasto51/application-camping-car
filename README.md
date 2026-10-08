@@ -82,6 +82,7 @@ node server/demo.js --supprimer      # efface toute la démo (la concession DEMO
 - Pour chaque client : un lien qui ouvre son appli (une seule fois, 14 jours) et son nom + code d'accès (« J'ai déjà un compte »). Ouvrir le lien d'un autre client dans le même navigateur change de client.
 - Avec votre adresse en argument, les e-mails des services et des clients démo arrivent chez vous (`vous+sav-nantes@gmail.com`, `vous+client-paul@gmail.com`…), une fois l'envoi des e-mails configuré.
 - Relancer la commande recrée une démo propre.
+- `--nom "Camping-Cars Dupont"` : la première concession porte le nom du prospect. Déroulé d'une présentation commerciale : [docs/DEMO-PRESENTATION.md](docs/DEMO-PRESENTATION.md).
 
 ## Importer une nouvelle version de l'application (V49…)
 
