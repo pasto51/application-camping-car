@@ -13,6 +13,8 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 - **Immatriculation** : aucune, nulle part.
 - **Équipements** : ne jamais pré-cocher d'équipements « de série ». C'est lui qui coche pour chaque véhicule (relevé).
 - **Plans** : dessinés dans notre style, jamais copiés des catalogues.
+- **Diagnostics = solution magasin** : chaque fin de parcours met en avant un produit vendu en magasin d'accessoires de camping-car (produit spécialisé), jamais de remède maison (vinaigre, bicarbonate, savon, chiffon, ruban adhésif, « système D »). Pas de référence de pièce. « Aucun produit nécessaire » seulement si aucun produit n'a de sens.
+- **Pas de diagnostic groupe électrogène** (ne l'intéresse pas).
 - Demandes : sous garantie ou extension → SAV ; hors garantie ou accessoire → magasin ; atelier (étanchéité, gaz…) → SAV. Un e-mail par service, pas d'e-mail aux commerciaux ni au responsable.
 
 ## Démo commerciale — à garder à jour

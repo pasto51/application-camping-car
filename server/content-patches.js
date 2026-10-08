@@ -7,6 +7,8 @@
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
 const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
+// Store first: specialised products sold in the store instead of home remedies (see CLAUDE.md).
+const STORE_PRODUCTS = require('./seed/diag-magasin.json');
 
 const PATCHES = [
   {
@@ -106,7 +108,7 @@ const PATCHES = [
     },
   },
   {
-    // Written from the composition of the equipment (spare-parts catalogue): generator, bike rack, store parts that wear.
+    // Written from the composition of the equipment (spare-parts catalogue): bike rack, store parts that wear.
     // A diagnostic already there (same id) and store answers already there are left as they are.
     key: '2026-10-11-pieces-groupe-porte-velos-store',
     run: (db) => {
@@ -134,6 +136,41 @@ const PATCHES = [
         if (added) {
           db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(store), 'h_store');
           changed += added;
+        }
+      }
+      return changed;
+    },
+  },
+  {
+    // The generator diagnostic is not wanted: removed where an earlier version had added it.
+    key: '2026-10-11-sans-groupe-electrogene',
+    run: (db) => db.prepare("DELETE FROM diagnostics WHERE id = 'g_groupe'").run().changes,
+  },
+  {
+    // Every end point puts forward the store's product: no home remedy. An end point is only changed if it still has
+    // the text it had when this list was written (a back-office edit wins).
+    key: '2026-10-11-solution-magasin',
+    run: (db) => {
+      let changed = 0;
+      const byId = new Map();
+      for (const e of STORE_PRODUCTS) byId.set(e.id, [...(byId.get(e.id) || []), e]);
+      for (const [id, edits] of byId) {
+        const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data);
+        let n = 0;
+        for (const e of edits) {
+          let leaf = data.tree;
+          for (const i of e.path) leaf = leaf && Array.isArray(leaf.n) ? leaf.n[i] : null;
+          if (!leaf || Array.isArray(leaf.n) || leaf.cause !== e.cause) continue;
+          if (e.from.prod !== undefined && leaf.prod !== e.from.prod) continue;
+          if (e.from.geste !== undefined && leaf.geste !== e.from.geste) continue;
+          Object.assign(leaf, e.to);
+          n++;
+        }
+        if (n) {
+          db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(data), id);
+          changed += n;
         }
       }
       return changed;

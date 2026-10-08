@@ -29,7 +29,7 @@ Mot de passe de tous les comptes démo : `demo1234`. Les liens clients ne serven
 1. **Le client, sur le téléphone (Paul Morel)**
    - Accueil : son véhicule, son plan, le SAV et le Magasin de **sa** concession, chacun avec « Appeler » et « Écrire » ; un espace client simple, en gros caractères.
    - « La concession vous a répondu » : il lit la réponse du SAV et répond.
-   - **Diagnostic** : une panne guidée pas à pas, le client teste pièce par pièce (ex. « Mon store s'ouvre un peu en roulant », « Mon groupe électrogène ne démarre pas »).
+   - **Diagnostic** : une panne guidée pas à pas, le client teste pièce par pièce (ex. « Mon store s'ouvre un peu en roulant », « Mon porte-vélos bouge en roulant »).
    - **🛒 Demander une pièce** : photo, modèle, référence. Sous garantie, la demande part **au SAV** ; hors garantie, **au magasin**.
    - **Mon espace client** : ses infos, sa garantie, son code, ses notifications, l'export ou la suppression de ses données (RGPD).
 2. **La concession, sur le PC**
