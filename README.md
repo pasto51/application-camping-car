@@ -120,7 +120,7 @@ Tests : `npm test`
 - Chaque jour (à partir de 7 h), le serveur copie la base dans `data/sauvegardes/app-AAAA-MM-JJ.db` et garde les 14 derniers jours.
 - Back-office → **Paramètres → Sauvegardes** (administrateur) : liste, « Sauvegarder maintenant » et « Télécharger ». Téléchargez-en une régulièrement pour la garder chez vous.
 - **Sauvegarde complète** chaque semaine (et bouton « Faire une sauvegarde complète maintenant ») : `data/sauvegardes/site-AAAA-MM-JJ.tar.gz` avec la base, les photos (`data/uploads`) et les clés du site ; les 4 dernières sont gardées. **À télécharger sur votre ordinateur une fois par mois.**
-- **Remettre le site en ligne** (mise à jour ratée, données abîmées, serveur perdu) : voir **[docs/SAUVEGARDE-ET-RESTAURATION.md](docs/SAUVEGARDE-ET-RESTAURATION.md)**. Le code du 9 octobre 2026 est marqué par le repère `sauvegarde-2026-10-09`.
+- **Remettre le site en ligne** (mise à jour ratée, données abîmées, serveur perdu) : voir **[docs/SAUVEGARDE-ET-RESTAURATION.md](docs/SAUVEGARDE-ET-RESTAURATION.md)**. Le code du 9 octobre 2026 a pour identifiant `43636a525d`.
 - **Restaurer** : sur alwaysdata, **Web → Sites → Arrêter** le site, puis dans le terminal :
   ```bash
   cd ~/application-camping-car && cp data/app.db data/app-avant-restauration.db && cp data/sauvegardes/app-AAAA-MM-JJ.db data/app.db && rm -f data/app.db-wal data/app.db-shm

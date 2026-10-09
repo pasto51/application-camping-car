@@ -30,7 +30,7 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 ## Sauvegardes
 
 - Sauvegarde complète hebdomadaire (base + photos + clés) dans Paramètres → Sauvegardes ; mode d'emploi pour remettre le site en ligne : `docs/SAUVEGARDE-ET-RESTAURATION.md`.
-- Repères du code (tags git) : `sauvegarde-2026-10-09`. En poser un nouveau quand l'utilisateur demande de figer une version.
+- Versions figées du code (identifiants de commit, la session ne peut pas pousser de tag) : 9 octobre 2026 = `43636a525d`. En noter une nouvelle quand l'utilisateur demande de figer une version.
 
 ## Vérifier avant de pousser
 

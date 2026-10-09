@@ -2,8 +2,8 @@
 
 Le site est fait de **deux choses** :
 
-1. **Le code** (les programmes) : il est sur GitHub. La version du **9 octobre 2026** est marquée par le repère
-   **`sauvegarde-2026-10-09`**. On peut y revenir à tout moment.
+1. **Le code** (les programmes) : il est sur GitHub. La version du **9 octobre 2026** a pour identifiant
+   **`43636a525d`** (à garder précieusement). On peut y revenir à tout moment.
 2. **Les données** (clients, demandes, contenus, comptes, **photos**, clés du site) : elles sont sur le serveur alwaysdata,
    dans le dossier `data`. Elles changent tous les jours : il faut donc les sauvegarder régulièrement.
 
@@ -27,7 +27,7 @@ Ce fichier est **confidentiel** (données des clients et clés du site) : ne l'e
 Les données ne bougent pas, seul le code revient en arrière. Dans la console SSH d'alwaysdata, copiez-collez :
 
 ```
-cd ~/application-camping-car && git fetch --tags && git checkout sauvegarde-2026-10-09 && echo OK
+cd ~/application-camping-car && git fetch origin && git checkout 43636a525d && echo OK
 ```
 
 Puis **Web → Sites → Redémarrer**. En bas du menu du back-office, la version change.
@@ -60,7 +60,7 @@ Il faut : le code (GitHub) et **la sauvegarde complète téléchargée sur votre
 
 1. Sur le nouveau serveur, dans la console SSH, récupérez le code à la version du 9 octobre 2026 :
    ```
-   cd ~ && git clone https://github.com/pasto51/application-camping-car.git && cd application-camping-car && git checkout sauvegarde-2026-10-09 && echo OK
+   cd ~ && git clone https://github.com/pasto51/application-camping-car.git && cd application-camping-car && git checkout 43636a525d && echo OK
    ```
    (Pour la dernière version à la place : `git checkout claude/app-vehicles-cloud-backoffice-gaifle`.)
 2. Envoyez le fichier `site-AAAA-MM-JJ.tar.gz` de votre ordinateur vers le dossier `~` du serveur, avec FileZilla
