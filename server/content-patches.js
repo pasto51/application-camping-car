@@ -8,6 +8,7 @@ const { getSetting, setSetting, bumpContentVersion, transaction } = require('./d
 const { seedStarterTips } = require('./tips');
 const { CLIENTS_2026_10 } = require('./diagnostics-clients');
 const { CLIENTS_2026_10_B } = require('./diagnostics-clients-2');
+const { CLIENTS_2026_10_C } = require('./diagnostics-clients-3');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -371,6 +372,24 @@ const PATCHES = [
       }
       const fuite = CLIENTS_2026_10.find((d) => d.id === 'p_fuite');
       changed += db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = 'p_fuite'").run(JSON.stringify(fuite)).changes;
+      return changed;
+    },
+  },
+  {
+    // The customer diagnostics added in October rewritten as funnels (symptom, then checks from the simplest, the
+    // workshop last), and the manual dish: pointer, mast and folding, cable, receiver and card.
+    key: '2026-10-19-entonnoir-antenne',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of [...CLIENTS_2026_10, ...CLIENTS_2026_10_B, ...CLIENTS_2026_10_C]) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) {
+          db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), d.id);
+        } else {
+          db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        }
+        changed++;
+      }
       return changed;
     },
   },

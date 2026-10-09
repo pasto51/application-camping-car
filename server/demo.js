@@ -94,6 +94,7 @@ const USAGE = [
   ['p_porte', FLAT, 3, ['porte cellule ferme mal', 'porte premier cran']],
   ['p_baie', SUMMER, 3, ['baie retombe', 'fenêtre rayée']],
   ['p_carburant', FLAT, 1, ['gazole dans réservoir eau']],
+  ['p_pointeur', SUMMER, 4, ['pointeur satellite calibre pas', 'antenne ne trouve pas satellite']],
 ];
 const UNANSWERED = ['remorque', 'attelage', 'starlink', 'panneau grêle'];
 
