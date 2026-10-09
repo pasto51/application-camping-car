@@ -1,6 +1,6 @@
 'use strict';
 
-const { HttpError } = require('../http');
+const { HttpError, PreparedJson } = require('../http');
 const { transaction, getSetting, stripVin, bumpContentVersion } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
@@ -13,7 +13,9 @@ const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('
 // Storage keys of the Compagnon de bord app that are saved in the cloud.
 const STATE_KEYS = new Set(['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand']);
 const PHOTO_KEYS = new Set(['cdb_uph', 'cdb_photo']);
-const MAX_STATE_BYTES = 30 * 1024 * 1024;
+const MAX_STATE_BYTES = 30 * 1024 * 1024; // photo keys: the photos arrive here, then become files
+const MAX_TEXT_STATE_BYTES = 512 * 1024; // other keys (equipment ticked, weights…)
+const MAX_CUSTOMER_STATE_BYTES = 3 * 1024 * 1024; // everything a customer keeps, photos as files aside
 const ACCESS_YEARS = 2;
 
 // Access codes look like "V114-ABCD-EFGH"; only the 8 random characters are checked.
@@ -29,12 +31,16 @@ function register(router) {
   const codeLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
   const restoreLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
 
+  // Only wrong codes count (30 per address in 15 minutes): the handovers of a busy day are never blocked.
   function findDealershipByCode(db, code, ip) {
-    if (codeLimiter(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
+    if (codeLimiter.reached(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
     const normalized = normalizeCode(code);
     if (!normalized) throw new HttpError(400, 'Code concession obligatoire');
     const row = db.prepare('SELECT id, name, city, phone, email FROM dealerships WHERE code = ? AND active = 1').get(normalized);
-    if (!row) throw new HttpError(404, 'Code concession inconnu');
+    if (!row) {
+      codeLimiter(ip);
+      throw new HttpError(404, 'Code concession inconnu');
+    }
     return row;
   }
 
@@ -59,11 +65,16 @@ function register(router) {
     const header = ctx.req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
     if (!token) throw new HttpError(401, 'Session requise');
+    const hash = sha256(token);
+    // A phone not used for a year is signed out (lost or sold phone); otherwise the session lasts.
     const row = ctx.db
-      .prepare('SELECT c.* FROM customer_sessions s JOIN customers c ON c.id = s.customer_id WHERE s.token_hash = ?')
-      .get(sha256(token));
+      .prepare("SELECT c.*, s.last_used_at AS session_used_at FROM customer_sessions s JOIN customers c ON c.id = s.customer_id WHERE s.token_hash = ? AND COALESCE(s.last_used_at, s.created_at) > datetime('now', '-365 days')")
+      .get(hash);
     if (!row) throw new HttpError(401, 'Session expirée, utilisez votre code d’accès');
-    ctx.tokenHash = sha256(token);
+    const today = new Date().toISOString().slice(0, 10);
+    if (!row.session_used_at || row.session_used_at.slice(0, 10) < today) ctx.db.prepare("UPDATE customer_sessions SET last_used_at = datetime('now') WHERE token_hash = ?").run(hash);
+    delete row.session_used_at;
+    ctx.tokenHash = hash;
     return row;
   }
 
@@ -190,6 +201,7 @@ function register(router) {
     if (core.length !== 8) throw new HttpError(400, 'Code d’accès incomplet');
     const customer = db.prepare('SELECT * FROM customers WHERE recovery_hash = ? AND lower(last_name) = lower(?)').get(sha256(core), lastName);
     if (!customer) throw new HttpError(404, 'Aucun compte ne correspond à ce nom et ce code');
+    if (customer.access_expires_at && customer.access_expires_at < new Date().toISOString()) throw new HttpError(403, 'Ce code d’accès a expiré : demandez-en un nouveau à votre concession');
     return { token: createSession(db, customer.id), ...session(db, customer) };
   });
 
@@ -209,14 +221,32 @@ function register(router) {
   router.get('/api/me', (ctx) => session(ctx.db, requireCustomer(ctx)));
 
   // Catalogue + vehicle profile + dealership: the data the app runs on.
+  // The same for every customer of a vehicle and a dealership (except the banner): built once, kept ready while nothing
+  // changes (content version, vehicle, dealership, announcement, banner), so that many customers opening the app at the
+  // same moment do not keep the server busy.
+  const appDataCache = new Map();
   router.get('/api/app/data', (ctx) => {
     const customer = requireCustomer(ctx);
-    return {
-      contentVersion: Number(getSetting(ctx.db, 'content_version', '0')),
-      announcement: getSetting(ctx.db, 'announcement', null),
-      ...appData(ctx.db, { vehicleId: customer.vehicle_id, dealershipId: customer.dealership_id }),
-      featured: bannerFor(ctx.db, customer),
-    };
+    const { db } = ctx;
+    const featured = bannerFor(db, customer);
+    const contentVersion = Number(getSetting(db, 'content_version', '0'));
+    const announcement = getSetting(db, 'announcement', null);
+    const key = sha256(
+      JSON.stringify([
+        contentVersion,
+        announcement,
+        featured,
+        db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id),
+        db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id),
+      ])
+    );
+    let prepared = appDataCache.get(key);
+    if (!prepared) {
+      prepared = new PreparedJson({ contentVersion, announcement, ...appData(db, { vehicleId: customer.vehicle_id, dealershipId: customer.dealership_id }), featured });
+      if (appDataCache.size >= 100) appDataCache.delete(appDataCache.keys().next().value);
+      appDataCache.set(key, prepared);
+    }
+    return prepared;
   });
 
   // The « À la une » banner for this customer today (asked at each start: dates and time since the handover change).
@@ -229,9 +259,11 @@ function register(router) {
     if (!STATE_KEYS.has(params.key)) throw new HttpError(400, 'Donnée inconnue');
     let value = body.value == null ? null : String(body.value);
     if (params.key === 'cdb_hand' && value) value = stripVin(value);
-    if (value && value.length > MAX_STATE_BYTES) throw new HttpError(413, 'Données trop volumineuses');
+    if (value && value.length > (PHOTO_KEYS.has(params.key) ? MAX_STATE_BYTES : MAX_TEXT_STATE_BYTES)) throw new HttpError(413, 'Données trop volumineuses');
     const previous = db.prepare('SELECT value FROM customer_state WHERE customer_id = ? AND key = ?').get(customer.id, params.key)?.value ?? null;
     const stored = PHOTO_KEYS.has(params.key) ? storePhotos(uploads, params.key, value, previous) : value;
+    const others = db.prepare('SELECT COALESCE(SUM(LENGTH(value)), 0) AS n FROM customer_state WHERE customer_id = ? AND key != ?').get(customer.id, params.key).n;
+    if (stored && others + stored.length > MAX_CUSTOMER_STATE_BYTES) throw new HttpError(413, 'Données trop volumineuses');
     if (stored == null) {
       db.prepare('DELETE FROM customer_state WHERE customer_id = ? AND key = ?').run(customer.id, params.key);
     } else {
@@ -315,8 +347,14 @@ function register(router) {
   }
 
   // Spare part or replacement equipment: everything the store needs to identify it, sent to the store's e-mail.
+  // A customer sends at most 15 requests (parts or workshop) and 60 messages a day: enough for real needs, no flood of
+  // e-mails to the dealership.
+  const requestLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 15 });
+  const messageLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 60 });
+  const tooMany = () => new HttpError(429, 'Vous avez envoyé beaucoup de demandes aujourd’hui : appelez votre concession, ou réessayez demain.');
   router.post('/api/me/parts', (ctx) => {
     const customer = requireCustomer(ctx);
+    if (requestLimiter(`c${customer.id}`)) throw tooMany();
     const { db, body } = ctx;
     const need = NEEDS[body.need] ? body.need : 'piece';
     const equipmentName = optStr(body.equipmentName, 120);
@@ -371,6 +409,7 @@ function register(router) {
   // Workshop appointment request or problem, sent to the dealership (which is told by e-mail).
   router.post('/api/me/requests', (ctx) => {
     const customer = requireCustomer(ctx);
+    if (requestLimiter(`c${customer.id}`)) throw tooMany();
     const { db, body } = ctx;
     const title = reqStr(body.title, 'Motif', 150);
     const parts = [optStr(body.message, 4000), body.period ? `Délai souhaité : ${optStr(body.period, 50)}` : null, body.phone ? `Téléphone : ${optStr(body.phone, 40)}` : null];
@@ -439,7 +478,10 @@ function register(router) {
     let saved = 0;
     for (const e of list) {
       if (!e || !EVENT_KINDS.includes(e.kind)) continue;
-      const query = e.kind === 'search' ? text(e.q, 80)?.toLowerCase() : null;
+      // A VIN or a number plate typed in the search is never kept (the owner's rule: none on the server).
+      let query = e.kind === 'search' ? text(e.q, 80)?.toLowerCase() : null;
+      const vinLike = (t) => /^[a-z0-9]{17}$/i.test(t) && (t.match(/\d/g) || []).length >= 2;
+      if (query && (query.split(/[\s,;.]+/).some(vinLike) || /\b[a-z]{2}[\s-]?\d{3}[\s-]?[a-z]{2}\b/i.test(query) || /\b\d{1,4}[\s-]?[a-z]{2,3}[\s-]?\d{2}\b/i.test(query))) query = '(numéro masqué)';
       if (e.kind === 'search' && (!query || query.length < 3)) continue;
       insert.run(month, e.kind, text(e.id, 40), text(e.label, 160), query, text(e.prod, 160), Number.isInteger(e.n) ? e.n : null, customer.dealership_id, type);
       saved++;
@@ -450,6 +492,7 @@ function register(router) {
   // The customer answers in the conversation of one of their requests.
   router.post('/api/me/requests/:id/messages', (ctx) => {
     const customer = requireCustomer(ctx);
+    if (messageLimiter(`c${customer.id}`)) throw tooMany();
     const { db } = ctx;
     const report = db.prepare('SELECT * FROM reports WHERE id = ? AND customer_id = ?').get(Number(ctx.params.id), customer.id);
     if (!report) throw new HttpError(404, 'Demande introuvable');

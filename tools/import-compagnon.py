@@ -605,6 +605,9 @@ def main():
   renderChecks();
 ''' + s[b:]
     s = replace_once(s, 'if(id==="hand") renderHand();', 'if(id==="hand") renderHand();\n    if(id==="daily") renderChecks();')
+    # Zones of the plan: escaped like every other text (the server also checks them).
+    s = replace_once(s, '\'" data-id="\'+s.id+\'" tabindex="0"', '\'" data-id="\'+esc(s.id)+\'" tabindex="0"')
+    s = replace_once(s, '<circle class="dot" r="26"/><text>\'+s.n+\'</text></g>', '<circle class="dot" r="26"/><text>\'+esc(s.n)+\'</text></g>')
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head

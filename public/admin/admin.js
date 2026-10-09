@@ -917,8 +917,10 @@ const VIEWS = {
       e.preventDefault();
       const f = new FormData(e.target);
       try {
-        await api('PUT', '/api/admin/password', { currentPassword: f.get('currentPassword'), newPassword: f.get('newPassword') });
-        toast('Mot de passe changé');
+        const r = await api('PUT', '/api/admin/password', { currentPassword: f.get('currentPassword'), newPassword: f.get('newPassword') });
+        // The other devices are signed out; this one keeps a fresh session.
+        if (r.token) setToken(r.token);
+        toast('Mot de passe changé : vos autres appareils sont déconnectés');
         e.target.reset();
       } catch (err) {
         toast(err.message, 'error');
@@ -1266,7 +1268,7 @@ async function customerDetail(el, id) {
   el.innerHTML = `${pageHeader(
     [c.firstName, c.lastName].filter(Boolean).join(' '),
     `<button class="btn" data-act="back">← Retour</button>
-     ${c.canManage ? '<button class="btn" data-act="edit">Modifier</button><button class="btn" data-act="recovery">Nouveau code d’accès</button>' : ''}
+     ${c.canManage ? '<button class="btn" data-act="edit">Modifier</button><button class="btn" data-act="recovery">Nouveau code d’accès</button><button class="btn" data-act="signout">Déconnecter ses téléphones</button>' : ''}
      ${isAdmin() ? '<button class="btn danger" data-act="del">Supprimer</button>' : ''}`
   )}
     ${c.canManage ? '' : `<div class="card warn-card">Ce client est suivi par ${esc(c.salespersonName || 'un autre commercial')} : vous pouvez consulter sa fiche, mais pas la modifier. Le responsable de la concession peut vous le confier.</div>`}
@@ -1403,6 +1405,16 @@ async function customerDetail(el, id) {
           customerDetail(el, id);
         },
       }),
+    // Lost or stolen phone: the customer's devices are signed out (they come back with their access code).
+    signout: async () => {
+      if (!confirm('Déconnecter tous les téléphones de ce client (téléphone perdu ou volé) ? Il pourra revenir avec son code d’accès.')) return;
+      try {
+        const r = await api('POST', `/api/admin/customers/${id}/signout`);
+        toast(`${r.sessions} téléphone(s) déconnecté(s)`);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    },
     recovery: async () => {
       if (!confirm('Générer un nouveau code d’accès (code perdu ou renouvellement) ? L’ancien code ne fonctionnera plus.')) return;
       const sendEmail = !!c.email && confirm(`Envoyer aussi le nouveau code et le bouton « Ouvrir mon application » par e-mail à ${c.email} ?`);

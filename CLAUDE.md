@@ -32,6 +32,13 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 - Sauvegarde complète hebdomadaire (base + photos + clés) dans Paramètres → Sauvegardes ; mode d'emploi pour remettre le site en ligne : `docs/SAUVEGARDE-ET-RESTAURATION.md`.
 - Versions figées du code (identifiants de commit, la session ne peut pas pousser de tag) : 9 octobre 2026 = `43636a525d`. En noter une nouvelle quand l'utilisateur demande de figer une version.
 
+## Sécurité (audit du 9 octobre 2026 : `docs/AUDIT-SECURITE.md`)
+
+- Tout texte venant d'un utilisateur s'affiche avec `esc()` ; toute donnée structurée (zones du plan, variantes…) est reconstruite champ par champ côté serveur.
+- Corps de requête : 256 Ko sans session, 40 Mo seulement avec une session valide.
+- Adresse du site dans les e-mails : `publicOrigin()` (jamais un en-tête inventé) ; `site_origin` enregistré après un bon mot de passe.
+- Limites anti-abus par vraie adresse (`clientIp`) et par compte ou client.
+
 ## Vérifier avant de pousser
 
 - `npm test`.

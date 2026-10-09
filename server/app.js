@@ -13,12 +13,13 @@ const { applyContentPatches } = require('./content-patches');
 const { migrateFeatured } = require('./banners');
 const { loadVapidKeys } = require('./webpush');
 const { createNotifier } = require('./notify');
-const { randomToken, sha256 } = require('./auth');
+const { randomToken, sha256, verifyToken } = require('./auth');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
-const BODY_LIMIT = 40 * 1024 * 1024; // report with several photos as data URLs
+const BODY_LIMIT = 40 * 1024 * 1024; // report with several photos as data URLs (signed-in users only)
+const SMALL_BODY_LIMIT = 256 * 1024;
 
 // Hash of the front-end files: it changes on each deploy, which makes the service worker update the installed app.
 function computeAppVersion() {
@@ -66,11 +67,24 @@ function createApp(options = {}) {
   publicRoutes.register(router);
   adminRoutes.register(router);
 
+  // Requests without photos are small: a large body (up to 40 MB of photos) is read only for a signed-in user, so that an
+  // anonymous visitor cannot fill the memory of the server.
+  function bodyLimit(req, pathname) {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+    if (pathname.startsWith('/api/admin/')) {
+      if (token ? verifyToken(token, config.secret) : config.isOpenAccess()) return BODY_LIMIT;
+    } else if (pathname.startsWith('/api/me/') && token) {
+      if (db.prepare('SELECT 1 FROM customer_sessions WHERE token_hash = ?').get(sha256(token))) return BODY_LIMIT;
+    }
+    return SMALL_BODY_LIMIT;
+  }
+
   async function handleApi(req, res, url) {
     const found = router.match(req.method, url.pathname);
     if (!found) throw new HttpError(404, 'Route inconnue');
     if (found.methodNotAllowed) throw new HttpError(405, 'Méthode non autorisée');
-    const body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ? await readJsonBody(req, BODY_LIMIT) : {};
+    const body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ? await readJsonBody(req, bodyLimit(req, url.pathname)) : {};
     const ctx = {
       req,
       res,
@@ -80,11 +94,11 @@ function createApp(options = {}) {
       body: body && typeof body === 'object' ? body : {},
       params: found.route ? found.params : {},
       query: url.searchParams,
-      ip: req.socket.remoteAddress || 'unknown',
+      ip: clientIp(req),
       notify,
       createLoginLink,
       // Public address of the site, for links in e-mails (the host may sit behind an HTTPS proxy).
-      origin: `${String(req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http')).split(',')[0]}://${String(req.headers['x-forwarded-host'] || req.headers.host).split(',')[0]}`,
+      origin: publicOrigin(req),
     };
     let result;
     for (const handler of found.route.handlers) result = await handler(ctx);
@@ -117,9 +131,20 @@ function createApp(options = {}) {
   }
 
   const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url, 'http://localhost');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'same-origin');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // No page of another site can frame ours, no plugin, no foreign <base>; HTTPS remembered by the browser.
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'; object-src 'none'; base-uri 'self'");
+    if (String(req.headers['x-forwarded-proto'] || '').split(',').pop().trim() === 'https' || req.socket.encrypted) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+    let url;
+    try {
+      // A malformed address (« GET //[ ») must not stop the server.
+      url = new URL(req.url, 'http://localhost');
+    } catch {
+      res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+      return res.end('Adresse invalide');
+    }
     try {
       if (url.pathname.startsWith('/api/')) await handleApi(req, res, url);
       else if (req.method === 'GET' || req.method === 'HEAD') handleStatic(req, res, url);
@@ -127,12 +152,33 @@ function createApp(options = {}) {
     } catch (err) {
       const status = err instanceof HttpError ? err.status : 500;
       if (status === 500) log('[error]', err);
-      if (!res.headersSent) sendJson(res, status, { error: status === 500 ? 'Erreur interne du serveur' : err.message });
+      if (!res.headersSent) sendJson(res, status, { error: status === 500 ? 'Erreur interne du serveur' : err.message }, req);
       else res.end();
     }
   });
 
   return { server, db, config, notify, uploads, log };
+}
+
+// The visitor's address. Behind the hosting proxy (connection from a local or private address), the last address of
+// X-Forwarded-For is the one the proxy saw (the ones before can be made up by the visitor).
+function clientIp(req) {
+  const direct = req.socket.remoteAddress || 'unknown';
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const local = /^(::1|127\.|::ffff:127\.|10\.|::ffff:10\.|192\.168\.|::ffff:192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:172\.(1[6-9]|2\d|3[01])\.|f[cd]|fe80)/i;
+  return forwarded.length && local.test(direct) ? forwarded[forwarded.length - 1] : direct;
+}
+
+// The public address of the site, for the links of the e-mails. The Host header is the one the hosting proxy routed on
+// (a made-up host would not reach the site); X-Forwarded-Host is only trusted for a local call (the demo generator).
+function publicOrigin(req) {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/+$/, '');
+  const host = String(req.headers.host || 'localhost');
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host);
+  const fwdHost = String(req.headers['x-forwarded-host'] || '').split(',').pop().trim();
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',').pop().trim() || (req.socket.encrypted ? 'https' : 'http');
+  const finalHost = local && /^[a-z0-9.-]+(:\d+)?$/i.test(fwdHost) ? fwdHost : host;
+  return `${proto === 'https' ? 'https' : 'http'}://${/^[a-z0-9.[\]:-]+$/i.test(finalHost) ? finalHost : 'localhost'}`;
 }
 
 // Without a SECRET env var, a random one is kept in the data directory so sessions survive restarts.

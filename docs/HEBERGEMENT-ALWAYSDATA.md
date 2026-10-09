@@ -97,7 +97,7 @@ Téléchargez de temps en temps le dossier `application-camping-car/data`, par e
 
 ## Accès libre au back-office (mode test)
 
-Pour ouvrir le back-office **sans mot de passe**, tapez dans la console :
+Pour ouvrir le back-office **sans mot de passe** (seulement pour essayer, tant que le site n'a pas de vrais clients : ce mode se coupe tout seul dès qu'il y en a un, et ne donne jamais accès aux sauvegardes), tapez dans la console :
 
 ```
 touch ~/application-camping-car/data/acces-libre

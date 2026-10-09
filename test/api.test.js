@@ -440,7 +440,7 @@ test('content editor: edits the app contents, not the customers, the requests or
   assert.deepEqual((await call('GET', '/api/admin/customers', { token: editor })).data, []);
   assert.equal((await call('GET', '/api/admin/reports', { token: editor })).data.length, 0);
   const { data: catalog } = await call('GET', '/api/catalog');
-  assert.equal((await call('POST', '/api/admin/customers', { token: editor, body: { vehicleId: catalog.vehicles[0].id, lastName: 'X' } })).status, 400);
+  assert.equal((await call('POST', '/api/admin/customers', { token: editor, body: { vehicleId: catalog.vehicles[0].id, lastName: 'X' } })).status, 403);
   assert.equal((await call('DELETE', `/api/admin/vehicles/${catalog.vehicles[0].id}`, { token: editor })).status, 403);
   // A manager cannot create or touch an editor account
   await call('POST', '/api/admin/users', { token: admin, body: { email: 'chef@edition.fr', password: 'motdepasse1', role: 'manager', dealershipId: d.id } });
@@ -762,4 +762,63 @@ test('full backup: one archive (database, photos, keys) that puts the site back 
     fs.rmSync(restored, { recursive: true, force: true });
     fs.rmSync(archive, { force: true });
   }
+});
+
+test('security: malformed addresses, small anonymous bodies, sessions cut, roles, site address, plan zones, VIN in searches', async () => {
+  // 1. A malformed address does not stop the server.
+  const net = require('node:net');
+  const port = app.server.address().port;
+  await new Promise((resolve) => {
+    const s = net.connect(port, '127.0.0.1', () => s.write('GET //[ HTTP/1.1\r\nHost: x\r\n\r\n'));
+    s.on('data', () => s.end());
+    s.on('close', resolve);
+    s.on('error', resolve);
+  });
+  assert.equal((await call('GET', '/api/config')).status, 200);
+  assert.equal((await call('DELETE', '/api/admin/users/%')).status, 400);
+
+  // 2. An anonymous visitor cannot send a large body.
+  const big = await fetch(`${base}/api/restore`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x: 'a'.repeat(400 * 1024) }) });
+  assert.equal(big.status, 413);
+
+  // 3. Changing the password ends the other sessions; a bad token is never treated as « open access ».
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: d } = await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Sécu Motors', code: 'SECU1234' } });
+  await call('POST', '/api/admin/users', { token: admin, body: { email: 'sales.secu@test.fr', password: 'salessecu123', role: 'sales', dealershipId: d.id } });
+  const sales = await login('sales.secu@test.fr', 'salessecu123');
+  const changed = await call('PUT', '/api/admin/password', { token: sales, body: { currentPassword: 'salessecu123', newPassword: 'salessecu456' } });
+  assert.equal((await call('GET', '/api/admin/me', { token: sales })).status, 401);
+  assert.equal((await call('GET', '/api/admin/me', { token: changed.data.token })).status, 200);
+  assert.equal((await call('GET', '/api/admin/me', { token: 'abc.def' })).status, 401);
+
+  // 4. Roles: the editor sees no dealership's team; sales cannot transfer to a store account; store cannot create customers.
+  const { data: ed } = await call('POST', '/api/admin/users', { token: admin, body: { email: 'ed.secu@test.fr', password: 'edsecu12345', role: 'editor' } });
+  assert.ok(ed);
+  const editor = await login('ed.secu@test.fr', 'edsecu12345');
+  assert.deepEqual((await call('GET', '/api/admin/salespeople', { token: editor })).data, []);
+  assert.deepEqual(Object.keys((await call('GET', '/api/admin/settings', { token: editor })).data), ['announcement']);
+
+  // 5. The site address of the e-mails is never taken from a failed login or a made-up host.
+  await fetch(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Host: 'evil.example', 'X-Forwarded-Host': 'evil.example' }, body: JSON.stringify({ email: 'x@x.fr', password: 'nope' }) });
+  assert.ok(!String(app.db.prepare("SELECT value FROM settings WHERE key = 'site_origin'").get()?.value || '').includes('evil'));
+
+  // 6. Plan zones: only an identifier, a number, a name and a position get through.
+  const { data: catalog } = await call('GET', '/api/catalog');
+  const vid = catalog.vehicles[0].id;
+  assert.equal((await call('PUT', `/api/admin/vehicles/${vid}/profile`, { token: editor, body: { spots: [{ id: '"><img src=x>', n: 1, x: 1, y: 1 }] } })).status, 400);
+  assert.equal((await call('PUT', `/api/admin/vehicles/${vid}/profile`, { token: editor, body: { vars: { frigo: '<script>' } } })).status, 200);
+  const prof = (await call('GET', `/api/admin/vehicles/${vid}/profile`, { token: admin })).data;
+  assert.equal((prof.profile || prof).vars.frigo, undefined);
+
+  // 7. A VIN or a plate typed in the search is not kept; a customer cannot flood the dealership with requests.
+  const h = await handover({ firstName: 'Sécu', lastName: 'Rité' });
+  await call('POST', '/api/me/events', { token: h.token, body: { events: [{ kind: 'search', q: 'VF1ABCDEF12345678 bruit', n: 0 }, { kind: 'search', q: 'AB-123-CD', n: 0 }] } });
+  assert.equal(app.db.prepare("SELECT COUNT(*) AS n FROM usage_events WHERE query LIKE '%vf1abcdef%' OR query LIKE '%ab-123%'").get().n, 0);
+  let last = 0;
+  for (let i = 0; i < 17; i++) last = (await call('POST', '/api/me/requests', { token: h.token, body: { title: `Demande ${i}`, message: 'x' } })).status;
+  assert.equal(last, 429);
+
+  // 8. Lost phone: the dealership signs out the customer's devices.
+  assert.equal((await call('POST', `/api/admin/customers/${h.customer.id}/signout`, { token: admin })).data.sessions, 1);
+  assert.equal((await call('GET', '/api/me', { token: h.token })).status, 401);
 });

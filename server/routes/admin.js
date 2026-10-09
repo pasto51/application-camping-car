@@ -72,18 +72,37 @@ function optUrl(value) {
 }
 
 function register(router) {
-  const loginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
+  // Wrong passwords: 10 per account and per address, 50 per address, in 15 minutes (a typo does not lock the whole team).
+  const loginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
+  const loginIpLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 50 });
+  // A password hash to compare with when the e-mail is unknown: the answer takes the same time (no way to guess the accounts).
+  const DUMMY_HASH = hashPassword('compte-inexistant-0000');
+
+  // Test mode (file data/acces-libre): the back-office opens without a password, but only while the site holds no real
+  // customer (demo dealerships aside) and never for the backups.
+  function openAccessOk(ctx) {
+    if (!ctx.config.isOpenAccess()) return false;
+    const real = ctx.db
+      .prepare("SELECT COUNT(*) AS n FROM customers c JOIN dealerships d ON d.id = c.dealership_id WHERE d.code NOT IN ('DEMO2026', 'DEMONANT', 'DEMORENN', 'DEMOVANN')")
+      .get().n;
+    return real === 0;
+  }
 
   function auth(ctx) {
     const header = ctx.req.headers.authorization || '';
-    const payload = verifyToken(header.startsWith('Bearer ') ? header.slice(7) : '', ctx.config.secret);
+    const sent = header.startsWith('Bearer ') ? header.slice(7) : '';
+    const payload = verifyToken(sent, ctx.config.secret);
     let user;
     if (payload) {
       user = ctx.db
-        .prepare('SELECT id, email, name, role, dealership_id, dealership_ids, phone, (SELECT store_detached FROM dealerships d WHERE d.id = admins.dealership_id) AS store_detached FROM admins WHERE id = ?')
+        .prepare('SELECT id, email, name, role, dealership_id, dealership_ids, phone, token_version, (SELECT store_detached FROM dealerships d WHERE d.id = admins.dealership_id) AS store_detached FROM admins WHERE id = ?')
         .get(payload.sub);
       if (!user) throw new HttpError(401, 'Compte supprimé');
-    } else if (ctx.config.isOpenAccess()) {
+      // Password changed or reset since this sign-in: the session ends on every device.
+      if ((payload.tv || 0) !== (user.token_version || 0)) throw new HttpError(401, 'Session expirée, reconnectez-vous');
+    } else if (sent) {
+      throw new HttpError(401, 'Session expirée, reconnectez-vous');
+    } else if (openAccessOk(ctx)) {
       user = ctx.db.prepare("SELECT id, email, name, role, dealership_id FROM admins WHERE role = 'admin' ORDER BY id LIMIT 1").get();
     }
     if (!user) throw new HttpError(401, 'Connexion requise');
@@ -94,6 +113,12 @@ function register(router) {
   function adminOnly(ctx) {
     const user = auth(ctx);
     if (user.role !== 'admin') throw new HttpError(403, 'Réservé aux administrateurs');
+    return user;
+  }
+  // Backups hold all the data and the keys of the site: never without a real sign-in.
+  function adminSignedIn(ctx) {
+    const user = adminOnly(ctx);
+    if (!(ctx.req.headers.authorization || '').startsWith('Bearer ')) throw new HttpError(403, 'Connectez-vous avec votre mot de passe pour les sauvegardes');
     return user;
   }
 
@@ -163,32 +188,38 @@ function register(router) {
 
   router.post('/api/admin/login', ({ db, body, config, ip, origin }) => {
     // Only wrong passwords count: a whole team logging in from the dealership's connection is not blocked.
-    if (loginLimiter.reached(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
-    // The address of the site, for the links of the e-mails sent by the daily tasks.
-    if (origin && !/localhost|127\.0\.0\.1/.test(origin)) setSetting(db, 'site_origin', origin);
+    const email0 = String(body.email || '').trim().toLowerCase();
+    if (loginLimiter.reached(`${ip}|${email0}`) || loginIpLimiter.reached(ip)) throw new HttpError(429, 'Trop de tentatives, réessayez dans quelques minutes');
     const email = String(body.email || '').trim().toLowerCase();
     const user = db.prepare('SELECT * FROM admins WHERE email = ?').get(email);
-    if (!user || !verifyPassword(body.password || '', user.password_hash)) {
-      loginLimiter(ip);
+    const ok = verifyPassword(body.password || '', user ? user.password_hash : DUMMY_HASH);
+    if (!user || !ok) {
+      loginLimiter(`${ip}|${email}`);
+      loginIpLimiter(ip);
       throw new HttpError(401, 'Identifiants incorrects');
     }
+    // The address of the site, for the links of the e-mails sent by the daily tasks (after a correct password only).
+    if (origin && !/localhost|127\.0\.0\.1/.test(origin)) setSetting(db, 'site_origin', origin);
     // « Rester connecté » : 15 days on this device; otherwise the session ends after 12 hours.
-    const token = signToken({ sub: user.id, role: user.role }, config.secret, body.remember ? 60 * 60 * 24 * 15 : 60 * 60 * 12);
+    const token = signToken({ sub: user.id, role: user.role, tv: user.token_version || 0 }, config.secret, body.remember ? 60 * 60 * 24 * 15 : 60 * 60 * 12);
     const storeDetached = db.prepare('SELECT store_detached FROM dealerships WHERE id = ?').get(user.dealership_id)?.store_detached ?? null;
     return { token, user: camel({ id: user.id, email: user.email, name: user.name, role: user.role, dealership_id: user.dealership_id, store_detached: storeDetached }) };
   });
 
-  router.get('/api/admin/me', (ctx) => ({ ...camel(auth(ctx)), openAccess: ctx.config.isOpenAccess(), appVersion: ctx.config.appVersion }));
+  router.get('/api/admin/me', (ctx) => {
+    const { token_version, ...me } = auth(ctx);
+    return { ...camel(me), openAccess: openAccessOk(ctx), appVersion: ctx.config.appVersion };
+  });
 
   // ---- Statistics of use (« Statistiques ») : what customers look for, to decide the next campaigns ----
   // The administrator and the analyst see every dealership (or one); a dealership manager sees theirs.
   // ---- Backups of the database (administrator) ----
   router.get('/api/admin/backups', (ctx) => {
-    adminOnly(ctx);
+    adminSignedIn(ctx);
     return { keep: KEEP, fullKeep: FULL_KEEP, backups: listBackups(ctx.config.dataDir), full: listFullBackups(ctx.config.dataDir) };
   });
   router.post('/api/admin/backups', (ctx) => {
-    adminOnly(ctx);
+    adminSignedIn(ctx);
     if (!ctx.body.full) return backupNow(ctx.db, ctx.config.dataDir);
     try {
       return fullBackupNow(ctx.db, ctx.config.dataDir);
@@ -197,7 +228,7 @@ function register(router) {
     }
   });
   router.get('/api/admin/backups/:name', (ctx) => {
-    adminOnly(ctx);
+    adminSignedIn(ctx);
     const file = backupFile(ctx.config.dataDir, ctx.params.name);
     if (!file) throw new HttpError(404, 'Sauvegarde introuvable');
     ctx.res.writeHead(200, {
@@ -206,7 +237,7 @@ function register(router) {
       'Content-Disposition': `attachment; filename="compagnon-${ctx.params.name}"`,
       'Cache-Control': 'no-store',
     });
-    fs.createReadStream(file).pipe(ctx.res);
+    fs.createReadStream(file).on('error', () => ctx.res.destroy()).pipe(ctx.res);
   });
 
   router.get('/api/admin/analytics', (ctx) => {
@@ -544,9 +575,11 @@ function register(router) {
     };
   }
 
+  // The e-mail server settings are for the administrator; the others see the announcement only.
   router.get('/api/admin/settings', (ctx) => {
-    auth(ctx);
-    return settingsView(ctx.db);
+    const user = auth(ctx);
+    const view = settingsView(ctx.db);
+    return user.role === 'admin' ? view : { announcement: view.announcement };
   });
 
   router.put('/api/admin/settings', (ctx) => {
@@ -564,6 +597,7 @@ function register(router) {
       setSetting(db, 'mail_port', optInt(m.port) || 587);
       setSetting(db, 'mail_user', optStr(m.user, 200));
       if (m.pass) setSetting(db, 'mail_pass', String(m.pass).slice(0, 200));
+      if (m.from && /[\r\n]/.test(String(m.from))) throw new HttpError(400, 'Adresse d’expédition invalide');
       setSetting(db, 'mail_from', optStr(m.from, 200));
       setSetting(db, 'mail_copy', optEmail(m.copy));
     }
@@ -997,11 +1031,16 @@ function register(router) {
       const known = new Set(db.prepare('SELECT id FROM equipment').all().map((r) => r.id));
       next.equipment = [...new Set(body.equipment.map(String))].filter((id) => known.has(id));
     }
-    for (const key of ['spots']) {
-      if (body[key] !== undefined) {
-        if (!Array.isArray(body[key])) throw new HttpError(400, 'Format invalide');
-        next[key] = body[key];
-      }
+    // Zones of the plan: rebuilt field by field (an identifier, a number, a name, a position), nothing else gets through.
+    if (body.spots !== undefined) {
+      if (!Array.isArray(body.spots)) throw new HttpError(400, 'Format invalide');
+      next.spots = body.spots.slice(0, 60).map((s) => {
+        const id = String(s?.id ?? '').trim();
+        const x = Number(s?.x);
+        const y = Number(s?.y);
+        if (!/^[a-z0-9_-]{1,30}$/i.test(id) || !Number.isFinite(x) || !Number.isFinite(y)) throw new HttpError(400, 'Zone du plan invalide');
+        return { id, n: Math.max(1, Math.min(99, Math.round(Number(s.n) || 1))), x: Math.round(x), y: Math.round(y), name: optStr(s.name, 80) || id };
+      });
     }
     if (body.type !== undefined) {
       if (body.type && !TYPE_IDS.includes(body.type)) throw new HttpError(400, 'Type de véhicule inconnu');
@@ -1029,10 +1068,12 @@ function register(router) {
           .filter(([, v]) => v)
       );
     }
+    // Variants (« frigo : comp ») and zone of each equipment (« store : ext »): short identifiers only.
     for (const key of ['vars', 'spotOverrides']) {
       if (body[key] !== undefined) {
         if (!body[key] || typeof body[key] !== 'object' || Array.isArray(body[key])) throw new HttpError(400, 'Format invalide');
-        next[key] = body[key];
+        const ok = (v) => typeof v === 'string' && /^[a-z0-9_-]{1,40}$/i.test(v);
+        next[key] = Object.fromEntries(Object.entries(body[key]).filter(([k, v]) => ok(k) && ok(v)).slice(0, 300));
       }
     }
     if (body.plan !== undefined) next.planUrl = uploads.resolveImage(body.plan, p.planUrl);
@@ -1213,6 +1254,7 @@ function register(router) {
   router.get('/api/admin/salespeople', (ctx) => {
     const user = auth(ctx);
     const dealershipId = user.role === 'admin' ? optInt(ctx.query.get('dealershipId')) : user.dealership_id;
+    if (!dealershipId && user.role !== 'admin') return [];
     const where = dealershipId ? 'AND dealership_id = ?' : '';
     return camelAll(
       ctx.db.prepare(`SELECT id, name, email, role, dealership_id FROM admins WHERE role IN ('manager', 'sales') ${where} ORDER BY name, email`).all(...(dealershipId ? [dealershipId] : []))
@@ -1223,6 +1265,7 @@ function register(router) {
   router.post('/api/admin/customers', async (ctx) => {
     const user = auth(ctx);
     requireCustomers(user);
+    if (!['admin', 'manager', 'dealer', 'sales'].includes(user.role)) throw new HttpError(403, 'Réservé au responsable et aux commerciaux');
     const { db, body } = ctx;
     const vehicleId = reqInt(body.vehicleId, 'Véhicule');
     const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(vehicleId);
@@ -1349,6 +1392,14 @@ function register(router) {
 
   // Issues a new recovery code (e.g. the customer lost theirs) and signs out their devices.
   // Issues a new access code (lost code, renewal) valid 2 years; phones already signed in stay signed in.
+  // Lost or stolen phone: every session of the customer ends.
+  router.post('/api/admin/customers/:id/signout', (ctx) => {
+    const user = auth(ctx);
+    const customer = getCustomerScoped(ctx, ctx.params.id);
+    requireManage(user, customer);
+    return { sessions: Number(ctx.db.prepare('DELETE FROM customer_sessions WHERE customer_id = ?').run(customer.id).changes) };
+  });
+
   router.post('/api/admin/customers/:id/recovery-code', async (ctx) => {
     const user = auth(ctx);
     const customer = getCustomerScoped(ctx, ctx.params.id);
@@ -1554,7 +1605,7 @@ function register(router) {
     const email = pick(optEmail(body.email), user.email);
     if (db.prepare('SELECT id FROM admins WHERE email = ? AND id != ?').get(email, user.id)) throw new HttpError(409, 'Un compte existe déjà avec cet e-mail');
     const hash = body.password ? hashPassword(checkPassword(body.password)) : user.password_hash;
-    db.prepare('UPDATE admins SET email = ?, name = ?, phone = ?, role = ?, dealership_id = ?, dealership_ids = ?, password_hash = ? WHERE id = ?').run(email, f.name, f.phone, f.role, f.dealershipId, f.dealershipIds, hash, user.id);
+    db.prepare('UPDATE admins SET email = ?, name = ?, phone = ?, role = ?, dealership_id = ?, dealership_ids = ?, password_hash = ?, token_version = token_version + ? WHERE id = ?').run(email, f.name, f.phone, f.role, f.dealershipId, f.dealershipIds, hash, body.password ? 1 : 0, user.id);
     // Moved to another dealership: their customers stay where they are, without a salesperson.
     if (f.dealershipId !== user.dealership_id) db.prepare('UPDATE customers SET salesperson_id = NULL WHERE salesperson_id = ? AND dealership_id != ?').run(user.id, f.dealershipId ?? -1);
     return userOut(db.prepare(`${USER_SELECT} WHERE a.id = ?`).get(user.id));
@@ -1565,7 +1616,7 @@ function register(router) {
     const me = managerOnly(ctx);
     const from = teamMember(ctx, me, ctx.params.id);
     const to = ctx.body.toUserId ? teamMember(ctx, me, ctx.body.toUserId) : null;
-    if (to && (to.role === 'admin' || to.dealership_id !== from.dealership_id)) throw new HttpError(400, 'Choisissez un commercial de la même concession');
+    if (to && (!['manager', 'dealer', 'sales'].includes(to.role) || to.dealership_id !== from.dealership_id)) throw new HttpError(400, 'Choisissez un commercial ou le responsable de la même concession');
     const { changes } = ctx.db.prepare('UPDATE customers SET salesperson_id = ? WHERE salesperson_id = ?').run(to ? to.id : null, from.id);
     return { moved: Number(changes) };
   });
@@ -1586,8 +1637,10 @@ function register(router) {
     const me = auth(ctx);
     const row = ctx.db.prepare('SELECT password_hash FROM admins WHERE id = ?').get(me.id);
     if (!verifyPassword(ctx.body.currentPassword || '', row.password_hash)) throw new HttpError(400, 'Mot de passe actuel incorrect');
-    ctx.db.prepare('UPDATE admins SET password_hash = ? WHERE id = ?').run(hashPassword(checkPassword(ctx.body.newPassword)), me.id);
-    return { ok: true };
+    ctx.db.prepare('UPDATE admins SET password_hash = ?, token_version = token_version + 1 WHERE id = ?').run(hashPassword(checkPassword(ctx.body.newPassword)), me.id);
+    // A new session for this device; the others are signed out.
+    const fresh = ctx.db.prepare('SELECT token_version FROM admins WHERE id = ?').get(me.id);
+    return { ok: true, token: signToken({ sub: me.id, role: me.role, tv: fresh.token_version }, ctx.config.secret, 60 * 60 * 12) };
   });
 }
 

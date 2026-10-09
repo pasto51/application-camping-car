@@ -34,7 +34,11 @@ function createRouter() {
       pathMatched = true;
       if (route.method !== method) continue;
       const params = {};
-      route.keys.forEach((key, i) => (params[key] = decodeURIComponent(m[i + 1])));
+      try {
+        route.keys.forEach((key, i) => (params[key] = decodeURIComponent(m[i + 1])));
+      } catch {
+        throw new HttpError(400, 'Adresse invalide');
+      }
       return { route, params };
     }
     return pathMatched ? { methodNotAllowed: true } : null;
@@ -57,8 +61,12 @@ function readJsonBody(req, limitBytes) {
     req.on('data', (chunk) => {
       size += chunk.length;
       if (size > limitBytes) {
+        // The rest is read and thrown away (nothing kept in memory), then the answer closes the connection.
+        req.removeAllListeners('data');
+        req.removeAllListeners('end');
+        req.on('data', () => {});
+        req.headersTooLarge = true;
         reject(new HttpError(413, 'Requête trop volumineuse'));
-        req.destroy();
         return;
       }
       chunks.push(chunk);
@@ -75,15 +83,30 @@ function readJsonBody(req, limitBytes) {
   });
 }
 
-// Large answers (the app catalogue is about 1 MB) are compressed when the client accepts it.
+// An answer serialized (and compressed) once and sent many times: the app catalogue, the same for all the customers of a
+// vehicle and a dealership, is about 1 MB.
+class PreparedJson {
+  constructor(data) {
+    this.raw = Buffer.from(JSON.stringify(data));
+    this.gzipped = null;
+  }
+  gzip() {
+    if (!this.gzipped) this.gzipped = zlib.gzipSync(this.raw);
+    return this.gzipped;
+  }
+}
+
+// Large answers are compressed when the client accepts it.
 function sendJson(res, status, data, req) {
-  let body = Buffer.from(JSON.stringify(data));
+  const prepared = data instanceof PreparedJson ? data : null;
+  let body = prepared ? prepared.raw : Buffer.from(JSON.stringify(data));
   const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', Vary: 'Accept-Encoding' };
   if (body.length > 2048 && req && /\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
-    body = zlib.gzipSync(body);
+    body = prepared ? prepared.gzip() : zlib.gzipSync(body);
     headers['Content-Encoding'] = 'gzip';
   }
   headers['Content-Length'] = body.length;
+  if (req && req.headersTooLarge) headers.Connection = 'close';
   res.writeHead(status, headers);
   res.end(body);
 }
@@ -132,4 +155,4 @@ function serveStatic(req, res, root, relPath, { cacheControl = 'no-cache', trans
   return true;
 }
 
-module.exports = { HttpError, createRouter, readJsonBody, sendJson, serveStatic };
+module.exports = { PreparedJson, HttpError, createRouter, readJsonBody, sendJson, serveStatic };

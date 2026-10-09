@@ -280,6 +280,8 @@ function openDatabase(file) {
 
 // Columns added after the first release: added in place so existing databases keep their data.
 const ADDED_COLUMNS = [
+  ['admins', 'token_version', 'INTEGER NOT NULL DEFAULT 0'],
+  ['customer_sessions', 'last_used_at', 'TEXT'],
   ['banners', 'equipment_any', 'TEXT'],
   ['banners', 'equipment_none', 'TEXT'],
   ['vehicles', 'profile', 'TEXT'],

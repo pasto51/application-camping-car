@@ -31,6 +31,12 @@ daily('sauvegarde-complete', (app) => {
   return `sauvegarde complète ${b.name} (${Math.round(b.size / 1024 / 1024)} Mo)`;
 });
 
+// Statistics of use older than 3 years are removed (the page shows 12 months at most).
+daily('menage', (app) => {
+  const r = app.db.prepare("DELETE FROM usage_events WHERE month < strftime('%Y-%m', 'now', '-36 months')").run();
+  return r.changes ? `statistiques anciennes supprimées : ${r.changes}` : null;
+});
+
 daily('rappels', async (app) => {
   const { db, notify } = app;
   const today = new Date().toISOString().slice(0, 10);

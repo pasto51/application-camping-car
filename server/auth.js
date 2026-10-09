@@ -65,6 +65,7 @@ function verifyToken(token, secret) {
 // Fixed-window limiter kept in memory; enough for a single instance.
 function createRateLimiter({ windowMs, max }) {
   const hits = new Map();
+  let sweptAt = 0;
   // Already over the limit, without counting this call (to count only failed attempts).
   isLimited.reached = (key) => {
     const entry = hits.get(key);
@@ -76,9 +77,12 @@ function createRateLimiter({ windowMs, max }) {
     const entry = hits.get(key);
     if (!entry || entry.reset < now) {
       hits.set(key, { count: 1, reset: now + windowMs });
-      if (hits.size > 10000) {
+      // Old entries are swept at most once a minute; a flood of new addresses cannot grow the memory without end.
+      if (hits.size > 10000 && now - sweptAt > 60000) {
+        sweptAt = now;
         for (const [k, v] of hits) if (v.reset < now) hits.delete(k);
       }
+      while (hits.size > 100000) hits.delete(hits.keys().next().value);
       return false;
     }
     entry.count += 1;

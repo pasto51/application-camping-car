@@ -445,11 +445,11 @@ function itemSheet(id) {
   const dots = () =>
     S.plan.spots
       .map(
-        (s) => `<g class="pdot ${s.id === chosen ? 'sel' : ''}" data-spot="${esc(s.id)}" transform="translate(${s.x} ${s.y})"><circle r="30" fill="transparent"/><circle class="d" r="24"/><text y="7">${s.n}</text></g>`
+        (s) => `<g class="pdot ${s.id === chosen ? 'sel' : ''}" data-spot="${esc(s.id)}" transform="translate(${Number(s.x) || 0} ${Number(s.y) || 0})"><circle r="30" fill="transparent"/><circle class="d" r="24"/><text y="7">${esc(s.n)}</text></g>`
       )
       .join('');
   const zoneList = () =>
-    S.plan.spots.map((s) => `<button type="button" class="zbtn ${s.id === chosen ? 'sel' : ''}" data-spot="${esc(s.id)}"><b>${s.n}</b> ${esc(s.name)}</button>`).join('') +
+    S.plan.spots.map((s) => `<button type="button" class="zbtn ${s.id === chosen ? 'sel' : ''}" data-spot="${esc(s.id)}"><b>${esc(s.n)}</b> ${esc(s.name)}</button>`).join('') +
     `<button type="button" class="zbtn ${chosen ? '' : 'sel'}" data-spot=""><b>–</b> Pas de zone précise (emplacement variable)</button>`;
   dialog(
     `<form class="dlg" method="dialog">

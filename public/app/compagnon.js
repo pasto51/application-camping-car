@@ -488,7 +488,7 @@ window.startCompagnon = function(DATA){
   function drawSpots(){
     $("#planSpots").innerHTML = SPOTS.map(function(s){
       var empty = ownedAt(s.id).length===0;
-      return '<g class="spot'+(empty?' empty':'')+(selSpot===s.id?' sel':'')+'" data-id="'+s.id+'" tabindex="0" role="button" aria-label="'+esc(s.n+'. '+s.name)+'"><circle r="38" fill="transparent"/><circle class="dot" r="26"/><text>'+s.n+'</text></g>';
+      return '<g class="spot'+(empty?' empty':'')+(selSpot===s.id?' sel':'')+'" data-id="'+esc(s.id)+'" tabindex="0" role="button" aria-label="'+esc(s.n+'. '+s.name)+'"><circle r="38" fill="transparent"/><circle class="dot" r="26"/><text>'+esc(s.n)+'</text></g>';
     }).join("");
     applyVb();
   }
