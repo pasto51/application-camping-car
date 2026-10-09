@@ -13,6 +13,7 @@ const { matchLayouts } = require('../layouts');
 const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
 const { backupNow, fullBackupNow, listBackups, listFullBackups, backupFile, KEEP, FULL_KEEP } = require('../backup');
 const { entretienOf, settingsOf, cleanSettings } = require('../entretien');
+const { cleanLists } = require('../lists');
 const { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut } = require('../tips');
 const { SCREENS, ICONS, AGES, WARRANTIES, allBanners, audience, cleanBanner, insertBanner, updateBanner, liveOn } = require('../banners');
 const { TYPES: VEHICLE_TYPES } = require('../vehicle-types');
@@ -913,20 +914,22 @@ function register(router) {
     if (expectArray ? !Array.isArray(value) : !value || typeof value !== 'object' || Array.isArray(value)) {
       throw new HttpError(400, 'Format invalide');
     }
+    let clean = value;
     if (key === 'lists') {
-      for (const [k, list] of Object.entries(value)) {
-        // An item: its text, or { t: text, eq: equipment (at least one), group, variant: [variant, value] }.
-        const ok = (i) => typeof i === 'string' || (i && typeof i === 'object' && typeof i.t === 'string' && i.t.trim());
-        if (!/^[a-z0-9_-]{1,30}$/.test(k) || !list || !Array.isArray(list.items) || !list.items.every(ok)) throw new HttpError(400, `Liste « ${k} » invalide`);
+      // An item: its text, or { t: text, eq: equipment (at least one), group, variant: [variant, value], where }.
+      try {
+        clean = cleanLists(value);
+      } catch (err) {
+        throw new HttpError(400, err.message);
       }
     }
-    const json = JSON.stringify(value);
+    const json = JSON.stringify(clean);
     if (json.length > 2 * 1024 * 1024) throw new HttpError(413, 'Trop volumineux');
     ctx.db
       .prepare("INSERT INTO catalog (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')")
       .run(key, json);
     bumpContentVersion(ctx.db);
-    return { key, value };
+    return { key, value: clean };
   });
 
   // ---- « Carnet d'entretien »: the kinds of maintenance (dates, reminders, for which customers) and the checks to do

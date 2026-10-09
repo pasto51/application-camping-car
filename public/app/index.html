@@ -270,7 +270,7 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
 .tiptext{padding:12px 14px 4px;margin:0;font-size:16px;line-height:1.5}.tipstore{margin:10px 14px 14px;padding:12px;border-radius:12px;background:var(--soft)}.tipstore p{margin:0 0 8px}.tipstore .btn{width:100%;flex:none}
 .tipshare{width:100%;flex:none;min-height:60px;font-size:18px;margin-top:8px}.tipform{display:flex;flex-direction:column;gap:10px;margin-top:8px}.tipform textarea{min-height:110px;font:inherit}.tipbtns{display:flex;gap:8px}
 .mission.feat{width:100%;font:inherit;cursor:pointer}.mission.feat .stamp{font-size:24px}.featpop{position:fixed;inset:0;z-index:60;background:rgba(5,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}.featpop .card{max-width:440px;width:100%;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}.featpop .btn{flex:none}
-.dailyseg{display:flex;flex-wrap:wrap;gap:6px}.dailyseg button{flex:1 1 auto;min-width:30%}.dailygoal{background:var(--soft);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:15px;line-height:1.4}#checks span b{color:var(--ink)}
+.dmenu{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}.dmenu-h{margin:14px 0 2px}.dmenu-h span{text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)}.dmenu-item{display:flex;align-items:center;gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;color:var(--ink);font:inherit;width:100%}.dmenu-t{flex:1;display:flex;flex-direction:column;gap:2px}.dmenu-t small{color:var(--muted);font-size:13px;line-height:1.3}.dchip{font-size:13px;font-weight:700;background:var(--soft);color:var(--accent);border-radius:999px;padding:3px 10px;white-space:nowrap}.dchip.ok{background:var(--ok-bg);color:var(--ok)}.dchip.mut{color:var(--muted)}.dmenu-item .go{color:var(--muted);font-size:22px}.dback{margin-bottom:6px}.dtitle{font-size:26px;margin:4px 0 12px}.dplace{grid-template-columns:1fr 1fr;margin:4px 0 6px}.dplace-tip{background:var(--warn-bg);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.4;margin:6px 0 0}.dailygoal{background:var(--soft);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:15px;line-height:1.4}#checks span b{color:var(--ink)}
 .affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .badmsg{background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:12px;font-size:15px}
 .vbadge{background:var(--ok-bg);color:var(--ok);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700;align-self:flex-start}
@@ -407,7 +407,7 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
 
     <!-- Gestes du quotidien -->
     <section class="screen" id="daily" hidden>
-      <div class="seg dailyseg" id="dailyseg" role="group" aria-label="Moment"></div>
+      <div class="dailyseg" id="dailyseg"></div>
       <p class="dailygoal" id="dailygoal" hidden></p>
       <div id="checkpart">
         <div>

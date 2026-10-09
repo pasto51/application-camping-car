@@ -48,16 +48,29 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
       const p = [];
       if (it.eq?.length) p.push(`avec ${it.eq.map((id) => eqName[id] || id).join(' ou ')}`);
       if (it.variant) p.push(variantName(it.variant));
+      if (it.where) p.push(WHERE_NAMES[it.where]);
       return p.join(' · ');
     };
     const LIST_NAMES = { arrivee: 'Arrivée', depart: 'Départ' };
+    const WHERE_NAMES = { camping: 'Camping ou aire de service', libre: 'Stationnement libre' };
+    const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const RESET_OPTIONS = [['', 'Jamais (le client décoche lui-même)'], ['jour', 'Le lendemain'], ['7', 'Au bout de 7 jours'], ['14', 'Au bout de 15 jours'], ['30', 'Au bout d’un mois'], ['60', 'Au bout de 2 mois'], ['90', 'Au bout de 3 mois'], ['180', 'Au bout de 6 mois'], ['365', 'Au bout d’un an']];
+    const resetName = (r) => (RESET_OPTIONS.find((o) => o[0] === String(r ?? '')) || RESET_OPTIONS[0])[1];
+    const listSection = (k) => lists[k]?.section || (k === 'arrivee' || k === 'depart' ? 'route' : 'saison');
+    const listSettings = (L) =>
+      [
+        `Se décoche : ${resetName(L.reset).toLowerCase()}`,
+        L.notify?.months?.length ? `rappel sur le téléphone en ${L.notify.months.map((m) => MONTHS[m - 1]).join(', ')}` : 'pas de rappel',
+        L.places ? 'demande au client où il s’arrête (camping ou aire / stationnement libre)' : '',
+      ].filter(Boolean).join(' · ');
     const listTitle = (k) => lists[k]?.title || LIST_NAMES[k] || k;
     const listCard = (key) => {
       const L = lists[key];
       return `<div class="card">
-        <div class="card-head"><h3>Onglet « ${esc(listTitle(key))} » (${L.items.length} lignes)</h3>
+        <div class="card-head"><h3>${listSection(key) === 'route' ? 'Sur la route' : 'Saisons et entretien'} : « ${esc(listTitle(key))} » (${L.items.length} lignes)</h3>
           <div class="row-actions"><button class="btn small" data-act="list-edit" data-key="${esc(key)}">Nom, but et note</button><button class="btn small primary" data-act="line-add" data-key="${esc(key)}">+ Ligne</button><button class="btn small danger" data-act="list-del" data-key="${esc(key)}">Supprimer la liste</button></div></div>
         ${L.goal ? `<p><strong>Le but :</strong> ${esc(L.goal)}</p>` : ''}
+        <p class="muted">${esc(listSettings(L))}</p>
         ${table(
           ['#', 'Ligne', 'Pour qui'],
           L.items.map(
@@ -79,7 +92,7 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
       </nav>
 
       <div class="card-head"><h2 class="section-title" id="c-gestes">Gestes du quotidien</h2><button class="btn" data-act="list-add">+ Nouvelle liste</button></div>
-      <p class="muted">Chaque liste est un onglet de l’écran « Gestes du quotidien », dans cet ordre. Le client coche au fur et à mesure ; ce qu’il a coché est gardé.</p>
+      <p class="muted">Les listes s’affichent en menu dans l’écran « Gestes du quotidien », en deux parties : « Sur la route » (arrivée, départ) et « Saisons et entretien », dans cet ordre. Le client coche au fur et à mesure ; pour chaque liste, vous choisissez quand elle se décoche toute seule (le lendemain pour l’arrivée et le départ, au bout d’un mois pour l’entretien mensuel…) et les mois où le client reçoit un rappel sur son téléphone. L’arrivée et le départ demandent où le client s’arrête : camping ou aire de service, ou stationnement libre ; chaque ligne peut être pour l’un, l’autre ou les deux.</p>
       ${Object.keys(lists).map(listCard).join('')}
 
       <h2 class="section-title" id="c-carnet">Carnet d’entretien</h2>
@@ -282,12 +295,19 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
     const listForm = (key) => {
       const L = key ? lists[key] : {};
       openForm({
-        title: key ? `Onglet « ${listTitle(key)} »` : 'Nouvelle liste',
-        values: { title: key ? listTitle(key) : '', goal: L.goal || '', note: L.note || '' },
+        title: key ? `Liste « ${listTitle(key)} »` : 'Nouvelle liste',
+        values: {
+          title: key ? listTitle(key) : '', goal: L.goal || '', note: L.note || '', section: key ? listSection(key) : 'saison',
+          places: !!L.places, reset: L.reset == null ? '' : String(L.reset), months: (L.notify?.months || []).map(String),
+        },
         fields: [
-          { name: 'title', label: 'Nom de l’onglet (court)', required: true, hint: 'Ex. : Hivernage, Chaque mois.' },
-          { name: 'goal', label: 'Le but (affiché en haut de la liste)', type: 'textarea', rows: 2 },
+          { name: 'title', label: 'Nom de la liste (court)', required: true, hint: 'Ex. : Hivernage, Chaque mois.' },
+          { name: 'section', label: 'Partie du menu', type: 'select', options: [['route', 'Sur la route (à chaque étape)'], ['saison', 'Saisons et entretien']] },
+          { name: 'goal', label: 'Le but (affiché sous le nom, et en haut de la liste)', type: 'textarea', rows: 2 },
           { name: 'note', label: 'Note sous la liste', full: true },
+          { name: 'reset', label: 'Se décoche toute seule', type: 'select', options: RESET_OPTIONS, hint: 'Compté à partir de la première case cochée. Ex. : le lendemain pour l’arrivée et le départ.' },
+          { name: 'months', label: 'Rappel sur le téléphone, ces mois-là (rien coché : pas de rappel)', type: 'checks', options: MONTHS.map((m, i) => [String(i + 1), m]), hint: 'Un rappel au plus par période (le temps avant qu’elle se décoche, un mois sinon), et aucun si le client a déjà fini la liste. Seulement pour les clients qui ont accepté les notifications.' },
+          { name: 'places', label: 'Demander où le client s’arrête (camping ou aire de service / stationnement libre)', type: 'checkbox' },
         ],
         onSubmit: async (d) => {
           let k = key;
@@ -295,7 +315,9 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
             k = slug(d.title).replace(/-/g, '') || 'liste';
             for (let n = 2; lists[k]; n++) k = `${slug(d.title).replace(/-/g, '')}${n}`;
           }
-          await saveLists({ ...lists, [k]: { ...(lists[k] || { items: [] }), title: d.title, goal: d.goal, note: d.note } });
+          const next = { ...(lists[k] || { items: [] }), title: d.title, goal: d.goal, note: d.note, section: d.section, places: !!d.places, reset: d.reset || undefined };
+          next.notify = d.months.length ? { months: d.months.map(Number) } : undefined;
+          await saveLists({ ...lists, [k]: next });
         },
       });
     };
@@ -304,16 +326,18 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
       const o = typeof it === 'string' ? { t: it } : it;
       openForm({
         title: n === undefined ? `Nouvelle ligne : ${listTitle(key)}` : `Ligne ${n + 1} : ${listTitle(key)}`,
-        values: { t: o.t || '', eq: o.eq || [], group: o.group || '', variant: o.variant ? o.variant.join('=') : '' },
+        values: { t: o.t || '', eq: o.eq || [], group: o.group || '', variant: o.variant ? o.variant.join('=') : '', where: o.where || '' },
         fields: [
           { name: 't', label: 'Ligne', type: 'textarea', rows: 3, required: true, hint: 'Le début jusqu’aux deux-points s’affiche en gras. Ex. : « Je vide toute l’eau : je vide la cuve… »' },
           { name: 'eq', label: 'Seulement si le client a AU MOINS UN de ces équipements (rien coché : tous)', type: 'checks', filter: 'Chercher un équipement (ex. : batterie)', options: opts.equipment },
           { name: 'group', label: 'Groupe (facultatif)', hint: 'Ex. « batterie » sur les lignes « batterie classique » et « batterie lithium » : si le client n’a coché aucun des deux équipements, il voit les deux lignes.' },
           { name: 'variant', label: 'Seulement si (type d’équipement)', type: 'select', options: variantOptions, hint: 'Si le client a répondu autre chose, la ligne est cachée ; s’il ne sait pas, elle est affichée.' },
+          ...(lists[key].places ? [{ name: 'where', label: 'Où', type: 'select', options: [['', 'Partout'], ['camping', 'Camping ou aire de service'], ['libre', 'Stationnement libre']] }] : []),
         ],
         onSubmit: async (d) => {
-          const line = d.eq.length || d.variant ? { t: d.t.trim() } : d.t.trim();
+          const line = d.eq.length || d.variant || d.where ? { t: d.t.trim() } : d.t.trim();
           if (typeof line === 'object') {
+            if (d.where) line.where = d.where;
             if (d.eq.length) line.eq = d.eq;
             if (d.eq.length && d.group.trim()) line.group = d.group.trim().toLowerCase();
             if (d.variant) line.variant = d.variant.split('=');

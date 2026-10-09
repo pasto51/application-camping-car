@@ -9,6 +9,7 @@ const { seedStarterTips } = require('./tips');
 const { CLIENTS_2026_10 } = require('./diagnostics-clients');
 const { CLIENTS_2026_10_B } = require('./diagnostics-clients-2');
 const { CLIENTS_2026_10_C } = require('./diagnostics-clients-3');
+const ROUTE = require('./lists-route');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -416,6 +417,28 @@ const PATCHES = [
     // « Conseils & Astuces »: the first tips of the site and the « À la une » banner (only if there are none yet).
     key: '2026-10-14-conseils-astuces',
     run: (db) => seedStarterTips(db),
+  },
+  {
+    // « Gestes du quotidien »: arrival and departure for a campsite or service area, or free parking; when each list
+    // unticks itself and reminds the customer. Lists changed by the dealership keep their lines.
+    key: '2026-10-20-listes-route',
+    run: (db) => {
+      const row = db.prepare("SELECT value FROM catalog WHERE key = 'lists'").get();
+      if (!row) return 0;
+      const lists = JSON.parse(row.value);
+      const same = (items, old) => JSON.stringify((items || []).map((i) => (typeof i === 'string' ? i : i.t))) === JSON.stringify(old);
+      let changed = 0;
+      if (lists.arrivee && same(lists.arrivee.items, ROUTE.OLD_ARRIVEE)) { lists.arrivee.items = ROUTE.ARRIVEE; lists.arrivee.note = ''; changed++; }
+      if (lists.depart && same(lists.depart.items, ROUTE.OLD_DEPART)) { lists.depart.items = ROUTE.DEPART; lists.depart.note = ''; changed++; }
+      for (const [k, set] of Object.entries(ROUTE.SETTINGS)) {
+        if (!lists[k]) continue;
+        for (const [f, v] of Object.entries(set)) if (lists[k][f] === undefined || lists[k][f] === '') lists[k][f] = v;
+        if (k === 'arrivee' || k === 'depart') lists[k].places = lists[k].items.some((i) => i && i.where) || undefined;
+        changed++;
+      }
+      db.prepare("UPDATE catalog SET value = ?, updated_at = datetime('now') WHERE key = 'lists'").run(JSON.stringify(lists));
+      return changed;
+    },
   },
 ];
 

@@ -277,7 +277,7 @@ def main():
         ".tiptext{padding:12px 14px 4px;margin:0;font-size:16px;line-height:1.5}.tipstore{margin:10px 14px 14px;padding:12px;border-radius:12px;background:var(--soft)}.tipstore p{margin:0 0 8px}.tipstore .btn{width:100%;flex:none}\n"
         ".tipshare{width:100%;flex:none;min-height:60px;font-size:18px;margin-top:8px}.tipform{display:flex;flex-direction:column;gap:10px;margin-top:8px}.tipform textarea{min-height:110px;font:inherit}.tipbtns{display:flex;gap:8px}\n"
         ".mission.feat{width:100%;font:inherit;cursor:pointer}.mission.feat .stamp{font-size:24px}.featpop{position:fixed;inset:0;z-index:60;background:rgba(5,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}.featpop .card{max-width:440px;width:100%;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}.featpop .btn{flex:none}\n"
-        ".dailyseg{display:flex;flex-wrap:wrap;gap:6px}.dailyseg button{flex:1 1 auto;min-width:30%}.dailygoal{background:var(--soft);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:15px;line-height:1.4}#checks span b{color:var(--ink)}\n"
+        ".dmenu{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}.dmenu-h{margin:14px 0 2px}.dmenu-h span{text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)}.dmenu-item{display:flex;align-items:center;gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;color:var(--ink);font:inherit;width:100%}.dmenu-t{flex:1;display:flex;flex-direction:column;gap:2px}.dmenu-t small{color:var(--muted);font-size:13px;line-height:1.3}.dchip{font-size:13px;font-weight:700;background:var(--soft);color:var(--accent);border-radius:999px;padding:3px 10px;white-space:nowrap}.dchip.ok{background:var(--ok-bg);color:var(--ok)}.dchip.mut{color:var(--muted)}.dmenu-item .go{color:var(--muted);font-size:22px}.dback{margin-bottom:6px}.dtitle{font-size:26px;margin:4px 0 12px}.dplace{grid-template-columns:1fr 1fr;margin:4px 0 6px}.dplace-tip{background:var(--warn-bg);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.4;margin:6px 0 0}.dailygoal{background:var(--soft);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:15px;line-height:1.4}#checks span b{color:var(--ink)}\n"
         ".affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}")
     head = replace_once(head, ".dlogo.sm{", ".dlogo.img{background:var(--panel);border:1px solid var(--line);overflow:hidden}.dlogo img{width:100%;height:100%;object-fit:contain}\n.dlogo.sm{")
 
@@ -547,60 +547,91 @@ def main():
     a = s.index('  var checked = {arrivee:{},depart:{}}, reminded = {}, optin = false;')
     b_mark = '\n  renderChecks();\n\n  /* ---------- Stockage local'
     b = s.index(b_mark, a) + len('\n  renderChecks();\n')
-    s = s[:a] + r'''  var activeList = Object.keys(LISTS)[0] || "arrivee";
+    s = s[:a] + r'''  var activeList = null; // null: the menu of the lists
   var checked = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_chk")||"{}")||{}}catch(e){} return o})();
   function chkSave(){lsSet("cdb_chk",JSON.stringify(checked))}
   var LIST_NAMES = {arrivee:"Arrivée",depart:"Départ"};
+  var SECTIONS = [["route","Sur la route","À cocher à chaque étape"],["saison","Saisons et entretien","Les routines de l’année"]];
+  var PLACES = [["camping","Camping ou aire de service"],["libre","Stationnement libre"]];
   function listTitle(k){return (LISTS[k] && LISTS[k].title) || LIST_NAMES[k] || k}
+  function listSection(k){var s = LISTS[k] && LISTS[k].section; return s==="route" || s==="saison" ? s : (k==="arrivee"||k==="depart" ? "route" : "saison")}
+  function meta(n){checked[n] = (checked[n] && typeof checked[n]==="object") ? checked[n] : {}; return checked[n]}
+  function place(){return checked._w==="libre" ? "libre" : "camping"}
+  // A list unticks itself: « jour » = the day after it was started, a number = that many days after.
+  function dayOf(t){var d = new Date(t); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate()}
+  function expired(k){
+    var r = LISTS[k] && LISTS[k].reset, t = meta("_t")[k]; if(!r || !t) return false;
+    return r==="jour" ? dayOf(t)!==dayOf(Date.now()) : Date.now()-t > Number(r)*86400000;
+  }
+  function freshen(){var ch = false; Object.keys(LISTS).forEach(function(k){if(expired(k)){checked[k] = {}; delete meta("_t")[k]; delete meta("_d")[k]; ch = true}}); if(ch) chkSave()}
+  function resetText(k){var r = LISTS[k] && LISTS[k].reset; return !r ? "" : r==="jour" ? "Elle se décoche toute seule le lendemain." : "Elle se décoche toute seule "+(Number(r)%30===0 && Number(r)>=30 ? (Number(r)/30)+" mois" : r+" jours")+" après le début."}
   // The lines for this vehicle: « eq » = at least one of these pieces of equipment (lines of the same « group »: all
-  // shown if the customer ticked none of them, e.g. the battery type not known), « variant » = [question, answer].
+  // shown if the customer ticked none of them, e.g. the battery type not known), « variant » = [question, answer],
+  // « where » = only for a stop in a campsite or service area, or only for free parking.
   function listItems(k){
-    var items = (LISTS[k] && LISTS[k].items) || [], O = (typeof own==="object" && own) || {}, V = (typeof vars==="object" && vars) || {};
+    var L = LISTS[k] || {}, items = L.items || [], O = (typeof own==="object" && own) || {}, V = (typeof vars==="object" && vars) || {}, w = place();
     var has = function(ids){return (ids||[]).some(function(i){return O[i] || (OWN_ALIAS && OWN_ALIAS[i] && O[OWN_ALIAS[i]])})};
     var groupKnown = {};
     items.forEach(function(it){if(it && it.group && has(it.eq)) groupKnown[it.group] = true});
     return items.map(function(it,i){return {i:i, t: typeof it==="string" ? it : it.t, it:it}}).filter(function(x){
       var it = x.it; if(typeof it==="string") return true;
+      if(L.places && it.where && it.where!==w) return false;
       if(it.variant && V[it.variant[0]] && V[it.variant[0]]!=="ns" && V[it.variant[0]]!==it.variant[1]) return false;
       if(it.eq && it.eq.length && !has(it.eq)) return it.group ? !groupKnown[it.group] : false;
       return true;
     });
   }
+  function counts(k){var shown = listItems(k), done = checked[k] || {}; return {n: shown.length, d: shown.filter(function(x){return done[x.i]}).length}}
   function itemHtml(t){var m = /^(.{3,90}?) : (.+)$/.exec(t); return m ? '<b>'+esc(m[1])+' :</b> '+esc(m[2]) : esc(t)}
-  function renderSeg(){
-    var seg = $("#dailyseg"); if(!seg) return;
-    if(!LISTS[activeList]) activeList = Object.keys(LISTS)[0];
-    seg.innerHTML = Object.keys(LISTS).map(function(k){return '<button type="button" data-list="'+esc(k)+'" aria-pressed="'+(k===activeList)+'">'+esc(listTitle(k))+'</button>'}).join("");
+  function renderMenu(){
+    var seg = $("#dailyseg");
+    seg.innerHTML = SECTIONS.map(function(S){
+      var ks = Object.keys(LISTS).filter(function(k){return listSection(k)===S[0]}); if(!ks.length) return "";
+      return '<p class="eyebrow dmenu-h">'+esc(S[1])+' <span>'+esc(S[2])+'</span></p><div class="dmenu">'+ks.map(function(k){
+        var c = counts(k), state = c.n && c.d===c.n ? '<span class="dchip ok">Fait</span>' : c.d ? '<span class="dchip">'+c.d+' sur '+c.n+'</span>' : '<span class="dchip mut">'+c.n+' gestes</span>';
+        return '<button type="button" class="dmenu-item" data-list="'+esc(k)+'"><span class="dmenu-t"><strong>'+esc(listTitle(k))+'</strong>'+(LISTS[k].goal ? '<small>'+esc(LISTS[k].goal)+'</small>' : '')+'</span>'+state+'<span class="go" aria-hidden="true">›</span></button>';
+      }).join("")+'</div>';
+    }).join("");
   }
   function renderChecks(){
-    renderSeg();
-    var L = LISTS[activeList] || {items:[]}, ul = $("#checks"), done = checked[activeList] || {};
-    var g = $("#dailygoal"); if(g){g.hidden = !L.goal; g.innerHTML = L.goal ? '<b>Le but :</b> '+esc(L.goal) : ''}
+    freshen();
+    var menu = !activeList || !LISTS[activeList];
+    $("#checkpart").hidden = menu; $("#dailynote").hidden = menu;
+    var g = $("#dailygoal");
+    if(menu){activeList = null; g.hidden = true; renderMenu(); return}
+    var L = LISTS[activeList], ul = $("#checks"), done = checked[activeList] || {};
+    $("#dailyseg").innerHTML = '<button type="button" class="lnk dback" data-menu>‹ Toutes les listes</button><h2 class="dtitle">'+esc(listTitle(activeList))+'</h2>'+
+      (L.places ? '<p class="eyebrow">Où vous arrêtez-vous ?</p><div class="seg dplace" role="group" aria-label="Où vous arrêtez-vous">'+PLACES.map(function(p){return '<button type="button" data-place="'+p[0]+'" aria-pressed="'+(place()===p[0])+'">'+esc(p[1])+'</button>'}).join("")+'</div>'+
+        (place()==="libre" ? '<p class="dplace-tip">Stationné, pas campé : rien ne doit dépasser du véhicule, rien ne doit couler, et la durée est souvent limitée par la commune.</p>' : '') : '');
+    g.hidden = !L.goal; g.innerHTML = L.goal ? '<b>Le but :</b> '+esc(L.goal) : '';
     ul.innerHTML = listItems(activeList).map(function(x){
       return '<li><label><input type="checkbox" data-i="'+x.i+'"'+(done[x.i]?' checked':'')+'><span>'+itemHtml(x.t)+'</span></label></li>';
     }).join("");
-    $("#dailynote").innerHTML = (L.note ? esc(L.note)+' ' : '') + '<button class="lnk" type="button" id="chkreset">Tout décocher</button>';
+    $("#dailynote").innerHTML = [L.note ? esc(L.note) : '', esc(resetText(activeList))].filter(Boolean).join(' ') + ' <button class="lnk" type="button" id="chkreset">Tout décocher</button>';
     updateProgress(false);
   }
   function updateProgress(announce){
-    var shown = listItems(activeList), done = checked[activeList] || {};
-    var n = shown.length, d = shown.filter(function(x){return done[x.i]}).length;
-    var pct = n ? Math.round(d/n*100) : 0;
-    $("#plabel").textContent = d + " sur " + n;
+    var c = counts(activeList), pct = c.n ? Math.round(c.d/c.n*100) : 0;
+    $("#plabel").textContent = c.d + " sur " + c.n;
     $("#ppct").textContent = pct + " %";
     $("#pbar").style.width = pct + "%";
-    if(announce && d===n && n>0) toast(activeList==="depart" ? "Liste complétée. Bon voyage !" : "Liste complétée. Bravo !");
+    if(c.n && c.d===c.n){ if(!meta("_d")[activeList]){meta("_d")[activeList] = Date.now(); chkSave()} } else if(meta("_d")[activeList]){delete meta("_d")[activeList]; chkSave()}
+    if(announce && c.d===c.n && c.n>0) toast(activeList==="depart" ? "Liste complétée. Bon voyage !" : "Liste complétée. Bravo !");
   }
   $("#checks").addEventListener("change",function(e){
     var i = e.target.dataset.i; if(i===undefined) return;
     checked[activeList] = checked[activeList] || {};
-    if(e.target.checked) checked[activeList][i] = 1; else delete checked[activeList][i];
+    if(e.target.checked){ checked[activeList][i] = 1; if(!meta("_t")[activeList]) meta("_t")[activeList] = Date.now() } else delete checked[activeList][i];
+    if(!Object.keys(checked[activeList]).length) delete meta("_t")[activeList];
     chkSave(); updateProgress(true);
   });
   $("#daily").addEventListener("click",function(e){
     var b = e.target.closest("#dailyseg [data-list]");
-    if(b){activeList = b.dataset.list; renderChecks(); return}
-    if(e.target.closest("#chkreset")){checked[activeList] = {}; chkSave(); renderChecks(); toast("Liste remise à zéro.")}
+    if(b){activeList = b.dataset.list; renderChecks(); window.scrollTo(0,0); return}
+    if(e.target.closest("[data-menu]")){activeList = null; renderChecks(); return}
+    var pl = e.target.closest("[data-place]");
+    if(pl){checked._w = pl.dataset.place; chkSave(); renderChecks(); return}
+    if(e.target.closest("#chkreset")){checked[activeList] = {}; delete meta("_t")[activeList]; delete meta("_d")[activeList]; chkSave(); renderChecks(); toast("Liste remise à zéro.")}
   });
   renderChecks();
 ''' + s[b:]
@@ -631,7 +662,7 @@ def main():
     body_part = replace_once(body_part, '''<div class="seg" role="group" aria-label="Moment">
         <button data-list="arrivee" aria-pressed="true">Arrivée</button>
         <button data-list="depart" aria-pressed="false">Départ</button>
-      </div>''', '<div class="seg dailyseg" id="dailyseg" role="group" aria-label="Moment"></div>\n      <p class="dailygoal" id="dailygoal" hidden></p>')
+      </div>''', '<div class="dailyseg" id="dailyseg"></div>\n      <p class="dailygoal" id="dailygoal" hidden></p>')
     body_part = replace_once(body_part, '<strong>Gestes du quotidien</strong><span>Arrivée, départ et entretien</span>', '<strong>Gestes du quotidien</strong><span>Arrivée, départ et routines de saison</span>')
     body_part = replace_once(body_part, '<div class="device" id="device">', '<div id="cloud"></div>\n<div class="device" id="device" hidden>')
     page = (

@@ -556,11 +556,15 @@ test('maintenance: due dates from the handover and the logbook, reminders, conse
   const pushed = [];
   const fake = { db: app.db, config: { dataDir }, log: () => {}, notify: { push: async (id, p) => (pushed.push([id, p.title]), 1) } };
   await runDue(fake, { force: true });
-  assert.equal(pushed.filter(([id]) => id === h.customer.id).length, 1);
+  // (the lists of « Gestes du quotidien » may also remind, on their months: counted apart)
+  const isList = ([, t]) => /Hivernage|Remise en route|Chaque mois/.test(t);
+  assert.equal(pushed.filter((p) => p[0] === h.customer.id && !isList(p)).length, 1);
   assert.match(pushed.find(([id]) => id === h.customer.id)[1], /^À (faire|prévoir) : /);
+  assert.ok(pushed.filter((p) => p[0] === h.customer.id && isList(p)).length <= 1);
   const again = pushed.length;
   await runDue(fake, { force: true });
   assert.ok(pushed.filter(([id, t]) => id === h.customer.id && t === pushed.find(([i]) => i === h.customer.id)[1]).length === 1, 'not twice for the same date');
+  assert.ok(pushed.filter((p) => p[0] === h.customer.id && isList(p)).length <= 1, 'a list reminds once per period');
   assert.ok(pushed.length >= again);
 });
 
@@ -737,6 +741,28 @@ test('routine checklists: winter storage, spring start-up, every month, with lin
   assert.equal(app.lists.plage.items.length, 2);
   // What is ticked is saved with the customer's data.
   assert.equal((await call('PUT', '/api/me/state/cdb_chk', { token: h.token, body: { value: JSON.stringify({ hiver: { 0: 1 } }) } })).status, 200);
+
+  // Arrival and departure: campsite or service area, or free parking; they untick the next day; the seasons remind.
+  assert.equal(lists.arrivee.section, 'route');
+  assert.equal(lists.arrivee.places, true);
+  assert.equal(lists.arrivee.reset, 'jour');
+  assert.ok(lists.arrivee.items.some((i) => i.where === 'libre') && lists.depart.items.some((i) => i.where === 'camping'));
+  assert.ok(lists.arrivee.items.filter((i) => i.where === 'libre').every((i) => !/cales sous les roues|store sorti/i.test(i.t)));
+  assert.deepEqual(lists.hiver.notify.months, [10, 11]);
+  assert.equal(lists.mensuel.reset, 30);
+  // Settings rebuilt field by field: unknown fields and wrong values are dropped.
+  const saved = await call('PUT', '/api/admin/catalog/lists', { token: admin, body: { value: { plage: { title: 'Plage', section: 'route', places: 1, reset: '7', notify: { months: [7, '8', 13, 'x'] }, evil: '<script>', items: [{ t: 'Je rince le sable', where: 'libre', onclick: 'x' }, { t: 'Ok', where: 'lune' }] } } } });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.data.value.plage, { title: 'Plage', goal: '', note: '', items: [{ t: 'Je rince le sable', where: 'libre' }, 'Ok'], section: 'route', places: true, reset: 7, notify: { months: [7, 8] } });
+  // Reminder of a list: on its months only, once per period, and not when the customer finished it.
+  const { listReminders } = require('../server/lists');
+  const L = { hiver: { title: 'Hivernage', reset: 90, notify: { months: [10, 11] }, items: ['a', 'b'] } };
+  const oct = Date.parse('2026-10-15T09:00:00Z');
+  assert.equal(listReminders(L, {}, {}, oct)[0].key, 'hiver');
+  assert.equal(listReminders(L, {}, {}, Date.parse('2026-06-15T09:00:00Z')).length, 0);
+  assert.equal(listReminders(L, {}, { hiver: '2026-10-01' }, oct).length, 0);
+  assert.equal(listReminders(L, { _d: { hiver: oct - 86400000 } }, {}, oct).length, 0);
+  assert.equal(listReminders(L, { _d: { hiver: oct - 200 * 86400000 } }, {}, oct).length, 1);
 });
 
 test('full backup: one archive (database, photos, keys) that puts the site back as it was', async () => {

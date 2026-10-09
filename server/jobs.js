@@ -8,6 +8,7 @@ const { getSetting, setSetting } = require('./db');
 const { backupNow, fullBackupNow, listFullBackups } = require('./backup');
 const { dueFor, NOTIFY_DAYS } = require('./entretien');
 const { SERVICES, serviceEmail, OVERDUE_SQL, WAITING_SINCE } = require('./services');
+const { listReminders } = require('./lists');
 
 const TASKS = [];
 
@@ -59,6 +60,39 @@ daily('rappels', async (app) => {
     sent += n ? 1 : 0;
   }
   return `rappels d’entretien : ${sent} notification(s)`;
+});
+
+// « Gestes du quotidien »: a reminder for the lists set with months (winter storage in autumn, monthly care in
+// season…), at most one per list and per period, and none when the customer completed the list during that period.
+daily('listes', async (app) => {
+  const { db, notify } = app;
+  const row = db.prepare("SELECT value FROM catalog WHERE key = 'lists'").get();
+  const lists = row ? JSON.parse(row.value) : {};
+  if (!Object.values(lists).some((L) => L.notify?.months?.length)) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  let sent = 0;
+  for (const c of db.prepare('SELECT DISTINCT c.id FROM customers c JOIN push_subscriptions p ON p.customer_id = c.id').all()) {
+    let chk = {};
+    try {
+      chk = JSON.parse(db.prepare("SELECT value FROM customer_state WHERE customer_id = ? AND key = 'cdb_chk'").get(c.id)?.value || '{}') || {};
+    } catch {
+      chk = {};
+    }
+    const last = {};
+    for (const r of db.prepare("SELECT kind, MAX(due) AS due FROM reminder_sent WHERE customer_id = ? AND kind LIKE 'liste-%' GROUP BY kind").all(c.id)) last[r.kind.slice(6)] = r.due;
+    if (Object.values(last).includes(today)) continue; // one list reminder a day at most
+    const todo = listReminders(lists, chk, last)[0];
+    if (!todo) continue;
+    const n = await notify.push(c.id, {
+      title: `À faire : ${todo.title}`,
+      body: `Votre liste « ${todo.title} » vous attend dans « Gestes du quotidien » (${todo.count} gestes).`,
+      url: '/app/',
+      tag: `liste-${todo.key}`,
+    });
+    db.prepare('INSERT OR IGNORE INTO reminder_sent (customer_id, kind, due) VALUES (?, ?, ?)').run(c.id, `liste-${todo.key}`, today);
+    sent += n ? 1 : 0;
+  }
+  return `rappels des listes : ${sent} notification(s)`;
 });
 
 // Requests left without answer for more than 48 hours: one e-mail a day to each service mailbox (SAV, store).
