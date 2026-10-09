@@ -1215,24 +1215,30 @@ async function dealershipDetail(el, id) {
 
 // Daily copies of the database (made by the server), to download and keep elsewhere.
 async function drawBackups(box) {
-  const { keep, backups } = await api('GET', '/api/admin/backups');
+  const { keep, fullKeep, backups, full = [] } = await api('GET', '/api/admin/backups');
   const size = (n) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} Mo` : `${Math.round(n / 1024)} Ko`);
+  const rows = (list, from) =>
+    `<div class="table-wrap"><table><thead><tr><th>Jour</th><th>Taille</th><th></th></tr></thead><tbody>${list
+      .map((b) => `<tr><td>${formatDate(b.name.slice(from, from + 10))}</td><td>${size(b.size)}</td><td class="row-actions"><button class="btn small" data-dl="${esc(b.name)}">Télécharger</button></td></tr>`)
+      .join('')}</tbody></table></div>`;
   box.innerHTML = `<h2>Sauvegardes</h2>
-    <p class="muted">Le serveur copie la base chaque jour (clients, demandes, contenus) et garde les ${keep} derniers jours. Téléchargez-en une de temps en temps pour la garder chez vous : c’est la vraie sécurité si le serveur a un problème. Les photos sont dans le dossier <code>data/uploads</code>, sauvegardé par alwaysdata.</p>
-    ${
-      backups.length
-        ? `<div class="table-wrap"><table><thead><tr><th>Jour</th><th>Taille</th><th></th></tr></thead><tbody>${backups
-            .map((b) => `<tr><td>${formatDate(b.name.slice(4, 14))}</td><td>${size(b.size)}</td><td class="row-actions"><button class="btn small" data-dl="${esc(b.name)}">Télécharger</button></td></tr>`)
-            .join('')}</tbody></table></div>`
-        : '<p>Aucune sauvegarde pour l’instant : la première se fait dans l’heure qui suit le démarrage du site.</p>'
-    }
-    <div class="actions"><button class="btn" data-now>Sauvegarder maintenant</button></div>`;
+    <h3>Sauvegarde complète (pour remettre le site en ligne)</h3>
+    <p class="muted">Un seul fichier avec <strong>tout ce qui n’est pas le code</strong> : la base (clients, demandes, contenus, comptes), <strong>les photos</strong> et les clés du site. Faite chaque semaine (les ${fullKeep} dernières sont gardées). <strong>Téléchargez-la sur votre ordinateur</strong> de temps en temps : c’est la vraie sécurité si le serveur a un problème. Fichier confidentiel : gardez-le en lieu sûr.</p>
+    ${full.length ? rows(full, 5) : '<p>Aucune sauvegarde complète pour l’instant.</p>'}
+    <div class="actions"><button class="btn primary" data-now="full">Faire une sauvegarde complète maintenant</button></div>
+    <h3>Base seule, chaque jour</h3>
+    <p class="muted">La base est aussi copiée chaque jour (les ${keep} derniers jours), pour revenir à la veille en cas d’erreur.</p>
+    ${backups.length ? rows(backups, 4) : '<p>Aucune sauvegarde pour l’instant : la première se fait dans l’heure qui suit le démarrage du site.</p>'}
+    <div class="actions"><button class="btn" data-now="db">Sauvegarder la base maintenant</button></div>`;
   box.onclick = async (e) => {
     const dl = e.target.closest('[data-dl]');
     try {
-      if (e.target.closest('[data-now]')) {
-        await api('POST', '/api/admin/backups');
-        toast('Sauvegarde faite');
+      const now = e.target.closest('[data-now]');
+      if (now) {
+        now.disabled = true;
+        now.textContent = 'Sauvegarde en cours…';
+        await api('POST', '/api/admin/backups', { full: now.dataset.now === 'full' });
+        toast(now.dataset.now === 'full' ? 'Sauvegarde complète faite : téléchargez-la' : 'Sauvegarde faite');
         return drawBackups(box);
       }
       if (!dl) return;

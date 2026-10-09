@@ -27,6 +27,11 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 - La démo ne doit jamais toucher aux vraies données : seulement les codes DEMONANT, DEMORENN, DEMOVANN et les comptes en `@demo.test` (pas DEMO2026, créée à l'installation).
 - La vérifier après modification : `DATA_DIR=<dossier temporaire> node server/demo.js` doit finir sans erreur et afficher la bonne répartition des demandes.
 
+## Sauvegardes
+
+- Sauvegarde complète hebdomadaire (base + photos + clés) dans Paramètres → Sauvegardes ; mode d'emploi pour remettre le site en ligne : `docs/SAUVEGARDE-ET-RESTAURATION.md`.
+- Repères du code (tags git) : `sauvegarde-2026-10-09`. En poser un nouveau quand l'utilisateur demande de figer une version.
+
 ## Vérifier avant de pousser
 
 - `npm test`.

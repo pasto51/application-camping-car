@@ -731,3 +731,35 @@ test('routine checklists: winter storage, spring start-up, every month, with lin
   // What is ticked is saved with the customer's data.
   assert.equal((await call('PUT', '/api/me/state/cdb_chk', { token: h.token, body: { value: JSON.stringify({ hiver: { 0: 1 } }) } })).status, 200);
 });
+
+test('full backup: one archive (database, photos, keys) that puts the site back as it was', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const h = await handover({ firstName: 'Sauve', lastName: 'Garde' });
+  await call('PUT', '/api/me/state/cdb_photo', { token: h.token, body: { value: PNG } });
+  const b = await call('POST', '/api/admin/backups', { token: admin, body: { full: true } });
+  assert.equal(b.status, 200);
+  assert.match(b.data.name, /^site-\d{4}-\d{2}-\d{2}\.tar\.gz$/);
+  assert.equal((await call('GET', '/api/admin/backups', { token: admin })).data.full[0].name, b.data.name);
+  const res = await fetch(`${base}/api/admin/backups/${b.data.name}`, { headers: { Authorization: `Bearer ${admin}` } });
+  assert.equal(res.status, 200);
+  const archive = path.join(os.tmpdir(), `cc-full-${Date.now()}.tar.gz`);
+  fs.writeFileSync(archive, Buffer.from(await res.arrayBuffer()));
+
+  // Restore into an empty folder and start a site on it: same customers, same photos, same keys.
+  const restored = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-restore-'));
+  const { spawnSync } = require('node:child_process');
+  assert.equal(spawnSync('tar', ['-xzf', archive, '-C', restored]).status, 0);
+  for (const f of ['app.db', 'LISEZ-MOI.txt', 'uploads']) assert.ok(fs.existsSync(path.join(restored, f)), f);
+  // The keys of the site, as in the original folder (this test site gets its secret from its settings, not from a file).
+  for (const f of ['secret.key', 'vapid.json']) assert.equal(fs.existsSync(path.join(restored, f)), fs.existsSync(path.join(dataDir, f)), f);
+  assert.ok(fs.readdirSync(path.join(restored, 'uploads'), { recursive: true }).some((f) => /\.(png|jpe?g|webp)$/i.test(f)), 'photos');
+  const copy = createApp({ dataDir: restored, log: () => {} });
+  try {
+    assert.ok(copy.db.prepare("SELECT 1 FROM customers WHERE last_name = 'Garde'").get());
+    if (fs.existsSync(path.join(dataDir, 'vapid.json'))) assert.equal(fs.readFileSync(path.join(restored, 'vapid.json'), 'utf8'), fs.readFileSync(path.join(dataDir, 'vapid.json'), 'utf8'));
+  } finally {
+    copy.db.close();
+    fs.rmSync(restored, { recursive: true, force: true });
+    fs.rmSync(archive, { force: true });
+  }
+});

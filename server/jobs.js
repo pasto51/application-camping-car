@@ -5,7 +5,7 @@
 // restart does not run it twice.
 
 const { getSetting, setSetting } = require('./db');
-const { backupNow } = require('./backup');
+const { backupNow, fullBackupNow, listFullBackups } = require('./backup');
 const { dueFor, NOTIFY_DAYS } = require('./entretien');
 const { SERVICES, serviceEmail, OVERDUE_SQL, WAITING_SINCE } = require('./services');
 
@@ -23,6 +23,14 @@ daily('sauvegarde', (app) => {
 
 // Maintenance reminders: one notification on the phone for each date coming within 15 days (or already passed),
 // at most one per customer and per day. Only customers who allowed notifications receive them.
+// Full backup (database, photos, keys) once a week: the 4 last are kept.
+daily('sauvegarde-complete', (app) => {
+  const last = listFullBackups(app.config.dataDir)[0];
+  if (last && Date.now() - new Date(last.date).getTime() < 6.5 * 86400000) return null;
+  const b = fullBackupNow(app.db, app.config.dataDir);
+  return `sauvegarde complète ${b.name} (${Math.round(b.size / 1024 / 1024)} Mo)`;
+});
+
 daily('rappels', async (app) => {
   const { db, notify } = app;
   const today = new Date().toISOString().slice(0, 10);

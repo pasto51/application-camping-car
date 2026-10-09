@@ -11,7 +11,7 @@ const { readProfile, getCatalogValue, CATALOG_KEYS, carryOf } = require('../cata
 const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
 const { matchLayouts } = require('../layouts');
 const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
-const { backupNow, listBackups, backupFile, KEEP } = require('../backup');
+const { backupNow, fullBackupNow, listBackups, listFullBackups, backupFile, KEEP, FULL_KEEP } = require('../backup');
 const { entretienOf, settingsOf, cleanSettings } = require('../entretien');
 const { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut } = require('../tips');
 const { SCREENS, ICONS, AGES, WARRANTIES, allBanners, audience, cleanBanner, insertBanner, updateBanner, liveOn } = require('../banners');
@@ -185,18 +185,23 @@ function register(router) {
   // ---- Backups of the database (administrator) ----
   router.get('/api/admin/backups', (ctx) => {
     adminOnly(ctx);
-    return { keep: KEEP, backups: listBackups(ctx.config.dataDir) };
+    return { keep: KEEP, fullKeep: FULL_KEEP, backups: listBackups(ctx.config.dataDir), full: listFullBackups(ctx.config.dataDir) };
   });
   router.post('/api/admin/backups', (ctx) => {
     adminOnly(ctx);
-    return backupNow(ctx.db, ctx.config.dataDir);
+    if (!ctx.body.full) return backupNow(ctx.db, ctx.config.dataDir);
+    try {
+      return fullBackupNow(ctx.db, ctx.config.dataDir);
+    } catch (err) {
+      throw new HttpError(500, `Sauvegarde complète : ${err.message}`);
+    }
   });
   router.get('/api/admin/backups/:name', (ctx) => {
     adminOnly(ctx);
     const file = backupFile(ctx.config.dataDir, ctx.params.name);
     if (!file) throw new HttpError(404, 'Sauvegarde introuvable');
     ctx.res.writeHead(200, {
-      'Content-Type': 'application/octet-stream',
+      'Content-Type': ctx.params.name.endsWith('.tar.gz') ? 'application/gzip' : 'application/octet-stream',
       'Content-Length': fs.statSync(file).size,
       'Content-Disposition': `attachment; filename="compagnon-${ctx.params.name}"`,
       'Cache-Control': 'no-store',
