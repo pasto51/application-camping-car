@@ -6,6 +6,7 @@
 
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { seedStarterTips } = require('./tips');
+const { CLIENTS_2026_10 } = require('./diagnostics-clients');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -291,6 +292,21 @@ const PATCHES = [
       let changed = 0;
       let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
       for (const d of CONFORT_2) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      return changed;
+    },
+  },
+  {
+    // Problems reported by customers: key and lock (Zadi), pleated blinds and fly screens, fridge that frosts or does not
+    // cool enough, water leaks (FrostControl).
+    key: '2026-10-16-problemes-clients',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of CLIENTS_2026_10) {
         if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
         db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
         changed++;
