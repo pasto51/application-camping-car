@@ -11,6 +11,7 @@ const { CLIENTS_2026_10_B } = require('./diagnostics-clients-2');
 const { CLIENTS_2026_10_C } = require('./diagnostics-clients-3');
 const ROUTE = require('./lists-route');
 const FORUMS = require('./diagnostics-forums');
+const ELEC = require('./diagnostics-electricite');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -469,6 +470,62 @@ const PATCHES = [
         db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
         changed++;
       }
+      return changed;
+    },
+  },
+  {
+    // Three diagnostics of the start completed from the forums: charging while driving (smart alternator, lithium),
+    // a fuse that blows straight away, the hookup post that trips. Not changed if the dealership reworked them.
+    key: '2026-10-23-electricite',
+    run: (db) => {
+      let changed = 0;
+      const edit = (id, fn) => {
+        const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+        if (!row) return;
+        const d = JSON.parse(row.data);
+        if (d.tree && fn(d.tree)) {
+          db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), id);
+          changed++;
+        }
+      };
+      const copy = (x) => JSON.parse(JSON.stringify(x));
+      const child = (node, option) => (node && node.o ? node.n[node.o.indexOf(option)] : undefined);
+      // « En roulant » → … → « Moteur tournant, attendez trois minutes » : its « Non » leads to the new checks.
+      edit('nocharge', (t) => {
+        const wait = child(child(child(t, 'En roulant'), 'Oui'), 'Non');
+        if (!wait || !wait.o || wait.o[1] !== 'Non' || wait.n[1].t) return false;
+        wait.n[1] = copy(ELEC.DRIVING_END);
+        return true;
+      });
+      // One cause per end point (the old sentence named two).
+      edit('nocharge', (t) => {
+        const leaves = findLeaves(t, { cause: 'Une ombre, même partielle, réduit fortement la production.' });
+        leaves.forEach((l) => { l.cause = 'L’ombre réduit fortement la production du panneau.'; l.geste = `Même une ombre partielle fait chuter la production. ${l.geste}`; });
+        return leaves.length > 0;
+      });
+      // The search must still find this one first among the newer electrical diagnostics (socket, panel, lights).
+      const v12 = db.prepare("SELECT data FROM diagnostics WHERE id = 'no12v'").get();
+      if (v12) {
+        const d = JSON.parse(v12.data);
+        if (d.label === 'Plus de courant dans la cellule (12 V)') {
+          d.label = 'Plus de courant dans la cellule (12 V) : panneau éteint, lumières qui faiblissent, un appareil ou une prise qui ne marche plus';
+          d.kw = `${d.kw || ''} plus rien ne marche panneau de contrôle reste éteint lumières faiblissent un seul appareil une seule prise fusible grille`.trim();
+          db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = 'no12v'").run(JSON.stringify(d));
+          changed++;
+        }
+      }
+      edit('no12v', (t) => {
+        if (!t.o || t.o.includes('Un fusible grille dès que je le remets')) return false;
+        t.o.push('Un fusible grille dès que je le remets');
+        t.n.push(copy(ELEC.FUSE_BLOWS));
+        return true;
+      });
+      edit('no230', (t) => {
+        const i = t.o ? t.o.indexOf('Ça disjoncte') : -1;
+        if (i < 0 || (t.n[i].o && t.n[i].o[0] === 'Le disjoncteur de la borne du camping')) return false;
+        t.n[i] = { t: 'Qu’est-ce qui disjoncte ?', o: ['Le disjoncteur de la borne du camping', 'Le disjoncteur dans mon véhicule'], n: [copy(ELEC.POST_TRIPS), t.n[i]] };
+        return true;
+      });
       return changed;
     },
   },
