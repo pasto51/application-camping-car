@@ -703,6 +703,7 @@
     ent.addEventListener('click', openCarnet);
     renderEntretien();
     loadEntretien();
+    api('GET', '/api/me/featured').then(function (r) { if (window.CDB_SET_FEATURED) window.CDB_SET_FEATURED(r.featured); }).catch(function () {});
     acc.addEventListener('click', function (e) {
       var b = e.target.closest('[data-acc]'); if (!b) return;
       if (b.dataset.acc === 'space') openSpace();

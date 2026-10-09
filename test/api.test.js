@@ -586,7 +586,6 @@ test('« Conseils & Astuces »: starter tips and banner, a tip shared by a custo
   const admin = await login('admin@test.fr', 'motdepasse123');
   const { data: start } = await call('GET', '/api/admin/tips', { token: admin });
   assert.ok(start.tips.length >= 8, 'starter tips');
-  assert.equal(start.featured.action, 'tip');
 
   const h = await handover({ firstName: 'Jean', lastName: 'Astuce' });
   let app = (await call('GET', '/api/app/data', { token: h.token })).data;
@@ -622,9 +621,55 @@ test('« Conseils & Astuces »: starter tips and banner, a tip shared by a custo
   const vid = await call('POST', '/api/admin/tips', { token: admin, body: { title: 'Vidéo', category: 'gaz', body: 'Regardez.', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
   assert.equal(vid.data.videoUrl, 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
 
-  // The banner: an announcement, then removed when its tip is deleted.
-  assert.equal((await call('PUT', '/api/admin/featured', { token: admin, body: { title: 'Portes ouvertes', action: 'popup', text: '' } })).status, 400);
-  assert.equal((await call('PUT', '/api/admin/featured', { token: admin, body: { title: 'Nouveau', icon: '💡', action: 'tip', tipId: vid.data.id } })).status, 200);
+  // Deleting a tip removes the banners that opened it.
+  const bt = await call('POST', '/api/admin/banners', { token: admin, body: { title: 'Nouveau', icon: '💡', action: 'tip', tipId: vid.data.id, priority: 50 } });
+  assert.equal((await call('GET', '/api/me/featured', { token: h.token })).data.featured.title, 'Nouveau');
   assert.equal((await call('DELETE', `/api/admin/tips/${vid.data.id}`, { token: admin })).status, 200);
-  assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.featured, null);
+  assert.ok(!(await call('GET', '/api/admin/banners', { token: admin })).data.banners.some((b) => b.id === bt.data.id));
+});
+
+test('« À la une » banners: each for its customers (dealership, type, time since handover, warranty, equipment, consent, dates)', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: start } = await call('GET', '/api/admin/banners', { token: admin });
+  assert.ok(start.banners.length >= 1, 'the first banner, for everyone');
+  for (const b of start.banners) await call('DELETE', `/api/admin/banners/${b.id}`, { token: admin });
+
+  const { data: other } = await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Bandeaux Motors', code: 'BANDO1' } });
+  const fresh = await handover({ firstName: 'Lucie', lastName: 'Neuve', handoverDate: new Date().toISOString().slice(0, 10) });
+  const feat = async (h) => (await call('GET', '/api/me/featured', { token: h.token })).data.featured;
+  assert.equal(await feat(fresh), null);
+
+  const post = (body, token = admin) => call('POST', '/api/admin/banners', { token, body: { icon: '📣', action: 'popup', text: 'Bienvenue !', ...body } });
+  assert.equal((await post({ title: 'Mauvaises dates', startsOn: '2026-05-10', endsOn: '2026-05-01' })).status, 400);
+  await post({ title: 'Ailleurs', dealershipIds: [other.id], priority: 90 });
+  await post({ title: 'Hors garantie', warranty: 'out', priority: 80 });
+  await post({ title: 'Anciens', age: 'old', priority: 70 });
+  await post({ title: 'Plus tard', startsOn: '2099-01-01', priority: 60 });
+  await post({ title: 'Offres', optinOnly: true, priority: 50 });
+  await post({ title: 'Sans solaire', equipmentId: 'solaire', equipmentHas: 'no', priority: 40 });
+  await post({ title: 'Bienvenue', age: 'm3', priority: 10 });
+  await call('PUT', '/api/me/state/cdb_own', { token: fresh.token, body: { value: JSON.stringify({ solaire: true, frigo: true }) } });
+  // None of the first six is for Lucie (other dealership, under warranty, new, not yet, no consent, she has solar panels).
+  assert.equal((await feat(fresh)).title, 'Bienvenue');
+  await call('PUT', '/api/me/info', { token: fresh.token, body: { marketing: true } });
+  assert.equal((await feat(fresh)).title, 'Offres');
+  await call('PUT', '/api/me/state/cdb_own', { token: fresh.token, body: { value: JSON.stringify({ frigo: true }) } });
+  assert.equal((await feat(fresh)).title, 'Offres', 'the consent banner has a higher priority');
+  await call('PUT', '/api/me/info', { token: fresh.token, body: { marketing: false } });
+  assert.equal((await feat(fresh)).title, 'Sans solaire');
+  const { data: list } = await call('GET', '/api/admin/banners', { token: admin });
+  assert.equal(list.banners.find((b) => b.title === 'Sans solaire').reach >= 1, true);
+  assert.equal(list.banners.find((b) => b.title === 'Plus tard').live, false);
+
+  // A dealership manager: banners for their dealership only, the others read-only.
+  await call('POST', '/api/admin/users', { token: admin, body: { email: 'resp.bando@test.fr', password: 'respbando123', role: 'manager', dealershipId: other.id } });
+  const manager = await login('resp.bando@test.fr', 'respbando123');
+  const mine = await post({ title: 'Portes ouvertes', dealershipIds: [] }, manager);
+  assert.equal(mine.status, 200);
+  const seen = (await call('GET', '/api/admin/banners', { token: manager })).data.banners;
+  assert.deepEqual(seen.find((b) => b.id === mine.data.id).dealershipIds, [other.id]);
+  const global = seen.find((b) => b.title === 'Bienvenue');
+  assert.equal(global.editable, false);
+  assert.equal((await call('DELETE', `/api/admin/banners/${global.id}`, { token: manager })).status, 403);
+  assert.equal((await call('GET', '/api/admin/banners', { token: fresh.token })).status, 401);
 });

@@ -13,7 +13,9 @@ const { matchLayouts } = require('../layouts');
 const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
 const { backupNow, listBackups, backupFile, KEEP } = require('../backup');
 const { entretienOf } = require('../entretien');
-const { CATEGORIES, CATEGORY_IDS, SCREENS, ICONS, videoEmbed, tipOut, featuredOf, cleanFeatured, setFeatured } = require('../tips');
+const { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut } = require('../tips');
+const { SCREENS, ICONS, AGES, WARRANTIES, allBanners, audience, cleanBanner, insertBanner, updateBanner, liveOn } = require('../banners');
+const { TYPES: VEHICLE_TYPES } = require('../vehicle-types');
 const { mailConfig, mailReady } = require('../notify');
 const { sendMail } = require('../mailer');
 
@@ -412,9 +414,6 @@ function register(router) {
     return {
       tips: db.prepare("SELECT * FROM tips ORDER BY status = 'pending' DESC, sort DESC, id DESC").all().map((r) => tipAdminOut(db, r)),
       categories: CATEGORIES,
-      screens: SCREENS,
-      icons: ICONS,
-      featured: featuredOf(db),
     };
   });
 
@@ -449,24 +448,84 @@ function register(router) {
     const prev = getOr404(db, 'tips', ctx.params.id, 'Astuce');
     db.prepare('DELETE FROM tips WHERE id = ?').run(prev.id);
     if (prev.image_url) uploads.remove(prev.image_url);
-    const f = featuredOf(db);
-    if (f && f.action === 'tip' && f.tipId === prev.id) setFeatured(db, null);
+    // The banners that opened it go too.
+    for (const b of allBanners(db)) if (b.action === 'tip' && b.tipId === prev.id) db.prepare('DELETE FROM banners WHERE id = ?').run(b.id);
     if (prev.status === 'published') bumpContentVersion(db);
     return { ok: true };
   });
 
-  router.put('/api/admin/featured', (ctx) => {
-    contentOnly(ctx);
-    const { db, body } = ctx;
-    let featured;
+  // ---- « À la une »: the banners of the app's home screen ----
+  // Administrator and content editor: for any customers. Dealership manager: banners for their own dealership only
+  // (open days…); they see the others without changing them.
+  function bannerUser(ctx) {
+    const user = auth(ctx);
+    if (!['admin', 'editor', 'manager'].includes(user.role)) throw new HttpError(403, 'Réservé à l’administrateur, à l’éditeur de contenu et au responsable de concession');
+    return user;
+  }
+  const isGlobalRole = (user) => user.role === 'admin' || user.role === 'editor';
+  function canEditBanner(user, b) {
+    return isGlobalRole(user) || (b.dealershipIds.length === 1 && b.dealershipIds[0] === user.dealership_id);
+  }
+
+  router.get('/api/admin/banners', (ctx) => {
+    const user = bannerUser(ctx);
+    const { db } = ctx;
+    const scopeIds = isGlobalRole(user) ? null : [user.dealership_id ?? -1];
+    // A manager sees the banners their customers may receive: for everyone, or naming their dealership.
+    const banners = allBanners(db)
+      .filter((b) => !scopeIds || !b.dealershipIds.length || b.dealershipIds.includes(scopeIds[0]))
+      .map((b) => ({ ...b, editable: canEditBanner(user, b), live: liveOn(b), reach: audience(db, b, scopeIds) }));
+    const dealerships = scopeIds ? camelAll(db.prepare('SELECT id, name FROM dealerships WHERE id = ?').all(scopeIds[0])) : camelAll(db.prepare('SELECT id, name FROM dealerships ORDER BY name').all());
+    return {
+      banners,
+      global: isGlobalRole(user),
+      dealerships,
+      tips: db.prepare("SELECT id, title FROM tips WHERE status = 'published' ORDER BY sort DESC, id DESC").all(),
+      equipment: db.prepare('SELECT id, data FROM equipment ORDER BY sort, id').all().map((r) => [r.id, JSON.parse(r.data).name]).sort((a, b) => a[1].localeCompare(b[1], 'fr')),
+      vehicleTypes: VEHICLE_TYPES.map((t) => [t.id, t.name]),
+      ages: AGES.map((a) => [a[0], a[1]]),
+      warranties: WARRANTIES,
+      screens: SCREENS,
+      icons: ICONS,
+    };
+  });
+
+  function bannerBody(ctx, user) {
     try {
-      featured = body.remove ? null : cleanFeatured(db, body);
+      return cleanBanner(ctx.db, ctx.body, isGlobalRole(user) ? {} : { dealershipIds: [user.dealership_id] });
     } catch (err) {
       throw new HttpError(400, err.message);
     }
-    setFeatured(db, featured);
+  }
+
+  router.post('/api/admin/banners', (ctx) => {
+    const user = bannerUser(ctx);
+    if (!isGlobalRole(user) && !user.dealership_id) throw new HttpError(403, 'Aucune concession');
+    const id = insertBanner(ctx.db, bannerBody(ctx, user), user.id);
+    bumpContentVersion(ctx.db);
+    return { id };
+  });
+
+  router.put('/api/admin/banners/:id', (ctx) => {
+    const user = bannerUser(ctx);
+    const { db } = ctx;
+    const prev = allBanners(db).find((b) => b.id === Number(ctx.params.id));
+    if (!prev) throw new HttpError(404, 'Bandeau introuvable');
+    if (!canEditBanner(user, prev)) throw new HttpError(403, 'Ce bandeau est géré par l’administrateur');
+    updateBanner(db, prev.id, bannerBody(ctx, user));
     bumpContentVersion(db);
-    return { featured };
+    return { id: prev.id };
+  });
+
+  router.delete('/api/admin/banners/:id', (ctx) => {
+    const user = bannerUser(ctx);
+    const { db } = ctx;
+    const prev = allBanners(db).find((b) => b.id === Number(ctx.params.id));
+    if (!prev) throw new HttpError(404, 'Bandeau introuvable');
+    if (!canEditBanner(user, prev)) throw new HttpError(403, 'Ce bandeau est géré par l’administrateur');
+    db.prepare('DELETE FROM banners WHERE id = ?').run(prev.id);
+    bumpContentVersion(db);
+    return { ok: true };
   });
 
   // ---- Settings ----

@@ -16,6 +16,7 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 - **Diagnostics = solution magasin** : chaque fin de parcours met en avant un produit vendu en magasin d'accessoires de camping-car (produit spécialisé), jamais de remède maison (vinaigre, bicarbonate, savon, chiffon, ruban adhésif, « système D »). Pas de référence de pièce. « Aucun produit nécessaire » seulement si aucun produit n'a de sens.
 - **Pas de diagnostic groupe électrogène** (ne l'intéresse pas).
 - **Conseils & Astuces** (ancien mini-jeu « Missions ») : astuces publiées depuis le back-office ou partagées par les clients, jamais publiées sans relecture (administrateur ou éditeur de contenu). « Le conseil du magasin » suit la règle solution magasin. La démo ne publie jamais d'astuce (elle serait visible des vrais clients).
+- **Bandeaux « À la une »** : ciblés (concessions, type de véhicule, ancienneté, garantie, équipement, accord offres, dates). Ceux de la démo visent seulement les concessions de démo, jamais « toutes ».
 - Demandes : sous garantie ou extension → SAV ; hors garantie ou accessoire → magasin ; atelier (étanchéité, gaz…) → SAV. Un e-mail par service, pas d'e-mail aux commerciaux ni au responsable.
 
 ## Démo commerciale — à garder à jour

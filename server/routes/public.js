@@ -6,6 +6,7 @@ const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealT
 const { appData, readProfile } = require('../catalog');
 const { KINDS, entretienOf, logOf } = require('../entretien');
 const { CATEGORY_IDS } = require('../tips');
+const { bannerFor } = require('../banners');
 const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
@@ -214,8 +215,12 @@ function register(router) {
       contentVersion: Number(getSetting(ctx.db, 'content_version', '0')),
       announcement: getSetting(ctx.db, 'announcement', null),
       ...appData(ctx.db, { vehicleId: customer.vehicle_id, dealershipId: customer.dealership_id }),
+      featured: bannerFor(ctx.db, customer),
     };
   });
+
+  // The « À la une » banner for this customer today (asked at each start: dates and time since the handover change).
+  router.get('/api/me/featured', (ctx) => ({ featured: bannerFor(ctx.db, requireCustomer(ctx)) }));
 
   // Saves one storage key of the app; returns the stored value (photos replaced by their URL).
   router.put('/api/me/state/:key', (ctx) => {

@@ -51,6 +51,11 @@ function removeDemo(db) {
   let customers = 0;
   for (const id of ids) customers += db.prepare('DELETE FROM customers WHERE dealership_id = ?').run(id).changes;
   for (const id of ids) db.prepare('DELETE FROM usage_events WHERE dealership_id = ?').run(id);
+  // Banners « À la une » of the demo: only those for demo dealerships (never one for everyone).
+  for (const b of db.prepare('SELECT id, dealership_ids FROM banners').all()) {
+    const targets = JSON.parse(b.dealership_ids || '[]');
+    if (targets.length && targets.every((t) => ids.includes(t))) db.prepare('DELETE FROM banners WHERE id = ?').run(b.id);
+  }
   const accounts = db.prepare("DELETE FROM admins WHERE email LIKE '%@demo.test'").run().changes;
   for (const id of ids) db.prepare('DELETE FROM dealerships WHERE id = ?').run(id);
   return { dealerships: ids.length, customers, accounts };
@@ -412,6 +417,14 @@ async function main() {
     ['Vaisselle et ustensiles', 15, true], ['Table et chaises de camping', 12, true], ['Barbecue ou plancha', 10, true], ['Kayak gonflable', 18, false],
   ]);
   await carry('Henri', { pax: 1 }, [['Valises et vêtements', 30, true], ['Nourriture et boissons', 25, true], ['Câbles, cales et outils', 15, true], ['Vélo', 15, false]]);
+  // « À la une »: banners for the demo dealerships only (a banner for everyone would show in the real customers' apps).
+  const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+  const banner = (staff, body) => call('POST', '/api/admin/banners', body, staffToken(staff.id, staff.role));
+  await banner(D.nantes.staff.responsable, { title: 'Portes ouvertes samedi', subtitle: 'Café offert et -10 % au magasin', icon: '🎉', action: 'popup', text: 'Samedi de 9 h à 18 h : portes ouvertes à la concession. Café offert, -10 % sur les accessoires et contrôle gratuit de la pression des pneus.', endsOn: inDays(10), priority: 20 });
+  await call('POST', '/api/admin/banners', { title: 'Plus d’autonomie', subtitle: 'Le panneau solaire, posé par notre atelier', icon: '☀️', action: 'popup', text: 'Avec un panneau solaire, vos batteries se rechargent toutes seules, même sans prise. Demandez-nous un devis au magasin.', dealershipIds: [D.rennes.id, D.vannes.id], equipmentId: 'solaire', equipmentHas: 'no', optinOnly: true, priority: 15 });
+  await call('POST', '/api/admin/banners', { title: 'Bienvenue à bord', subtitle: 'Les bons gestes des premières semaines', icon: '🚐', action: 'screen', screen: 'tips', dealershipIds: [D.nantes.id, D.rennes.id, D.vannes.id], age: 'm3', priority: 30 });
+  await call('POST', '/api/admin/banners', { title: 'Votre garantie se termine', subtitle: 'Pensez à l’extension de garantie', icon: '🛡️', action: 'screen', screen: 'rdv', dealershipIds: [D.nantes.id, D.rennes.id, D.vannes.id], warranty: 'out', priority: 10 });
+
   // « Partager mon astuce »: two tips from customers, waiting in « Conseils & Astuces » (never published by the demo:
   // a published tip would show in the real customers' apps too).
   await call('POST', '/api/me/tips', { title: 'Des cales qu’on n’oublie plus', category: 'route', body: 'J’ai accroché un petit sac à l’intérieur de la porte : les cales y vont dès que je les ramasse, et je vois tout de suite si elles manquent avant de partir.' }, C.Martine.token);

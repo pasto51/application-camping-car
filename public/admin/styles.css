@@ -273,3 +273,6 @@ tr.clickable:hover td { background: var(--bg); }
 .feat-preview strong { font-size: 1.1rem; }
 @media (max-width: 640px) { .tip-main { flex-direction: column; } .tip-thumb { width: 100%; height: 160px; } }
 .section-title { margin: 1.4rem 0 .6rem; font-size: 1.1rem; }
+.banner-row { display: grid; grid-template-columns: minmax(240px, 380px) 1fr auto; gap: 1rem; align-items: center; margin-bottom: .8rem; }
+.banner-info p { margin: .2rem 0; }
+@media (max-width: 900px) { .banner-row { grid-template-columns: 1fr; } }

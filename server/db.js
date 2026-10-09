@@ -159,6 +159,27 @@ CREATE TABLE IF NOT EXISTS tips (
   published_at TEXT
 );
 CREATE INDEX IF NOT EXISTS tips_status ON tips (status);
+-- « À la une »: banners of the app's home screen, each for its own customers (empty lists: everyone) and between two dates.
+CREATE TABLE IF NOT EXISTS banners (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  icon TEXT,
+  action TEXT NOT NULL DEFAULT 'popup',
+  payload TEXT NOT NULL DEFAULT '{}',
+  dealership_ids TEXT NOT NULL DEFAULT '[]',
+  vehicle_types TEXT NOT NULL DEFAULT '[]',
+  age TEXT NOT NULL DEFAULT '',
+  warranty TEXT NOT NULL DEFAULT '',
+  equipment_id TEXT,
+  equipment_has INTEGER NOT NULL DEFAULT 1,
+  optin_only INTEGER NOT NULL DEFAULT 0,
+  starts_on TEXT,
+  ends_on TEXT,
+  priority INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER REFERENCES admins(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE TABLE IF NOT EXISTS maintenance_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,

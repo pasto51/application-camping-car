@@ -10,6 +10,7 @@ const { HttpError, createRouter, readJsonBody, sendJson, serveStatic } = require
 const { seed } = require('./seed');
 const { seedCatalog, ensureEquipmentPresets } = require('./catalog');
 const { applyContentPatches } = require('./content-patches');
+const { migrateFeatured } = require('./banners');
 const { loadVapidKeys } = require('./webpush');
 const { createNotifier } = require('./notify');
 const { randomToken, sha256 } = require('./auth');
@@ -50,6 +51,7 @@ function createApp(options = {}) {
   seedCatalog(db, uploads, log);
   ensureEquipmentPresets(db);
   applyContentPatches(db, log);
+  migrateFeatured(db);
   config.vapid = loadVapidKeys(dataDir);
   const LINK_DAYS = 14;
   const createLoginLink = (customerId) => {

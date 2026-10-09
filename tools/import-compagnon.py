@@ -536,6 +536,8 @@ def main():
     else featPopup(f);
   });
   renderFeatured();
+  // The banner for this customer today, asked again at each start (dates, time since the handover).
+  window.CDB_SET_FEATURED = function(f){DATA.featured = f || null; renderFeatured()};
 ''' + s[b:]
 
     # ---- Page shell ----

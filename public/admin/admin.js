@@ -7,6 +7,7 @@ const formatDateTime = (t) => {
 import { registerCatalogViews } from '/admin/catalog.js';
 import { registerAnalyticsView } from '/admin/analytics.js';
 import { registerTipsView } from '/admin/tips.js';
+import { registerBannersView } from '/admin/banners.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -104,6 +105,7 @@ function sections() {
     ['vehicles', '🚐', 'Véhicules', canEditContent()],
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', canEditContent()],
     ['equipment', '🧰', 'Équipements', canEditContent()],
+    ['banners', '📣', 'À la une', canEditContent() || ['manager', 'dealer'].includes(state.user?.role)],
     ['tips', '💡', 'Conseils & Astuces', canEditContent()],
     ['content', '📋', 'Contenus de l’appli', canEditContent()],
     ['brands', '🏷️', 'Marques', canEditContent()],
@@ -904,6 +906,7 @@ const VIEWS = {
 
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin, canEditContent });
 registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, refreshTipsBadge });
+registerBannersView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.

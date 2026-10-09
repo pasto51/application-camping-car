@@ -1,10 +1,8 @@
 'use strict';
 
 // « Conseils & Astuces »: short tips (title, picture or video, text, optional « Le conseil du magasin ») written in the
-// back-office, or shared by customers and published once read by an administrator or a content editor. And the
-// « À la une » banner of the home screen, which opens a tip, a page of the app, a web page or an announcement.
-
-const { getSetting, setSetting } = require('./db');
+// back-office, or shared by customers and published once read by an administrator or a content editor. (The « À la une »
+// banners of the home screen are in banners.js.)
 
 const CATEGORIES = [
   ['eau', 'Eau'],
@@ -16,20 +14,6 @@ const CATEGORIES = [
   ['confort', 'Confort'],
 ];
 const CATEGORY_IDS = new Set(CATEGORIES.map((c) => c[0]));
-
-// Pages of the app the banner can open (screen ids of public/app).
-const SCREENS = [
-  ['tips', 'Conseils & Astuces'],
-  ['weight', 'Poids du véhicule'],
-  ['carnet', 'Carnet d’entretien'],
-  ['daily', 'Gestes du quotidien'],
-  ['diag', 'J’ai un souci'],
-  ['rdv', 'Rendez-vous atelier'],
-  ['equip', 'Mes équipements'],
-  ['what', 'C’est quoi, ça ?'],
-];
-const SCREEN_IDS = new Set(SCREENS.map((s) => s[0]));
-const ICONS = ['💡', '❄️', '☀️', '💧', '🔥', '🔋', '🔧', '🚐', '🎁', '📣', '🛒', '⚠️'];
 
 // Videos are only embedded (never stored on our server): YouTube or Vimeo, played without tracking cookies when possible.
 function videoEmbed(url) {
@@ -74,43 +58,6 @@ function tipOut(r) {
 
 function publishedTips(db) {
   return db.prepare("SELECT * FROM tips WHERE status = 'published' ORDER BY sort DESC, id DESC").all().map(tipOut);
-}
-
-const DEFAULT_FEATURED = null;
-function featuredOf(db) {
-  try {
-    return JSON.parse(getSetting(db, 'featured', 'null')) || DEFAULT_FEATURED;
-  } catch {
-    return DEFAULT_FEATURED;
-  }
-}
-
-// What the banner may hold: title, subtitle, icon, and one action (tip, page of the app, web page, announcement).
-function cleanFeatured(db, body) {
-  if (!body || !String(body.title || '').trim()) return null;
-  const str = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : '');
-  const action = ['tip', 'screen', 'link', 'popup'].includes(body.action) ? body.action : 'popup';
-  const out = { title: str(body.title, 80), subtitle: str(body.subtitle, 140), icon: ICONS.includes(body.icon) ? body.icon : '💡', action };
-  if (action === 'tip') {
-    const id = Number(body.tipId);
-    if (!db.prepare("SELECT 1 FROM tips WHERE id = ? AND status = 'published'").get(id)) throw new Error('Choisissez une astuce publiée');
-    out.tipId = id;
-  } else if (action === 'screen') {
-    if (!SCREEN_IDS.has(body.screen)) throw new Error('Choisissez une page de l’application');
-    out.screen = body.screen;
-  } else if (action === 'link') {
-    const url = str(body.url, 500);
-    if (!/^https:\/\/[^\s]+$/i.test(url)) throw new Error('Le lien doit commencer par https://');
-    out.url = url;
-  } else {
-    out.text = str(body.text, 1500);
-    if (!out.text) throw new Error('Écrivez le texte de l’annonce');
-  }
-  return out;
-}
-
-function setFeatured(db, featured) {
-  setSetting(db, 'featured', featured ? JSON.stringify(featured) : null);
 }
 
 // First tips of a new site, in our words. « Le conseil du magasin » is always a product sold in a camping-car accessory
@@ -171,11 +118,12 @@ function seedStarterTips(db) {
   const insert = db.prepare("INSERT INTO tips (title, category, body, store_tip, status, sort, published_at) VALUES (?, ?, ?, ?, 'published', 0, datetime('now'))");
   // Inserted last first: the newest is shown first, so the list keeps this order.
   [...STARTER_TIPS].reverse().forEach((t) => insert.run(t.title, t.category, t.body, t.storeTip));
-  if (!featuredOf(db)) {
+  // A first banner for everyone, opening the first tip.
+  if (!db.prepare('SELECT COUNT(*) AS n FROM banners').get().n) {
     const first = db.prepare('SELECT id FROM tips WHERE title = ?').get(STARTER_TIPS[0].title);
-    setFeatured(db, { title: 'Avant l’hiver', subtitle: 'Protégez votre circuit d’eau du gel', icon: '❄️', action: 'tip', tipId: first.id });
+    db.prepare("INSERT INTO banners (title, subtitle, icon, action, payload) VALUES (?, ?, ?, 'tip', ?)").run('Avant l’hiver', 'Protégez votre circuit d’eau du gel', '❄️', JSON.stringify({ tipId: first.id }));
   }
   return STARTER_TIPS.length;
 }
 
-module.exports = { CATEGORIES, CATEGORY_IDS, SCREENS, ICONS, videoEmbed, tipOut, publishedTips, featuredOf, cleanFeatured, setFeatured, seedStarterTips };
+module.exports = { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut, publishedTips, seedStarterTips };
