@@ -1303,6 +1303,7 @@ async function customerDetail(el, id) {
                 ? `créé avant cette version, il ne peut pas être réaffiché : utilisez « Nouveau code d’accès » (valable jusqu’au ${formatDate(c.accessExpiresAt.slice(0, 10))})`
                 : 'pas encore généré'
           }</dd></div>
+          ${c.nickname ? `<div><dt>Petit nom du véhicule</dt><dd>« ${esc(c.nickname)} »</dd></div>` : ''}
           <div><dt>Contrôle de mise en main</dt><dd>${c.handover.steps}/5 points${c.handover.validatedOn ? ` · validée le ${esc(c.handover.validatedOn)}` : ''}</dd></div>
           <div><dt>Dernière sauvegarde de l’appli</dt><dd>${c.stateUpdatedAt ? formatDate(c.stateUpdatedAt) : '—'}</dd></div>
         </dl>

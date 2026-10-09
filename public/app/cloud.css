@@ -150,3 +150,8 @@
 .cloud-list li{margin:6px 0;line-height:1.4}
 .cloud-late{color:var(--warn);font-weight:700}
 .cloud-del{min-height:32px;padding:2px 10px;font-size:13px;margin-left:6px}
+
+/* Nickname of the vehicle at the top of the home screen */
+.hero-name.cloud-nick{color:var(--accent);overflow-wrap:anywhere}
+.cloud-nickline{margin:-6px 0 0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:14px;color:var(--muted)}
+.cloud-nickline .lnk{min-height:32px;padding:4px 12px;font-size:13px}

@@ -52,6 +52,7 @@ function customerStateSummary(db, customerId) {
     models: Object.entries(mods)
       .filter(([, m]) => m && (m.name || m.ref))
       .map(([id, m]) => ({ id, name: names[id] || id, model: m.name || '', ref: m.ref || '' })),
+    nickname: state.cdb_nick?.value || '',
     handover: { steps: Object.keys(hand.steps || {}).filter((k) => hand.steps[k]).length, validatedOn: hand.date || null },
     stateUpdatedAt: Object.values(state).map((s) => s.updatedAt).sort().pop() || null,
   };

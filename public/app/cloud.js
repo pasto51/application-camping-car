@@ -9,7 +9,7 @@
   var SESSION_KEY = 'cdb_cloud';
   var DATA_KEY = 'cdb_cloud_data';
   var PENDING_KEY = 'cdb_cloud_pending';
-  var STATE_KEYS = ['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand'];
+  var STATE_KEYS = ['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand', 'cdb_nick'];
   var root = document.getElementById('cloud');
   var device = document.getElementById('device');
 
@@ -516,6 +516,7 @@
         root.innerHTML = '';
         device.hidden = false;
         window.startCompagnon(DATA);
+        renderNick();
         addAccountCard();
         loadRequests();
         setInterval(function () { if (document.visibilityState === 'visible') loadRequests(); }, 60000);
@@ -684,6 +685,51 @@
       if (!sub) return;
       return api('DELETE', '/api/me/push', { endpoint: sub.endpoint }).catch(function () {}).then(function () { return sub.unsubscribe(); });
     });
+  }
+
+  // ---------- Nickname of the vehicle (« Le Baroudeur »): shown big at the top, the model just below ----------
+
+  var NICK_KEY = 'cdb_nick';
+  function renderNick() {
+    var h = document.querySelector('#home .hero-name');
+    if (!h || !DATA || !DATA.vehicle) return;
+    var nick = (lsGet(NICK_KEY) || '').trim(), v = DATA.vehicle;
+    var model = [v.heroPrefix, v.heroName].filter(Boolean).join(' ');
+    h.innerHTML = nick ? esc(nick) : esc(v.heroPrefix || '') + ' <span>' + esc(v.heroName || '') + '</span>';
+    h.classList.toggle('cloud-nick', !!nick);
+    var line = document.getElementById('cloudnick');
+    if (!line) {
+      line = document.createElement('p');
+      line.id = 'cloudnick';
+      line.className = 'cloud-nickline';
+      h.insertAdjacentElement('afterend', line);
+    }
+    line.innerHTML = (nick ? '<span>' + esc(v.fullName || model) + '</span> ' : '') +
+      '<button type="button" class="lnk" data-nick>' + (nick ? 'Changer le petit nom' : 'Donner un petit nom à mon véhicule') + '</button>';
+    line.querySelector('[data-nick]').onclick = editNick;
+  }
+  function editNick() {
+    var cur = lsGet(NICK_KEY) || '';
+    var m = document.createElement('div');
+    m.className = 'cloud-modal';
+    m.innerHTML = '<form class="card"><p class="eyebrow">Votre véhicule</p><h3>Son petit nom</h3>' +
+      '<p class="sub">Il s’affiche en grand à l’accueil de l’appli, le modèle reste écrit juste en dessous.</p>' +
+      '<input class="search" name="nick" maxlength="40" autocomplete="off" placeholder="ex : Le Baroudeur" value="' + esc(cur) + '">' +
+      '<div class="btns">' + (cur ? '<button type="button" class="btn alt" data-clear>Effacer</button>' : '') +
+      '<button type="button" class="btn alt" data-x>Annuler</button><button class="btn">Enregistrer</button></div></form>';
+    document.body.appendChild(m);
+    var input = m.querySelector('input');
+    setTimeout(function () { input.focus(); }, 50);
+    function save(v) {
+      v = (v || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      if (v) lsSet(NICK_KEY, v); else lsDel(NICK_KEY);
+      if (window.CDB_SYNC) window.CDB_SYNC.changed(NICK_KEY, v || null);
+      m.remove();
+      renderNick();
+    }
+    m.querySelector('[data-x]').onclick = function () { m.remove(); };
+    var clr = m.querySelector('[data-clear]'); if (clr) clr.onclick = function () { save(''); };
+    m.querySelector('form').onsubmit = function (e) { e.preventDefault(); save(input.value); };
   }
 
   function addAccountCard() {

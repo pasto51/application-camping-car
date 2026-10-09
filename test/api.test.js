@@ -99,6 +99,11 @@ test('handover, app data, cloud save of the app storage and restore on another p
   assert.match(cover.data.value, /^\/uploads\//);
   assert.equal((await call('PUT', '/api/me/state/autre', { token, body: { value: 'x' } })).status, 400);
 
+  // Nickname of the vehicle: one line of text, 40 characters at most
+  const nick = await call('PUT', '/api/me/state/cdb_nick', { token, body: { value: '  Le\nBaroudeur  ' + 'x'.repeat(60) } });
+  assert.equal(nick.data.value, ('Le Baroudeur ' + 'x'.repeat(60)).slice(0, 40));
+  await call('PUT', '/api/me/state/cdb_nick', { token, body: { value: 'Titine' } });
+
   // A URL that is not the customer's own is dropped (cannot take over someone else's file)
   const foreign = await call('PUT', '/api/me/state/cdb_uph', { token, body: { value: JSON.stringify({ frigo: frigoUrl, pompe: data.vehicle.photos[0].url }) } });
   assert.deepEqual(JSON.parse(foreign.data.value), { frigo: frigoUrl });
@@ -120,6 +125,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
   assert.equal(restored.status, 200);
   assert.equal(restored.data.state.cdb_own, '{"frigo":true}');
   assert.equal(restored.data.state.cdb_photo, cover.data.value);
+  assert.equal(restored.data.state.cdb_nick, 'Titine');
 
   // Workshop request reaches the dealership, which answers
   const req = await call('POST', '/api/me/requests', { token, body: { title: 'Test d’étanchéité', message: 'Bonjour', period: '15 jours', phone: '0600000000' } });
@@ -135,6 +141,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
   const detail = (await call('GET', `/api/admin/customers/${h.customer.id}`, { token: admin })).data;
   assert.deepEqual(detail.equipmentOwned, ['Réfrigérateur à compression (sous la plaque de cuisson)']);
   assert.equal(detail.photos.length, 1);
+  assert.equal(detail.nickname, 'Titine');
   assert.ok(detail.accessExpiresAt);
 
   // Erasure removes data and files

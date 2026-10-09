@@ -11,7 +11,7 @@ const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
 // Storage keys of the Compagnon de bord app that are saved in the cloud.
-const STATE_KEYS = new Set(['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand']);
+const STATE_KEYS = new Set(['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand', 'cdb_nick']);
 const PHOTO_KEYS = new Set(['cdb_uph', 'cdb_photo']);
 const MAX_STATE_BYTES = 30 * 1024 * 1024; // photo keys: the photos arrive here, then become files
 const MAX_TEXT_STATE_BYTES = 512 * 1024; // other keys (equipment ticked, weights…)
@@ -259,6 +259,8 @@ function register(router) {
     if (!STATE_KEYS.has(params.key)) throw new HttpError(400, 'Donnée inconnue');
     let value = body.value == null ? null : String(body.value);
     if (params.key === 'cdb_hand' && value) value = stripVin(value);
+    // The vehicle's nickname, shown at the top of the app: one line of plain text.
+    if (params.key === 'cdb_nick' && value) value = value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40) || null;
     if (value && value.length > (PHOTO_KEYS.has(params.key) ? MAX_STATE_BYTES : MAX_TEXT_STATE_BYTES)) throw new HttpError(413, 'Données trop volumineuses');
     const previous = db.prepare('SELECT value FROM customer_state WHERE customer_id = ? AND key = ?').get(customer.id, params.key)?.value ?? null;
     const stored = PHOTO_KEYS.has(params.key) ? storePhotos(uploads, params.key, value, previous) : value;

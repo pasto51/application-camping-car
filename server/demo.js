@@ -423,6 +423,9 @@ async function main() {
     ['Vélo électrique', 25, true], ['Vélo électrique', 25, true], ['Valises et vêtements', 40, true], ['Nourriture et boissons', 30, true],
     ['Vaisselle et ustensiles', 15, true], ['Table et chaises de camping', 12, true], ['Barbecue ou plancha', 10, true], ['Kayak gonflable', 18, false],
   ]);
+  // Nickname given to the vehicle by the customer (shown big at the top of their app).
+  await call('PUT', '/api/me/state/cdb_nick', { value: 'Le Baroudeur' }, C.Isabelle.token);
+  await call('PUT', '/api/me/state/cdb_nick', { value: 'Titine' }, C.Henri.token);
   await carry('Henri', { pax: 1 }, [['Valises et vêtements', 30, true], ['Nourriture et boissons', 25, true], ['Câbles, cales et outils', 15, true], ['Vélo', 15, false]]);
   // « À la une »: banners for the demo dealerships only (a banner for everyone would show in the real customers' apps).
   const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
