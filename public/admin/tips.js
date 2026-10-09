@@ -14,11 +14,11 @@ export function registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confi
           ${t.imageUrl ? `<img class="tip-thumb" src="${esc(t.imageUrl)}" alt="">` : t.videoUrl ? '<span class="tip-thumb tip-vid">▶</span>' : ''}
           <div>
             <span class="status">${esc(catName[t.category] || t.category)}</span>
-            ${t.customer ? `<span class="status piece">Astuce de client</span>` : ''}
+            ${t.customer ? `<span class="status piece">Astuce de client</span>` : t.status === 'pending' ? '<span class="status">Proposition</span>' : ''}
             <h3>${esc(t.title)}</h3>
             <p>${multiline(t.body)}</p>
             ${t.storeTip ? `<p class="tip-store">🛒 <strong>Le conseil du magasin :</strong> ${esc(t.storeTip)}</p>` : ''}
-            <p class="muted">${t.customer ? `Envoyée par ${esc(t.customer.name)} (${esc(t.customer.dealership)}) le ${formatDate(t.createdAt)}. Seul le prénom est affiché dans l’appli.` : t.publishedAt ? `Publiée le ${formatDate(t.publishedAt)}` : ''}</p>
+            <p class="muted">${t.customer ? `Envoyée par ${esc(t.customer.name)} (${esc(t.customer.dealership)}) le ${formatDate(t.createdAt)}. Seul le prénom est affiché dans l’appli.` : t.publishedAt ? `Publiée le ${formatDate(t.publishedAt)}` : t.status === 'pending' ? 'Proposée avec la mise à jour de l’appli : relisez-la, corrigez si besoin, puis publiez-la ou refusez-la.' : ''}</p>
           </div>
         </div>
         <div class="row-actions">
@@ -31,7 +31,7 @@ export function registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confi
     el.innerHTML = `${pageHeader('Conseils & Astuces', '<button class="btn primary" data-act="add">+ Nouvelle astuce</button>')}
       <p class="muted">Le bandeau de l’accueil de l’appli se règle dans <a href="#banners">📣 À la une</a>.</p>
       <h2 class="section-title">À valider (${pending.length})</h2>
-      ${pending.length ? pending.map(card).join('') : '<p class="muted">Aucune astuce de client en attente.</p>'}
+      ${pending.length ? pending.map(card).join('') : '<p class="muted">Aucune astuce en attente.</p>'}
       <h2 class="section-title">Publiées dans l’appli (${published.length})</h2>
       ${published.map(card).join('')}`;
 
