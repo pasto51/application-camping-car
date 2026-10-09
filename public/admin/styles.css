@@ -291,3 +291,6 @@ tr.muted td { opacity: .6; }
 .guide-list li:first-child { border-top: 0; }
 .guide-list span { color: var(--muted); font-size: .92rem; }
 @media (max-width: 900px) { .guide-cols { grid-template-columns: 1fr; } }
+
+/* Lists of « Gestes du quotidien » that ask where the customer stops: one block per place */
+.list-place{margin:18px 0 6px;font-size:15px}

@@ -440,6 +440,20 @@ const PATCHES = [
       return changed;
     },
   },
+  {
+    // « Chaque mois » first among the seasonal routines (the order can then be changed in the back-office).
+    key: '2026-10-21-ordre-listes',
+    run: (db) => {
+      const row = db.prepare("SELECT value FROM catalog WHERE key = 'lists'").get();
+      if (!row) return 0;
+      const lists = JSON.parse(row.value);
+      const keys = Object.keys(lists);
+      if (keys.join() !== 'arrivee,depart,hiver,printemps,mensuel') return 0;
+      const next = Object.fromEntries(['arrivee', 'depart', 'mensuel', 'hiver', 'printemps'].map((k) => [k, lists[k]]));
+      db.prepare("UPDATE catalog SET value = ?, updated_at = datetime('now') WHERE key = 'lists'").run(JSON.stringify(next));
+      return 1;
+    },
+  },
 ];
 
 function findLeaves(node, match, out = []) {

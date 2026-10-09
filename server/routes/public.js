@@ -349,10 +349,10 @@ function register(router) {
   }
 
   // Spare part or replacement equipment: everything the store needs to identify it, sent to the store's e-mail.
-  // Only a safety net against a program that would send thousands of e-mails: far above what a customer does, even
-  // one who sends the same request again and again (the diagnostics themselves have no limit).
-  const requestLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 200 });
-  const messageLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 500 });
+  // A customer sends at most 15 requests (parts or workshop) and 60 messages a day: enough for real needs, no flood of
+  // e-mails to the dealership.
+  const requestLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 15 });
+  const messageLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 60 });
   const tooMany = () => new HttpError(429, 'Vous avez envoyé beaucoup de demandes aujourd’hui : appelez votre concession, ou réessayez demain.');
   router.post('/api/me/parts', (ctx) => {
     const customer = requireCustomer(ctx);

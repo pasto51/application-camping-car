@@ -727,7 +727,7 @@ test('logbook set in the back-office: kinds for some customers only, checks to d
 test('routine checklists: winter storage, spring start-up, every month, with lines for some equipment', async () => {
   const admin = await login('admin@test.fr', 'motdepasse123');
   const lists = (await call('GET', '/api/admin/catalog/lists', { token: admin })).data.value;
-  assert.deepEqual(Object.keys(lists), ['arrivee', 'depart', 'hiver', 'printemps', 'mensuel']);
+  assert.deepEqual(Object.keys(lists), ['arrivee', 'depart', 'mensuel', 'hiver', 'printemps']);
   assert.equal(lists.hiver.title, 'Hivernage');
   const lith = lists.hiver.items.find((i) => i.eq?.includes('lith'));
   assert.equal(lith.group, 'batterie');
@@ -850,7 +850,7 @@ test('security: malformed addresses, small anonymous bodies, sessions cut, roles
   await call('POST', '/api/me/events', { token: h.token, body: { events: [{ kind: 'search', q: 'VF1ABCDEF12345678 bruit', n: 0 }, { kind: 'search', q: 'AB-123-CD', n: 0 }] } });
   assert.equal(app.db.prepare("SELECT COUNT(*) AS n FROM usage_events WHERE query LIKE '%vf1abcdef%' OR query LIKE '%ab-123%'").get().n, 0);
   let last = 0;
-  for (let i = 0; i < 202; i++) last = (await call('POST', '/api/me/requests', { token: h.token, body: { title: `Demande ${i}`, message: 'x' } })).status;
+  for (let i = 0; i < 17; i++) last = (await call('POST', '/api/me/requests', { token: h.token, body: { title: `Demande ${i}`, message: 'x' } })).status;
   assert.equal(last, 429);
 
   // 8. Lost phone: the dealership signs out the customer's devices.

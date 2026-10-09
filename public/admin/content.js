@@ -64,21 +64,35 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
         L.places ? 'demande au client où il s’arrête (camping ou aire / stationnement libre)' : '',
       ].filter(Boolean).join(' · ');
     const listTitle = (k) => lists[k]?.title || LIST_NAMES[k] || k;
+    // Lines shown for one place (or all lines when the list does not ask where the customer stops).
+    const lineRows = (key, place) => {
+      const L = lists[key];
+      const shown = L.items.map((it, n) => ({ it, n })).filter(({ it }) => !place || !it.where || it.where === place);
+      return shown.map(({ it, n }, k) => {
+        const both = place && !it.where ? ' <span class="status">Les deux</span>' : '';
+        const cond = itemCond(place ? { ...(typeof it === 'string' ? { t: it } : it), where: undefined } : it);
+        return `<tr><td>${k + 1}</td><td>${esc(itemText(it))}${both}</td><td>${esc(cond) || '<span class="muted">Tous</span>'}</td>
+          <td class="row-actions"><button class="btn small" data-act="line-up" data-key="${esc(key)}" data-id="${n}" data-prev="${k ? shown[k - 1].n : ''}" ${k ? '' : 'disabled'} aria-label="Monter">↑</button><button class="btn small" data-act="line-edit" data-key="${esc(key)}" data-id="${n}">Modifier</button><button class="btn small danger" data-act="line-del" data-key="${esc(key)}" data-id="${n}">Supprimer</button></td></tr>`;
+      });
+    };
+    const sameSection = (key) => Object.keys(lists).filter((k) => listSection(k) === listSection(key));
     const listCard = (key) => {
       const L = lists[key];
+      const first = sameSection(key)[0] === key;
+      const add = (where, label) => `<button class="btn small primary" data-act="line-add" data-key="${esc(key)}" data-where="${where}">${label}</button>`;
+      const lines = L.places
+        ? Object.entries(WHERE_NAMES)
+            .map(([w, name]) => `<h4 class="list-place">${w === 'camping' ? '🏕️' : '🌙'} Ce que voit le client en ${name.toLowerCase()} (${lineRows(key, w).length} lignes)</h4>
+              <div class="actions">${add(w, `+ Ligne : ${name.toLowerCase()} seulement`)}${add('', '+ Ligne pour les deux')}</div>
+              ${table(['#', 'Ligne', 'Pour qui'], lineRows(key, w), 'Aucune ligne.')}`)
+            .join('')
+        : `<div class="actions">${add('', '+ Ligne')}</div>${table(['#', 'Ligne', 'Pour qui'], lineRows(key, null), 'Aucune ligne.')}`;
       return `<div class="card">
         <div class="card-head"><h3>${listSection(key) === 'route' ? 'Sur la route' : 'Saisons et entretien'} : « ${esc(listTitle(key))} » (${L.items.length} lignes)</h3>
-          <div class="row-actions"><button class="btn small" data-act="list-edit" data-key="${esc(key)}">Nom, but et note</button><button class="btn small primary" data-act="line-add" data-key="${esc(key)}">+ Ligne</button><button class="btn small danger" data-act="list-del" data-key="${esc(key)}">Supprimer la liste</button></div></div>
+          <div class="row-actions"><button class="btn small" data-act="list-up" data-key="${esc(key)}" ${first ? 'disabled' : ''} aria-label="Monter la liste" title="Monter la liste dans le menu">↑</button><button class="btn small" data-act="list-edit" data-key="${esc(key)}">Nom, but, décochage et rappel</button><button class="btn small danger" data-act="list-del" data-key="${esc(key)}">Supprimer la liste</button></div></div>
         ${L.goal ? `<p><strong>Le but :</strong> ${esc(L.goal)}</p>` : ''}
         <p class="muted">${esc(listSettings(L))}</p>
-        ${table(
-          ['#', 'Ligne', 'Pour qui'],
-          L.items.map(
-            (it, n) => `<tr><td>${n + 1}</td><td>${esc(itemText(it))}</td><td>${esc(itemCond(it)) || '<span class="muted">Tous</span>'}</td>
-              <td class="row-actions"><button class="btn small" data-act="line-up" data-key="${esc(key)}" data-id="${n}" ${n ? '' : 'disabled'} aria-label="Monter">↑</button><button class="btn small" data-act="line-edit" data-key="${esc(key)}" data-id="${n}">Modifier</button><button class="btn small danger" data-act="line-del" data-key="${esc(key)}" data-id="${n}">Supprimer</button></td></tr>`
-          ),
-          'Aucune ligne.'
-        )}
+        ${lines}
         ${L.note ? `<p class="muted">Note sous la liste : ${esc(L.note)}</p>` : ''}
       </div>`;
     };
@@ -92,8 +106,8 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
       </nav>
 
       <div class="card-head"><h2 class="section-title" id="c-gestes">Gestes du quotidien</h2><button class="btn" data-act="list-add">+ Nouvelle liste</button></div>
-      <p class="muted">Les listes s’affichent en menu dans l’écran « Gestes du quotidien », en deux parties : « Sur la route » (arrivée, départ) et « Saisons et entretien », dans cet ordre. Le client coche au fur et à mesure ; pour chaque liste, vous choisissez quand elle se décoche toute seule (le lendemain pour l’arrivée et le départ, au bout d’un mois pour l’entretien mensuel…) et les mois où le client reçoit un rappel sur son téléphone. L’arrivée et le départ demandent où le client s’arrête : camping ou aire de service, ou stationnement libre ; chaque ligne peut être pour l’un, l’autre ou les deux.</p>
-      ${Object.keys(lists).map(listCard).join('')}
+      <p class="muted">Les listes s’affichent en menu dans l’écran « Gestes du quotidien », en deux parties : « Sur la route » (arrivée, départ) et « Saisons et entretien », dans l’ordre ci-dessous (flèche ↑ pour monter une liste). Le client coche au fur et à mesure ; pour chaque liste, vous choisissez quand elle se décoche toute seule (le lendemain pour l’arrivée et le départ, au bout d’un mois pour l’entretien mensuel…) et les mois où le client reçoit un rappel sur son téléphone. L’arrivée et le départ demandent où le client s’arrête : camping ou aire de service, ou stationnement libre. Vous voyez ci-dessous les deux versions telles que le client les voit, et vous ajoutez une ligne pour l’une, l’autre ou les deux.</p>
+      ${['route', 'saison'].map((sec) => Object.keys(lists).filter((k) => listSection(k) === sec).map(listCard).join('')).join('')}
 
       <h2 class="section-title" id="c-carnet">Carnet d’entretien</h2>
       <div class="card">
@@ -321,18 +335,18 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
         },
       });
     };
-    const lineForm = (key, n) => {
+    const lineForm = (key, n, presetWhere = '') => {
       const it = n === undefined ? '' : lists[key].items[n];
       const o = typeof it === 'string' ? { t: it } : it;
       openForm({
         title: n === undefined ? `Nouvelle ligne : ${listTitle(key)}` : `Ligne ${n + 1} : ${listTitle(key)}`,
-        values: { t: o.t || '', eq: o.eq || [], group: o.group || '', variant: o.variant ? o.variant.join('=') : '', where: o.where || '' },
+        values: { t: o.t || '', eq: o.eq || [], group: o.group || '', variant: o.variant ? o.variant.join('=') : '', where: n === undefined ? presetWhere : o.where || '' },
         fields: [
           { name: 't', label: 'Ligne', type: 'textarea', rows: 3, required: true, hint: 'Le début jusqu’aux deux-points s’affiche en gras. Ex. : « Je vide toute l’eau : je vide la cuve… »' },
           { name: 'eq', label: 'Seulement si le client a AU MOINS UN de ces équipements (rien coché : tous)', type: 'checks', filter: 'Chercher un équipement (ex. : batterie)', options: opts.equipment },
           { name: 'group', label: 'Groupe (facultatif)', hint: 'Ex. « batterie » sur les lignes « batterie classique » et « batterie lithium » : si le client n’a coché aucun des deux équipements, il voit les deux lignes.' },
           { name: 'variant', label: 'Seulement si (type d’équipement)', type: 'select', options: variantOptions, hint: 'Si le client a répondu autre chose, la ligne est cachée ; s’il ne sait pas, elle est affichée.' },
-          ...(lists[key].places ? [{ name: 'where', label: 'Où', type: 'select', options: [['', 'Partout'], ['camping', 'Camping ou aire de service'], ['libre', 'Stationnement libre']] }] : []),
+          ...(lists[key].places ? [{ name: 'where', label: 'Pour quel arrêt', type: 'select', options: [['', 'Les deux (camping ou aire, et stationnement libre)'], ['camping', 'Camping ou aire de service seulement'], ['libre', 'Stationnement libre seulement']] }] : []),
         ],
         onSubmit: async (d) => {
           const line = d.eq.length || d.variant || d.where ? { t: d.t.trim() } : d.t.trim();
@@ -364,13 +378,24 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
         'list-edit': () => listForm(key),
         'list-del': () =>
           confirmDelete(`Supprimer toute la liste « ${listTitle(key)} » (${lists[key].items.length} lignes) de l’appli ?`, () => saveLists(without(lists, key), 'Liste supprimée')),
-        'line-add': () => lineForm(key),
+        'line-add': () => lineForm(key, undefined, b.dataset.where || ''),
+        'list-up': () => {
+          const keys = Object.keys(lists), sec = sameSection(key), prev = sec[sec.indexOf(key) - 1];
+          if (!prev) return;
+          const a1 = keys.indexOf(prev), a2 = keys.indexOf(key);
+          [keys[a1], keys[a2]] = [keys[a2], keys[a1]];
+          saveLists(Object.fromEntries(keys.map((k) => [k, lists[k]])), 'Ordre des listes enregistré');
+        },
         'line-edit': () => lineForm(key, i),
         'line-del': () =>
           confirmDelete(`Supprimer la ligne « ${itemText(lists[key].items[i]).slice(0, 80)} » ?`, () => saveLists({ ...lists, [key]: { ...lists[key], items: lists[key].items.filter((_, n) => n !== i) } }, 'Ligne supprimée')),
         'line-up': () => {
+          // Moves the line above the one shown just before it (in the version of the list being looked at).
           const items = lists[key].items.slice();
-          [items[i - 1], items[i]] = [items[i], items[i - 1]];
+          const j = b.dataset.prev === '' || b.dataset.prev === undefined ? i - 1 : Number(b.dataset.prev);
+          if (j < 0) return;
+          const [line] = items.splice(i, 1);
+          items.splice(j, 0, line);
           saveLists({ ...lists, [key]: { ...lists[key], items } }, 'Ordre enregistré');
         },
         'kind-add': () => kindForm(),
