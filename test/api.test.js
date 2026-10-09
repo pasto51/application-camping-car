@@ -581,3 +581,50 @@ test('« rester connecté » gives a 15-day session, otherwise 12 hours', async 
   assert.ok(exp(long) > 14 * 86400 && exp(long) <= 15 * 86400);
   assert.ok(exp(short) <= 12 * 3600);
 });
+
+test('« Conseils & Astuces »: starter tips and banner, a tip shared by a customer, read then published by the editor', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: start } = await call('GET', '/api/admin/tips', { token: admin });
+  assert.ok(start.tips.length >= 8, 'starter tips');
+  assert.equal(start.featured.action, 'tip');
+
+  const h = await handover({ firstName: 'Jean', lastName: 'Astuce' });
+  let app = (await call('GET', '/api/app/data', { token: h.token })).data;
+  const before = app.tips.length;
+  assert.ok(app.featured && app.tipCategories.length);
+  assert.ok(app.tips.every((t) => !/vinaigre|bicarbonate/i.test(t.body + (t.storeTip || ''))));
+
+  // The customer shares a tip: not shown until it is published.
+  assert.equal((await call('POST', '/api/me/tips', { token: h.token, body: { title: 'Ok', body: '' } })).status, 400);
+  assert.equal((await call('POST', '/api/me/tips', { token: h.token, body: { title: 'Ranger les cales', category: 'route', body: 'Je range les cales dans un sac accroché à la porte.', photo: PNG } })).status, 200);
+  assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.tips.length, before);
+  assert.equal((await call('GET', '/api/admin/stats', { token: admin })).data.pendingTips, 1);
+  const pending = (await call('GET', '/api/admin/tips', { token: admin })).data.tips.find((t) => t.status === 'pending');
+  assert.equal(pending.customer.name, 'Jean Astuce');
+  assert.ok(pending.imageUrl);
+
+  // Other roles cannot read nor publish.
+  const { data: dealer } = await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Astuces Motors', code: 'ASTUCE1' } });
+  await call('POST', '/api/admin/users', { token: admin, body: { email: 'sav.astuce@test.fr', password: 'savastuce123', role: 'sav', dealershipId: dealer.id } });
+  const sav = await login('sav.astuce@test.fr', 'savastuce123');
+  assert.equal((await call('GET', '/api/admin/tips', { token: sav })).status, 403);
+
+  // Published with « Le conseil du magasin »: the app shows it with the customer's first name.
+  const pub = await call('PUT', `/api/admin/tips/${pending.id}`, { token: admin, body: { publish: true, storeTip: 'Un sac de rangement pour cales.' } });
+  assert.equal(pub.data.status, 'published');
+  app = (await call('GET', '/api/app/data', { token: h.token })).data;
+  const mine = app.tips.find((t) => t.id === pending.id);
+  assert.equal(mine.author, 'Jean');
+  assert.equal(mine.storeTip, 'Un sac de rangement pour cales.');
+
+  // Video: only an embedded YouTube / Vimeo link.
+  assert.equal((await call('POST', '/api/admin/tips', { token: admin, body: { title: 'Vidéo', body: 'x', videoUrl: 'https://exemple.fr/v.mp4' } })).status, 400);
+  const vid = await call('POST', '/api/admin/tips', { token: admin, body: { title: 'Vidéo', category: 'gaz', body: 'Regardez.', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
+  assert.equal(vid.data.videoUrl, 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+
+  // The banner: an announcement, then removed when its tip is deleted.
+  assert.equal((await call('PUT', '/api/admin/featured', { token: admin, body: { title: 'Portes ouvertes', action: 'popup', text: '' } })).status, 400);
+  assert.equal((await call('PUT', '/api/admin/featured', { token: admin, body: { title: 'Nouveau', icon: '💡', action: 'tip', tipId: vid.data.id } })).status, 200);
+  assert.equal((await call('DELETE', `/api/admin/tips/${vid.data.id}`, { token: admin })).status, 200);
+  assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.featured, null);
+});

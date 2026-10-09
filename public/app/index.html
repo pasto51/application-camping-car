@@ -264,6 +264,12 @@ h1,h2,h3{letter-spacing:.005em}
 .lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#waff .btn{flex:none;width:100%}.wtiny{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0}
 .affrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.affrow:first-of-type{border-top:0}.affchk{flex:1;display:flex;align-items:center;gap:10px;font-size:16px;min-height:44px}.affchk input{width:24px;height:24px;accent-color:var(--accent);flex:none}.affrow .dimin input{width:70px}
 button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.dim.on{outline:3px solid var(--accent)}.dimgo{font-size:13px;font-weight:700;color:var(--accent);margin-top:4px}.dimpanel{margin-top:10px}.dimpanel[hidden]{display:none}.dimclose{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.dimfld .dimin input{width:80px}
+.tipcats{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}.tipcard{padding:0;overflow:hidden;margin-bottom:10px}.tiphead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:var(--ink);text-align:left;font:inherit;padding:14px;min-height:60px;cursor:pointer}
+.tipt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.tipt b{font-size:17px;line-height:1.3}.tipcat{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}.tipby{font-size:13px;color:var(--muted)}.tipgo{font-size:24px;color:var(--accent);flex:none;width:28px;text-align:center}
+.tipimg{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin:8px 0}.tipcard .tipimg{border-radius:0;margin:0}.tipvid{position:relative;width:100%;aspect-ratio:16/9;background:#000}.tipvid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.tiptext{padding:12px 14px 4px;margin:0;font-size:16px;line-height:1.5}.tipstore{margin:10px 14px 14px;padding:12px;border-radius:12px;background:var(--soft)}.tipstore p{margin:0 0 8px}.tipstore .btn{width:100%;flex:none}
+.tipshare{width:100%;flex:none;min-height:60px;font-size:18px;margin-top:8px}.tipform{display:flex;flex-direction:column;gap:10px;margin-top:8px}.tipform textarea{min-height:110px;font:inherit}.tipbtns{display:flex;gap:8px}
+.mission.feat{width:100%;font:inherit;cursor:pointer}.mission.feat .stamp{font-size:24px}.featpop{position:fixed;inset:0;z-index:60;background:rgba(5,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}.featpop .card{max-width:440px;width:100%;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}.featpop .btn{flex:none}
 .affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .badmsg{background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:12px;font-size:15px}
 .vbadge{background:var(--ok-bg);color:var(--ok);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700;align-self:flex-start}
@@ -386,12 +392,12 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
         <div class="dims" id="dims" aria-live="polite"></div>
         <button class="loadcard" id="loadcard" data-go="weight" type="button"></button>
       </div>
-      <button class="mission" data-go="game"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg></span><span class="mtxt"><small>Mission du jour</small><strong>Préparer le départ</strong><span>3 minutes pour apprendre le bon ordre</span></span><span class="go" aria-hidden="true">›</span></button>
+      <div id="featured"></div>
       <div class="tiles">
         <button class="tile" data-go="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><strong>Gestes du quotidien</strong><span>Arrivée et départ</span></button>
         <button class="tile" data-go="what"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg><strong>C'est quoi, ça&nbsp;?</strong><span>Touchez le plan pour comprendre</span></button>
         <button class="tile" data-go="diag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><strong>J'ai un souci</strong><span>On cherche la cause avec vous</span></button>
-        <button class="tile" data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg><strong>Missions</strong><span>Apprendre en jouant</span></button>
+        <button class="tile" data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg><strong>Conseils &amp; Astuces</strong><span>Les bons gestes, partagés</span></button>
         <button class="tile wide" data-go="equip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h3M4 12h3M4 18h3"/><path d="M10 6h10M10 12h10M10 18h10"/></svg><span class="t"><strong>Mes équipements</strong><span id="eqcount">Cochez ce qui équipe votre véhicule</span></span></button>
         <button class="tile wide" data-go="rdv"><div class="dlogo" aria-hidden="true">LOGO</div><span class="t"><strong>Rendez-vous atelier</strong><span>Étanchéité, contrôle gaz, révisions</span></span></button>
       </div>
@@ -475,7 +481,7 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
       <div id="diagbody"></div>
     </section>
 
-    <!-- Missions -->
+    <!-- Conseils & Astuces -->
     <section class="screen" id="game" hidden>
       <div id="gamebody"></div>
     </section>
@@ -488,7 +494,7 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
     <button data-go="equip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h3M4 12h3M4 18h3"/><path d="M10 6h10M10 12h10M10 18h10"/></svg>Équipements</button>
     <button data-go="what"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>C'est quoi ?</button>
     <button data-go="diag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg>Souci</button>
-    <button data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>Missions</button>
+    <button data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Astuces</button>
   </nav>
 </div>
 

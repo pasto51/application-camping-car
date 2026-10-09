@@ -107,6 +107,7 @@ function exportCsv(d) {
     table('Recherches sans réponse', ['Recherche', 'Fois'], d.unanswered.map((x) => [x.query, x.count])),
     table('Saisonnalité', ['Problème', ...d.seasonality.months], d.seasonality.rows.map((r) => [r.label, ...r.counts])),
     table('Équipements', ['Équipement', 'Clients équipés', 'Fiches ouvertes'], d.equipment.map((x) => [x.name, x.owners, x.views])),
+    table('Astuces les plus lues', ['Astuce', 'Lectures'], (d.topTips || []).map((x) => [x.label, x.count])),
     table('Types de véhicules', ['Type', 'Problèmes consultés'], d.vehicleTypes.map((x) => [TYPES[x.type] || x.type, x.n])),
   ];
   const blob = new Blob(['\ufeff' + parts.join('\r\n')], { type: 'text/csv;charset=utf-8' });
@@ -201,6 +202,11 @@ export function registerAnalyticsView(VIEWS, h) {
           <h2>Équipements de vos clients</h2>
           <p class="muted">Nombre de clients équipés (cochés dans leur application, ou prévus sur leur modèle), et nombre de fois où la fiche a été ouverte.</p>
           ${d.equipment.length ? barList(d.equipment, { value: (x) => x.owners, label: (x) => esc(x.name), extra: (x) => (x.views ? `<small class="muted">· ${fmt(x.views)} vue(s)</small>` : ''), unit: ' client(s)' }) : '<p class="muted">Aucun.</p>'}
+        </div>
+        <div class="card">
+          <h2>Astuces les plus lues</h2>
+          <p class="muted">« Conseils & Astuces » : les astuces que vos clients ouvrent le plus.</p>
+          ${(d.topTips || []).length ? barList(d.topTips, { value: (x) => x.count, label: (x) => esc(x.label), unit: ' lecture(s)' }) : '<p class="muted">Pas encore de lecture.</p>'}
         </div>
         <div class="card">
           <h2>Types de véhicules</h2>

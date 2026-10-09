@@ -11,7 +11,7 @@ window.startCompagnon = function(DATA){
   document.addEventListener("click", dealerSite, true);
   if(DATA.dealer.website) $$(".top .dlogo").forEach(function(d){d.classList.add("link"); d.setAttribute("role","link"); d.setAttribute("title","Site de "+(DATA.dealer.name||"la concession"))});
   (function(){var im = $("#planSvg image"); im.setAttribute("href",DATA.vehicle.planUrl || (DATA.vehicle.spots.length ? "/app/plan-van.svg" : "")); if(!DATA.vehicle.planUrl && !DATA.vehicle.spots.length) im.remove()})();
-  var titles = {home:"Compagnon de bord",daily:"Gestes du quotidien",equip:"Mes équipements",rdv:"Rendez-vous atelier",weight:"Poids et charge",hand:"Mise en main",what:"C'est quoi, ça ?",diag:"J'ai un souci",game:"Missions"};
+  var titles = {home:"Compagnon de bord",daily:"Gestes du quotidien",equip:"Mes équipements",rdv:"Rendez-vous atelier",weight:"Poids et charge",hand:"Mise en main",what:"C'est quoi, ça ?",diag:"J'ai un souci",game:"Conseils & Astuces"};
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -1010,48 +1010,95 @@ window.startCompagnon = function(DATA){
     if(e.target.closest("#dagain")){renderDiagList()}
   });
 
-  /* ---------- Missions ---------- */
-  var STEPS = DATA.steps;
-  var game = {order:[],done:[],msg:"",finished:false,badge:false};
-  function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
-  function resetGame(){game.order = shuffle(STEPS.map(function(_,i){return i})); game.done=[]; game.msg=""; game.finished=false}
-  resetGame();
-  var BADGES = [
-    {n:"Départ serein",icon:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',key:"depart"},
-    {n:"Maître des eaux",icon:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',key:"eaux"},
-    {n:"Énergie au top",icon:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',key:"energie"},
-    {n:"Premier réveil",icon:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',key:"reveil"}
-  ];
+  /* ---------- Conseils & Astuces ---------- */
+  var TIPS = DATA.tips || [], TCATS = DATA.tipCategories || [];
+  var tipState = {cat:"", open:null, sharing:false, photo:null, sent:false, busy:false};
+  function tipTrack(t){if(window.CDB_TRACK) window.CDB_TRACK("tip",{id:String(t.id),label:t.title})}
+  function catName(id){var c = TCATS.filter(function(x){return x[0]===id})[0]; return c ? c[1] : ""}
+  function tipMedia(t){
+    if(t.videoUrl) return '<div class="tipvid"><iframe src="'+esc(t.videoUrl)+'" title="'+esc(t.title)+'" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+    if(t.imageUrl) return '<img class="tipimg" src="'+esc(t.imageUrl)+'" alt="">';
+    return '';
+  }
+  function tipCard(t){
+    var open = tipState.open === t.id;
+    return '<article class="card tipcard'+(open?' open':'')+'" id="tip-'+t.id+'">' +
+      '<button class="tiphead" type="button" data-tip="'+t.id+'" aria-expanded="'+open+'"><span class="tipt"><span class="tipcat">'+esc(catName(t.category))+'</span><b>'+esc(t.title)+'</b>'+(t.author?'<span class="tipby">L\'astuce de '+esc(t.author)+'</span>':'')+'</span><span class="tipgo" aria-hidden="true">'+(open?'−':'+')+'</span></button>' +
+      (open ? tipMedia(t) + '<p class="tiptext">'+esc(t.body).replace(/\n/g,'<br>')+'</p>' +
+        (t.storeTip ? '<div class="tipstore"><p class="eyebrow">🛒 Le conseil du magasin</p><p>'+esc(t.storeTip)+'</p>'+(window.CDB_CLOUD && window.CDB_CLOUD.partRequest ? '<button class="btn alt" type="button" data-tipshop="'+t.id+'">Demander au magasin</button>' : '')+'</div>' : '') : '') +
+      '</article>';
+  }
+  function shareBlock(){
+    if(!window.CDB_CLOUD || !window.CDB_CLOUD.shareTip) return '';
+    if(tipState.sent) return '<div class="ok"><b>Merci pour votre astuce !</b> Elle sera relue par la concession, puis publiée pour les autres camping-caristes.</div><button class="lnk" type="button" id="tipagain">Partager une autre astuce</button>';
+    if(!tipState.sharing) return '<button class="btn tipshare" type="button" id="tipshare">💬 Partager mon astuce</button>';
+    return '<div class="card tipform"><h3>Partager mon astuce</h3>' +
+      '<div class="fld"><label for="tp_t">Titre</label><input id="tp_t" class="search" maxlength="80" placeholder="Ex. : Ranger les cales sans les oublier"></div>' +
+      '<div class="fld"><label for="tp_c">Thème</label><select id="tp_c" class="search">'+TCATS.map(function(c){return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'}).join("")+'</select></div>' +
+      '<div class="fld"><label for="tp_b">Votre astuce</label><textarea id="tp_b" class="search" rows="5" maxlength="1500" placeholder="Expliquez simplement ce que vous faites."></textarea></div>' +
+      '<div class="fld"><label for="tp_p">Une photo (facultatif)</label><input id="tp_p" type="file" accept="image/*">'+(tipState.photo?'<img class="tipimg" src="'+tipState.photo+'" alt="Votre photo">':'')+'</div>' +
+      '<p class="sub">Votre astuce est relue avant d\'être publiée. Seul votre prénom apparaît.</p>' +
+      '<div class="tipbtns"><button class="btn" type="button" id="tipsend"'+(tipState.busy?' disabled':'')+'>Envoyer</button><button class="btn alt" type="button" id="tipcancel">Annuler</button></div></div>';
+  }
   function renderGame(){
-    var b = $("#gamebody"), n = STEPS.length, d = game.done.length;
-    var html = '<div class="card"><p class="eyebrow">Mission</p><h2 style="font-size:23px">Préparer le départ</h2><p class="sub">Touchez les gestes dans le bon ordre. Pas de pénalité : on vous explique à chaque fois.</p></div>';
-    html += '<div><div class="progress-row"><span>Sérénité</span><span>'+d+' sur '+n+'</span></div><div class="progress"><i style="width:'+Math.round(d/n*100)+'%"></i></div></div>';
-    if(game.done.length){
-      html += '<ol class="seq">'+game.done.map(function(i,k){return '<li><b>'+(k+1)+'. '+esc(STEPS[i].t)+'</b><span>'+esc(STEPS[i].why)+'</span></li>'}).join("")+'</ol>';
-    }
-    if(!game.finished){
-      if(game.msg) html += '<div class="safety">'+esc(game.msg)+'</div>';
-      html += '<p class="eyebrow">Quel est le prochain geste ?</p><div class="opts">' +
-        game.order.filter(function(i){return game.done.indexOf(i)<0}).map(function(i){return '<button class="opt" data-step="'+i+'">'+esc(STEPS[i].t)+'</button>'}).join("") + '</div>';
-    } else {
-      html += '<div class="ok"><b>Bravo, départ serein !</b> Le véhicule est prêt à rouler. Ordre conseillé, à valider pour ce modèle.</div><button class="btn" id="replay" style="width:100%">Rejouer la mission</button>';
-    }
-    html += '<p class="eyebrow">Vos badges</p><div class="badges">' +
-      BADGES.map(function(x){var on = x.key==="depart" && game.badge; return '<div class="badge'+(on?' on':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+x.icon+'</svg><span>'+esc(x.n)+'</span></div>'}).join("") + '</div>';
-    b.innerHTML = html;
+    var b = $("#gamebody");
+    var cats = TCATS.filter(function(c){return TIPS.some(function(t){return t.category===c[0]})});
+    var list = TIPS.filter(function(t){return !tipState.cat || t.category===tipState.cat});
+    var h = '<p class="sub">Les bons gestes, expliqués simplement par votre concession et par d\'autres camping-caristes. Touchez une astuce pour la lire.</p>';
+    if(cats.length > 1) h += '<div class="tipcats"><button type="button" class="vchip" data-tcat="" aria-pressed="'+(!tipState.cat)+'">Tout</button>'+cats.map(function(c){return '<button type="button" class="vchip" data-tcat="'+esc(c[0])+'" aria-pressed="'+(tipState.cat===c[0])+'">'+esc(c[1])+'</button>'}).join("")+'</div>';
+    h += list.length ? list.map(tipCard).join("") : '<div class="empty"><p>Aucune astuce pour le moment.</p></div>';
+    h += shareBlock();
+    b.innerHTML = h;
+  }
+  function openTip(id){
+    var t = TIPS.filter(function(x){return x.id===id})[0];
+    tipState.cat = ""; tipState.open = t ? id : null; go("game");
+    if(t){tipTrack(t); var el = $("#tip-"+id); if(el && el.scrollIntoView) el.scrollIntoView({block:"start"})}
   }
   $("#gamebody").addEventListener("click",function(e){
-    var s = e.target.closest("[data-step]");
-    if(s){
-      var i = +s.dataset.step, expected = game.done.length;
-      if(i === expected){
-        game.done.push(i); game.msg = "";
-        if(game.done.length === STEPS.length){game.finished = true; game.badge = true; toast("Badge gagné : Départ serein")}
-      } else {
-        game.msg = "Pas tout de suite. Indice : " + STEPS[expected].why;
-      }
-      renderGame(); return;
+    var h = e.target.closest("[data-tip]");
+    if(h){var id = +h.dataset.tip; tipState.open = tipState.open===id ? null : id; if(tipState.open){var t = TIPS.filter(function(x){return x.id===id})[0]; if(t) tipTrack(t)} renderGame(); var el = $("#tip-"+id); if(el && tipState.open && el.scrollIntoView) el.scrollIntoView({block:"nearest"}); return}
+    var c = e.target.closest("[data-tcat]");
+    if(c){tipState.cat = c.dataset.tcat; tipState.open = null; renderGame(); return}
+    var sh = e.target.closest("[data-tipshop]");
+    if(sh){var ts = TIPS.filter(function(x){return x.id===+sh.dataset.tipshop})[0]; if(ts) window.CDB_CLOUD.partRequest(null, ts.title, "accessoire"); return}
+    if(e.target.closest("#tipshare")){tipState.sharing = true; tipState.sent = false; renderGame(); var f = $("#tp_t"); if(f) f.focus(); return}
+    if(e.target.closest("#tipcancel")){tipState.sharing = false; tipState.photo = null; renderGame(); return}
+    if(e.target.closest("#tipagain")){tipState.sent = false; tipState.sharing = true; renderGame(); return}
+    if(e.target.closest("#tipsend")){
+      var data = {title:($("#tp_t").value||"").trim(), category:$("#tp_c").value, body:($("#tp_b").value||"").trim(), photo:tipState.photo};
+      if(!data.title){toast("Donnez un titre à votre astuce."); return}
+      if(data.body.length < 10){toast("Expliquez votre astuce en quelques mots."); return}
+      tipState.busy = true; e.target.closest("#tipsend").disabled = true;
+      window.CDB_CLOUD.shareTip(data).then(function(){tipState.busy = false; tipState.sharing = false; tipState.photo = null; tipState.sent = true; renderGame(); toast("Astuce envoyée, merci !")}).catch(function(err){tipState.busy = false; var sb = $("#tipsend"); if(sb) sb.disabled = false; toast(err && err.message ? err.message : "Envoi impossible, réessayez.")});
     }
-    if(e.target.closest("#replay")){resetGame(); renderGame()}
   });
+  $("#gamebody").addEventListener("change",function(e){
+    if(e.target.id !== "tp_p" || !e.target.files || !e.target.files[0]) return;
+    var keep = {t:$("#tp_t").value, c:$("#tp_c").value, b:$("#tp_b").value};
+    window.CDB_CLOUD.compress(e.target.files[0]).then(function(url){tipState.photo = url; renderGame(); $("#tp_t").value = keep.t; $("#tp_c").value = keep.c; $("#tp_b").value = keep.b}).catch(function(){toast("Photo illisible, essayez-en une autre.")});
+  });
+
+  // « À la une »: the banner of the home screen, set in the back-office (a tip, a page of the app, a web page or an announcement).
+  function renderFeatured(){
+    var el = $("#featured"); if(!el) return;
+    var f = DATA.featured;
+    if(!f || !f.title){el.innerHTML = ""; return}
+    el.innerHTML = '<button class="mission feat" type="button" id="featbtn"><span class="stamp" aria-hidden="true">'+esc(f.icon||"💡")+'</span><span class="mtxt"><small>À la une</small><strong>'+esc(f.title)+'</strong>'+(f.subtitle?'<span>'+esc(f.subtitle)+'</span>':'')+'</span><span class="go" aria-hidden="true">›</span></button>';
+  }
+  function featPopup(f){
+    var m = document.createElement("div"); m.className = "featpop";
+    m.innerHTML = '<div class="card" role="dialog" aria-modal="true" aria-label="'+esc(f.title)+'"><p class="eyebrow">'+esc(f.icon||"📣")+' À la une</p><h2>'+esc(f.title)+'</h2><p>'+esc(f.text||"").replace(/\n/g,'<br>')+'</p><button class="btn" type="button" data-featclose="1">Fermer</button></div>';
+    m.addEventListener("click",function(e){if(e.target === m || e.target.closest("[data-featclose]")) m.remove()});
+    document.body.appendChild(m);
+  }
+  document.addEventListener("click",function(e){
+    if(!e.target.closest("#featbtn")) return;
+    var f = DATA.featured; if(!f) return;
+    if(f.action==="tip") openTip(f.tipId);
+    else if(f.action==="screen"){ if(f.screen==="tips") go("game"); else if(f.screen==="carnet"){ if(window.CDB_CLOUD && window.CDB_CLOUD.openCarnet) window.CDB_CLOUD.openCarnet() } else if(titles[f.screen]) go(f.screen) }
+    else if(f.action==="link" && f.url) window.open(f.url, "_blank", "noopener");
+    else featPopup(f);
+  });
+  renderFeatured();
 };

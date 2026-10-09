@@ -13,6 +13,7 @@ const { matchLayouts } = require('../layouts');
 const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
 const { backupNow, listBackups, backupFile, KEEP } = require('../backup');
 const { entretienOf } = require('../entretien');
+const { CATEGORIES, CATEGORY_IDS, SCREENS, ICONS, videoEmbed, tipOut, featuredOf, cleanFeatured, setFeatured } = require('../tips');
 const { mailConfig, mailReady } = require('../notify');
 const { sendMail } = require('../mailer');
 
@@ -297,6 +298,11 @@ function register(router) {
       .sort((a, b) => b.owners - a.owners || b.views - a.views)
       .slice(0, 25);
 
+    // « Conseils & Astuces »: the tips read the most.
+    const tipNames = new Map(rows('SELECT id, title FROM tips').map((t) => [String(t.id), t.title]));
+    const topTips = rows(`SELECT item, MAX(label) AS label, COUNT(*) AS n FROM usage_events WHERE kind = 'tip' AND ${inRange} GROUP BY item ORDER BY n DESC LIMIT 10`, from, ...scopeArgs)
+      .map((r) => ({ id: r.item, label: tipNames.get(r.item) || r.label || r.item, count: r.n }));
+
     const vehicleTypes = rows(`SELECT COALESCE(vehicle_type, 'inconnu') AS type, COUNT(*) AS n FROM usage_events WHERE kind = 'diag' AND ${inRange} GROUP BY type ORDER BY n DESC`, from, ...scopeArgs);
     // The dealerships offered in the filter (names only): those followed, or all for the administrator.
     const choices = user.role === 'manager' ? [] : allowed
@@ -317,6 +323,7 @@ function register(router) {
       unanswered,
       seasonality,
       equipment,
+      topTips,
       vehicleTypes,
     };
   });
@@ -345,6 +352,8 @@ function register(router) {
         return count(`SELECT COUNT(*) AS n FROM reports r JOIN customers c ON c.id = r.customer_id JOIN dealerships d ON d.id = c.dealership_id WHERE ${OVERDUE_SQL} AND ${rs.sql}${svc ? ' AND r.service = ?' : ''}`, [...rs.args, ...(svc ? [svc] : [])]);
       })(),
       contentVersion: Number(getSetting(db, 'content_version', '0')),
+      // Tips shared by customers, waiting to be read (administrator and content editor).
+      pendingTips: user.role === 'admin' || user.role === 'editor' ? count("SELECT COUNT(*) AS n FROM tips WHERE status = 'pending'") : null,
       // « Mes clients » recap, for whoever follows customers (no e-mail is sent to salespeople).
       mine: {
         customers: count('SELECT COUNT(*) AS n FROM customers WHERE salesperson_id = ?', [user.id]),
@@ -362,6 +371,102 @@ function register(router) {
         ),
       },
     };
+  });
+
+  // ---- « Conseils & Astuces » and the « À la une » banner (administrator and content editor) ----
+
+  function tipAdminOut(db, r) {
+    const who = r.customer_id ? db.prepare('SELECT c.first_name, c.last_name, d.name AS dealership FROM customers c JOIN dealerships d ON d.id = c.dealership_id WHERE c.id = ?').get(r.customer_id) : null;
+    return { ...tipOut(r), status: r.status, createdAt: r.created_at, publishedAt: r.published_at, sort: r.sort, customer: who ? { id: r.customer_id, name: [who.first_name, who.last_name].filter(Boolean).join(' '), dealership: who.dealership } : null };
+  }
+  function tipFields(ctx, prev = {}) {
+    const { body, uploads } = ctx;
+    const title = body.title === undefined ? prev.title : optStr(body.title, 80);
+    if (!title) throw new HttpError(400, 'Titre obligatoire');
+    const category = body.category === undefined ? prev.category : CATEGORY_IDS.has(body.category) ? body.category : 'entretien';
+    let videoUrl = prev.video_url ?? null;
+    if (body.videoUrl !== undefined) {
+      videoUrl = body.videoUrl ? videoEmbed(body.videoUrl) : null;
+      if (body.videoUrl && !videoUrl) throw new HttpError(400, 'Vidéo : collez un lien YouTube ou Vimeo');
+    }
+    let imageUrl = prev.image_url ?? null;
+    if (body.image !== undefined) {
+      if (typeof body.image === 'string' && body.image.startsWith('data:image/')) imageUrl = uploads.saveDataUrl(body.image);
+      else if (!body.image) imageUrl = null;
+      if (prev.image_url && prev.image_url !== imageUrl) uploads.remove(prev.image_url);
+    }
+    return {
+      title,
+      category,
+      body: body.body === undefined ? prev.body : optStr(body.body, 3000) || '',
+      storeTip: body.storeTip === undefined ? prev.store_tip ?? null : optStr(body.storeTip, 400),
+      sort: body.sort === undefined ? prev.sort ?? 0 : optInt(body.sort) || 0,
+      imageUrl,
+      videoUrl,
+    };
+  }
+
+  router.get('/api/admin/tips', (ctx) => {
+    contentOnly(ctx);
+    const { db } = ctx;
+    return {
+      tips: db.prepare("SELECT * FROM tips ORDER BY status = 'pending' DESC, sort DESC, id DESC").all().map((r) => tipAdminOut(db, r)),
+      categories: CATEGORIES,
+      screens: SCREENS,
+      icons: ICONS,
+      featured: featuredOf(db),
+    };
+  });
+
+  router.post('/api/admin/tips', (ctx) => {
+    contentOnly(ctx);
+    const { db } = ctx;
+    const f = tipFields(ctx);
+    const r = db
+      .prepare("INSERT INTO tips (title, category, body, store_tip, sort, image_url, video_url, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'published', datetime('now'))")
+      .run(f.title, f.category, f.body, f.storeTip, f.sort, f.imageUrl, f.videoUrl);
+    bumpContentVersion(db);
+    return tipAdminOut(db, db.prepare('SELECT * FROM tips WHERE id = ?').get(r.lastInsertRowid));
+  });
+
+  // Edit (a customer's tip too, before publishing it: correct a word, add « Le conseil du magasin »); publish: true publishes.
+  router.put('/api/admin/tips/:id', (ctx) => {
+    contentOnly(ctx);
+    const { db, body } = ctx;
+    const prev = getOr404(db, 'tips', ctx.params.id, 'Astuce');
+    const f = tipFields(ctx, prev);
+    const status = body.publish ? 'published' : prev.status;
+    db.prepare(
+      "UPDATE tips SET title = ?, category = ?, body = ?, store_tip = ?, sort = ?, image_url = ?, video_url = ?, status = ?, published_at = CASE WHEN ? = 'published' AND published_at IS NULL THEN datetime('now') ELSE published_at END WHERE id = ?"
+    ).run(f.title, f.category, f.body, f.storeTip, f.sort, f.imageUrl, f.videoUrl, status, status, prev.id);
+    if (status === 'published' || prev.status === 'published') bumpContentVersion(db);
+    return tipAdminOut(db, db.prepare('SELECT * FROM tips WHERE id = ?').get(prev.id));
+  });
+
+  router.delete('/api/admin/tips/:id', (ctx) => {
+    contentOnly(ctx);
+    const { db, uploads } = ctx;
+    const prev = getOr404(db, 'tips', ctx.params.id, 'Astuce');
+    db.prepare('DELETE FROM tips WHERE id = ?').run(prev.id);
+    if (prev.image_url) uploads.remove(prev.image_url);
+    const f = featuredOf(db);
+    if (f && f.action === 'tip' && f.tipId === prev.id) setFeatured(db, null);
+    if (prev.status === 'published') bumpContentVersion(db);
+    return { ok: true };
+  });
+
+  router.put('/api/admin/featured', (ctx) => {
+    contentOnly(ctx);
+    const { db, body } = ctx;
+    let featured;
+    try {
+      featured = body.remove ? null : cleanFeatured(db, body);
+    } catch (err) {
+      throw new HttpError(400, err.message);
+    }
+    setFeatured(db, featured);
+    bumpContentVersion(db);
+    return { featured };
   });
 
   // ---- Settings ----

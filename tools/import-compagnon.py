@@ -271,6 +271,12 @@ def main():
         ".lc-v.ok,.lc-v.warn,.lc-v.bad{background:none;padding:0;border-radius:0}#waff .btn{flex:none;width:100%}.wtiny{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0}\n"
         ".affrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.affrow:first-of-type{border-top:0}.affchk{flex:1;display:flex;align-items:center;gap:10px;font-size:16px;min-height:44px}.affchk input{width:24px;height:24px;accent-color:var(--accent);flex:none}.affrow .dimin input{width:70px}\n"
         "button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.dim.on{outline:3px solid var(--accent)}.dimgo{font-size:13px;font-weight:700;color:var(--accent);margin-top:4px}.dimpanel{margin-top:10px}.dimpanel[hidden]{display:none}.dimclose{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.dimfld .dimin input{width:80px}\n"
+        ".tipcats{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}.tipcard{padding:0;overflow:hidden;margin-bottom:10px}.tiphead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:var(--ink);text-align:left;font:inherit;padding:14px;min-height:60px;cursor:pointer}\n"
+        ".tipt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.tipt b{font-size:17px;line-height:1.3}.tipcat{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}.tipby{font-size:13px;color:var(--muted)}.tipgo{font-size:24px;color:var(--accent);flex:none;width:28px;text-align:center}\n"
+        ".tipimg{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin:8px 0}.tipcard .tipimg{border-radius:0;margin:0}.tipvid{position:relative;width:100%;aspect-ratio:16/9;background:#000}.tipvid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}\n"
+        ".tiptext{padding:12px 14px 4px;margin:0;font-size:16px;line-height:1.5}.tipstore{margin:10px 14px 14px;padding:12px;border-radius:12px;background:var(--soft)}.tipstore p{margin:0 0 8px}.tipstore .btn{width:100%;flex:none}\n"
+        ".tipshare{width:100%;flex:none;min-height:60px;font-size:18px;margin-top:8px}.tipform{display:flex;flex-direction:column;gap:10px;margin-top:8px}.tipform textarea{min-height:110px;font:inherit}.tipbtns{display:flex;gap:8px}\n"
+        ".mission.feat{width:100%;font:inherit;cursor:pointer}.mission.feat .stamp{font-size:24px}.featpop{position:fixed;inset:0;z-index:60;background:rgba(5,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}.featpop .card{max-width:440px;width:100%;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}.featpop .btn{flex:none}\n"
         ".affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}")
     head = replace_once(head, ".dlogo.sm{", ".dlogo.img{background:var(--panel);border:1px solid var(--line);overflow:hidden}.dlogo img{width:100%;height:100%;object-fit:contain}\n.dlogo.sm{")
 
@@ -433,6 +439,105 @@ def main():
         '<div class="empty"><p>Aucun équipement ajouté depuis la livraison. Ce que vous ajoutez dans « Mes équipements » (porte-vélos, panneau solaire…) compte ici son poids.</p>')
     s = replace_once(s, '''    h += '<h3 class="sech">Détail du calcul</h3>''', '''    if(c.inc.length) h += '<p class="sub">Déjà compris dans la masse en ordre de marche (présents sur le véhicule à la livraison) : '+esc(c.inc.join(", "))+'.</p>';
     h += '<h3 class="sech">Détail du calcul</h3>''')
+    # ---- « Conseils & Astuces » instead of the missions game, and the « À la une » banner of the home screen ----
+    # Tips written in the back-office or shared by customers (published after reading), filtered by category.
+    s = replace_once(s, 'game:"Missions"};', 'game:"Conseils & Astuces"};')
+    a = s.index("  /* ---------- Missions ---------- */")
+    b_end = '    if(e.target.closest("#replay")){resetGame(); renderGame()}\n  });\n'
+    b = s.index(b_end, a) + len(b_end)
+    s = s[:a] + r'''  /* ---------- Conseils & Astuces ---------- */
+  var TIPS = DATA.tips || [], TCATS = DATA.tipCategories || [];
+  var tipState = {cat:"", open:null, sharing:false, photo:null, sent:false, busy:false};
+  function tipTrack(t){if(window.CDB_TRACK) window.CDB_TRACK("tip",{id:String(t.id),label:t.title})}
+  function catName(id){var c = TCATS.filter(function(x){return x[0]===id})[0]; return c ? c[1] : ""}
+  function tipMedia(t){
+    if(t.videoUrl) return '<div class="tipvid"><iframe src="'+esc(t.videoUrl)+'" title="'+esc(t.title)+'" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+    if(t.imageUrl) return '<img class="tipimg" src="'+esc(t.imageUrl)+'" alt="">';
+    return '';
+  }
+  function tipCard(t){
+    var open = tipState.open === t.id;
+    return '<article class="card tipcard'+(open?' open':'')+'" id="tip-'+t.id+'">' +
+      '<button class="tiphead" type="button" data-tip="'+t.id+'" aria-expanded="'+open+'"><span class="tipt"><span class="tipcat">'+esc(catName(t.category))+'</span><b>'+esc(t.title)+'</b>'+(t.author?'<span class="tipby">L\'astuce de '+esc(t.author)+'</span>':'')+'</span><span class="tipgo" aria-hidden="true">'+(open?'−':'+')+'</span></button>' +
+      (open ? tipMedia(t) + '<p class="tiptext">'+esc(t.body).replace(/\n/g,'<br>')+'</p>' +
+        (t.storeTip ? '<div class="tipstore"><p class="eyebrow">🛒 Le conseil du magasin</p><p>'+esc(t.storeTip)+'</p>'+(window.CDB_CLOUD && window.CDB_CLOUD.partRequest ? '<button class="btn alt" type="button" data-tipshop="'+t.id+'">Demander au magasin</button>' : '')+'</div>' : '') : '') +
+      '</article>';
+  }
+  function shareBlock(){
+    if(!window.CDB_CLOUD || !window.CDB_CLOUD.shareTip) return '';
+    if(tipState.sent) return '<div class="ok"><b>Merci pour votre astuce !</b> Elle sera relue par la concession, puis publiée pour les autres camping-caristes.</div><button class="lnk" type="button" id="tipagain">Partager une autre astuce</button>';
+    if(!tipState.sharing) return '<button class="btn tipshare" type="button" id="tipshare">💬 Partager mon astuce</button>';
+    return '<div class="card tipform"><h3>Partager mon astuce</h3>' +
+      '<div class="fld"><label for="tp_t">Titre</label><input id="tp_t" class="search" maxlength="80" placeholder="Ex. : Ranger les cales sans les oublier"></div>' +
+      '<div class="fld"><label for="tp_c">Thème</label><select id="tp_c" class="search">'+TCATS.map(function(c){return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'}).join("")+'</select></div>' +
+      '<div class="fld"><label for="tp_b">Votre astuce</label><textarea id="tp_b" class="search" rows="5" maxlength="1500" placeholder="Expliquez simplement ce que vous faites."></textarea></div>' +
+      '<div class="fld"><label for="tp_p">Une photo (facultatif)</label><input id="tp_p" type="file" accept="image/*">'+(tipState.photo?'<img class="tipimg" src="'+tipState.photo+'" alt="Votre photo">':'')+'</div>' +
+      '<p class="sub">Votre astuce est relue avant d\'être publiée. Seul votre prénom apparaît.</p>' +
+      '<div class="tipbtns"><button class="btn" type="button" id="tipsend"'+(tipState.busy?' disabled':'')+'>Envoyer</button><button class="btn alt" type="button" id="tipcancel">Annuler</button></div></div>';
+  }
+  function renderGame(){
+    var b = $("#gamebody");
+    var cats = TCATS.filter(function(c){return TIPS.some(function(t){return t.category===c[0]})});
+    var list = TIPS.filter(function(t){return !tipState.cat || t.category===tipState.cat});
+    var h = '<p class="sub">Les bons gestes, expliqués simplement par votre concession et par d\'autres camping-caristes. Touchez une astuce pour la lire.</p>';
+    if(cats.length > 1) h += '<div class="tipcats"><button type="button" class="vchip" data-tcat="" aria-pressed="'+(!tipState.cat)+'">Tout</button>'+cats.map(function(c){return '<button type="button" class="vchip" data-tcat="'+esc(c[0])+'" aria-pressed="'+(tipState.cat===c[0])+'">'+esc(c[1])+'</button>'}).join("")+'</div>';
+    h += list.length ? list.map(tipCard).join("") : '<div class="empty"><p>Aucune astuce pour le moment.</p></div>';
+    h += shareBlock();
+    b.innerHTML = h;
+  }
+  function openTip(id){
+    var t = TIPS.filter(function(x){return x.id===id})[0];
+    tipState.cat = ""; tipState.open = t ? id : null; go("game");
+    if(t){tipTrack(t); var el = $("#tip-"+id); if(el && el.scrollIntoView) el.scrollIntoView({block:"start"})}
+  }
+  $("#gamebody").addEventListener("click",function(e){
+    var h = e.target.closest("[data-tip]");
+    if(h){var id = +h.dataset.tip; tipState.open = tipState.open===id ? null : id; if(tipState.open){var t = TIPS.filter(function(x){return x.id===id})[0]; if(t) tipTrack(t)} renderGame(); var el = $("#tip-"+id); if(el && tipState.open && el.scrollIntoView) el.scrollIntoView({block:"nearest"}); return}
+    var c = e.target.closest("[data-tcat]");
+    if(c){tipState.cat = c.dataset.tcat; tipState.open = null; renderGame(); return}
+    var sh = e.target.closest("[data-tipshop]");
+    if(sh){var ts = TIPS.filter(function(x){return x.id===+sh.dataset.tipshop})[0]; if(ts) window.CDB_CLOUD.partRequest(null, ts.title, "accessoire"); return}
+    if(e.target.closest("#tipshare")){tipState.sharing = true; tipState.sent = false; renderGame(); var f = $("#tp_t"); if(f) f.focus(); return}
+    if(e.target.closest("#tipcancel")){tipState.sharing = false; tipState.photo = null; renderGame(); return}
+    if(e.target.closest("#tipagain")){tipState.sent = false; tipState.sharing = true; renderGame(); return}
+    if(e.target.closest("#tipsend")){
+      var data = {title:($("#tp_t").value||"").trim(), category:$("#tp_c").value, body:($("#tp_b").value||"").trim(), photo:tipState.photo};
+      if(!data.title){toast("Donnez un titre à votre astuce."); return}
+      if(data.body.length < 10){toast("Expliquez votre astuce en quelques mots."); return}
+      tipState.busy = true; e.target.closest("#tipsend").disabled = true;
+      window.CDB_CLOUD.shareTip(data).then(function(){tipState.busy = false; tipState.sharing = false; tipState.photo = null; tipState.sent = true; renderGame(); toast("Astuce envoyée, merci !")}).catch(function(err){tipState.busy = false; var sb = $("#tipsend"); if(sb) sb.disabled = false; toast(err && err.message ? err.message : "Envoi impossible, réessayez.")});
+    }
+  });
+  $("#gamebody").addEventListener("change",function(e){
+    if(e.target.id !== "tp_p" || !e.target.files || !e.target.files[0]) return;
+    var keep = {t:$("#tp_t").value, c:$("#tp_c").value, b:$("#tp_b").value};
+    window.CDB_CLOUD.compress(e.target.files[0]).then(function(url){tipState.photo = url; renderGame(); $("#tp_t").value = keep.t; $("#tp_c").value = keep.c; $("#tp_b").value = keep.b}).catch(function(){toast("Photo illisible, essayez-en une autre.")});
+  });
+
+  // « À la une »: the banner of the home screen, set in the back-office (a tip, a page of the app, a web page or an announcement).
+  function renderFeatured(){
+    var el = $("#featured"); if(!el) return;
+    var f = DATA.featured;
+    if(!f || !f.title){el.innerHTML = ""; return}
+    el.innerHTML = '<button class="mission feat" type="button" id="featbtn"><span class="stamp" aria-hidden="true">'+esc(f.icon||"💡")+'</span><span class="mtxt"><small>À la une</small><strong>'+esc(f.title)+'</strong>'+(f.subtitle?'<span>'+esc(f.subtitle)+'</span>':'')+'</span><span class="go" aria-hidden="true">›</span></button>';
+  }
+  function featPopup(f){
+    var m = document.createElement("div"); m.className = "featpop";
+    m.innerHTML = '<div class="card" role="dialog" aria-modal="true" aria-label="'+esc(f.title)+'"><p class="eyebrow">'+esc(f.icon||"📣")+' À la une</p><h2>'+esc(f.title)+'</h2><p>'+esc(f.text||"").replace(/\n/g,'<br>')+'</p><button class="btn" type="button" data-featclose="1">Fermer</button></div>';
+    m.addEventListener("click",function(e){if(e.target === m || e.target.closest("[data-featclose]")) m.remove()});
+    document.body.appendChild(m);
+  }
+  document.addEventListener("click",function(e){
+    if(!e.target.closest("#featbtn")) return;
+    var f = DATA.featured; if(!f) return;
+    if(f.action==="tip") openTip(f.tipId);
+    else if(f.action==="screen"){ if(f.screen==="tips") go("game"); else if(f.screen==="carnet"){ if(window.CDB_CLOUD && window.CDB_CLOUD.openCarnet) window.CDB_CLOUD.openCarnet() } else if(titles[f.screen]) go(f.screen) }
+    else if(f.action==="link" && f.url) window.open(f.url, "_blank", "noopener");
+    else featPopup(f);
+  });
+  renderFeatured();
+''' + s[b:]
+
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head
@@ -444,6 +549,13 @@ def main():
     body_part = replace_once(body_part, '<image href="img/dessus.png" ', '<image ')
     body_part = replace_once(body_part, "Les équipements de série sont déjà cochés : décochez ce qui manque.", "Les équipements prévus pour ce modèle sont déjà cochés : ajoutez ou décochez avec la concession.")
     body_part = replace_once(body_part, '<button class="btn alt" id="eqreset">Liste de série</button>', '')
+    # « Mission du jour » → the « À la une » banner, set in the back-office; « Missions » → « Conseils & Astuces ».
+    body_part = replace_once(body_part, '<button class="mission" data-go="game"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg></span><span class="mtxt"><small>Mission du jour</small><strong>Préparer le départ</strong><span>3 minutes pour apprendre le bon ordre</span></span><span class="go" aria-hidden="true">›</span></button>', '<div id="featured"></div>')
+    body_part = replace_once(body_part, '<button class="tile" data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg><strong>Missions</strong><span>Apprendre en jouant</span></button>',
+        '<button class="tile" data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg><strong>Conseils &amp; Astuces</strong><span>Les bons gestes, partagés</span></button>')
+    body_part = replace_once(body_part, '<button data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>Missions</button>',
+        '<button data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg>Astuces</button>')
+    body_part = replace_once(body_part, '<!-- Missions -->', '<!-- Conseils & Astuces -->')
     # The maintenance moved to the « Carnet d'entretien » of the home screen (dates, reminders, appointment): no more tab here.
     body_part = replace_once(body_part, '\n        <button data-list="entretien" aria-pressed="false">Entretien</button>', '')
     body_part = replace_once(body_part, '<strong>Gestes du quotidien</strong><span>Arrivée, départ et entretien</span>', '<strong>Gestes du quotidien</strong><span>Arrivée et départ</span>')

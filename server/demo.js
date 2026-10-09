@@ -101,6 +101,7 @@ function seedUsage(db, dealershipIds) {
     leafOf.set(id, leaves.filter((l) => l.prod && !/^Aucun/.test(l.prod)));
   }
   const equipment = db.prepare('SELECT id FROM equipment ORDER BY sort LIMIT 40').all().map((r) => r.id);
+  const tips = db.prepare("SELECT id, title, category FROM tips WHERE status = 'published' AND customer_id IS NULL").all();
   const types = ['fourgon', 'fourgon', 'profile', 'profile', 'compact', 'integral', 'van'];
   const insert = db.prepare('INSERT INTO usage_events (at, month, kind, item, label, query, prod, results, dealership_id, vehicle_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   let n = 0;
@@ -128,6 +129,11 @@ function seedUsage(db, dealershipIds) {
       }
       for (let i = 0; i < Math.round(25 * size * growth); i++) {
         insert.run(at, month, 'equip', equipment[Math.floor(rnd() * equipment.length)], null, null, null, null, dealer, types[Math.floor(rnd() * types.length)]); n++;
+      }
+      // « Conseils & Astuces » read: winter tips in autumn, the others all year round.
+      for (const t of tips) {
+        const times = Math.round((t.category === 'hiver' ? [2, 1, 0, 0, 0, 0, 0, 0, 2, 5, 6, 4][d.getUTCMonth()] : 1.5) * size * growth * (0.5 + rnd()));
+        for (let i = 0; i < times; i++) { insert.run(at, month, 'tip', String(t.id), t.title, null, null, null, dealer, types[Math.floor(rnd() * types.length)]); n++; }
       }
       if (rnd() < 0.5) { insert.run(at, month, 'search', null, null, UNANSWERED[Math.floor(rnd() * UNANSWERED.length)], null, 0, dealer, null); n++; }
     });
@@ -406,6 +412,10 @@ async function main() {
     ['Vaisselle et ustensiles', 15, true], ['Table et chaises de camping', 12, true], ['Barbecue ou plancha', 10, true], ['Kayak gonflable', 18, false],
   ]);
   await carry('Henri', { pax: 1 }, [['Valises et vêtements', 30, true], ['Nourriture et boissons', 25, true], ['Câbles, cales et outils', 15, true], ['Vélo', 15, false]]);
+  // « Partager mon astuce »: two tips from customers, waiting in « Conseils & Astuces » (never published by the demo:
+  // a published tip would show in the real customers' apps too).
+  await call('POST', '/api/me/tips', { title: 'Des cales qu’on n’oublie plus', category: 'route', body: 'J’ai accroché un petit sac à l’intérieur de la porte : les cales y vont dès que je les ramasse, et je vois tout de suite si elles manquent avant de partir.' }, C.Martine.token);
+  await call('POST', '/api/me/tips', { title: 'Douche plus chaude en hiver', category: 'hiver', body: 'Je lance le chauffe-eau 20 minutes avant et je ferme la porte de la salle d’eau : l’eau reste chaude plus longtemps.' }, C.Bernard.token);
   await call('PUT', '/api/me/info', { marketing: true }, C.Paul.token);
   await call('PUT', '/api/me/info', { marketing: true }, C.Isabelle.token);
   await call('PUT', '/api/me/info', { marketing: false }, C.Martine.token);

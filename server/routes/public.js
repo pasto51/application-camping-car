@@ -1,10 +1,11 @@
 'use strict';
 
 const { HttpError } = require('../http');
-const { transaction, getSetting, stripVin } = require('../db');
+const { transaction, getSetting, stripVin, bumpContentVersion } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
 const { KINDS, entretienOf, logOf } = require('../entretien');
+const { CATEGORY_IDS } = require('../tips');
 const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
@@ -397,9 +398,27 @@ function register(router) {
     return entretienOf(ctx.db, customer);
   });
 
+  // « Partager mon astuce »: a tip from a customer, published only once read by an administrator or a content editor.
+  const tipLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 5 });
+  router.post('/api/me/tips', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const { db, body, uploads } = ctx;
+    const title = optStr(body.title, 80);
+    const text = optStr(body.body, 1500);
+    if (!title) throw new HttpError(400, 'Donnez un titre à votre astuce');
+    if (!text || text.length < 10) throw new HttpError(400, 'Expliquez votre astuce en quelques mots');
+    if (tipLimiter(`c${customer.id}`)) throw new HttpError(429, 'Merci ! Vous avez déjà partagé plusieurs astuces aujourd’hui, réessayez demain.');
+    const category = CATEGORY_IDS.has(body.category) ? body.category : 'entretien';
+    const photo = typeof body.photo === 'string' && body.photo.startsWith('data:image/') ? uploads.saveDataUrl(body.photo) : null;
+    db.prepare("INSERT INTO tips (title, category, body, image_url, status, customer_id, author_name) VALUES (?, ?, ?, ?, 'pending', ?, ?)").run(
+      title, category, text, photo, customer.id, optStr(customer.first_name, 60) || null
+    );
+    return { ok: true };
+  });
+
   // Usage statistics, without saying who: what is searched, which problems are opened, which advice is reached,
   // « Demander au magasin », which equipment is looked at. Only the dealership, the vehicle type and the month are kept.
-  const EVENT_KINDS = ['search', 'diag', 'result', 'shop', 'equip'];
+  const EVENT_KINDS = ['search', 'diag', 'result', 'shop', 'equip', 'tip'];
   const eventLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 120 });
   router.post('/api/me/events', (ctx) => {
     const customer = requireCustomer(ctx);
@@ -522,8 +541,12 @@ function deleteCustomer(db, uploads, customerId) {
   const files = [customer.cover_photo_url, ...statePhotoUrls(db, customerId)];
   for (const p of db.prepare('SELECT url FROM customer_photos WHERE customer_id = ?').all(customerId)) files.push(p.url);
   for (const r of db.prepare('SELECT photos FROM reports WHERE customer_id = ?').all(customerId)) files.push(...JSON.parse(r.photos || '[]'));
+  // The tips they shared go with them (and the apps reload the list if one was published).
+  const tips = db.prepare('SELECT image_url, status FROM tips WHERE customer_id = ?').all(customerId);
+  tips.forEach((t) => files.push(t.image_url));
   db.prepare('DELETE FROM customers WHERE id = ?').run(customerId);
-  files.forEach((f) => uploads.remove(f));
+  if (tips.some((t) => t.status === 'published')) bumpContentVersion(db);
+  files.filter(Boolean).forEach((f) => uploads.remove(f));
   return true;
 }
 

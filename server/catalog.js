@@ -6,6 +6,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { transaction, bumpContentVersion } = require('./db');
+const { publishedTips, featuredOf, CATEGORIES } = require('./tips');
 const { safeJson } = require('./util');
 const { vehiclePlan, effectiveSpot, isApplicable } = require('./vehicle-types');
 
@@ -174,6 +175,9 @@ function appData(db, { vehicleId, dealershipId }) {
     },
   };
   for (const key of CATALOG_KEYS) data[key] = getCatalogValue(db, key);
+  data.tips = publishedTips(db);
+  data.tipCategories = CATEGORIES;
+  data.featured = featuredOf(db);
   if (data.config) data.config = { ...data.config, HIDDEN_EQ: { ...(data.config.HIDDEN_EQ || {}), ...hidden } };
   return data;
 }

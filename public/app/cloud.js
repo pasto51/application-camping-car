@@ -327,6 +327,9 @@
   }
 
   window.CDB_CLOUD.partRequest = partRequest;
+  window.CDB_CLOUD.compress = compress;
+  // « Partager mon astuce »: sent to the dealership, published once read.
+  window.CDB_CLOUD.shareTip = function (data) { return api('POST', '/api/me/tips', data); };
 
   // ---------- Onboarding (before the app) ----------
 
@@ -739,6 +742,7 @@
         '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
     }).join('');
   }
+  window.CDB_CLOUD.openCarnet = function () { openCarnet(); };
   function openCarnet() {
     var m = document.createElement('div');
     m.className = 'cloud-modal cloud-sheet cloud-space';

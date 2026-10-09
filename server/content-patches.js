@@ -5,6 +5,7 @@
 // meanwhile in the back-office always wins.
 
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
+const { seedStarterTips } = require('./tips');
 const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
 const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
 const { CONFORT, CONFORT_2 } = require('./diagnostics-confort');
@@ -243,6 +244,11 @@ const PATCHES = [
       }
       return changed;
     },
+  },
+  {
+    // « Conseils & Astuces »: the first tips of the site and the « À la une » banner (only if there are none yet).
+    key: '2026-10-14-conseils-astuces',
+    run: (db) => seedStarterTips(db),
   },
 ];
 

@@ -141,6 +141,24 @@ CREATE TABLE IF NOT EXISTS catalog (
 
 -- Everything the app keeps for a customer (equipment checked, photos, weights, handover…), by storage key.
 -- The customer's maintenance logbook (« J'ai fait le test d'étanchéité le… ») and the reminders already notified.
+-- « Conseils & Astuces »: written in the back-office, or shared by a customer (pending until an administrator or a content
+-- editor publishes it).
+CREATE TABLE IF NOT EXISTS tips (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'entretien',
+  body TEXT NOT NULL DEFAULT '',
+  image_url TEXT,
+  video_url TEXT,
+  store_tip TEXT,
+  status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('published', 'pending')),
+  customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+  author_name TEXT,
+  sort INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  published_at TEXT
+);
+CREATE INDEX IF NOT EXISTS tips_status ON tips (status);
 CREATE TABLE IF NOT EXISTS maintenance_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,

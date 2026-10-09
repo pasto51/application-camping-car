@@ -6,6 +6,7 @@ const formatDateTime = (t) => {
 };
 import { registerCatalogViews } from '/admin/catalog.js';
 import { registerAnalyticsView } from '/admin/analytics.js';
+import { registerTipsView } from '/admin/tips.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -103,6 +104,7 @@ function sections() {
     ['vehicles', '🚐', 'Véhicules', canEditContent()],
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', canEditContent()],
     ['equipment', '🧰', 'Équipements', canEditContent()],
+    ['tips', '💡', 'Conseils & Astuces', canEditContent()],
     ['content', '📋', 'Contenus de l’appli', canEditContent()],
     ['brands', '🏷️', 'Marques', canEditContent()],
     ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor() && !isAnalyst()],
@@ -134,6 +136,18 @@ function renderShell() {
   </div>`;
   root.querySelector('#logout')?.addEventListener('click', logout);
   showSection(state.section);
+  refreshTipsBadge();
+}
+
+// Tips shared by customers and waiting to be read: a badge on « Conseils & Astuces ».
+function refreshTipsBadge() {
+  if (!canEditContent()) return;
+  api('GET', '/api/admin/stats').then((st) => {
+    const a = root.querySelector('.sidebar a[data-section="tips"]');
+    if (!a) return;
+    a.querySelector('.nav-badge')?.remove();
+    if (st.pendingTips) a.insertAdjacentHTML('beforeend', ` <span class="nav-badge" title="Astuces à valider">${st.pendingTips}</span>`);
+  }).catch(() => {});
 }
 
 async function showSection(id) {
@@ -172,7 +186,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
     const hide = f.hideIf ? `data-hide-if="${f.hideIf[0]}" data-hide-values="${esc(f.hideIf[1].join(','))}"` : '';
     switch (f.type) {
       case 'textarea':
-        return `<label class="${cls}">${label}<textarea name="${f.name}" rows="${f.rows || 5}" ${req}>${esc(v ?? '')}</textarea>${hint}</label>`;
+        return `<label class="${cls}" ${hide}>${label}<textarea name="${f.name}" rows="${f.rows || 5}" ${req}>${esc(v ?? '')}</textarea>${hint}</label>`;
       case 'select':
         return `<label class="${cls}" ${hide}>${label}<select name="${f.name}" ${req}>${f.options
           .map(([val, text]) => `<option value="${esc(val)}" ${String(v ?? '') === String(val) ? 'selected' : ''}>${esc(text)}</option>`)
@@ -196,7 +210,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
         specs[f.name] = Array.isArray(v) ? v.map((s) => ({ ...s })) : [];
         return `<div class="field full"><span class="label">${label}</span><div class="specs-editor" data-specs="${f.name}"></div>${hint}</div>`;
       default:
-        return `<label class="${cls}">${label}<input name="${f.name}" type="${f.type || 'text'}" value="${esc(v ?? '')}" ${req} ${f.attrs || ''}>${hint}</label>`;
+        return `<label class="${cls}" ${hide}>${label}<input name="${f.name}" type="${f.type || 'text'}" value="${esc(v ?? '')}" ${req} ${f.attrs || ''}>${hint}</label>`;
     }
   };
 
@@ -889,6 +903,7 @@ const VIEWS = {
 };
 
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin, canEditContent });
+registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, refreshTipsBadge });
 registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.
