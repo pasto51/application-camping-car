@@ -28,7 +28,7 @@ de toutes les adresses du site, et un test de charge.
 | Moyenne | Un téléphone perdu restait connecté pour toujours | Bouton « Déconnecter ses téléphones » dans la fiche client ; déconnexion après 1 an sans utilisation |
 | Moyenne | Un code d'accès expiré ouvrait encore le compte | Refusé après sa date |
 | Moyenne | Les limites anti-essais étaient communes à tout le site derrière le proxy (20 erreurs = tout le monde bloqué) | Vraie adresse du visiteur ; limite par compte et par adresse |
-| Moyenne | Un client pouvait envoyer des centaines de demandes (et autant d'e-mails) | 15 demandes et 60 messages par jour et par client |
+| Moyenne | Un client pouvait envoyer des centaines de demandes (et autant d'e-mails) | Garde-fou très large (200 demandes et 500 messages par jour et par client) contre un programme ; les diagnostics ne sont pas limités |
 | Basse | L'éditeur et l'analyste voyaient l'équipe de toutes les concessions | Liste vide |
 | Basse | Des clients pouvaient être confiés à un compte SAV ou magasin ; le SAV pouvait créer des clients | Réservé aux commerciaux et au responsable |
 | Basse | Les réglages e-mail visibles par tous les rôles | Administrateur seulement |
