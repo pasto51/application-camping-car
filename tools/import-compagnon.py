@@ -277,6 +277,7 @@ def main():
         ".tiptext{padding:12px 14px 4px;margin:0;font-size:16px;line-height:1.5}.tipstore{margin:10px 14px 14px;padding:12px;border-radius:12px;background:var(--soft)}.tipstore p{margin:0 0 8px}.tipstore .btn{width:100%;flex:none}\n"
         ".tipshare{width:100%;flex:none;min-height:60px;font-size:18px;margin-top:8px}.tipform{display:flex;flex-direction:column;gap:10px;margin-top:8px}.tipform textarea{min-height:110px;font:inherit}.tipbtns{display:flex;gap:8px}\n"
         ".mission.feat{width:100%;font:inherit;cursor:pointer}.mission.feat .stamp{font-size:24px}.featpop{position:fixed;inset:0;z-index:60;background:rgba(5,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}.featpop .card{max-width:440px;width:100%;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}.featpop .btn{flex:none}\n"
+        ".dailyseg{display:flex;flex-wrap:wrap;gap:6px}.dailyseg button{flex:1 1 auto;min-width:30%}.dailygoal{background:var(--soft);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:15px;line-height:1.4}#checks span b{color:var(--ink)}\n"
         ".affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}")
     head = replace_once(head, ".dlogo.sm{", ".dlogo.img{background:var(--panel);border:1px solid var(--line);overflow:hidden}.dlogo img{width:100%;height:100%;object-fit:contain}\n.dlogo.sm{")
 
@@ -541,6 +542,69 @@ def main():
   window.CDB_SET_FEATURED = function(f){DATA.featured = f || null; renderFeatured()};
 ''' + s[b:]
 
+    # ---- « Gestes du quotidien »: every list set in the back-office (Arrivée, Départ, Hivernage, Remise en route, Chaque
+    # mois…), one tab each; lines for some equipment only; what is ticked is kept (and saved with the customer's data).
+    a = s.index('  var checked = {arrivee:{},depart:{}}, reminded = {}, optin = false;')
+    b_mark = '\n  renderChecks();\n\n  /* ---------- Stockage local'
+    b = s.index(b_mark, a) + len('\n  renderChecks();\n')
+    s = s[:a] + r'''  var activeList = Object.keys(LISTS)[0] || "arrivee";
+  var checked = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_chk")||"{}")||{}}catch(e){} return o})();
+  function chkSave(){lsSet("cdb_chk",JSON.stringify(checked))}
+  var LIST_NAMES = {arrivee:"Arrivée",depart:"Départ"};
+  function listTitle(k){return (LISTS[k] && LISTS[k].title) || LIST_NAMES[k] || k}
+  // The lines for this vehicle: « eq » = at least one of these pieces of equipment (lines of the same « group »: all
+  // shown if the customer ticked none of them, e.g. the battery type not known), « variant » = [question, answer].
+  function listItems(k){
+    var items = (LISTS[k] && LISTS[k].items) || [], O = (typeof own==="object" && own) || {}, V = (typeof vars==="object" && vars) || {};
+    var has = function(ids){return (ids||[]).some(function(i){return O[i] || (OWN_ALIAS && OWN_ALIAS[i] && O[OWN_ALIAS[i]])})};
+    var groupKnown = {};
+    items.forEach(function(it){if(it && it.group && has(it.eq)) groupKnown[it.group] = true});
+    return items.map(function(it,i){return {i:i, t: typeof it==="string" ? it : it.t, it:it}}).filter(function(x){
+      var it = x.it; if(typeof it==="string") return true;
+      if(it.variant && V[it.variant[0]] && V[it.variant[0]]!=="ns" && V[it.variant[0]]!==it.variant[1]) return false;
+      if(it.eq && it.eq.length && !has(it.eq)) return it.group ? !groupKnown[it.group] : false;
+      return true;
+    });
+  }
+  function itemHtml(t){var m = /^(.{3,90}?) : (.+)$/.exec(t); return m ? '<b>'+esc(m[1])+' :</b> '+esc(m[2]) : esc(t)}
+  function renderSeg(){
+    var seg = $("#dailyseg"); if(!seg) return;
+    if(!LISTS[activeList]) activeList = Object.keys(LISTS)[0];
+    seg.innerHTML = Object.keys(LISTS).map(function(k){return '<button type="button" data-list="'+esc(k)+'" aria-pressed="'+(k===activeList)+'">'+esc(listTitle(k))+'</button>'}).join("");
+  }
+  function renderChecks(){
+    renderSeg();
+    var L = LISTS[activeList] || {items:[]}, ul = $("#checks"), done = checked[activeList] || {};
+    var g = $("#dailygoal"); if(g){g.hidden = !L.goal; g.innerHTML = L.goal ? '<b>Le but :</b> '+esc(L.goal) : ''}
+    ul.innerHTML = listItems(activeList).map(function(x){
+      return '<li><label><input type="checkbox" data-i="'+x.i+'"'+(done[x.i]?' checked':'')+'><span>'+itemHtml(x.t)+'</span></label></li>';
+    }).join("");
+    $("#dailynote").innerHTML = (L.note ? esc(L.note)+' ' : '') + '<button class="lnk" type="button" id="chkreset">Tout décocher</button>';
+    updateProgress(false);
+  }
+  function updateProgress(announce){
+    var shown = listItems(activeList), done = checked[activeList] || {};
+    var n = shown.length, d = shown.filter(function(x){return done[x.i]}).length;
+    var pct = n ? Math.round(d/n*100) : 0;
+    $("#plabel").textContent = d + " sur " + n;
+    $("#ppct").textContent = pct + " %";
+    $("#pbar").style.width = pct + "%";
+    if(announce && d===n && n>0) toast(activeList==="depart" ? "Liste complétée. Bon voyage !" : "Liste complétée. Bravo !");
+  }
+  $("#checks").addEventListener("change",function(e){
+    var i = e.target.dataset.i; if(i===undefined) return;
+    checked[activeList] = checked[activeList] || {};
+    if(e.target.checked) checked[activeList][i] = 1; else delete checked[activeList][i];
+    chkSave(); updateProgress(true);
+  });
+  $("#daily").addEventListener("click",function(e){
+    var b = e.target.closest("#dailyseg [data-list]");
+    if(b){activeList = b.dataset.list; renderChecks(); return}
+    if(e.target.closest("#chkreset")){checked[activeList] = {}; chkSave(); renderChecks(); toast("Liste remise à zéro.")}
+  });
+  renderChecks();
+''' + s[b:]
+    s = replace_once(s, 'if(id==="hand") renderHand();', 'if(id==="hand") renderHand();\n    if(id==="daily") renderChecks();')
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head
@@ -561,7 +625,11 @@ def main():
     body_part = replace_once(body_part, '<!-- Missions -->', '<!-- Conseils & Astuces -->')
     # The maintenance moved to the « Carnet d'entretien » of the home screen (dates, reminders, appointment): no more tab here.
     body_part = replace_once(body_part, '\n        <button data-list="entretien" aria-pressed="false">Entretien</button>', '')
-    body_part = replace_once(body_part, '<strong>Gestes du quotidien</strong><span>Arrivée, départ et entretien</span>', '<strong>Gestes du quotidien</strong><span>Arrivée et départ</span>')
+    body_part = replace_once(body_part, '''<div class="seg" role="group" aria-label="Moment">
+        <button data-list="arrivee" aria-pressed="true">Arrivée</button>
+        <button data-list="depart" aria-pressed="false">Départ</button>
+      </div>''', '<div class="seg dailyseg" id="dailyseg" role="group" aria-label="Moment"></div>\n      <p class="dailygoal" id="dailygoal" hidden></p>')
+    body_part = replace_once(body_part, '<strong>Gestes du quotidien</strong><span>Arrivée, départ et entretien</span>', '<strong>Gestes du quotidien</strong><span>Arrivée, départ et routines de saison</span>')
     body_part = replace_once(body_part, '<div class="device" id="device">', '<div id="cloud"></div>\n<div class="device" id="device" hidden>')
     page = (
         '<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'

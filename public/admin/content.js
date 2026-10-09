@@ -37,12 +37,38 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
     const table = (head, rows, empty = 'Aucun.') =>
       rows.length ? `<div class="table-wrap"><table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : `<p class="muted">${empty}</p>`;
     const actions = (act, id) => `<td class="row-actions"><button class="btn small" data-act="${act}" data-id="${id}">Modifier</button><button class="btn small danger" data-act="${act}-del" data-id="${id}">Supprimer</button></td>`;
-    const listCard = (key, title) => `<form class="card form" data-list="${key}">
-        <h3>${esc(title)}</h3>
-        <label>Une étape par ligne<textarea name="items" rows="${(lists[key]?.items.length || 4) + 2}">${esc((lists[key]?.items || []).join('\n'))}</textarea></label>
-        <label>Note affichée sous la liste<input name="note" value="${esc(lists[key]?.note || '')}"></label>
-        <button class="btn primary">Enregistrer</button>
-      </form>`;
+    // The daily lists: one tab each in the app. A line may be for some vehicles only (equipment, or a variant).
+    const variantName = (v) => {
+      const V = config.VARIANTS?.[v[0]];
+      return V ? `${V.q} : ${(V.o.find((o) => o[0] === v[1]) || [])[1] || v[1]}` : v.join(' = ');
+    };
+    const itemText = (it) => (typeof it === 'string' ? it : it.t);
+    const itemCond = (it) => {
+      if (typeof it === 'string') return '';
+      const p = [];
+      if (it.eq?.length) p.push(`avec ${it.eq.map((id) => eqName[id] || id).join(' ou ')}`);
+      if (it.variant) p.push(variantName(it.variant));
+      return p.join(' · ');
+    };
+    const LIST_NAMES = { arrivee: 'Arrivée', depart: 'Départ' };
+    const listTitle = (k) => lists[k]?.title || LIST_NAMES[k] || k;
+    const listCard = (key) => {
+      const L = lists[key];
+      return `<div class="card">
+        <div class="card-head"><h3>Onglet « ${esc(listTitle(key))} » (${L.items.length} lignes)</h3>
+          <div class="row-actions"><button class="btn small" data-act="list-edit" data-key="${esc(key)}">Nom, but et note</button><button class="btn small primary" data-act="line-add" data-key="${esc(key)}">+ Ligne</button><button class="btn small danger" data-act="list-del" data-key="${esc(key)}">Supprimer la liste</button></div></div>
+        ${L.goal ? `<p><strong>Le but :</strong> ${esc(L.goal)}</p>` : ''}
+        ${table(
+          ['#', 'Ligne', 'Pour qui'],
+          L.items.map(
+            (it, n) => `<tr><td>${n + 1}</td><td>${esc(itemText(it))}</td><td>${esc(itemCond(it)) || '<span class="muted">Tous</span>'}</td>
+              <td class="row-actions"><button class="btn small" data-act="line-up" data-key="${esc(key)}" data-id="${n}" ${n ? '' : 'disabled'} aria-label="Monter">↑</button><button class="btn small" data-act="line-edit" data-key="${esc(key)}" data-id="${n}">Modifier</button><button class="btn small danger" data-act="line-del" data-key="${esc(key)}" data-id="${n}">Supprimer</button></td></tr>`
+          ),
+          'Aucune ligne.'
+        )}
+        ${L.note ? `<p class="muted">Note sous la liste : ${esc(L.note)}</p>` : ''}
+      </div>`;
+    };
     const wtIds = Object.keys(WT);
     const dimIds = Object.keys(DIMS);
 
@@ -52,8 +78,9 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
         <a href="#c-gestes">Gestes du quotidien</a><a href="#c-carnet">Carnet d’entretien</a><a href="#c-rdv">Rendez-vous atelier</a><a href="#c-emporte">Ce que j’emporte</a><a href="#c-poids">Poids des équipements</a><a href="#c-dims">Longueur et hauteur</a><a href="#c-avance">Réglages avancés</a>
       </nav>
 
-      <h2 class="section-title" id="c-gestes">Gestes du quotidien</h2>
-      <div class="detail-grid">${listCard('arrivee', 'Liste « Arrivée »')}${listCard('depart', 'Liste « Départ »')}</div>
+      <div class="card-head"><h2 class="section-title" id="c-gestes">Gestes du quotidien</h2><button class="btn" data-act="list-add">+ Nouvelle liste</button></div>
+      <p class="muted">Chaque liste est un onglet de l’écran « Gestes du quotidien », dans cet ordre. Le client coche au fur et à mesure ; ce qu’il a coché est gardé.</p>
+      ${Object.keys(lists).map(listCard).join('')}
 
       <h2 class="section-title" id="c-carnet">Carnet d’entretien</h2>
       <div class="card">
@@ -125,20 +152,11 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
       toast(msg);
       reload();
     };
-    el.querySelectorAll('[data-list]').forEach((f) => {
-      f.onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = new FormData(f);
-        const next = { ...lists, [f.dataset.list]: { ...lists[f.dataset.list], note: fd.get('note'), items: fd.get('items').split('\n').map((s) => s.trim()).filter(Boolean) } };
-        try {
-          await api('PUT', '/api/admin/catalog/lists', { value: next });
-          toast('Liste enregistrée');
-          reload();
-        } catch (err) {
-          toast(err.message, 'error');
-        }
-      };
-    });
+    const saveLists = async (next, msg = 'Liste enregistrée') => {
+      await api('PUT', '/api/admin/catalog/lists', { value: next });
+      toast(msg);
+      reload();
+    };
 
     // ---- Forms ----
     const kindForm = (i) => {
@@ -259,6 +277,54 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
           await saveConfig({ DIMS: { ...DIMS, [key]: { t: d.t, v: Math.max(0, Math.min(300, Math.round(Number(d.v) || 0))), n } } }, 'Dépassement enregistré');
         },
       });
+    const variantOptions = [['', 'Peu importe']];
+    for (const [k, V] of Object.entries(config.VARIANTS || {})) for (const o of V.o) if (o[0] !== 'ns') variantOptions.push([`${k}=${o[0]}`, `${V.q} : ${o[1]}`]);
+    const listForm = (key) => {
+      const L = key ? lists[key] : {};
+      openForm({
+        title: key ? `Onglet « ${listTitle(key)} »` : 'Nouvelle liste',
+        values: { title: key ? listTitle(key) : '', goal: L.goal || '', note: L.note || '' },
+        fields: [
+          { name: 'title', label: 'Nom de l’onglet (court)', required: true, hint: 'Ex. : Hivernage, Chaque mois.' },
+          { name: 'goal', label: 'Le but (affiché en haut de la liste)', type: 'textarea', rows: 2 },
+          { name: 'note', label: 'Note sous la liste', full: true },
+        ],
+        onSubmit: async (d) => {
+          let k = key;
+          if (!k) {
+            k = slug(d.title).replace(/-/g, '') || 'liste';
+            for (let n = 2; lists[k]; n++) k = `${slug(d.title).replace(/-/g, '')}${n}`;
+          }
+          await saveLists({ ...lists, [k]: { ...(lists[k] || { items: [] }), title: d.title, goal: d.goal, note: d.note } });
+        },
+      });
+    };
+    const lineForm = (key, n) => {
+      const it = n === undefined ? '' : lists[key].items[n];
+      const o = typeof it === 'string' ? { t: it } : it;
+      openForm({
+        title: n === undefined ? `Nouvelle ligne : ${listTitle(key)}` : `Ligne ${n + 1} : ${listTitle(key)}`,
+        values: { t: o.t || '', eq: o.eq || [], group: o.group || '', variant: o.variant ? o.variant.join('=') : '' },
+        fields: [
+          { name: 't', label: 'Ligne', type: 'textarea', rows: 3, required: true, hint: 'Le début jusqu’aux deux-points s’affiche en gras. Ex. : « Je vide toute l’eau : je vide la cuve… »' },
+          { name: 'eq', label: 'Seulement si le client a AU MOINS UN de ces équipements (rien coché : tous)', type: 'checks', filter: 'Chercher un équipement (ex. : batterie)', options: opts.equipment },
+          { name: 'group', label: 'Groupe (facultatif)', hint: 'Ex. « batterie » sur les lignes « batterie classique » et « batterie lithium » : si le client n’a coché aucun des deux équipements, il voit les deux lignes.' },
+          { name: 'variant', label: 'Seulement si (type d’équipement)', type: 'select', options: variantOptions, hint: 'Si le client a répondu autre chose, la ligne est cachée ; s’il ne sait pas, elle est affichée.' },
+        ],
+        onSubmit: async (d) => {
+          const line = d.eq.length || d.variant ? { t: d.t.trim() } : d.t.trim();
+          if (typeof line === 'object') {
+            if (d.eq.length) line.eq = d.eq;
+            if (d.eq.length && d.group.trim()) line.group = d.group.trim().toLowerCase();
+            if (d.variant) line.variant = d.variant.split('=');
+          }
+          const items = lists[key].items.slice();
+          if (n === undefined) items.push(line);
+          else items[n] = line;
+          await saveLists({ ...lists, [key]: { ...lists[key], items } });
+        },
+      });
+    };
     const without = (obj, key) => Object.fromEntries(Object.entries(obj).filter(([k]) => k !== key));
 
     // data-id is a number for the lists, an equipment id for the weights and sizes: read it as text here.
@@ -268,7 +334,21 @@ export function registerContentView(VIEWS, { api, openForm, pageHeader, bind, co
       const a = b.dataset.act;
       const raw = b.dataset.id;
       const i = raw === undefined ? undefined : Number(raw);
+      const key = b.dataset.key;
       const handlers = {
+        'list-add': () => listForm(),
+        'list-edit': () => listForm(key),
+        'list-del': () =>
+          confirmDelete(`Supprimer toute la liste « ${listTitle(key)} » (${lists[key].items.length} lignes) de l’appli ?`, () => saveLists(without(lists, key), 'Liste supprimée')),
+        'line-add': () => lineForm(key),
+        'line-edit': () => lineForm(key, i),
+        'line-del': () =>
+          confirmDelete(`Supprimer la ligne « ${itemText(lists[key].items[i]).slice(0, 80)} » ?`, () => saveLists({ ...lists, [key]: { ...lists[key], items: lists[key].items.filter((_, n) => n !== i) } }, 'Ligne supprimée')),
+        'line-up': () => {
+          const items = lists[key].items.slice();
+          [items[i - 1], items[i]] = [items[i], items[i - 1]];
+          saveLists({ ...lists, [key]: { ...lists[key], items } }, 'Ordre enregistré');
+        },
         'kind-add': () => kindForm(),
         kind: () => kindForm(i),
         'kind-del': () =>

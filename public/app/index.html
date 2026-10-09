@@ -270,6 +270,7 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
 .tiptext{padding:12px 14px 4px;margin:0;font-size:16px;line-height:1.5}.tipstore{margin:10px 14px 14px;padding:12px;border-radius:12px;background:var(--soft)}.tipstore p{margin:0 0 8px}.tipstore .btn{width:100%;flex:none}
 .tipshare{width:100%;flex:none;min-height:60px;font-size:18px;margin-top:8px}.tipform{display:flex;flex-direction:column;gap:10px;margin-top:8px}.tipform textarea{min-height:110px;font:inherit}.tipbtns{display:flex;gap:8px}
 .mission.feat{width:100%;font:inherit;cursor:pointer}.mission.feat .stamp{font-size:24px}.featpop{position:fixed;inset:0;z-index:60;background:rgba(5,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}.featpop .card{max-width:440px;width:100%;max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}.featpop .btn{flex:none}
+.dailyseg{display:flex;flex-wrap:wrap;gap:6px}.dailyseg button{flex:1 1 auto;min-width:30%}.dailygoal{background:var(--soft);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:15px;line-height:1.4}#checks span b{color:var(--ink)}
 .affdel{border:0;background:none;color:var(--muted);font-size:18px;width:40px;height:40px}.affbtns,.affideas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .badmsg{background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:12px;font-size:15px}
 .vbadge{background:var(--ok-bg);color:var(--ok);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700;align-self:flex-start}
@@ -394,7 +395,7 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
       </div>
       <div id="featured"></div>
       <div class="tiles">
-        <button class="tile" data-go="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><strong>Gestes du quotidien</strong><span>Arrivée et départ</span></button>
+        <button class="tile" data-go="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><strong>Gestes du quotidien</strong><span>Arrivée, départ et routines de saison</span></button>
         <button class="tile" data-go="what"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg><strong>C'est quoi, ça&nbsp;?</strong><span>Touchez le plan pour comprendre</span></button>
         <button class="tile" data-go="diag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><strong>J'ai un souci</strong><span>On cherche la cause avec vous</span></button>
         <button class="tile" data-go="game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg><strong>Conseils &amp; Astuces</strong><span>Les bons gestes, partagés</span></button>
@@ -406,10 +407,8 @@ button.dim{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}.d
 
     <!-- Gestes du quotidien -->
     <section class="screen" id="daily" hidden>
-      <div class="seg" role="group" aria-label="Moment">
-        <button data-list="arrivee" aria-pressed="true">Arrivée</button>
-        <button data-list="depart" aria-pressed="false">Départ</button>
-      </div>
+      <div class="seg dailyseg" id="dailyseg" role="group" aria-label="Moment"></div>
+      <p class="dailygoal" id="dailygoal" hidden></p>
       <div id="checkpart">
         <div>
           <div class="progress-row"><span id="plabel">0 sur 6</span><span id="ppct">0 %</span></div>

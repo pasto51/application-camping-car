@@ -874,7 +874,9 @@ function register(router) {
     }
     if (key === 'lists') {
       for (const [k, list] of Object.entries(value)) {
-        if (!list || !Array.isArray(list.items) || list.items.some((i) => typeof i !== 'string')) throw new HttpError(400, `Liste « ${k} » invalide`);
+        // An item: its text, or { t: text, eq: equipment (at least one), group, variant: [variant, value] }.
+        const ok = (i) => typeof i === 'string' || (i && typeof i === 'object' && typeof i.t === 'string' && i.t.trim());
+        if (!/^[a-z0-9_-]{1,30}$/.test(k) || !list || !Array.isArray(list.items) || !list.items.every(ok)) throw new HttpError(400, `Liste « ${k} » invalide`);
       }
     }
     const json = JSON.stringify(value);

@@ -11,7 +11,7 @@ const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
 // Storage keys of the Compagnon de bord app that are saved in the cloud.
-const STATE_KEYS = new Set(['cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand']);
+const STATE_KEYS = new Set(['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand']);
 const PHOTO_KEYS = new Set(['cdb_uph', 'cdb_photo']);
 const MAX_STATE_BYTES = 30 * 1024 * 1024;
 const ACCESS_YEARS = 2;

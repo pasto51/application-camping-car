@@ -9,7 +9,7 @@
   var SESSION_KEY = 'cdb_cloud';
   var DATA_KEY = 'cdb_cloud_data';
   var PENDING_KEY = 'cdb_cloud_pending';
-  var STATE_KEYS = ['cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand'];
+  var STATE_KEYS = ['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand'];
   var root = document.getElementById('cloud');
   var device = document.getElementById('device');
 

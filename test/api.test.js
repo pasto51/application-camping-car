@@ -712,3 +712,22 @@ test('logbook set in the back-office: kinds for some customers only, checks to d
   assert.deepEqual((await call('GET', '/api/app/data', { token: h.token })).data.carry, [{ n: 'Kayak', kg: 18 }]);
   assert.equal((await call('PUT', '/api/admin/entretien', { token: (await handover()).token, body: { kinds: [], tips: [] } })).status, 401);
 });
+
+test('routine checklists: winter storage, spring start-up, every month, with lines for some equipment', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const lists = (await call('GET', '/api/admin/catalog/lists', { token: admin })).data.value;
+  assert.deepEqual(Object.keys(lists), ['arrivee', 'depart', 'hiver', 'printemps', 'mensuel']);
+  assert.equal(lists.hiver.title, 'Hivernage');
+  const lith = lists.hiver.items.find((i) => i.eq?.includes('lith'));
+  assert.equal(lith.group, 'batterie');
+  assert.ok(lists.printemps.items.some((i) => i.variant?.[0] === 'frigo'));
+  // A new list from the back-office; a bad key or an empty line is refused.
+  assert.equal((await call('PUT', '/api/admin/catalog/lists', { token: admin, body: { value: { ...lists, 'Mauvais nom': { items: [] } } } })).status, 400);
+  assert.equal((await call('PUT', '/api/admin/catalog/lists', { token: admin, body: { value: { ...lists, plage: { title: 'Plage', items: [{ t: '' }] } } } })).status, 400);
+  assert.equal((await call('PUT', '/api/admin/catalog/lists', { token: admin, body: { value: { ...lists, plage: { title: 'Plage', items: ['Je rince le sable', { t: 'Je range le store', eq: ['store'] }] } } } })).status, 200);
+  const h = await handover({ firstName: 'Rita', lastName: 'Routine' });
+  const app = (await call('GET', '/api/app/data', { token: h.token })).data;
+  assert.equal(app.lists.plage.items.length, 2);
+  // What is ticked is saved with the customer's data.
+  assert.equal((await call('PUT', '/api/me/state/cdb_chk', { token: h.token, body: { value: JSON.stringify({ hiver: { 0: 1 } }) } })).status, 200);
+});

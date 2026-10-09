@@ -6,6 +6,59 @@
 
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { seedStarterTips } = require('./tips');
+
+const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
+const ROUTINE_LISTS = {
+  hiver: {
+    title: 'Hivernage',
+    goal: 'Protéger le véhicule du gel et de l’humidité pendant les longs mois d’arrêt.',
+    note: 'Routine d’automne.',
+    items: [
+      'Je vide toute l’eau (le plus important) : je vide la cuve d’eau propre, la cuve des eaux grises, et j’ouvre la vanne de sécurité (purge) du chauffe-eau.',
+      'J’ouvre les robinets : je laisse tous les robinets (évier, lavabo, douche) ouverts en position centrale (mitigeur au milieu). Ainsi, il ne reste aucune goutte d’eau dans les tuyaux pour geler.',
+      'Je m’occupe du frigo : je le vide, le nettoie et je cale la porte pour qu’elle reste entrouverte tout l’hiver (pour éviter les moisissures).',
+      'Je laisse respirer l’intérieur : je soulève légèrement les matelas et les assises de la banquette pour laisser l’air circuler. J’en profite pour placer des absorbeurs d’humidité dans l’habitacle.',
+      'Je protège les joints : je passe un coup de spray d’entretien au silicone sur les joints en caoutchouc des fenêtres pour éviter qu’ils ne collent ou craquellent avec le froid.',
+      { t: 'Je protège ma batterie cellule classique (plomb, AGM, gel) : je ne la laisse surtout pas branchée en permanence. Je la branche seulement 72 h toutes les 3 semaines (astuce : un petit programmateur de prise). Si le véhicule dort en extérieur, le panneau solaire du toit suffit souvent à assurer la charge d’entretien.', eq: BATTERY_CLASSIC, group: 'batterie' },
+      { t: 'Je protège ma batterie cellule lithium : c’est très simple, je mets son coupe-circuit sur la position OFF.', eq: ['lith'], group: 'batterie' },
+      'Je protège ma batterie moteur : pour être sûr de pouvoir démarrer au printemps, je la relie à un petit panneau solaire d’appoint, ou bien je démarre mon véhicule de temps en temps (15 à 20 minutes) pour maintenir la charge.',
+      'Je soulage mes pneus : pour éviter qu’ils ne se déforment sous le poids en restant sur place, je les surgonfle légèrement (+0,5 bar) ou je monte mon véhicule sur des cales anti-ovalisation.',
+    ],
+  },
+  printemps: {
+    title: 'Remise en route',
+    goal: 'Relancer la machine en douceur et vérifier que tout fonctionne pour les beaux jours.',
+    note: 'Routine de réveil, au printemps.',
+    items: [
+      'Je ferme les vannes d’eau : je referme la purge du chauffe-eau, le bouchon de la cuve d’eau propre et tous les robinets (laissés ouverts cet hiver).',
+      'Je chasse l’air des tuyaux : je mets un peu d’eau propre, j’allume la pompe et j’ouvre les robinets un par un jusqu’à ce que l’eau coule normalement sans « crachoter ».',
+      'Je purifie mon circuit d’eau : j’en profite pour verser un produit désinfectant spécial cuve dans l’eau propre afin d’éliminer les bactéries de l’hiver.',
+      'Je prépare les toilettes : je donne un bon coup de propre à ma cassette WC et je graisse son joint en caoutchouc (avec un spray ou un lubrifiant adapté) pour qu’il reste bien souple et étanche.',
+      'Je vérifie les batteries : je m’assure sur le panneau central que les niveaux de charge (batterie moteur et batterie cellule) sont au maximum.',
+      'Je teste mes appareils : j’allume mon frigo et mon chauffe-eau au gaz et à l’électricité pour m’assurer qu’ils démarrent bien et fonctionnent correctement après ces mois d’arrêt.',
+      { t: 'Je nettoie les grilles du frigo (frigo à absorption) : un petit coup de pinceau ou de soufflette sur les grilles extérieures enlève la poussière et les toiles d’araignées, pour qu’il refroidisse bien.', variant: ['frigo', 'trimixte'] },
+      'Je vérifie mon gaz : je regarde la date de péremption imprimée sur la « lyre » (le tuyau noir en caoutchouc souple) qui relie mes bouteilles de gaz.',
+      'Je contrôle les ouvrants : je vérifie l’étanchéité et la bonne ouverture des portes, fenêtres et lanterneaux. Je mets un petit coup de spray lubrifiant dans les serrures et sur les charnières si ça grince.',
+      'Je contrôle la mécanique de base : avant de rouler, je vérifie les niveaux du moteur (huile, liquide de refroidissement, lave-glace) et je refais absolument la pression de mes pneus.',
+      'Je fais une beauté à l’extérieur : un grand lavage de la carrosserie pour enlever les traces et les coulures noires accumulées pendant l’hiver.',
+    ],
+  },
+  mensuel: {
+    title: 'Chaque mois',
+    goal: 'Prévenir l’usure, éviter les pannes courantes et garder un bon confort à bord.',
+    note: 'Entretien mensuel en pleine saison.',
+    items: [
+      'Entretien de la cassette WC : je nettoie l’intérieur de la cassette avec un produit détartrant spécifique. Je pulvérise ensuite un lubrifiant au silicone spécial joints sur le clapet en caoutchouc pour garantir son étanchéité et faciliter son ouverture.',
+      'Traitement de la cuve des eaux grises : pour prévenir les remontées d’odeurs pendant les trajets, je verse une dose de nettoyant spécial cuve dans les bondes (évier et douche) afin de dissoudre les graisses et les résidus de savon.',
+      'Dégivrage du réfrigérateur : je retire la glace accumulée dans le compartiment freezer. Un réfrigérateur régulièrement dégivré consomme moins d’énergie et refroidit mieux en été.',
+      'Nettoyage du toit et du panneau solaire : avec précaution, j’accède au toit pour retirer les feuilles mortes et nettoyer les fientes d’oiseaux (qui peuvent attaquer la peinture). J’en profite pour nettoyer mon panneau solaire à l’eau claire, pour qu’il recharge bien.',
+      'Nettoyage des baies acryliques : les baies de camping-car ne sont pas en verre. Je les nettoie avec une microfibre et un nettoyant spécifique pour acrylique (un produit à vitres de la maison provoque des micro-fissures au soleil).',
+      'Lubrification des ouvrants et serrures : je pulvérise du spray lubrifiant dans les serrures de la porte cellule, des soutes et de la trappe WC. Le mécanisme ne grippe pas avec la poussière de la route.',
+      'Contrôle des pneus et des niveaux moteur : à froid, je vérifie la pression de tous les pneus. Sous le capot, je contrôle le niveau d’huile, le liquide de refroidissement, et je remplis le lave-glace.',
+      'Vérification de la signalisation et de la caméra : avec l’aide d’une autre personne, je vérifie les clignotants, les veilleuses et les feux stop. J’en profite pour nettoyer délicatement la lentille de la caméra de recul avec un chiffon doux.',
+    ],
+  },
+};
 const { NEW_EQUIPMENT, NEW_EQUIPMENT_2026, EQUIPMENT_TYPES, GENERIC_NAMES, DEFAULT_SPOTS } = require('./vehicle-types');
 const { NEW_DIAGNOSTICS, STORE_BRANCHES } = require('./diagnostics-pieces');
 const { CONFORT, CONFORT_2 } = require('./diagnostics-confort');
@@ -242,6 +295,25 @@ const PATCHES = [
         db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
         changed++;
       }
+      return changed;
+    },
+  },
+  {
+    // Three routine checklists in « Gestes du quotidien » (written by the user): winter storage, spring start-up, and the
+    // monthly care in season. Lines for some equipment only (battery type, absorption fridge).
+    key: '2026-10-15-check-lists-routine',
+    run: (db) => {
+      const row = db.prepare("SELECT value FROM catalog WHERE key = 'lists'").get();
+      const lists = row ? JSON.parse(row.value) : {};
+      let changed = 0;
+      for (const [key, list] of Object.entries(ROUTINE_LISTS)) {
+        if (lists[key]) continue;
+        lists[key] = list;
+        changed++;
+      }
+      if (lists.arrivee && !lists.arrivee.title) lists.arrivee.title = 'Arrivée';
+      if (lists.depart && !lists.depart.title) lists.depart.title = 'Départ';
+      db.prepare("INSERT INTO catalog (key, value) VALUES ('lists', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')").run(JSON.stringify(lists));
       return changed;
     },
   },

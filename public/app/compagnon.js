@@ -28,6 +28,7 @@ window.startCompagnon = function(DATA){
     if(id==="rdv") renderRdv();
     if(id==="weight") renderWeight();
     if(id==="hand") renderHand();
+    if(id==="daily") renderChecks();
     if(typeof updateCount==="function") updateCount();
     if(id==="diag") renderDiagList();
     if(id==="game") renderGame();
@@ -45,56 +46,60 @@ window.startCompagnon = function(DATA){
   var OWN_ALIAS = DATA.config.OWN_ALIAS;
   function ownA(i){return own[i] || (OWN_ALIAS[i] && own[OWN_ALIAS[i]])}
   function RL(){return REMINDERS.filter(function(r){return !r.needs || r.needs.some(function(i){return ownA(i)})})}
-  var checked = {arrivee:{},depart:{}}, reminded = {}, optin = false;
-  var activeList = "arrivee";
+  var activeList = Object.keys(LISTS)[0] || "arrivee";
+  var checked = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_chk")||"{}")||{}}catch(e){} return o})();
+  function chkSave(){lsSet("cdb_chk",JSON.stringify(checked))}
+  var LIST_NAMES = {arrivee:"Arrivée",depart:"Départ"};
+  function listTitle(k){return (LISTS[k] && LISTS[k].title) || LIST_NAMES[k] || k}
+  // The lines for this vehicle: « eq » = at least one of these pieces of equipment (lines of the same « group »: all
+  // shown if the customer ticked none of them, e.g. the battery type not known), « variant » = [question, answer].
+  function listItems(k){
+    var items = (LISTS[k] && LISTS[k].items) || [], O = (typeof own==="object" && own) || {}, V = (typeof vars==="object" && vars) || {};
+    var has = function(ids){return (ids||[]).some(function(i){return O[i] || (OWN_ALIAS && OWN_ALIAS[i] && O[OWN_ALIAS[i]])})};
+    var groupKnown = {};
+    items.forEach(function(it){if(it && it.group && has(it.eq)) groupKnown[it.group] = true});
+    return items.map(function(it,i){return {i:i, t: typeof it==="string" ? it : it.t, it:it}}).filter(function(x){
+      var it = x.it; if(typeof it==="string") return true;
+      if(it.variant && V[it.variant[0]] && V[it.variant[0]]!=="ns" && V[it.variant[0]]!==it.variant[1]) return false;
+      if(it.eq && it.eq.length && !has(it.eq)) return it.group ? !groupKnown[it.group] : false;
+      return true;
+    });
+  }
+  function itemHtml(t){var m = /^(.{3,90}?) : (.+)$/.exec(t); return m ? '<b>'+esc(m[1])+' :</b> '+esc(m[2]) : esc(t)}
+  function renderSeg(){
+    var seg = $("#dailyseg"); if(!seg) return;
+    if(!LISTS[activeList]) activeList = Object.keys(LISTS)[0];
+    seg.innerHTML = Object.keys(LISTS).map(function(k){return '<button type="button" data-list="'+esc(k)+'" aria-pressed="'+(k===activeList)+'">'+esc(listTitle(k))+'</button>'}).join("");
+  }
   function renderChecks(){
-    var isEnt = activeList === "entretien";
-    $("#checkpart").hidden = isEnt; $("#remindpart").hidden = !isEnt;
-    if(isEnt){
-      $("#remindpart").innerHTML = '<p class="eyebrow">Vos rappels d\'entretien</p>' + RL().map(function(r,i){
-        var on = !!reminded[r.t];
-        return '<div class="rem"><h3>'+esc(r.t)+'</h3><p class="when">'+esc(r.w)+'</p><div style="display:flex;flex-wrap:wrap;gap:8px"><button data-r="'+i+'" aria-pressed="'+on+'">'+(on?'Rappel activé':'Me rappeler')+'</button>'+(r.m?'<button data-rdv="'+r.m+'" style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent)">Prendre rendez-vous</button>':'')+'</div>' +
-          (on ? '<div class="notif"><b>Compagnon de bord · maintenant</b><span>'+esc(r.t)+' : c\'est le moment. Touchez pour voir comment faire.</span></div><p class="picnote">Exemple de notification, programmée sur votre téléphone. Aucune donnée n\'est envoyée.</p>' : '') + '</div>';
-      }).join("") +
-      '<p class="eyebrow" style="margin-top:8px">Messages de la marque</p>' +
-      '<label class="rem" style="flex-direction:row;align-items:flex-start;gap:12px;cursor:pointer"><input type="checkbox" id="optin" style="width:24px;height:24px;accent-color:var(--accent);flex:none"'+(optin?' checked':'')+'><span><b>Recevoir les conseils et offres de saison</b><br><span class="when">Facultatif, désactivable à tout moment. Rien n\'est envoyé sans votre accord.</span></span></label>' +
-      (optin ? '<div class="notif"><b>Votre concession · exemple</b><span>Avant l\'hiver : protégez votre circuit d\'eau. Les produits d\'hivernage sont en rayon cette semaine.</span></div><div class="notif"><b>Votre concession · exemple</b><span>Départ en vacances ? Vérifiez vos pneus, puis passez prendre votre kit de dépannage.</span></div><p class="picnote">Messages d\'exemple. Contenu, fréquence et ciblage choisis par la concession.</p>' : '');
-      $("#dailynote").textContent = "Fréquences données en exemple. Elles seront alignées sur les préconisations constructeur.";
-      return;
-    }
-    var L = LISTS[activeList], ul = $("#checks");
-    ul.innerHTML = L.items.map(function(t,i){
-      return '<li><label><input type="checkbox" data-i="'+i+'"'+(checked[activeList][i]?' checked':'')+'><span>'+esc(t)+'</span></label></li>';
+    renderSeg();
+    var L = LISTS[activeList] || {items:[]}, ul = $("#checks"), done = checked[activeList] || {};
+    var g = $("#dailygoal"); if(g){g.hidden = !L.goal; g.innerHTML = L.goal ? '<b>Le but :</b> '+esc(L.goal) : ''}
+    ul.innerHTML = listItems(activeList).map(function(x){
+      return '<li><label><input type="checkbox" data-i="'+x.i+'"'+(done[x.i]?' checked':'')+'><span>'+itemHtml(x.t)+'</span></label></li>';
     }).join("");
-    $("#dailynote").textContent = L.note;
+    $("#dailynote").innerHTML = (L.note ? esc(L.note)+' ' : '') + '<button class="lnk" type="button" id="chkreset">Tout décocher</button>';
     updateProgress(false);
   }
   function updateProgress(announce){
-    var n = LISTS[activeList].items.length, d = Object.keys(checked[activeList]).filter(function(k){return checked[activeList][k]}).length;
-    var pct = Math.round(d/n*100);
+    var shown = listItems(activeList), done = checked[activeList] || {};
+    var n = shown.length, d = shown.filter(function(x){return done[x.i]}).length;
+    var pct = n ? Math.round(d/n*100) : 0;
     $("#plabel").textContent = d + " sur " + n;
     $("#ppct").textContent = pct + " %";
     $("#pbar").style.width = pct + "%";
-    if(announce && d===n && n>0) toast("Liste complétée. Bon voyage !");
+    if(announce && d===n && n>0) toast(activeList==="depart" ? "Liste complétée. Bon voyage !" : "Liste complétée. Bravo !");
   }
   $("#checks").addEventListener("change",function(e){
     var i = e.target.dataset.i; if(i===undefined) return;
-    checked[activeList][i] = e.target.checked;
-    updateProgress(true);
+    checked[activeList] = checked[activeList] || {};
+    if(e.target.checked) checked[activeList][i] = 1; else delete checked[activeList][i];
+    chkSave(); updateProgress(true);
   });
-  $("#remindpart").addEventListener("click",function(e){
-    var b = e.target.closest("[data-r]"); if(!b) return;
-    var k = RL()[+b.dataset.r].t; reminded[k] = !reminded[k];
-    renderChecks();
-    toast(reminded[k] ? "Démo : vous recevriez une notification au bon moment." : "Rappel désactivé.");
-  });
-  $("#remindpart").addEventListener("change",function(e){if(e.target.id==="optin"){optin = e.target.checked; renderChecks(); toast(optin?"Démo : vous recevriez les offres de saison.":"Offres désactivées.")}});
-  $$(".seg button[data-list]").forEach(function(b){
-    b.addEventListener("click",function(){
-      activeList = b.dataset.list;
-      $$(".seg button[data-list]").forEach(function(x){x.setAttribute("aria-pressed", x===b ? "true":"false")});
-      renderChecks();
-    });
+  $("#daily").addEventListener("click",function(e){
+    var b = e.target.closest("#dailyseg [data-list]");
+    if(b){activeList = b.dataset.list; renderChecks(); return}
+    if(e.target.closest("#chkreset")){checked[activeList] = {}; chkSave(); renderChecks(); toast("Liste remise à zéro.")}
   });
   renderChecks();
 
