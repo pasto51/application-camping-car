@@ -7,6 +7,7 @@
 const { getSetting, setSetting, bumpContentVersion, transaction } = require('./db');
 const { seedStarterTips } = require('./tips');
 const { CLIENTS_2026_10 } = require('./diagnostics-clients');
+const { CLIENTS_2026_10_B } = require('./diagnostics-clients-2');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -352,6 +353,24 @@ const PATCHES = [
         if (leaves.length) db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = 'h_eau'").run(JSON.stringify(data));
         changed += leaves.length;
       }
+      return changed;
+    },
+  },
+  {
+    // Second batch of customer problems (doors, windows, taps, cupboards, gas struts, fridge door, storage lockers,
+    // swivel seats, table, slats, lights, fuel in the water tank, tank cap, stabiliser legs, sliding door, bodywork,
+    // pop-up roof, inverter), and the cracked shower tray in the leak diagnostic.
+    key: '2026-10-18-problemes-clients-2',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of CLIENTS_2026_10_B) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      const fuite = CLIENTS_2026_10.find((d) => d.id === 'p_fuite');
+      changed += db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = 'p_fuite'").run(JSON.stringify(fuite)).changes;
       return changed;
     },
   },

@@ -422,12 +422,17 @@ const CLIENTS_2026_10 = [
         },
         {
           t: 'Où exactement ?',
-          o: ['Au bac de douche ou au mitigeur', 'Au pied des WC, à chaque chasse d’eau', 'Entre la cuvette et la cassette des WC'],
+          o: ['Au joint du bac de douche ou au mitigeur', 'Le bac de douche lui-même est fendu', 'Au pied des WC, à chaque chasse d’eau', 'Entre la cuvette et la cassette des WC'],
           n: [
             buy(
               'Le joint du bac de douche est fendu.',
               'Séchez bien la zone, retirez l’ancien joint et refaites-le avec un mastic d’étanchéité spécial sanitaire de camping-car.',
               'Mastic d’étanchéité spécial sanitaire camping-car'
+            ),
+            shop(
+              'Le bac de douche est fendu.',
+              'L’eau qui passe par la fissure abîme le plancher en dessous : ne prenez plus de douche avant la réparation. L’atelier répare le bac à la résine ou le change. Un caillebotis répartit ensuite le poids et évite une nouvelle fissure.',
+              'Réparation du bac à l’atelier, puis caillebotis de douche'
             ),
             buy(
               'Le joint de la chasse d’eau des WC est usé.',

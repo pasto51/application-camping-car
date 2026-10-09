@@ -91,6 +91,9 @@ const USAGE = [
   ['p_fuite', SPRING, 5, ['fuite eau', 'frost control coule']],
   ['p_storeplisse', FLAT, 3, ['ficelle store', 'moustiquaire roulette']],
   ['p_serrure', FLAT, 3, ['clé cassée', 'barillet zadi']],
+  ['p_porte', FLAT, 3, ['porte cellule ferme mal', 'porte premier cran']],
+  ['p_baie', SUMMER, 3, ['baie retombe', 'fenêtre rayée']],
+  ['p_carburant', FLAT, 1, ['gazole dans réservoir eau']],
 ];
 const UNANSWERED = ['remorque', 'attelage', 'starlink', 'panneau grêle'];
 
