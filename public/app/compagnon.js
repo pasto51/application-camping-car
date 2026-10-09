@@ -254,7 +254,8 @@ window.startCompagnon = function(DATA){
   function wopt(id){var v = wt.opt[id]; return (typeof v==="number") ? v : WT[id]}
   function wtSave(){lsSet("cdb_wt",JSON.stringify(wt))}
   function waff(){return Array.isArray(wt.aff) ? wt.aff : []}
-  var AFF_IDEAS = [["Vélo",15],["Vélo électrique",25],["Valises et vêtements",40],["Nourriture et boissons",30],["Vaisselle et ustensiles",15],["Table et chaises de camping",12],["Barbecue ou plancha",10],["Câbles, cales et outils",15],["Jeux et affaires de plage",10],["Chien",20]];
+  // Set in the back-office (« Contenus de l'appli » → « Ce que j'emporte »).
+  var AFF_IDEAS = (DATA.carry || []).map(function(x){return [x.n, x.kg]});
   function loadCalc(){
     var FACT = {}; (DATA.vehicle.equipment||[]).forEach(function(i){FACT[i] = true});
     var inc = Object.keys(WT).filter(function(id){return own[id] && FACT[id] && eqById(id)}).map(function(id){return eqById(id).name});

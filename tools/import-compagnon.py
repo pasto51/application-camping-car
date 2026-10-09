@@ -312,7 +312,8 @@ def main():
     # each thing, then tick before each trip what goes in the vehicle.
     s = replace_once(s, 'function wtSave(){lsSet("cdb_wt",JSON.stringify(wt))}', r'''function wtSave(){lsSet("cdb_wt",JSON.stringify(wt))}
   function waff(){return Array.isArray(wt.aff) ? wt.aff : []}
-  var AFF_IDEAS = [["Vélo",15],["Vélo électrique",25],["Valises et vêtements",40],["Nourriture et boissons",30],["Vaisselle et ustensiles",15],["Table et chaises de camping",12],["Barbecue ou plancha",10],["Câbles, cales et outils",15],["Jeux et affaires de plage",10],["Chien",20]];''')
+  // Set in the back-office (« Contenus de l'appli » → « Ce que j'emporte »).
+  var AFF_IDEAS = (DATA.carry || []).map(function(x){return [x.n, x.kg]});''')
     s = replace_once(s, '{n:"Bagages, vélos, matériel",kg:wv("bag")}', r'''(waff().length ? {n:"Ce que j'emporte ("+waff().filter(function(a){return a.on}).length+" coché"+(waff().filter(function(a){return a.on}).length>1?"s":"")+")",kg:waff().reduce(function(t,a){return t+(a.on?a.kg:0)},0)} : {n:"Bagages, vélos, matériel",kg:wv("bag")})''')
     s = replace_once(s, r'''    el.innerHTML = '<span class="lc-top"><span class="k2">Charge restante</span><span class="lc-v '+c.st+'">'+(c.rest<0?"−":"")+kg(Math.abs(c.rest))+'</span></span><span class="gauge" aria-hidden="true"><i class="'+c.st+'" style="width:'+c.pct.toFixed(0)+'%"></i></span><span class="lc-sub">Estimé '+kg(c.total)+' sur '+kg(c.ptac)+' autorisés. Modifier ›</span>';''',
     r'''    el.className = "loadcard is-"+c.st;

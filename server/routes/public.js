@@ -4,7 +4,7 @@ const { HttpError } = require('../http');
 const { transaction, getSetting, stripVin, bumpContentVersion } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
-const { KINDS, entretienOf, logOf } = require('../entretien');
+const { kindsOf, labelOf, entretienOf, logOf } = require('../entretien');
 const { CATEGORY_IDS } = require('../tips');
 const { bannerFor } = require('../banners');
 const { routeRequest, warrantyOf, SERVICES } = require('../services');
@@ -389,7 +389,7 @@ function register(router) {
   router.get('/api/me/entretien', (ctx) => entretienOf(ctx.db, requireCustomer(ctx)));
   router.post('/api/me/entretien', (ctx) => {
     const customer = requireCustomer(ctx);
-    const kind = KINDS[ctx.body.kind] ? ctx.body.kind : null;
+    const kind = kindsOf(ctx.db).some((k) => k.id === ctx.body.kind) ? ctx.body.kind : null;
     if (!kind) throw new HttpError(400, 'Choisissez ce qui a été fait');
     const doneOn = optDate(ctx.body.doneOn) || new Date().toISOString().slice(0, 10);
     if (doneOn > new Date().toISOString().slice(0, 10)) throw new HttpError(400, 'La date ne peut pas être dans le futur');
@@ -513,7 +513,7 @@ function register(router) {
       dealership: s.dealership,
       appData: state,
       requests: requestsOf(db, customer.id),
-      maintenanceLog: logOf(db, customer.id).map((e) => ({ doneOn: e.done_on, kind: e.kind, label: KINDS[e.kind]?.label, note: e.note })),
+      maintenanceLog: logOf(db, customer.id).map((e) => ({ doneOn: e.done_on, kind: e.kind, label: labelOf(kindsOf(db), e.kind), note: e.note })),
     };
   });
 

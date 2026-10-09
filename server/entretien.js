@@ -2,27 +2,42 @@
 
 // Maintenance: what is due for a customer (from the handover date and what they noted in their logbook), and the
 // logbook itself. The customer keeps the logbook (« J'ai fait le test d'étanchéité le… »): the next date follows from it.
+// The kinds of maintenance are set in the back-office (« Contenus de l'appli » → « Carnet d'entretien »), each for its
+// own customers (dealerships, type of vehicle, equipment they have or do not have); these are the first ones.
 
-const KINDS = {
-  etanch: { label: 'Test d’étanchéité', every: 12, rdv: 'etanch', why: 'Une fois par an : souvent exigé pour garder la garantie étanchéité.' },
-  revision: { label: 'Révision annuelle', every: 12, rdv: 'revision', why: 'Entretien du porteur et de la cellule.' },
-  gaz: { label: 'Contrôle de l’installation gaz', every: 24, rdv: 'gaz', why: 'Tuyaux, détendeur et appareils au gaz : pour votre sécurité.' },
-  chauf: { label: 'Révision du chauffage', season: '10-01', after: 10, rdv: 'chauf', why: 'Avant l’hiver, pour ne pas tomber en panne au froid.' },
-  hiv: { label: 'Hivernage', season: '10-15', rdv: 'hiv', why: 'Vidange de l’eau et protection contre le gel avant l’hiver.' },
-  printemps: { label: 'Remise en route (déshivernage)', season: '03-15', after: 4, rdv: 'revision', why: 'Avant la saison : eau, gaz, batteries et étanchéité.' },
-  frigo: { label: 'Révision du réfrigérateur', season: '04-01', after: 10, rdv: 'frigo', needs: ['frigo', 'comp'], why: 'Avant la saison : brûleur et ventilation, pour qu’il refroidisse bien sur le gaz.' },
-  eauch: { label: 'Révision du chauffe-eau', every: 12, rdv: 'eauch', needs: ['eauch', 'trumae', 'eaue', 'trumac', 'trumad', 'combi'], why: 'Chaque année, avec la vidange : anode, soupape et joints.' },
-  energie: { label: 'Contrôle des batteries', season: '03-01', after: 4, rdv: 'energie', needs: ['cell', 'agm', 'gel', 'lith', 'solaire', 'b2b'], why: 'Après l’hiver : charge, cosses et chargeur, avant de repartir.' },
-  pneus: { label: 'Pneus (contrôle ou remplacement)' },
-  autre: { label: 'Autre intervention' },
-};
-// The small checks the customer does himself, without a date (they were the « Entretien » tab of the daily gestures).
-const TIPS = [
+const { getCatalogValue, readProfile } = require('./catalog');
+
+const DEFAULT_KINDS = [
+  { id: 'etanch', label: 'Test d’étanchéité', every: 12, rdv: 'etanch', why: 'Une fois par an : souvent exigé pour garder la garantie étanchéité.' },
+  { id: 'revision', label: 'Révision annuelle', every: 12, rdv: 'revision', why: 'Entretien du porteur et de la cellule.' },
+  { id: 'gaz', label: 'Contrôle de l’installation gaz', every: 24, rdv: 'gaz', why: 'Tuyaux, détendeur et appareils au gaz : pour votre sécurité.' },
+  { id: 'chauf', label: 'Révision du chauffage', season: '10-01', after: 10, rdv: 'chauf', why: 'Avant l’hiver, pour ne pas tomber en panne au froid.' },
+  { id: 'hiv', label: 'Hivernage', season: '10-15', rdv: 'hiv', why: 'Vidange de l’eau et protection contre le gel avant l’hiver.' },
+  { id: 'printemps', label: 'Remise en route (déshivernage)', season: '03-15', after: 4, rdv: 'revision', why: 'Avant la saison : eau, gaz, batteries et étanchéité.' },
+  { id: 'frigo', label: 'Révision du réfrigérateur', season: '04-01', after: 10, rdv: 'frigo', equipmentAny: ['frigo', 'comp'], why: 'Avant la saison : brûleur et ventilation, pour qu’il refroidisse bien sur le gaz.' },
+  { id: 'eauch', label: 'Révision du chauffe-eau', every: 12, rdv: 'eauch', equipmentAny: ['eauch', 'trumae', 'eaue', 'trumac', 'trumad', 'combi'], why: 'Chaque année, avec la vidange : anode, soupape et joints.' },
+  { id: 'energie', label: 'Contrôle des batteries', season: '03-01', after: 4, rdv: 'energie', equipmentAny: ['cell', 'agm', 'gel', 'lith', 'solaire', 'b2b'], why: 'Après l’hiver : charge, cosses et chargeur, avant de repartir.' },
+  { id: 'pneus', label: 'Pneus (contrôle ou remplacement)' },
+  { id: 'autre', label: 'Autre intervention' },
+];
+// The small checks the customer does himself, without a date.
+const DEFAULT_TIPS = [
   { label: 'Pression des pneus', when: 'Toutes les 2 semaines en saison, et après un stockage' },
   { label: 'Niveaux moteur : huile, refroidissement, lave-glace', when: 'Avant un long trajet' },
 ];
-const SOON_DAYS = 45; // shown in the home banner this many days before the date
+const SOON_DAYS = 45; // shown as « à faire » (red dot) this many days before the date
 const NOTIFY_DAYS = 15; // notified on the phone this many days before the date
+
+// What the back-office saved, else the first kinds.
+function settingsOf(db) {
+  const v = getCatalogValue(db, 'entretien');
+  return {
+    kinds: Array.isArray(v?.kinds) ? v.kinds : DEFAULT_KINDS,
+    tips: Array.isArray(v?.tips) ? v.tips : DEFAULT_TIPS,
+  };
+}
+const kindsOf = (db) => settingsOf(db).kinds;
+const labelOf = (kinds, id) => kinds.find((k) => k.id === id)?.label || 'Intervention';
 
 const iso = (d) => d.toISOString().slice(0, 10);
 const day = (s) => new Date(`${s}T12:00:00Z`);
@@ -33,14 +48,27 @@ const addMonths = (s, n) => {
 };
 const addDays = (s, n) => iso(new Date(day(s).getTime() + n * 86400000));
 
+// Is this kind of maintenance for this customer? (A kind already noted in their logbook stays, whatever the targeting.)
+function isFor(k, customer, own, ctx, lastDone) {
+  if (k.active === false) return false;
+  if (lastDone) return true;
+  if (k.dealershipIds?.length && !k.dealershipIds.includes(customer.dealership_id)) return false;
+  if (k.vehicleTypes?.length && !k.vehicleTypes.includes(ctx.vehicleType || '')) return false;
+  const any = k.equipmentAny || k.needs || [];
+  if (any.length && !any.some((id) => own[id])) return false;
+  if ((k.equipmentNone || []).some((id) => own[id])) return false;
+  return true;
+}
+
 // The dated items of a customer, earliest first: { kind, label, due, state: 'late' | 'soon' | 'later', rdv, why }.
-// own: the equipment checked for the vehicle (fridge, water heater, batteries…); without it, those items are left out.
-function dueItems(customer, log, today = iso(new Date()), own = {}) {
+// own: the equipment checked for the vehicle (fridge, water heater, batteries…); ctx: { vehicleType }.
+function dueItems(customer, log, today = iso(new Date()), own = {}, kinds = DEFAULT_KINDS, ctx = {}) {
   const last = {};
   for (const e of log) if (!last[e.kind] || e.done_on > last[e.kind]) last[e.kind] = e.done_on;
   const out = [];
-  for (const [kind, k] of Object.entries(KINDS)) {
-    if (k.needs && !k.needs.some((id) => own[id]) && !last[kind]) continue;
+  for (const k of kinds) {
+    const kind = k.id;
+    if (!isFor(k, customer, own, ctx, last[kind])) continue;
     let due = null;
     if (k.every) {
       const base = last[kind] || customer.handover_date;
@@ -82,14 +110,74 @@ function ownOf(db, customerId) {
   }
 }
 
+function vehicleTypeOf(db, customer) {
+  const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
+  return vehicle ? readProfile(vehicle).type || '' : '';
+}
+
+// What is due for one customer, with the kinds set in the back-office.
+function dueFor(db, customer, today) {
+  return dueItems(customer, logOf(db, customer.id), today, ownOf(db, customer.id), kindsOf(db), { vehicleType: vehicleTypeOf(db, customer) });
+}
+
 function entretienOf(db, customer, today) {
+  const { kinds, tips } = settingsOf(db);
   const log = logOf(db, customer.id);
+  const own = ownOf(db, customer.id);
+  const ctx = { vehicleType: vehicleTypeOf(db, customer) };
   return {
-    items: dueItems(customer, log, today, ownOf(db, customer.id)),
-    tips: TIPS,
-    log: log.map((e) => ({ id: e.id, doneOn: e.done_on, kind: e.kind, label: KINDS[e.kind]?.label || 'Intervention', note: e.note })),
-    kinds: Object.entries(KINDS).map(([id, k]) => [id, k.label]),
+    items: dueItems(customer, log, today, own, kinds, ctx),
+    tips,
+    log: log.map((e) => ({ id: e.id, doneOn: e.done_on, kind: e.kind, label: labelOf(kinds, e.kind), note: e.note })),
+    // What the customer may note: the kinds for them (and « Autre intervention » kinds without a date).
+    kinds: kinds.filter((k) => isFor(k, customer, own, ctx, log.some((e) => e.kind === k.id))).map((k) => [k.id, k.label]),
   };
 }
 
-module.exports = { KINDS, TIPS, dueItems, entretienOf, logOf, ownOf, SOON_DAYS, NOTIFY_DAYS };
+// Checks what the back-office sends (« Carnet d'entretien »).
+function cleanSettings(db, value) {
+  if (!value || !Array.isArray(value.kinds) || !Array.isArray(value.tips)) throw new Error('Format invalide');
+  const str = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : '');
+  const ids = new Set();
+  const equipment = new Set(db.prepare('SELECT id FROM equipment').all().map((r) => r.id));
+  const list = (v, keep) => [...new Set((Array.isArray(v) ? v : []).filter(keep))].slice(0, 60);
+  const kinds = value.kinds.slice(0, 60).map((k) => {
+    const label = str(k.label, 80);
+    if (!label) throw new Error('Chaque entretien doit avoir un nom');
+    let id = str(k.id, 30).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    if (!id) id = label.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'entretien';
+    let unique = id;
+    for (let n = 2; ids.has(unique); n++) unique = `${id}-${n}`;
+    ids.add(unique);
+    const out = { id: unique, label };
+    const why = str(k.why, 300);
+    if (why) out.why = why;
+    const rdv = str(k.rdv, 30);
+    if (rdv) out.rdv = rdv;
+    if (k.every) {
+      const every = Math.round(Number(k.every));
+      if (!(every >= 1 && every <= 120)) throw new Error(`« ${label} » : fréquence de 1 à 120 mois`);
+      out.every = every;
+    } else if (k.season) {
+      if (!/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(k.season)) throw new Error(`« ${label} » : date de saison invalide`);
+      out.season = k.season;
+      const after = Math.round(Number(k.after) || 0);
+      if (after) out.after = Math.max(0, Math.min(36, after));
+    }
+    const dealershipIds = list(k.dealershipIds, (x) => Number.isInteger(x) && x > 0);
+    if (dealershipIds.length) out.dealershipIds = dealershipIds;
+    const vehicleTypes = list(k.vehicleTypes, (x) => typeof x === 'string' && x.length <= 30);
+    if (vehicleTypes.length) out.vehicleTypes = vehicleTypes;
+    const any = list(k.equipmentAny, (x) => equipment.has(x));
+    const none = list(k.equipmentNone, (x) => equipment.has(x));
+    if (any.some((x) => none.includes(x))) throw new Error(`« ${label} » : un même équipement ne peut pas être à la fois « ont » et « n’ont pas »`);
+    if (any.length) out.equipmentAny = any;
+    if (none.length) out.equipmentNone = none;
+    if (k.active === false) out.active = false;
+    return out;
+  });
+  const tips = value.tips.slice(0, 30).map((t) => ({ label: str(t.label, 120), when: str(t.when, 160) })).filter((t) => t.label);
+  return { kinds, tips };
+}
+
+module.exports = { DEFAULT_KINDS, DEFAULT_TIPS, settingsOf, kindsOf, labelOf, dueItems, dueFor, entretienOf, logOf, ownOf, cleanSettings, SOON_DAYS, NOTIFY_DAYS };

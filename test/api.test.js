@@ -675,3 +675,40 @@ test('« À la une » banners: each for its customers (dealership, type, time si
   assert.equal((await call('DELETE', `/api/admin/banners/${global.id}`, { token: manager })).status, 403);
   assert.equal((await call('GET', '/api/admin/banners', { token: fresh.token })).status, 401);
 });
+
+test('logbook set in the back-office: kinds for some customers only, checks to do oneself, « Ce que j’emporte »', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const { data: start } = await call('GET', '/api/admin/entretien', { token: admin });
+  assert.ok(start.kinds.find((k) => k.id === 'etanch') && start.tips.length);
+  const h = await handover({ firstName: 'Paul', lastName: 'Carnet2', handoverDate: '2024-01-10' });
+  await call('PUT', '/api/me/state/cdb_own', { token: h.token, body: { value: JSON.stringify({ frigo: true }) } });
+  const { data: other } = await call('POST', '/api/admin/dealerships', { token: admin, body: { name: 'Carnet Motors', code: 'CARNET1' } });
+
+  const kinds = [
+    ...start.kinds,
+    { label: 'Vidange du groupe froid', every: 6, equipmentAny: ['frigo'] },
+    { label: 'Contrôle clim', every: 12, equipmentAny: ['clim'] },
+    { label: 'Offre Carnet Motors', every: 12, dealershipIds: [other.id] },
+    { label: 'Révision cellule', season: '05-01', after: 0, equipmentNone: ['clim'] },
+  ];
+  assert.equal((await call('PUT', '/api/admin/entretien', { token: admin, body: { kinds: [...kinds, { label: 'Erreur', every: 500 }], tips: start.tips } })).status, 400);
+  const saved = await call('PUT', '/api/admin/entretien', { token: admin, body: { kinds, tips: [...start.tips, { label: 'Graisser les marchepieds', when: 'Au printemps' }] } });
+  assert.equal(saved.status, 200);
+  const groupe = saved.data.kinds.find((k) => k.label === 'Vidange du groupe froid');
+  assert.equal(groupe.id, 'vidange-du-groupe-froid');
+
+  const { data: mine } = await call('GET', '/api/me/entretien', { token: h.token });
+  const ids = mine.items.map((i) => i.kind);
+  assert.ok(ids.includes('vidange-du-groupe-froid'), 'has a fridge');
+  assert.ok(!ids.some((id) => id.startsWith('controle-clim')), 'no air conditioning');
+  assert.ok(!ids.some((id) => id.startsWith('offre-carnet')), 'other dealership');
+  assert.ok(ids.includes('revision-cellule'));
+  assert.ok(mine.tips.some((t) => t.label === 'Graisser les marchepieds'));
+  assert.ok(mine.kinds.some(([id]) => id === 'vidange-du-groupe-froid') && !mine.kinds.some(([id]) => id.startsWith('controle-clim')));
+  assert.equal((await call('POST', '/api/me/entretien', { token: h.token, body: { kind: 'vidange-du-groupe-froid' } })).status, 200);
+
+  // « Ce que j'emporte »: in the app data.
+  await call('PUT', '/api/admin/carry', { token: admin, body: { items: [{ n: 'Kayak', kg: 18 }, { n: '', kg: 3 }] } });
+  assert.deepEqual((await call('GET', '/api/app/data', { token: h.token })).data.carry, [{ n: 'Kayak', kg: 18 }]);
+  assert.equal((await call('PUT', '/api/admin/entretien', { token: (await handover()).token, body: { kinds: [], tips: [] } })).status, 401);
+});

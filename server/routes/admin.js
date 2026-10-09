@@ -7,12 +7,12 @@ const { bumpContentVersion, getSetting, setSetting } = require('../db');
 const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter, sealText, openText } = require('../auth');
 const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
 const { deleteCustomer, formatAccessCode } = require('./public');
-const { readProfile, getCatalogValue, CATALOG_KEYS } = require('../catalog');
+const { readProfile, getCatalogValue, CATALOG_KEYS, carryOf } = require('../catalog');
 const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
 const { matchLayouts } = require('../layouts');
 const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
 const { backupNow, listBackups, backupFile, KEEP } = require('../backup');
-const { entretienOf } = require('../entretien');
+const { entretienOf, settingsOf, cleanSettings } = require('../entretien');
 const { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut } = require('../tips');
 const { SCREENS, ICONS, AGES, WARRANTIES, allBanners, audience, cleanBanner, insertBanner, updateBanner, liveOn } = require('../banners');
 const { TYPES: VEHICLE_TYPES } = require('../vehicle-types');
@@ -884,6 +884,42 @@ function register(router) {
       .run(key, json);
     bumpContentVersion(ctx.db);
     return { key, value };
+  });
+
+  // ---- « Carnet d'entretien »: the kinds of maintenance (dates, reminders, for which customers) and the checks to do
+  // oneself; « Ce que j'emporte »: the things added in one touch. Both in « Contenus de l'appli ».
+  const saveCatalog = (db, key, value) => {
+    db.prepare("INSERT INTO catalog (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')").run(key, JSON.stringify(value));
+    bumpContentVersion(db);
+  };
+  router.get('/api/admin/entretien', (ctx) => {
+    contentOnly(ctx);
+    return settingsOf(ctx.db);
+  });
+  router.put('/api/admin/entretien', (ctx) => {
+    contentOnly(ctx);
+    let value;
+    try {
+      value = cleanSettings(ctx.db, ctx.body);
+    } catch (err) {
+      throw new HttpError(400, err.message);
+    }
+    saveCatalog(ctx.db, 'entretien', value);
+    return value;
+  });
+  router.get('/api/admin/carry', (ctx) => {
+    contentOnly(ctx);
+    return carryOf(ctx.db);
+  });
+  router.put('/api/admin/carry', (ctx) => {
+    contentOnly(ctx);
+    if (!Array.isArray(ctx.body.items)) throw new HttpError(400, 'Format invalide');
+    const items = ctx.body.items
+      .map((x) => ({ n: String(x?.n ?? '').trim().slice(0, 60), kg: Math.max(0, Math.min(999, Math.round(Number(x?.kg) || 0))) }))
+      .filter((x) => x.n)
+      .slice(0, 40);
+    saveCatalog(ctx.db, 'carry', items);
+    return items;
   });
 
   // ---- Vehicle profile: what the app shows for this model (dimensions, weights, plan, equipment photos) ----

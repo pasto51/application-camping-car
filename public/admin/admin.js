@@ -8,6 +8,8 @@ import { registerCatalogViews } from '/admin/catalog.js';
 import { registerAnalyticsView } from '/admin/analytics.js';
 import { registerTipsView } from '/admin/tips.js';
 import { registerBannersView } from '/admin/banners.js';
+import { registerContentView } from '/admin/content.js';
+import { guideHtml } from '/admin/guide.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -98,7 +100,7 @@ function renderLogin() {
 
 function sections() {
   const all = [
-    ['dashboard', '📊', 'Tableau de bord', !isEditor() && !isAnalyst()],
+    ['dashboard', '📊', 'Tableau de bord', true],
     ['analytics', '📈', 'Statistiques', canSeeStats()],
     ['reports', '💬', 'Demandes clients', state.user?.role !== 'sales' && !isEditor() && !isAnalyst()],
     ['customers', '👥', 'Clients', !isEditor() && !isAnalyst() && !isDetachedStore()],
@@ -367,6 +369,14 @@ async function loadCatalog() {
 const VIEWS = {
   async dashboard(el) {
     const s = await api('GET', '/api/admin/stats');
+    const guide = guideHtml(state.user.role, sections().map((x) => x[0]));
+    // Content editor and analyst: no customers nor requests, the guide (and the tips to read) only.
+    if (isEditor() || isAnalyst()) {
+      el.innerHTML = `${pageHeader('Tableau de bord')}
+        ${isEditor() && s.pendingTips ? `<div class="tiles"><a class="tile tile-alert" href="#tips"><strong>${s.pendingTips}</strong><span>Astuce(s) de clients à relire</span></a></div>` : ''}
+        ${guide}`;
+      return;
+    }
     const tiles = [
       ...(state.user.role === 'sales' ? [] : [[myService() ? `Demandes ${myService() === 'sav' ? 'SAV' : 'magasin'} à traiter` : 'Demandes à traiter', s.openReports, 'reports']]),
       ...(state.user.role !== 'sales' && s.overdueReports ? [['⏰ Sans réponse depuis plus de 48 h', s.overdueReports, 'reports', 'overdue']] : []),
@@ -399,6 +409,7 @@ const VIEWS = {
     el.innerHTML = `${pageHeader('Tableau de bord')}
       ${recap}
       <div class="tiles">${tiles.map(([label, n, link, filter]) => `<a class="tile${filter ? ' tile-alert' : ''}" href="#${link}" ${filter ? `data-report-filter="${filter}"` : ''}><strong>${n}</strong><span>${esc(label)}</span></a>`).join('')}</div>
+      ${guide}
       <div class="card">
         <h2>Fonctionnement</h2>
         <ul>
@@ -919,6 +930,7 @@ const VIEWS = {
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin, canEditContent });
 registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, refreshTipsBadge });
 registerBannersView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
+registerContentView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.

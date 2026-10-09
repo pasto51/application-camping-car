@@ -118,6 +118,14 @@ function ensureEquipmentPresets(db) {
   }
 }
 
+// « Ce que j'emporte » (weight of the vehicle): the things the customer adds in one touch, with their usual weight.
+const DEFAULT_CARRY = [
+  { n: 'Vélo', kg: 15 }, { n: 'Vélo électrique', kg: 25 }, { n: 'Valises et vêtements', kg: 40 }, { n: 'Nourriture et boissons', kg: 30 },
+  { n: 'Vaisselle et ustensiles', kg: 15 }, { n: 'Table et chaises de camping', kg: 12 }, { n: 'Barbecue ou plancha', kg: 10 },
+  { n: 'Câbles, cales et outils', kg: 15 }, { n: 'Jeux et affaires de plage', kg: 10 }, { n: 'Chien', kg: 20 },
+];
+const carryOf = (db) => getCatalogValue(db, 'carry') || DEFAULT_CARRY;
+
 function getCatalogValue(db, key) {
   const row = db.prepare('SELECT value FROM catalog WHERE key = ?').get(key);
   return row ? JSON.parse(row.value) : null;
@@ -177,8 +185,9 @@ function appData(db, { vehicleId, dealershipId }) {
   for (const key of CATALOG_KEYS) data[key] = getCatalogValue(db, key);
   data.tips = publishedTips(db);
   data.tipCategories = CATEGORIES;
+  data.carry = carryOf(db);
   if (data.config) data.config = { ...data.config, HIDDEN_EQ: { ...(data.config.HIDDEN_EQ || {}), ...hidden } };
   return data;
 }
 
-module.exports = { seedCatalog, ensureEquipmentPresets, appData, readProfile, defaultProfile, getCatalogValue, CATALOG_KEYS };
+module.exports = { carryOf, DEFAULT_CARRY, seedCatalog, ensureEquipmentPresets, appData, readProfile, defaultProfile, getCatalogValue, CATALOG_KEYS };
