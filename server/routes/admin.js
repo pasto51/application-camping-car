@@ -575,11 +575,12 @@ function register(router) {
     };
   }
 
-  // The e-mail server settings are for the administrator; the others see the announcement only.
+  // The e-mail server settings are for the administrator; the others see the announcement, and only whether the
+  // e-mails are set up (for the warning of « Demandes clients »).
   router.get('/api/admin/settings', (ctx) => {
     const user = auth(ctx);
     const view = settingsView(ctx.db);
-    return user.role === 'admin' ? view : { announcement: view.announcement };
+    return user.role === 'admin' ? view : { announcement: view.announcement, mail: { ready: view.mail.ready } };
   });
 
   router.put('/api/admin/settings', (ctx) => {

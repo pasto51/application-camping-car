@@ -432,7 +432,7 @@ const VIEWS = {
     );
     const overdue = all.filter((r) => r.overdue && (!service || r.service === service)).length;
     const toAnswer = all.filter((r) => r.waitingForDealer).length;
-    const mailWarning = settings && !settings.mail.ready
+    const mailWarning = settings?.mail && !settings.mail.ready
       ? `<div class="card warn-card">✉️ Les e-mails de notification ne sont pas encore configurés : vous ne serez pas prévenu des nouvelles demandes. ${isAdmin() ? '<a href="#settings">Configurer l’envoi des e-mails</a>' : 'Demandez à l’administrateur de le configurer.'}</div>`
       : '';
     el.innerHTML = `${pageHeader(`Demandes clients${toAnswer ? ` · ${toAnswer} à répondre` : ''}`)}

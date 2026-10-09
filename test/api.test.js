@@ -796,7 +796,9 @@ test('security: malformed addresses, small anonymous bodies, sessions cut, roles
   assert.ok(ed);
   const editor = await login('ed.secu@test.fr', 'edsecu12345');
   assert.deepEqual((await call('GET', '/api/admin/salespeople', { token: editor })).data, []);
-  assert.deepEqual(Object.keys((await call('GET', '/api/admin/settings', { token: editor })).data), ['announcement']);
+  const seen = (await call('GET', '/api/admin/settings', { token: editor })).data;
+  assert.deepEqual(Object.keys(seen), ['announcement', 'mail']);
+  assert.deepEqual(Object.keys(seen.mail), ['ready']);
 
   // 5. The site address of the e-mails is never taken from a failed login or a made-up host.
   await fetch(`${base}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Host: 'evil.example', 'X-Forwarded-Host': 'evil.example' }, body: JSON.stringify({ email: 'x@x.fr', password: 'nope' }) });
