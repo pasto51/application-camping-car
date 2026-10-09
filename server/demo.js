@@ -95,6 +95,10 @@ const USAGE = [
   ['p_baie', SUMMER, 3, ['baie retombe', 'fenêtre rayée']],
   ['p_carburant', FLAT, 1, ['gazole dans réservoir eau']],
   ['p_pointeur', SUMMER, 4, ['pointeur satellite calibre pas', 'antenne ne trouve pas satellite']],
+  ['p_alde', WINTER, 3, ['alde glouglou', 'chauffage alde chauffe plus']],
+  ['p_toitmoteur', SUMMER, 3, ['toit relevable monte plus']],
+  ['p_odeurdouche', SUMMER, 4, ['odeur égout douche']],
+  ['p_embrayage', FLAT, 2, ['embrayage patine']],
 ];
 const UNANSWERED = ['remorque', 'attelage', 'starlink', 'panneau grêle'];
 

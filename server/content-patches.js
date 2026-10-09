@@ -10,6 +10,7 @@ const { CLIENTS_2026_10 } = require('./diagnostics-clients');
 const { CLIENTS_2026_10_B } = require('./diagnostics-clients-2');
 const { CLIENTS_2026_10_C } = require('./diagnostics-clients-3');
 const ROUTE = require('./lists-route');
+const FORUMS = require('./diagnostics-forums');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -452,6 +453,23 @@ const PATCHES = [
       const next = Object.fromEntries(['arrivee', 'depart', 'mensuel', 'hiver', 'printemps'].map((k) => [k, lists[k]]));
       db.prepare("UPDATE catalog SET value = ?, updated_at = datetime('now') WHERE key = 'lists'").run(JSON.stringify(next));
       return 1;
+    },
+  },
+  {
+    // Problems of motorhome and van owners found on forums of the last three years (vans: pop-up roof, panel, USB
+    // socket, roof fan, rear doors, bench seat, diesel smell, cab curtains; motorhomes: grey-water gauge, shower smell,
+    // Alde, bike-rack lights, cab ventilation and air-con, key, windows, camera, clutch, gearbox, handbrake, front
+    // noise, hydraulic jacks, smoke detector).
+    key: '2026-10-22-diagnostics-forums',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of [...FORUMS.VANS, ...FORUMS.MOTORHOMES]) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      return changed;
     },
   },
 ];
