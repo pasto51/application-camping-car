@@ -12,6 +12,8 @@ const { CLIENTS_2026_10_C } = require('./diagnostics-clients-3');
 const ROUTE = require('./lists-route');
 const FORUMS = require('./diagnostics-forums');
 const ELEC = require('./diagnostics-electricite');
+const STORES = require('./diagnostics-magasins');
+const TIP_PROPOSALS = require('./tips-propositions.json');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -526,6 +528,61 @@ const PATCHES = [
         t.n[i] = { t: 'Qu’est-ce qui disjoncte ?', o: ['Le disjoncteur de la borne du camping', 'Le disjoncteur dans mon véhicule'], n: [copy(ELEC.POST_TRIPS), t.n[i]] };
         return true;
       });
+      return changed;
+    },
+  },
+  {
+    // From the advice pages of accessory stores and makers: new diagnostics, new answers to older ones, « Lavage » as a
+    // funnel, and 35 tips for « Conseils & Astuces » left « À valider » (never published without being read).
+    key: '2026-10-24-sites-magasins',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of STORES.NEW) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      const save = (id, d) => db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), id);
+      for (const [id, [option, node]] of Object.entries(STORES.BRANCHES)) {
+        const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+        if (!row) continue;
+        const d = JSON.parse(row.data);
+        if (!d.tree || !Array.isArray(d.tree.o) || d.tree.o.includes(option)) continue;
+        d.tree.o.push(option);
+        d.tree.n.push(JSON.parse(JSON.stringify(node)));
+        save(id, d);
+        changed++;
+      }
+      const lavage = db.prepare("SELECT data FROM diagnostics WHERE id = 'p_lavage'").get();
+      if (lavage) {
+        const d = JSON.parse(lavage.data);
+        if (d.tree && !d.tree.n) {
+          d.tree = JSON.parse(JSON.stringify(STORES.LAVAGE));
+          save('p_lavage', d);
+          changed++;
+        }
+      }
+      // The broad fridge and toilet diagnostics keep coming first in the search, next to the newer narrow ones.
+      const renames = {
+        h_frigo: ['Mon frigo ne fait plus de froid (ou a un autre souci)', 'Mon frigo ne fait plus de froid ou ne refroidit plus assez, affiche un code, ou sa flamme ne s’allume pas'],
+        h_wc: ['Mes toilettes ne marchent plus (ou ont un souci)', 'Mes toilettes ne marchent plus : chasse d’eau, fuite, odeur, voyant ou indicateur de niveau'],
+      };
+      for (const [id, [before, after]] of Object.entries(renames)) {
+        const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+        if (!row) continue;
+        const d = JSON.parse(row.data);
+        if (d.label !== before) continue;
+        d.label = after;
+        save(id, d);
+        changed++;
+      }
+      const insert = db.prepare("INSERT INTO tips (title, category, body, store_tip, status, sort) VALUES (?, ?, ?, ?, 'pending', 0)");
+      for (const t of TIP_PROPOSALS) {
+        if (db.prepare('SELECT 1 FROM tips WHERE title = ?').get(t.title)) continue;
+        insert.run(t.title, t.category, t.body, t.storeTip);
+        changed++;
+      }
       return changed;
     },
   },

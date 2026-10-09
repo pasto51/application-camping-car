@@ -52,7 +52,7 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   assert.ok(v114 && v114.photoUrl, 'V114 with its photo');
   const admin = await login('admin@test.fr', 'motdepasse123');
   const diags = (await call('GET', '/api/admin/diagnostics', { token: admin })).data;
-  assert.equal(diags.length, 144);
+  assert.equal(diags.length, 153);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
   assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 188);
 
@@ -75,7 +75,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
   // Data the app runs on
   const { data } = await call('GET', '/api/app/data', { token });
   assert.equal(data.equipment.length, 188);
-  assert.equal(data.diagnostics.length, 144);
+  assert.equal(data.diagnostics.length, 153);
   // Written from the spare-parts catalogue: bike rack and the store parts that wear (no generator)
   assert.ok(data.diagnostics.some((x) => x.id === 'h_portevelos') && !data.diagnostics.some((x) => x.id === 'g_groupe'));
   // Comfort problems that lead to a product of the store
@@ -608,8 +608,11 @@ test('« Conseils & Astuces »: starter tips and banner, a tip shared by a custo
   assert.equal((await call('POST', '/api/me/tips', { token: h.token, body: { title: 'Ok', body: '' } })).status, 400);
   assert.equal((await call('POST', '/api/me/tips', { token: h.token, body: { title: 'Ranger les cales', category: 'route', body: 'Je range les cales dans un sac accroché à la porte.', photo: PNG } })).status, 200);
   assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.tips.length, before);
-  assert.equal((await call('GET', '/api/admin/stats', { token: admin })).data.pendingTips, 1);
-  const pending = (await call('GET', '/api/admin/tips', { token: admin })).data.tips.find((t) => t.status === 'pending');
+  // The 35 tips proposed with the update wait « À valider », like the customer's one: none is in the app.
+  assert.equal((await call('GET', '/api/admin/stats', { token: admin })).data.pendingTips, 36);
+  const all = (await call('GET', '/api/admin/tips', { token: admin })).data.tips;
+  assert.equal(all.filter((t) => t.status === 'pending' && !t.customer).length, 35);
+  const pending = all.find((t) => t.status === 'pending' && t.customer);
   assert.equal(pending.customer.name, 'Jean Astuce');
   assert.ok(pending.imageUrl);
 

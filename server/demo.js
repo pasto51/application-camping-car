@@ -99,6 +99,8 @@ const USAGE = [
   ['p_toitmoteur', SUMMER, 3, ['toit relevable monte plus']],
   ['p_odeurdouche', SUMMER, 4, ['odeur égout douche']],
   ['p_embrayage', FLAT, 2, ['embrayage patine']],
+  ['p_glaciere', SUMMER, 4, ['glacière refroidit pas']],
+  ['p_auvent', SUMMER, 3, ['auvent gonflable dégonfle']],
 ];
 const UNANSWERED = ['remorque', 'attelage', 'starlink', 'panneau grêle'];
 

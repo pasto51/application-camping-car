@@ -1,0 +1,212 @@
+[
+ {
+  "title": "Batterie de cellule : un plein de courant chaque mois",
+  "category": "energie",
+  "body": "Une batterie qui reste plusieurs semaines sans servir se vide toute seule et finit par ne plus bien se recharger. Branchez le camping-car sur le 230 V au moins une fois par mois, pendant une longue durée. Pour une longue pause, coupez seulement la batterie de la cellule : celle du moteur garde vos réglages de radio et d'ordinateur de bord.",
+  "storeTip": "Un chargeur de maintien automatique, adapté au type de votre batterie, garde la cellule en forme sans que vous ayez à y penser."
+ },
+ {
+  "title": "Savoir combien d'électricité vous consommez",
+  "category": "energie",
+  "body": "Avec un équipement de base, un camping-car consomme environ 40 Ah par jour. Une batterie au plomb ne doit pas descendre sous la moitié de sa charge : 100 Ah au plomb, c'est donc à peine deux jours sans recharge. Faites le compte de vos appareils avant de partir en autonomie.",
+  "storeTip": "Un moniteur de batterie à shunt affiche en direct ce qui entre, ce qui sort et le temps qu'il vous reste."
+ },
+ {
+  "title": "Batterie lithium : les règles à connaître",
+  "category": "energie",
+  "body": "Une batterie lithium s'utilise presque entièrement, se recharge vite et pèse moitié moins lourd que le plomb. Ne la mélangez jamais avec une batterie au plomb sur la même installation, et vérifiez que le chargeur est compatible. Sous 0 °C, elle refuse de se recharger, sauf modèle chauffant.",
+  "storeTip": "Une batterie lithium LiFePO4 avec protection électronique intégrée (BMS) et suivi sur téléphone, posée par l'atelier, rend le passage au lithium simple et sûr."
+ },
+ {
+  "title": "Panneau solaire sale, panneau qui produit moins",
+  "category": "energie",
+  "body": "Poussière, feuilles et fientes d'oiseaux font baisser la production de vos panneaux solaires. Profitez de chaque lavage du toit pour les nettoyer doucement, avec une éponge douce et de l'eau claire. Un panneau propre recharge mieux et dure plus longtemps.",
+  "storeTip": "Un protecteur spécial panneau solaire dépose un film qui empêche la poussière et l'eau de s'y accrocher."
+ },
+ {
+  "title": "Une batterie portable pour les petits appareils",
+  "category": "energie",
+  "body": "Une station d'énergie portable (« powerstation ») se recharge sur une prise, sur la prise 12 V du véhicule ou avec un panneau solaire. Elle alimente téléphones, ordinateur, lampes ou ventilateur sans puiser dans la batterie du camping-car. Pratique aussi pour un pique-nique ou sous l'auvent.",
+  "storeTip": "Une station d'énergie portable au lithium, avec panneau solaire pliable, vous donne du courant partout, même loin des bornes."
+ },
+ {
+  "title": "Convertisseur 230 V : réservé aux petits appareils",
+  "category": "energie",
+  "body": "Le convertisseur transforme le 12 V de la batterie en 230 V pour brancher vos appareils de la maison. Mais un radiateur, une bouilloire ou un sèche-cheveux vident la batterie en très peu de temps. Gardez ces gros appareils pour les moments où vous êtes branché sur une borne.",
+  "storeTip": "Un convertisseur à onde sinusoïdale pure, avec coupure automatique quand la batterie faiblit, protège à la fois vos appareils et votre batterie."
+ },
+ {
+  "title": "Borne de camping qui saute : allumez un appareil à la fois",
+  "category": "energie",
+  "body": "Les bornes électriques des campings fournissent souvent peu de puissance. Si le climatiseur, le chauffage et la bouilloire démarrent en même temps, la borne disjoncte. Lancez les gros appareils l'un après l'autre et laissez tourner le climatiseur seul.",
+  "storeTip": "Un module de démarrage progressif (« soft start ») pour climatiseur adoucit l'appel de courant et évite de faire sauter la borne."
+ },
+ {
+  "title": "Un fusible grillé se remplace par le même",
+  "category": "energie",
+  "body": "Une lumière, la pompe ou le frigo ne marche plus ? Regardez d'abord le fusible : s'il a le filament coupé ou noirci, il est grillé. Coupez le courant, puis remplacez-le par un fusible de même taille et de même valeur (le chiffre écrit dessus). Jamais plus fort : le circuit ne serait plus protégé.",
+  "storeTip": "Un coffret de fusibles de rechange de toutes les valeurs, rangé à bord, vous permet de repartir en deux minutes."
+ },
+ {
+  "title": "Économiser l'eau du réservoir",
+  "category": "eau",
+  "body": "Un réservoir de 100 à 130 litres dure 3 à 4 jours pour un couple. Fermez le robinet pendant que vous vous lavez, les dents ou la vaisselle, et chronométrez les douches. Faites la vaisselle dans une bassine plutôt qu'à l'eau qui coule.",
+  "storeTip": "Un pommeau de douche économique à débit réduit fait durer le réservoir bien plus longtemps, sans perdre en confort."
+ },
+ {
+  "title": "Réservoir d'eau propre : un grand nettoyage par an",
+  "category": "eau",
+  "body": "Le réservoir d'eau propre se nettoie au moins une fois par an, de préférence en fin de ménage. Versez le produit, roulez un peu sur une petite route pour bien le mélanger, puis videz et rincez en ouvrant tous les robinets. Votre eau reste claire et sans goût.",
+  "storeTip": "Un nettoyant désinfectant spécial réservoir de camping-car, puis un produit de conservation à chaque plein, garde l'eau saine toute la saison."
+ },
+ {
+  "title": "Évier bouché : jamais de déboucheur de maison",
+  "category": "eau",
+  "body": "Les déboucheurs très agressifs vendus pour la maison abîment la pompe, les tuyaux et les siphons du camping-car. Si l'eau s'écoule mal à cause des graisses ou des cheveux, choisissez un produit doux et adapté. Une grille sur la bonde évite bien des bouchons.",
+  "storeTip": "Un déboucheur biologique pour camping-car dissout graisses et cheveux en douceur, sans danger pour les canalisations."
+ },
+ {
+  "title": "Cassette WC : la vider tous les 2 à 4 jours",
+  "category": "eau",
+  "body": "Videz la cassette tous les 2 à 4 jours, plus souvent si vous êtes nombreux, sans attendre le voyant rouge. Utilisez uniquement l'emplacement prévu pour les eaux noires sur l'aire de service, puis rincez jusqu'à ce que l'eau ressorte claire. Gardez le couvercle des toilettes baissé.",
+  "storeTip": "Un additif spécial cassette de WC chimique décompose les matières et neutralise les odeurs entre deux vidanges."
+ },
+ {
+  "title": "Eau chaude : 50 °C suffisent au quotidien",
+  "category": "eau",
+  "body": "Pour la toilette et la vaisselle, la position 50 °C du chauffe-eau suffit ; gardez 70 °C pour l'hiver. Comptez environ 15 minutes avant d'avoir de l'eau chaude. Sans sécurité anti-choc sur le gaz, le chauffe-eau à gaz ne marche pas en roulant : mettez-le en route une fois arrêté.",
+  "storeTip": "Un traitement anticalcaire pour circuit d'eau de camping-car protège le chauffe-eau du tartre et prolonge sa vie."
+ },
+ {
+  "title": "Un détecteur de gaz pour dormir tranquille",
+  "category": "gaz",
+  "body": "Le monoxyde de carbone ne se voit pas et ne se sent pas, et une fuite de gaz passe inaperçue quand on dort. Installez un détecteur près du coin nuit et des appareils au gaz, en suivant la notice pour la hauteur. Évitez les bouches d'aération et les fenêtres, et testez-le régulièrement.",
+  "storeTip": "Un détecteur 3 en 1 (monoxyde de carbone, propane-butane et gaz narcotiques), alimenté en 12 V, veille pendant votre sommeil."
+ },
+ {
+  "title": "Voyager en Europe : prévoir l'adaptateur gaz",
+  "category": "gaz",
+  "body": "Chaque pays a ses propres bouteilles de gaz et elles ne se branchent pas sur une installation française. Le plus simple est d'acheter une bouteille sur place et de la raccorder avec un adaptateur. Achetez-le avant de partir : à l'étranger, il est souvent introuvable.",
+  "storeTip": "Un kit d'adaptateurs gaz « Europe » permet de brancher la plupart des bouteilles étrangères, et un spray détecteur de fuite vérifie le raccord en quelques secondes."
+ },
+ {
+  "title": "En hiver, choisissez le propane",
+  "category": "gaz",
+  "body": "Le butane ne sort plus de la bouteille quand il gèle : chauffage et cuisinière s'arrêtent. Le propane, lui, continue de fonctionner par grand froid. Dès que les nuits passent sous zéro, roulez avec du propane.",
+  "storeTip": "Un indicateur de niveau pour bouteille de gaz vous évite de tomber en panne de chauffage en pleine nuit d'hiver."
+ },
+ {
+  "title": "Gaz : fermé en roulant, sauf sécurité anti-choc",
+  "category": "gaz",
+  "body": "Le gaz s'ouvre une fois le camping-car arrêté et se referme avant de reprendre la route. Robinet de la bouteille : sens inverse des aiguilles d'une montre pour ouvrir, sens des aiguilles pour fermer. Si vous voulez chauffer en roulant, demandez à l'atelier si votre installation est équipée pour.",
+  "storeTip": "Un détendeur avec sécurité anti-choc coupe le gaz tout seul en cas d'accident et permet de chauffer en roulant en toute sécurité."
+ },
+ {
+  "title": "Pneus : la pression à chaque départ, à froid",
+  "category": "route",
+  "body": "Un pneu pas assez gonflé chauffe et peut éclater ; trop gonflé, il s'use au centre. Vérifiez la pression avant chaque départ, pneus froids, avec les valeurs indiquées pour votre véhicule chargé. Lors d'un long stationnement en plein soleil, protégez les pneus.",
+  "storeTip": "Un système de surveillance de pression des pneus à capteurs vous alerte sur l'écran dès qu'un pneu se dégonfle."
+ },
+ {
+  "title": "Connaître la hauteur exacte de son camping-car",
+  "category": "route",
+  "body": "Un profilé mesure environ 2,80 m, une capucine jusqu'à 3,20 m ou plus, sans compter l'antenne, la climatisation ou les panneaux sur le toit. Mesurez la hauteur réelle, équipements compris, et collez-la au tableau de bord. Un coup d'œil suffit avant un tunnel, un pont ou un parking couvert.",
+  "storeTip": "Un GPS spécial camping-car, réglé avec la hauteur et le poids de votre véhicule, évite les passages trop bas."
+ },
+ {
+  "title": "Charge et poids : un arrière qui s'affaisse, ça se corrige",
+  "category": "route",
+  "body": "Eau, bagages, vélos sur le porte-vélos : tout ce poids tire l'arrière vers le bas. Le camping-car penche alors plus dans les virages, craint le vent de côté et freine moins bien. Ne remplissez le réservoir d'eau qu'à l'arrivée si possible, et chargez le lourd au plus bas.",
+  "storeTip": "Des renforts de suspension pneumatiques arrière redressent le véhicule chargé et réduisent le roulis."
+ },
+ {
+  "title": "Pas de rétroviseur intérieur ? Une caméra de recul",
+  "category": "route",
+  "body": "Dans un camping-car, on ne voit rien derrière soi, et l'arrière dépasse loin des roues. Une caméra de recul aide à se garer sans descendre ni guider à grands gestes. Sur la route, elle montre aussi les véhicules qui vous suivent de trop près.",
+  "storeTip": "Une caméra de recul pour camping-car, avec écran ou rétroviseur connecté, fait office de rétroviseur intérieur."
+ },
+ {
+  "title": "Antivol : ne rien laisser à la vue",
+  "category": "route",
+  "body": "Sac, téléphone, portefeuille : rien ne doit se voir depuis l'extérieur quand vous quittez le camping-car. Garez-vous dans un endroit passant et éclairé si vous ne le sentez pas. Un antivol visible décourage souvent les voleurs avant même qu'ils essaient.",
+  "storeTip": "Une barre antivol de portes de cabine, verrouillée à clé, ajoute une fermeture solide et dissuasive."
+ },
+ {
+  "title": "Montagne en hiver : chaînes ou pneus hiver obligatoires",
+  "category": "hiver",
+  "body": "Dans les zones de montagne, en hiver, il faut avoir à bord des chaînes pour deux roues motrices ou rouler avec quatre pneus hiver (marqués d’une montagne et d’un flocon). Entraînez-vous à monter les chaînes chez vous, au sec : sur une route enneigée, ce sera bien plus rapide. Les pneus hiver servent dès que la température passe sous 7 °C.",
+  "storeTip": "Des chaînes à neige à tension automatique, à la dimension de vos pneus, se montent en quelques minutes au bord de la route."
+ },
+ {
+  "title": "Grand froid : isolez la cabine",
+  "category": "hiver",
+  "body": "Le pare-brise et les vitres de la cabine laissent filer une grande partie de la chaleur. Fermez-les la nuit avec des volets isolants, et chauffez plutôt le coin salon que tout le véhicule. Vous aurez plus chaud en consommant moins.",
+  "storeTip": "Des volets isolants extérieurs multicouches pour pare-brise et vitres latérales gardent la chaleur dedans et limitent la buée."
+ },
+ {
+  "title": "Dehors l'hiver : une housse qui respire",
+  "category": "hiver",
+  "body": "Un camping-car laissé dehors subit pluie, gel, UV et grêle. Une housse le protège, à condition qu'elle laisse sortir l'humidité, sinon la condensation s'installe dessous. Installez-la bien tendue sur un véhicule propre et sec.",
+  "storeTip": "Une housse de protection respirante spéciale camping-car protège des intempéries sans enfermer l'humidité."
+ },
+ {
+  "title": "Canicule : aérez le soir, fermez le jour",
+  "category": "confort",
+  "body": "Le jour, fermez tout et occultez les vitres : l'idéal est d'arrêter le soleil par l'extérieur. Le soir, ouvrez grand lanterneaux et fenêtres pour faire un courant d'air avant de vous coucher. Garez-vous à l'ombre quand c'est possible.",
+  "storeTip": "Un lanterneau ventilé (extracteur) chasse l'air chaud et fait entrer la fraîcheur du soir, moustiquaire comprise."
+ },
+ {
+  "title": "Humidité : aérer cinq minutes, puis chauffer",
+  "category": "confort",
+  "body": "Un air humide donne froid même quand le thermomètre est correct. Ouvrez en grand quelques minutes pour renouveler l'air, puis chauffez : la chaleur monte plus vite. Un thermostat évite d'avoir trop chaud puis trop froid.",
+  "storeTip": "Un absorbeur d'humidité rechargeable pour camping-car limite la buée et la condensation dans la cellule."
+ },
+ {
+  "title": "Matelas humide ? Faites circuler l'air dessous",
+  "category": "confort",
+  "body": "La nuit, la vapeur de notre respiration se dépose sous le matelas, contre le sommier froid. Résultat : matelas humide et risque de moisissure. Soulevez et aérez le matelas régulièrement, surtout en saison froide.",
+  "storeTip": "Un sous-matelas anti-condensation crée une lame d'air sous le couchage pour des nuits saines et sèches."
+ },
+ {
+  "title": "Internet : se garer dégagé, loin des obstacles",
+  "category": "confort",
+  "body": "Montagnes, arbres et immeubles affaiblissent le signal 4G. Choisissez un emplacement dégagé et, si vous avez une antenne, tournez-la vers l'antenne relais la plus proche (des applications gratuites la localisent). Avant de partir, vérifiez quel opérateur couvre le mieux votre itinéraire.",
+  "storeTip": "Un routeur 4G/5G avec antenne de toit capte bien mieux qu'un téléphone posé dans la cellule."
+ },
+ {
+  "title": "Moustiques : fermez avant la tombée du jour",
+  "category": "confort",
+  "body": "Les insectes entrent surtout au crépuscule, attirés par la lumière. Tirez les moustiquaires avant d'allumer à l'intérieur, et évitez d'éclairer près d'une fenêtre ouverte. Vous gardez l'air frais sans les piqûres.",
+  "storeTip": "Une moustiquaire de porte de cellule, plissée ou à enrouleur, laisse passer l'air mais pas les insectes."
+ },
+ {
+  "title": "Frigo : bien le ranger avant de rouler",
+  "category": "confort",
+  "body": "Dans les virages, bouteilles et bocaux se renversent dans le réfrigérateur. Calez-les avec des barres de maintien et posez un tapis antidérapant au fond. Prévoyez ce que vous allez prendre avant d'ouvrir : moins d'ouvertures, c'est plus de froid et moins de consommation.",
+  "storeTip": "Des barres de maintien et un tapis antidérapant pour réfrigérateur gardent tout en place pendant le trajet."
+ },
+ {
+  "title": "Lavage : toit d'abord, et sans haute pression",
+  "category": "entretien",
+  "body": "Commencez toujours par le toit, sinon la saleté coulera sur ce que vous venez de laver. Évitez le nettoyeur haute pression sur la carrosserie : l'eau s'infiltre par les aérations, les joints et les trappes. Lavez du haut vers le bas et traitez les traînées noires avant qu'elles ne s'incrustent.",
+  "storeTip": "Un balai télescopique à eau et un nettoyant anti-traînées noires spécial camping-car font le travail sans abîmer peinture ni joints."
+ },
+ {
+  "title": "Fenêtres en plastique : tout en douceur",
+  "category": "entretien",
+  "body": "Les baies du camping-car sont en plastique, pas en verre : elles se rayent facilement. Nettoyez-les sans appuyer, avec une microfibre propre, et jamais avec un produit pour vitres de maison. Une petite griffure peut souvent s'effacer.",
+  "storeTip": "Un nettoyant rénovateur pour baies acryliques, et au besoin un kit efface-rayures, rend aux fenêtres leur transparence."
+ },
+ {
+  "title": "Contrôle d'étanchéité : chaque année, même sans rouler",
+  "category": "entretien",
+  "body": "Pour garder la garantie étanchéité, le contrôle se fait chaque année avant la date anniversaire, même si le camping-car n'a pas bougé. Entre deux contrôles, surveillez les signes : auréoles au plafond, coussins humides, odeur de moisi. Prenez rendez-vous à l'atelier au moindre doute.",
+  "storeTip": "Un hygromètre d'intérieur vous montre si l'air de la cellule reste entre 40 et 60 % d'humidité."
+ },
+ {
+  "title": "Auvent : jamais rangé mouillé",
+  "category": "entretien",
+  "body": "Une toile d'auvent pliée humide moisit et se tache en quelques jours. Laissez-la sécher complètement avant de la ranger dans son sac, à l'abri de la poussière. Si vous devez la stocker dehors, utilisez une boîte étanche.",
+  "storeTip": "Un imperméabilisant spécial toile d'auvent redonne à la toile sa résistance à la pluie et aux UV."
+ }
+]
