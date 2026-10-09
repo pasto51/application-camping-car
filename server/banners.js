@@ -1,7 +1,7 @@
 'use strict';
 
 // « À la une »: the banners of the app's home screen, each for its own customers (dealerships, type of vehicle, time
-// since the handover, warranty, a piece of equipment they have or not, consent to offers) and between two dates.
+// since the handover, warranty, equipment they have or do not have, consent to offers) and between two dates.
 // A customer sees one banner: the one with the highest priority among those for them, then the most recent.
 
 const { getSetting, setSetting } = require('./db');
@@ -63,8 +63,10 @@ function bannerOut(r) {
     vehicleTypes: json(r.vehicle_types, []),
     age: r.age || '',
     warranty: r.warranty || '',
-    equipmentId: r.equipment_id || '',
-    equipmentHas: r.equipment_has === 0 ? 'no' : 'yes',
+    // Equipment: at least one of « equipmentAny », none of « equipmentNone » (e.g. an air-conditioning offer for those
+    // without any air conditioning). The first version had a single piece of equipment (equipment_id / equipment_has).
+    equipmentAny: json(r.equipment_any, null) || (r.equipment_id && r.equipment_has !== 0 ? [r.equipment_id] : []),
+    equipmentNone: json(r.equipment_none, null) || (r.equipment_id && r.equipment_has === 0 ? [r.equipment_id] : []),
     optinOnly: !!r.optin_only,
     startsOn: r.starts_on || '',
     endsOn: r.ends_on || '',
@@ -92,7 +94,8 @@ function matches(b, c, day = today()) {
   }
   if (b.warranty === 'under' && !c.underWarranty) return false;
   if (b.warranty === 'out' && c.underWarranty) return false;
-  if (b.equipmentId && !!c.own[b.equipmentId] !== (b.equipmentHas === 'yes')) return false;
+  if (b.equipmentAny.length && !b.equipmentAny.some((id) => c.own[id])) return false;
+  if (b.equipmentNone.some((id) => c.own[id])) return false;
   if (b.optinOnly && !c.optin) return false;
   return true;
 }
@@ -162,8 +165,10 @@ function cleanBanner(db, body, { dealershipIds: forced } = {}) {
   const startsOn = date(body.startsOn);
   const endsOn = date(body.endsOn);
   if (startsOn && endsOn && endsOn < startsOn) throw new Error('La date de fin est avant la date de début');
-  const equipmentId = str(body.equipmentId, 40);
-  if (equipmentId && !db.prepare('SELECT 1 FROM equipment WHERE id = ?').get(equipmentId)) throw new Error('Équipement inconnu');
+  const known = (v) => [...new Set((Array.isArray(v) ? v : []).map(String))].filter((id) => db.prepare('SELECT 1 FROM equipment WHERE id = ?').get(id)).slice(0, 60);
+  const equipmentAny = known(body.equipmentAny);
+  const equipmentNone = known(body.equipmentNone);
+  if (equipmentAny.some((id) => equipmentNone.includes(id))) throw new Error('Un même équipement ne peut pas être à la fois « ont » et « n’ont pas »');
   return {
     title,
     subtitle: str(body.subtitle, 140),
@@ -174,8 +179,10 @@ function cleanBanner(db, body, { dealershipIds: forced } = {}) {
     vehicle_types: JSON.stringify(types),
     age: AGE_IDS.has(body.age) ? body.age : '',
     warranty: ['under', 'out'].includes(body.warranty) ? body.warranty : '',
-    equipment_id: equipmentId || null,
-    equipment_has: body.equipmentHas === 'no' ? 0 : 1,
+    equipment_any: JSON.stringify(equipmentAny),
+    equipment_none: JSON.stringify(equipmentNone),
+    equipment_id: null,
+    equipment_has: 1,
     optin_only: body.optinOnly ? 1 : 0,
     starts_on: startsOn,
     ends_on: endsOn,
@@ -183,7 +190,7 @@ function cleanBanner(db, body, { dealershipIds: forced } = {}) {
   };
 }
 
-const COLUMNS = ['title', 'subtitle', 'icon', 'action', 'payload', 'dealership_ids', 'vehicle_types', 'age', 'warranty', 'equipment_id', 'equipment_has', 'optin_only', 'starts_on', 'ends_on', 'priority'];
+const COLUMNS = ['title', 'subtitle', 'icon', 'action', 'payload', 'dealership_ids', 'vehicle_types', 'age', 'warranty', 'equipment_any', 'equipment_none', 'equipment_id', 'equipment_has', 'optin_only', 'starts_on', 'ends_on', 'priority'];
 function insertBanner(db, b, createdBy = null) {
   const r = db.prepare(`INSERT INTO banners (${COLUMNS.join(', ')}, created_by) VALUES (${COLUMNS.map(() => '?').join(', ')}, ?)`).run(...COLUMNS.map((k) => b[k]), createdBy);
   return Number(r.lastInsertRowid);
@@ -202,7 +209,7 @@ function migrateFeatured(db) {
     insertBanner(db, {
       title, subtitle: subtitle || '', icon: icon || '💡', action,
       payload: JSON.stringify({ tipId, screen, url, text }),
-      dealership_ids: '[]', vehicle_types: '[]', age: '', warranty: '', equipment_id: null, equipment_has: 1, optin_only: 0, starts_on: null, ends_on: null, priority: 0,
+      dealership_ids: '[]', vehicle_types: '[]', age: '', warranty: '', equipment_any: '[]', equipment_none: '[]', equipment_id: null, equipment_has: 1, optin_only: 0, starts_on: null, ends_on: null, priority: 0,
     });
   }
   setSetting(db, 'featured', null);

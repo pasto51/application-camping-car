@@ -198,8 +198,11 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
       case 'checks': {
         // Several choices among a list (e.g. the dealerships followed by an analyst).
         const on = new Set((Array.isArray(v) ? v : []).map(String));
+        // A long list (equipment…) gets a search box, with what is already checked first.
+        const opts = f.filter ? [...f.options].sort((a, b) => on.has(String(b[0])) - on.has(String(a[0]))) : f.options;
         return `<div class="field full" ${f.showIf ? `data-show-if="${f.showIf[0]}" data-show-value="${esc(f.showIf[1])}"` : ''}><span class="label">${label}</span>
-          <div class="checks">${f.options.length ? f.options.map(([val, text]) => `<label class="check"><input type="checkbox" name="${f.name}" value="${esc(val)}" ${on.has(String(val)) ? 'checked' : ''}> ${esc(text)}</label>`).join('') : '<span class="muted">Aucune concession.</span>'}</div>${hint}</div>`;
+          ${f.filter ? `<input type="search" class="checks-filter" data-checks-filter="${f.name}" placeholder="${esc(f.filter)}">` : ''}
+          <div class="checks" data-checks="${f.name}">${opts.length ? opts.map(([val, text]) => `<label class="check"><input type="checkbox" name="${f.name}" value="${esc(val)}" ${on.has(String(val)) ? 'checked' : ''}> ${esc(text)}</label>`).join('') : '<span class="muted">Aucune concession.</span>'}</div>${hint}</div>`;
       }
       case 'image':
         return `<div class="field full"><span class="label">${label}</span>
@@ -262,6 +265,15 @@ function openForm({ title, fields, values = {}, submitLabel = 'Enregistrer', onS
       images[name] = null;
       preview.innerHTML = '<span>Aucune photo</span>';
       clear.hidden = true;
+    };
+  });
+
+  dialog.querySelectorAll('[data-checks-filter]').forEach((input) => {
+    const box = dialog.querySelector(`[data-checks="${input.dataset.checksFilter}"]`);
+    const norm = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    input.oninput = () => {
+      const q = norm(input.value.trim());
+      box.querySelectorAll('label').forEach((l) => (l.hidden = !!q && !norm(l.textContent).includes(q) && !l.querySelector('input').checked));
     };
   });
 

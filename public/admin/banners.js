@@ -24,7 +24,9 @@ export function registerBannersView(VIEWS, { api, openForm, pageHeader, bind, co
       if (b.vehicleTypes.length) parts.push(b.vehicleTypes.map((t) => typeName[t] || t).join(', '));
       if (b.age) parts.push(ageName[b.age]);
       if (b.warranty) parts.push(warrantyName[b.warranty]);
-      if (b.equipmentId) parts.push(`${b.equipmentHas === 'no' ? 'sans' : 'avec'} ${eqName[b.equipmentId] || b.equipmentId}`);
+      const eqs = (ids) => ids.map((id) => eqName[id] || id).join(' ou ');
+      if (b.equipmentAny.length) parts.push(`avec ${eqs(b.equipmentAny)}`);
+      if (b.equipmentNone.length) parts.push(`sans ${eqs(b.equipmentNone)}`);
       if (b.optinOnly) parts.push('ayant accepté les offres');
       return parts.join(' · ');
     };
@@ -88,8 +90,15 @@ export function registerBannersView(VIEWS, { api, openForm, pageHeader, bind, co
       { name: 'vehicleTypes', label: 'Types de véhicule (aucun coché : tous)', type: 'checks', options: d.vehicleTypes },
       { name: 'age', label: 'Ancienneté du véhicule (depuis la mise en main)', type: 'select', options: d.ages },
       { name: 'warranty', label: 'Garantie', type: 'select', options: d.warranties },
-      { name: 'equipmentId', label: 'Équipement', type: 'select', options: [['', 'Peu importe'], ...d.equipment] },
-      { name: 'equipmentHas', label: 'Clients…', type: 'select', options: [['yes', 'qui ont cet équipement'], ['no', 'qui n’ont pas cet équipement (pour le leur proposer)']], hideIf: ['equipmentId', ['']] },
+      {
+        name: 'equipmentNone',
+        label: 'Clients qui n’ont AUCUN de ces équipements (pour le leur proposer)',
+        type: 'checks',
+        filter: 'Chercher un équipement (ex. : clim)',
+        options: d.equipment,
+        hint: 'Ex. opération clim : cochez toutes les climatisations, seuls les clients sans clim verront le bandeau.',
+      },
+      { name: 'equipmentAny', label: 'Clients qui ont AU MOINS UN de ces équipements', type: 'checks', filter: 'Chercher un équipement (ex. : solaire)', options: d.equipment, hint: 'Ex. : les clients équipés d’un panneau solaire.' },
       { name: 'optinOnly', label: 'Seulement les clients qui ont accepté les conseils et offres (conseillé pour une offre commerciale)', type: 'checkbox' },
       { name: 'startsOn', label: 'Début (vide : tout de suite)', type: 'date' },
       { name: 'endsOn', label: 'Fin (vide : sans fin)', type: 'date', hint: 'Le bandeau disparaît tout seul après cette date.' },
@@ -106,7 +115,7 @@ export function registerBannersView(VIEWS, { api, openForm, pageHeader, bind, co
         openForm({
           title: 'Nouveau bandeau « À la une »',
           fields,
-          values: { icon: '📣', action: 'popup', priority: d.global ? 0 : 10, equipmentHas: 'yes' },
+          values: { icon: '📣', action: 'popup', priority: d.global ? 0 : 10 },
           onSubmit: save(),
         }),
       edit: (id) => {

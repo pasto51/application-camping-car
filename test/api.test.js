@@ -646,7 +646,9 @@ test('« À la une » banners: each for its customers (dealership, type, time si
   await post({ title: 'Anciens', age: 'old', priority: 70 });
   await post({ title: 'Plus tard', startsOn: '2099-01-01', priority: 60 });
   await post({ title: 'Offres', optinOnly: true, priority: 50 });
-  await post({ title: 'Sans solaire', equipmentId: 'solaire', equipmentHas: 'no', priority: 40 });
+  assert.equal((await post({ title: 'Contradiction', equipmentAny: ['clim'], equipmentNone: ['clim'] })).status, 400);
+  await post({ title: 'Avec clim', equipmentAny: ['clim', 'climcab'], priority: 45 });
+  await post({ title: 'Sans solaire', equipmentNone: ['solaire', 'climcab'], priority: 40 });
   await post({ title: 'Bienvenue', age: 'm3', priority: 10 });
   await call('PUT', '/api/me/state/cdb_own', { token: fresh.token, body: { value: JSON.stringify({ solaire: true, frigo: true }) } });
   // None of the first six is for Lucie (other dealership, under warranty, new, not yet, no consent, she has solar panels).

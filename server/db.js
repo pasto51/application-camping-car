@@ -173,6 +173,8 @@ CREATE TABLE IF NOT EXISTS banners (
   warranty TEXT NOT NULL DEFAULT '',
   equipment_id TEXT,
   equipment_has INTEGER NOT NULL DEFAULT 1,
+  equipment_any TEXT,
+  equipment_none TEXT,
   optin_only INTEGER NOT NULL DEFAULT 0,
   starts_on TEXT,
   ends_on TEXT,
@@ -278,6 +280,8 @@ function openDatabase(file) {
 
 // Columns added after the first release: added in place so existing databases keep their data.
 const ADDED_COLUMNS = [
+  ['banners', 'equipment_any', 'TEXT'],
+  ['banners', 'equipment_none', 'TEXT'],
   ['vehicles', 'profile', 'TEXT'],
   ['dealerships', 'hours', 'TEXT'],
   ['dealerships', 'logo_url', 'TEXT'],

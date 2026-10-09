@@ -276,3 +276,5 @@ tr.clickable:hover td { background: var(--bg); }
 .banner-row { display: grid; grid-template-columns: minmax(240px, 380px) 1fr auto; gap: 1rem; align-items: center; margin-bottom: .8rem; }
 .banner-info p { margin: .2rem 0; }
 @media (max-width: 900px) { .banner-row { grid-template-columns: 1fr; } }
+.checks-filter { width: 100%; margin: .3rem 0; }
+.checks label[hidden] { display: none; }
