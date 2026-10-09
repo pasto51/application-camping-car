@@ -315,6 +315,47 @@ const PATCHES = [
     },
   },
   {
+    // The four customer diagnostics after checking them against the makers' instructions (Zadi, Truma FrostControl,
+    // Dometic, Thetford), and the two older ones they replace (same problems, conflicting advice: « leak » and
+    // « blind »). Water-circuit leaks were sent to the « test d'étanchéité » appointment: they go to the workshop.
+    key: '2026-10-17-diagnostics-verifies',
+    run: (db) => {
+      let changed = 0;
+      for (const d of CLIENTS_2026_10) {
+        const row = db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id);
+        if (row) db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), d.id);
+        else {
+          const sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n + 1;
+          db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, sort, JSON.stringify(d));
+        }
+        changed++;
+      }
+      changed += db.prepare("DELETE FROM diagnostics WHERE id IN ('leak', 'blind')").run().changes;
+      for (const id of ['c_tank_gel', 'g_trumad', 'g_truma', 'h_wc', 'h_pompe', 'h_clim', 'h_sat']) {
+        const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+        if (!row) continue;
+        const data = JSON.parse(row.data);
+        let n = 0;
+        (function walk(node) {
+          if (!node) return;
+          if (Array.isArray(node.n)) return node.n.forEach(walk);
+          if (node.rdv === 'etanch' && !/joint/i.test(node.cause)) { node.rdv = 'atelier'; n++; } // a roof seal stays « étanchéité »
+        })(data.tree);
+        if (n) db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(data), id);
+        changed += n;
+      }
+      const eau = db.prepare("SELECT data FROM diagnostics WHERE id = 'h_eau'").get();
+      if (eau) {
+        const data = JSON.parse(eau.data);
+        const leaves = findLeaves(data.tree, { cause: 'Une fuite du circuit d\'eau passe à proximité.' });
+        leaves.forEach((leaf) => { leaf.rdv = 'atelier'; });
+        if (leaves.length) db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = 'h_eau'").run(JSON.stringify(data));
+        changed += leaves.length;
+      }
+      return changed;
+    },
+  },
+  {
     // Three routine checklists in « Gestes du quotidien » (written by the user): winter storage, spring start-up, and the
     // monthly care in season. Lines for some equipment only (battery type, absorption fridge).
     key: '2026-10-15-check-lists-routine',

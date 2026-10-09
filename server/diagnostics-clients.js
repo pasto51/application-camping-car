@@ -13,7 +13,6 @@ const CLIENTS_2026_10 = [
     id: 'p_serrure',
     cat: 'ext',
     label: 'Ma clé coince, est cassée ou perdue (porte de cellule, soutes)',
-    eq: 'porte_cell',
     kw: 'clé cle barillet serrure zadi porte cellule soute coffre coince grippe dure bloque cassée casse perdue perdu double extracteur extraction rouge vert haute sécurité tourne dans le vide',
     tree: {
       t: 'Que se passe-t-il ?',
@@ -35,22 +34,22 @@ const CLIENTS_2026_10 = [
               'Lubrifiant spécial serrures et barillets'
             ),
             {
-              t: 'Quel est le modèle de votre barillet Zadi ? (repère de couleur sur la tête du barillet ou sur la carte des clés)',
-              o: ['Repère rouge (modèle standard)', 'Repère vert (haute sécurité)', 'Je ne sais pas'],
+              t: 'Votre barillet Zadi est-il un modèle standard ou haute sécurité ? (le magasin les distingue par leur couleur : rouge pour le standard, vert pour la haute sécurité)',
+              o: ['Standard (rouge)', 'Haute sécurité (vert)', 'Je ne sais pas'],
               n: [
                 buy(
                   'Le barillet standard est usé.',
-                  'Porte ouverte, le barillet se retire avec la clé d’extraction du même modèle et un barillet neuf se met à la place, livré avec ses deux clés. La clé d’extraction ne marche que serrure ouverte.',
+                  'Serrure déverrouillée, le barillet se retire avec la clé d’extraction qui correspond à sa série, et un barillet neuf se met à la place, livré avec ses deux clés. La clé d’extraction ne marche que serrure ouverte : elle n’ouvre pas une serrure fermée.',
                   'Barillet Zadi standard avec 2 clés et clé d’extraction'
                 ),
                 buy(
                   'Le barillet haute sécurité est usé.',
-                  'Porte ouverte, le barillet se retire avec la clé d’extraction du modèle haute sécurité (elle n’est pas la même que celle du modèle standard), puis un barillet haute sécurité neuf se met à la place.',
+                  'Serrure déverrouillée, le barillet se retire avec la clé d’extraction qui correspond à sa série, puis un barillet haute sécurité neuf se met à la place. Demandez au magasin la clé d’extraction qui va avec votre barillet.',
                   'Barillet Zadi haute sécurité avec 2 clés et clé d’extraction'
                 ),
                 buy(
                   'Le modèle du barillet n’est pas identifié.',
-                  'Apportez une clé et une photo de la serrure au magasin : il reconnaît le modèle (repère rouge ou vert) et vous donne le barillet et la clé d’extraction qui vont ensemble.',
+                  'Apportez une clé et une photo de la serrure au magasin : il reconnaît le modèle (standard ou haute sécurité) et vous donne le barillet et la clé d’extraction qui vont ensemble.',
                   'Barillet Zadi du bon modèle avec ses clés'
                 ),
               ],
@@ -62,13 +61,13 @@ const CLIENTS_2026_10 = [
           o: ['Un morceau est resté dans la serrure', 'La clé est cassée hors de la serrure'],
           n: [
             {
-              t: 'La porte (ou la soute) est-elle ouverte ?',
-              o: ['Oui, elle est ouverte', 'Non, elle est fermée'],
+              t: 'La serrure est-elle déverrouillée (porte ou soute ouverte) ?',
+              o: ['Oui, elle est ouverte', 'Non, elle est fermée à clé'],
               n: [
                 buy(
                   'Le morceau de clé bloque le barillet.',
-                  'Ne tirez pas le morceau avec une pince : vous abîmeriez la serrure. Porte ouverte, retirez le barillet avec la clé d’extraction du même modèle (repère rouge ou vert) et posez un barillet neuf : le morceau part avec l’ancien.',
-                  'Barillet Zadi neuf et clé d’extraction du même modèle'
+                  'Ne tirez pas le morceau avec une pince : vous abîmeriez la serrure. Serrure déverrouillée, retirez le barillet avec la clé d’extraction qui correspond à sa série et posez un barillet neuf : le morceau part avec l’ancien.',
+                  'Barillet Zadi neuf et clé d’extraction de la même série'
                 ),
                 shop(
                   'Le barillet fermé ne peut pas être extrait.',
@@ -79,8 +78,8 @@ const CLIENTS_2026_10 = [
             },
             buy(
               'Il vous reste une seule clé du barillet.',
-              'Faites faire un double tant que vous en avez une : le magasin commande une clé sur mesure à partir de la clé restante ou du numéro gravé dessus.',
-              'Clé Zadi sur mesure au numéro de votre barillet'
+              'Faites faire un double tant que vous en avez une. Apportez la clé restante au magasin, avec le numéro gravé dessus : selon le modèle, il commande une clé à ce numéro, sinon il vous propose un kit de barillets neufs avec leurs clés.',
+              'Clé Zadi au numéro de votre barillet (ou kit de barillets neufs)'
             ),
           ],
         },
@@ -90,13 +89,13 @@ const CLIENTS_2026_10 = [
           n: [
             buy(
               'Il manque une clé à votre jeu.',
-              'Avec la clé restante ou son numéro, le magasin commande une clé sur mesure. Il peut aussi commander un barillet sur mesure au même code, pour qu’une nouvelle serrure s’ouvre avec vos clés actuelles.',
-              'Clé ou barillet Zadi sur mesure (au code de vos serrures)'
+              'Apportez la clé restante ou son numéro au magasin : selon le modèle, il commande une clé ou un barillet à ce numéro, pour qu’une serrure neuve s’ouvre avec vos clés actuelles. Sinon, un kit de barillets identiques remplace toutes les serrures.',
+              'Clé ou barillet Zadi au numéro de vos serrures'
             ),
             buy(
               'Sans clé ni numéro le barillet doit être remplacé.',
-              'Si la porte est fermée, faites-la ouvrir par l’atelier. Ensuite, des barillets sur mesure au même code se posent sur la porte et les soutes : une seule clé ouvre tout, et la clé perdue ne sert plus à personne.',
-              'Barillets Zadi sur mesure au même code, avec 2 clés'
+              'Si la porte est fermée, faites-la ouvrir par l’atelier. Ensuite, un kit de barillets identiques se pose sur la porte et les soutes : une seule clé ouvre tout, et la clé perdue ne sert plus à personne.',
+              'Kit de barillets Zadi identiques avec 2 clés'
             ),
           ],
         },
@@ -107,7 +106,7 @@ const CLIENTS_2026_10 = [
         ),
         buy(
           'Chaque serrure a son propre barillet.',
-          'Un kit de barillets identiques (5 ou 10, avec 2 clés) se pose serrures ouvertes avec la clé d’extraction : une seule clé pour la porte et toutes les soutes. Il existe en modèle standard (repère rouge) et haute sécurité (repère vert).',
+          'Un kit de barillets identiques (5 ou 10, avec 2 clés) se pose serrures ouvertes avec la clé d’extraction : une seule clé pour la porte et toutes les soutes. Il existe en modèle standard et en haute sécurité.',
           'Kit de barillets Zadi identiques avec 2 clés'
         ),
       ],
@@ -116,13 +115,14 @@ const CLIENTS_2026_10 = [
   {
     id: 'p_storeplisse',
     cat: 'ext',
-    label: 'Mon store plissé ou ma moustiquaire (fenêtre, porte, lanterneau, pare-brise) : cordon cassé, roulettes ou accroches qui lâchent',
-    eq: 'baies',
-    kw: 'store plissé remis remiflair occultant moustiquaire cordon ficelle fil cassé détendu roulette roulettes accroche accroches patin rail lâche décroche toile déchirée lanterneau fenêtre baie porte pare-brise cabine remonte descend tout seul',
+    label: 'Mon store plissé ou ma moustiquaire (fenêtre, porte, lanterneau, pare-brise) : bloqué, cordon cassé, roulettes ou accroches qui lâchent',
+    kw: 'store plissé remis remiflair remitop occultant rideau moustiquaire skydome cordon ficelle fil cassé détendu roulette roulettes accroche accroches patin rail glissière lâche décroche toile déchirée lanterneau fenêtre baie porte pare-brise cabine remonte descend tout seul bloqué bloque tombe travers coulisse mal dur',
     tree: {
       t: 'Qu’est-ce qui ne va pas ?',
       o: [
-        'Un cordon (ficelle) est cassé',
+        'Un cordon (ficelle) est cassé, ou le store pend de travers',
+        'Le store est bloqué : il ne monte ni ne descend plus',
+        'Il coulisse mal, il force',
         'Une roulette ou une accroche a lâché',
         'La toile est déchirée ou percée',
         'Le store ne tient plus en place (il remonte ou descend tout seul)',
@@ -134,12 +134,12 @@ const CLIENTS_2026_10 = [
           n: [
             buy(
               'Le cordon de tension est usé.',
-              'Avant d’enlever l’ancien cordon, notez par où il passe. Le cordon neuf se passe dans les mêmes trous (une longue aiguille aide), puis se noue bien tendu sur sa vis de réglage en bas du store. Comptez une heure, ou faites-le faire par le magasin.',
+              'Avant d’enlever l’ancien cordon, notez par où il passe. Le cordon neuf se passe dans les mêmes trous (une longue aiguille aide), puis se noue bien tendu sur son point de réglage (souvent en bas du store). Comptez une heure, ou faites-le faire par le magasin.',
               'Kit de cordon de rechange pour store plissé'
             ),
             buy(
               'Le cordon de la moustiquaire plissée est cassé.',
-              'Même principe qu’un store de fenêtre : notez le passage du cordon, remplacez-le et tendez-le sur sa vis de réglage. Si la toile est abîmée elle aussi, une moustiquaire de porte neuve se pose à la place.',
+              'Même principe qu’un store de fenêtre : notez le passage du cordon, remplacez-le et tendez-le sur son point de réglage. Si la toile est abîmée elle aussi, une moustiquaire de porte neuve se pose à la place.',
               'Kit de cordon de rechange pour moustiquaire plissée'
             ),
             buy(
@@ -149,6 +149,16 @@ const CLIENTS_2026_10 = [
             ),
           ],
         },
+        buy(
+          'Un cordon coincé bloque le store.',
+          'Ne tirez pas sur la toile et ne forcez pas : les plis et la cassette casseraient. Laissez le store où il est, photographiez-le avec ses côtés et montrez la photo au magasin : il vous donne le kit de cordon de votre store, ou fait le recordage.',
+          'Kit de cordon de rechange pour store plissé (selon la marque)'
+        ),
+        buy(
+          'Les rails du store sont encrassés.',
+          'Dépoussiérez les rails avec une brosse douce, puis pulvérisez un peu de spray silicone et manœuvrez le store doucement, bien droit, plusieurs fois. Pas d’huile ni de graisse : elles collent la poussière.',
+          'Spray silicone pour rails et glissières'
+        ),
         {
           t: 'La roulette (ou l’accroche) est-elle cassée ou seulement sortie de son rail ?',
           o: ['Sortie du rail', 'Cassée ou perdue'],
@@ -160,7 +170,7 @@ const CLIENTS_2026_10 = [
             ),
             buy(
               'La roulette du store est cassée.',
-              'Les roulettes, patins et accroches se vendent en pièces détachées pour chaque marque de store (Remis…). Apportez la pièce cassée, ou une photo et les dimensions du store, au magasin.',
+              'Les roulettes, patins et accroches se vendent en pièces détachées selon la marque du store. Apportez la pièce cassée, ou une photo et les dimensions du store, au magasin.',
               'Roulettes et accroches de rechange pour store plissé'
             ),
           ],
@@ -183,7 +193,7 @@ const CLIENTS_2026_10 = [
         },
         buy(
           'Les cordons ne sont plus assez tendus.',
-          'Retendez les cordons sur leur vis de réglage, en bas du store, jusqu’à ce qu’il tienne à mi-hauteur. Un cordon effiloché finit par casser : changez-le en même temps.',
+          'Retendez les cordons sur leur point de réglage (souvent en bas du store) jusqu’à ce qu’il tienne à mi-hauteur. Un cordon effiloché finit par casser : changez-le en même temps.',
           'Kit de cordon de rechange pour store plissé'
         ),
       ],
@@ -207,13 +217,18 @@ const CLIENTS_2026_10 = [
           vv: ['trimixte', 'comp', 'ns'],
           n: [
             {
-              t: 'Les grilles extérieures du frigo sont-elles propres (poussière, toiles d’araignée, insectes) ?',
-              o: ['Non, elles sont encrassées', 'Oui, elles sont propres'],
+              t: 'Regardez les grilles extérieures du frigo : qu’y voyez-vous ?',
+              o: ['Les caches d’hiver sont encore posés', 'Elles sont encrassées (poussière, toiles d’araignée, insectes)', 'Elles sont propres et dégagées'],
               n: [
                 buy(
+                  'Les caches d’hiver bloquent l’air du frigo.',
+                  'Retirez les caches d’hiver dès que les beaux jours reviennent (au-dessus d’environ 8 °C dehors) : sans eux, l’air chaud sort par la grille du haut et le frigo refait du froid en quelques heures. Gardez-les pour l’hiver.',
+                  'Aucun produit nécessaire'
+                ),
+                buy(
                   'Les grilles encrassées empêchent la chaleur de sortir.',
-                  'Frigo éteint et refroidi, retirez les grilles et dépoussiérez-les, ainsi que les ailettes à l’arrière du frigo, avec une brosse douce et un souffleur. Remettez les grilles : elles évacuent aussi les gaz brûlés du brûleur.',
-                  'Kit d’entretien des grilles de réfrigérateur (brosse et souffleur)',
+                  'Frigo éteint et refroidi, retirez les grilles et dépoussiérez-les avec une brosse douce et un aérosol dépoussiérant, ainsi que les ailettes que vous voyez par l’ouverture. Ne touchez ni au brûleur ni à la cheminée. Remettez les grilles : elles évacuent aussi les gaz brûlés.',
+                  'Aérosol dépoussiérant et brosse douce pour grilles de réfrigérateur',
                   'Ne roulez jamais et n’utilisez jamais le frigo au gaz sans ses grilles : elles évacuent les gaz brûlés.'
                 ),
                 {
@@ -222,12 +237,12 @@ const CLIENTS_2026_10 = [
                   n: [
                     buy(
                       'Le soleil sur la paroi du frigo bloque son refroidissement.',
-                      'Un frigo à absorption perd du froid au-delà d’environ 32 °C dehors. Garez-vous côté frigo à l’ombre si possible, et faites poser des ventilateurs de grille : ils chassent l’air chaud de derrière le frigo et lui redonnent du froid par forte chaleur.',
-                      'Kit de ventilateurs de grille de réfrigérateur (12 V)'
+                      'Un frigo à absorption perd du froid au-delà d’environ 32 °C dehors. Garez-vous côté frigo à l’ombre si possible. Des ventilateurs 12 V à thermostat, fixés sur la grille du haut, chassent l’air chaud de derrière le frigo et lui redonnent du froid par forte chaleur : le magasin vous conseille le modèle qui va sur votre grille.',
+                      'Kit de ventilateurs 12 V à thermostat pour grille de réfrigérateur'
                     ),
                     buy(
                       'Le frigo à absorption perd son froid quand il penche.',
-                      'Mettez le véhicule à plat avec des cales : au-delà de quelques degrés d’inclinaison, le froid baisse beaucoup.',
+                      'Mettez le véhicule à plat avec des cales : au-delà d’environ 3 degrés d’inclinaison, le froid baisse beaucoup. Une petite application de niveau ou un niveau à bulle posé dans le frigo suffit à vérifier.',
                       'Cales de nivellement avec niveau à bulle'
                     ),
                     shop(
@@ -248,7 +263,7 @@ const CLIENTS_2026_10 = [
             buy(
               'Le type de frigo n’est pas connu.',
               'Regardez la plaque à l’intérieur du frigo (ou « Mes équipements »). S’il a des grilles dehors sur la paroi, c’est un frigo à absorption : dépoussiérez-les, et des ventilateurs de grille l’aideront l’été.',
-              'Kit de ventilateurs de grille de réfrigérateur (12 V)'
+              'Kit de ventilateurs 12 V à thermostat pour grille de réfrigérateur'
             ),
           ],
         },
@@ -258,7 +273,7 @@ const CLIENTS_2026_10 = [
           n: [
             buy(
               'Le joint de porte laisse entrer l’air humide.',
-              'L’air humide qui entre par le joint se change en givre. Changez le joint s’il est écrasé ou déchiré, et vérifiez que la porte n’est pas restée en position « aération » d’hivernage.',
+              'L’air humide qui entre par le joint se change en givre. Changez le joint s’il est écrasé ou déchiré, et vérifiez que la porte n’est pas restée bloquée entrouverte (position de rangement).',
               'Joint de porte de réfrigérateur au modèle'
             ),
             {
@@ -282,7 +297,7 @@ const CLIENTS_2026_10 = [
         buy(
           'En roulant le tirage d’air derrière le frigo diminue.',
           'Faites descendre le frigo en température avant de partir (sur 230 V ou au gaz à l’arrêt), car sur 12 V un frigo à absorption garde le froid sans en refaire beaucoup. Des ventilateurs de grille forcent l’air chaud dehors sur la route.',
-          'Kit de ventilateurs de grille de réfrigérateur (12 V)'
+          'Kit de ventilateurs 12 V à thermostat pour grille de réfrigérateur'
         ),
       ],
     },
@@ -291,12 +306,15 @@ const CLIENTS_2026_10 = [
     id: 'p_fuite',
     cat: 'eau',
     label: 'J’ai une fuite d’eau ou mon réservoir se vide tout seul',
-    eq: 'eauch',
-    kw: 'fuite eau coule goutte flaque sous le camping-car vide tout seul réservoir chauffe-eau frost control frostcontrol vanne vidange soupape purge gel truma évier robinet raccord tuyau douche wc chasse',
+    eq: 'pompe',
+    kw: 'fuite eau coule goutte flaque sous le camping-car vide tout seul réservoir chauffe-eau frost control frostcontrol vanne vidange soupape purge gel gelé dégel truma évier robinet raccord tuyau douche wc chasse lame cassette eaux grises trop-plein déborde',
     tree: {
       t: 'Où voyez-vous l’eau ?',
       o: [
         'Sous le véhicule, près du chauffe-eau',
+        'Sous le véhicule : de l’eau grise qui sent mauvais',
+        'Juste après avoir rempli le réservoir',
+        'Après une période de gel',
         'Sous l’évier ou au pied d’un robinet',
         'Autour de la douche ou des WC',
         'Le réservoir se vide mais je ne vois pas de fuite',
@@ -308,18 +326,18 @@ const CLIENTS_2026_10 = [
           o: ['Oui, le bouton est sorti', 'Non, elle est fermée et ça coule quand même', 'Je ne trouve pas cette vanne'],
           n: [
             {
-              t: 'Faisait-il froid (moins de 3 °C) ou le courant 12 V était-il coupé ?',
+              t: 'Faisait-il froid (moins de 3 °C environ au niveau de la vanne) ?',
               o: ['Oui', 'Non'],
               n: [
                 buy(
                   'La vanne s’est ouverte pour protéger le chauffe-eau du gel.',
-                  'C’est normal : elle vide le chauffe-eau dès 3 °C environ. Quand il fait plus doux (vers 7 °C), refermez-la (levier en position fermée puis bouton enfoncé), chauffez la cellule et remettez l’eau. Un câble chauffant de cuve protège le reste du circuit l’hiver.',
+                  'C’est normal : elle vide le chauffe-eau dès 3 °C environ. Quand il fait plus doux (vers 7 °C), refermez-la (levier tourné parallèle à la vanne, puis bouton enfoncé jusqu’au déclic), chauffez la cellule et remettez l’eau. Un câble chauffant de cuve protège le reste du circuit l’hiver.',
                   'Câble chauffant antigel pour réservoir et tuyaux'
                 ),
                 shop(
                   'La soupape de la vanne évacue une surpression.',
-                  'Si l’eau part par la vanne pendant la chauffe ou à chaque ouverture de robinet, la pression du circuit est trop forte : un vase d’expansion rempli d’eau en est souvent la cause. L’atelier le contrôle avec la pompe.',
-                  'Vase d’expansion pour circuit d’eau, contrôlé par l’atelier'
+                  'Si l’eau part par la vanne pendant la chauffe ou à chaque ouverture de robinet, la pression du circuit est trop forte : la vanne laisse partir l’eau au-delà d’environ 4,5 bars. Une pompe trop puissante (plus de 2,8 bars) ou un vase d’expansion plein d’eau en est souvent la cause. L’atelier contrôle et pose un réducteur de pression si besoin.',
+                  'Réducteur de pression ou vase d’expansion, posé par l’atelier'
                 ),
               ],
             },
@@ -329,9 +347,60 @@ const CLIENTS_2026_10 = [
               'Kit de vanne de vidange FrostControl avec raccords'
             ),
             shop(
-              'Un raccord du circuit d’eau fuit sous le plancher.',
-              'Coupez la pompe et notez où tombent les gouttes. L’atelier cherche le raccord en cause et le change.',
+              'Une fuite se cache sous le véhicule.',
+              'La vanne de vidange se trouve sous le plancher près du chauffe-eau, ou à l’intérieur juste à côté de lui. Coupez la pompe et notez où tombent les gouttes : l’atelier trouve la fuite et change la pièce.',
               'Raccords et colliers pour circuit d’eau, posés par l’atelier'
+            ),
+          ],
+        },
+        {
+          t: 'Fermez la vanne de vidange des eaux grises à fond. La fuite s’arrête-t-elle ?',
+          o: ['Oui, ça ne coule plus', 'Non, ça coule toujours'],
+          n: [
+            buy(
+              'La vanne de vidange des eaux grises était mal fermée.',
+              'Refermez-la à fond après chaque vidange. Une graisse silicone sur son axe la garde douce et étanche.',
+              'Graisse silicone pour vannes et joints'
+            ),
+            shop(
+              'Le joint de la vanne des eaux grises est usé.',
+              'Videz le réservoir d’eaux grises sur une aire de service. L’atelier remplace le joint ou la vanne.',
+              'Joint ou vanne de vidange d’eaux grises, posé par l’atelier'
+            ),
+          ],
+        },
+        buy(
+          'Le réservoir d’eau propre déborde par son trop-plein.',
+          'C’est normal quand il est plein à ras : arrêtez de remplir dès que l’eau sort du trop-plein. Un pistolet d’arrosage à coupure évite d’en mettre partout.',
+          'Pistolet de remplissage à coupure et tuyau alimentaire'
+        ),
+        {
+          t: 'Laissez dégeler. Où voyez-vous des traces d’eau ?',
+          o: ['Sur un tuyau ou un raccord visible', 'Autour du chauffe-eau', 'Près de la pompe', 'Je ne vois pas d’où'],
+          n: [
+            shop(
+              'Le gel a fissuré une pièce visible du circuit.',
+              'Ne relancez pas la pompe. L’atelier remplace la pièce fissurée. Pour l’hiver suivant, vidangez le circuit ou protégez-le avec un câble chauffant antigel.',
+              'Tuyau alimentaire et raccords rapides, posés par l’atelier',
+              'Après un gel, faites contrôler le circuit à l’atelier avant de le remettre sous pression.'
+            ),
+            shop(
+              'Le gel a abîmé le chauffe-eau.',
+              'Ne relancez ni la pompe ni le chauffe-eau. L’atelier contrôle la cuve et la vanne de vidange.',
+              'Contrôle du chauffe-eau à l’atelier',
+              'Après un gel, faites contrôler le circuit à l’atelier avant de le remettre sous pression.'
+            ),
+            shop(
+              'La glace a fissuré la pompe à eau.',
+              'Coupez la pompe et vidangez le circuit. La pompe est à remplacer.',
+              'Pompe à eau de remplacement, posée par l’atelier',
+              'Après un gel, faites contrôler le circuit à l’atelier avant de le remettre sous pression.'
+            ),
+            shop(
+              'Une fissure cachée est possible après le gel.',
+              'Ne relancez pas la pompe avant le contrôle : l’atelier met le circuit sous pression et cherche la fuite.',
+              'Recherche de fuite à l’atelier',
+              'Après un gel, faites contrôler le circuit à l’atelier avant de le remettre sous pression.'
             ),
           ],
         },
@@ -353,7 +422,7 @@ const CLIENTS_2026_10 = [
         },
         {
           t: 'Où exactement ?',
-          o: ['Au bac de douche ou au mitigeur', 'Au pied des WC, après la chasse d’eau'],
+          o: ['Au bac de douche ou au mitigeur', 'Au pied des WC, à chaque chasse d’eau', 'Entre la cuvette et la cassette des WC'],
           n: [
             buy(
               'Le joint du bac de douche est fendu.',
@@ -362,8 +431,13 @@ const CLIENTS_2026_10 = [
             ),
             buy(
               'Le joint de la chasse d’eau des WC est usé.',
-              'Une petite flaque après chaque chasse vient du joint de la vanne d’arrivée d’eau. Le kit de joints de la marque de vos WC se pose facilement.',
+              'Une petite flaque après chaque chasse vient souvent des joints de la vanne d’arrivée d’eau. Le kit de joints de la marque de vos WC se pose facilement.',
               'Kit de joints pour WC à cassette'
+            ),
+            buy(
+              'Le joint de la lame des WC ne ferme plus bien.',
+              'Le joint de la lame sèche et laisse passer le liquide entre la cuvette et la cassette. Lubrifiez-le avec un produit spécial joints de lame, à chaque vidange de cassette. S’il est fendu, un joint de lame neuf se pose.',
+              'Lubrifiant spécial joints de lame de WC à cassette'
             ),
           ],
         },
@@ -373,7 +447,7 @@ const CLIENTS_2026_10 = [
           n: [
             buy(
               'La vanne de vidange du chauffe-eau est ouverte.',
-              'Bouton sorti, la vanne vide l’eau dehors : c’est sa protection contre le gel (sous 3 °C ou courant 12 V coupé). Par temps doux, refermez-la (levier puis bouton) et remettez l’eau. Un câble chauffant protège le circuit l’hiver.',
+              'Bouton sorti, la vanne vide l’eau dehors : c’est sa protection contre le gel (sous 3 °C environ). Au-dessus de 7 °C, refermez-la (levier parallèle à la vanne, puis bouton enfoncé) et remettez l’eau. Un câble chauffant protège le circuit l’hiver.',
               'Câble chauffant antigel pour réservoir et tuyaux'
             ),
             shop(

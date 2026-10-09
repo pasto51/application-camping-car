@@ -87,6 +87,10 @@ const USAGE = [
   ['p_internet', FLAT, 4, ['pas internet', 'wifi camping']],
   ['p_vol', FLAT, 3, ['alarme vol']],
   ['p_stockage', AUTUMN, 4, ['hivernage', 'stockage hiver']],
+  ['p_frigochaud', SUMMER, 6, ['frigo givre', 'frigo pas assez froid']],
+  ['p_fuite', SPRING, 5, ['fuite eau', 'frost control coule']],
+  ['p_storeplisse', FLAT, 3, ['ficelle store', 'moustiquaire roulette']],
+  ['p_serrure', FLAT, 3, ['clé cassée', 'barillet zadi']],
 ];
 const UNANSWERED = ['remorque', 'attelage', 'starlink', 'panneau grêle'];
 
