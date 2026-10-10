@@ -44,6 +44,6 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 
 ## Vérifier avant de pousser
 
-- `npm test`.
+- `npm test` (il lance aussi `tools/check-equipment-links.js` : aucun diagnostic, ligne de liste, motif ou entretien ne doit viser un équipement que personne ne peut cocher ; à relancer après tout retrait ou regroupement d'équipements).
 - Pour l'interface : lancer le serveur (`DATA_DIR=… PORT=3997 ADMIN_EMAIL=… ADMIN_PASSWORD=… node server/index.js`) et passer dans un navigateur (Playwright).
 - Branche de travail : `claude/app-vehicles-cloud-backoffice-gaifle`.

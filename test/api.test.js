@@ -968,3 +968,9 @@ test('ensembles and elements: elements under their ensemble, dates read on the p
   assert.ok(it && it.state === 'late' && it.due === '2022-03-01');
   assert.ok(ent.datesMissing.some((d) => d.id === 'lyre'));
 });
+
+test('every link between the equipment and the diagnostics, lists, workshop reasons and logbook still holds', () => {
+  const { execFileSync } = require('node:child_process');
+  const out = execFileSync(process.execPath, [require('node:path').join(__dirname, '..', 'tools', 'check-equipment-links.js')], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  assert.match(out, /Aucun problème/);
+});
