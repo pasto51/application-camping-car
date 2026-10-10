@@ -3,7 +3,7 @@
 // catalogue is placed once. Usage: node tools/equipment-groups-doc.js <equipment.json: [{id, cat, name}]>
 const fs = require('node:fs');
 const path = require('node:path');
-const { GROUPS, TO_REVIEW } = require('../server/equipment-groups');
+const { GROUPS, TO_REVIEW, TO_REMOVE } = require('../server/equipment-groups');
 
 const eq = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const byId = Object.fromEntries(eq.map((e) => [e.id, e]));
@@ -41,10 +41,12 @@ for (const [cat, catName] of Object.entries(CATS)) {
       mark(e.id, g.id);
       (e.replaces || []).forEach((r) => mark(r, g.id));
       const choices = e.choices ? ` : ${e.choices.join(' · ')}` : '';
-      md += `- ${e.new ? '🆕 ' : ''}**${name(e)}** — ${KIND[e.kind]}${choices}${dated(e.dated)}\n`;
+      md += `- ${e.new ? '🆕 ' : ''}**${name(e)}** — ${KIND[e.kind]}${choices}${dated(e.dated)}${e.note ? ` (${e.note})` : ''}\n`;
     }
   }
 }
+md += '\n## Retirés à votre demande\n';
+for (const [id, why] of Object.entries(TO_REMOVE)) { mark(id, 'retire'); md += `- ~~${byId[id]?.name || id}~~ : ${why}\n`; }
 md += '\n## À décider\n';
 for (const [id, why] of Object.entries(TO_REVIEW)) { mark(id, 'revoir'); md += `- **${byId[id]?.name || id}** : ${why}\n`; }
 

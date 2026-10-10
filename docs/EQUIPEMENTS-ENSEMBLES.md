@@ -19,8 +19,9 @@
 - **Fixations Isofix** — option
 
 ### Occultation de la cabine
-- 🆕 **Type d’occultation** — un modèle parmi : Stores plissés intégrés · Rideaux · Isolants à poser
 - **Store plissé du pare-brise** — option
+- 🆕 **Rideaux de cabine** — option
+- 🆕 **Isolants à poser (intérieurs ou extérieurs)** — option
 
 ### 🆕 Aides à la conduite
 _Pas de place précise sur le plan : la fiche s’ouvre depuis la cabine._
@@ -92,14 +93,13 @@ _Pas de place précise sur le plan : la fiche s’ouvre depuis la cabine._
 
 ### 🆕 Meuble cuisine
 - **Plaque de cuisson** — toujours là : Gaz · Induction · Mixte gaz et induction
-- **Dessous de la plaque de cuisson** — toujours là
+- **Dessous de la plaque de cuisson** — option (Seulement si on peut le photographier.)
 - **Évier de la cuisine** — toujours là
 - **Siphon de l'évier de la cuisine** — toujours là
 - **Hotte aspirante** — option
 - **Four à gaz** — option
 - **Micro-ondes** — option
 - **Poches de rangement du meuble cuisine** — option
-- **Cuisine en L** — option
 
 ### 🆕 Réfrigérateur
 _Remplace « frigo » et « comp », qui faisaient doublon._
@@ -158,14 +158,14 @@ _Remplace « frigo » et « comp », qui faisaient doublon._
 _Pas de date de validité à suivre._
 
 - 🆕 **Type** — un modèle parmi : Réservoir fixe · Bouteilles rechargeables
-- 🆕 **Prise de remplissage extérieure** — toujours là
+- 🆕 **Coupelle de remplissage** — toujours là
 - 🆕 **Adaptateurs de remplissage pour l’étranger** — option
 - **Prise de gaz extérieure** — option
 
 ## Électricité et énergie
 
 ### 🆕 Batterie cellule
-- 🆕 **Type de batterie** — un modèle parmi : Plomb · AGM · GEL · Lithium (LiFePO4)
+- 🆕 **Type de batterie** — un modèle parmi : AGM · GEL · Lithium (LiFePO4)
 - **Coupe-circuit de batterie** — toujours là
 - **Deuxième batterie cellule** — option
 - **Moniteur de batterie** — option
@@ -177,14 +177,15 @@ _Pas de date de validité à suivre._
 ### Prise P17 et circuit 230 V
 - **Disjoncteur différentiel 230 V** — toujours là
 - **Chargeur de batterie 230 V** — toujours là
-- **Prise 230 V extérieure** — option
+- 🆕 **Prises 230 V intérieures** — toujours là (Elles ne marchent que si la prise P17 extérieure est branchée, sauf avec un convertisseur (onduleur) installé pour les alimenter.)
 - **Onduleur 12 V → 230 V** — option
+- **Prise 230 V extérieure** — option
 
 ### Tableau de contrôle général
 - **Gestionnaire d’énergie connecté** — option
 
 ### Panneaux solaires
-- **Régulateur solaire MPPT** — toujours là
+- 🆕 **Régulateur solaire** — toujours là : MPPT · PWM
 
 ### 🆕 Éclairage et prises
 - **Éclairage LED** — toujours là
@@ -218,28 +219,32 @@ _Avec un Truma Combi ou un Alde, l’eau chaude est faite par le chauffage : rie
 - 🆕 **Chauffe-eau** — un modèle parmi : Fait par le chauffage (Combi, Alde) · Chauffe-eau Truma (gaz / 230 V) · Chauffe-eau électrique 230 V
 
 ### Climatisation de toit
-- (pas d’élément : l’ensemble suffit)
+_Elle ne marche que branchée sur le 230 V (prise P17)._
 
-### Lanterneau du salon
+- 🆕 **Télécommande** — option
+
+### 🆕 Climatisation de soute ou de coffre
+_Sous une banquette ou dans un coffre ; elle ne marche que branchée sur le 230 V (prise P17)._
+
+- 🆕 **Filtre à air** — toujours là — 📅 rappel tous les 12 mois (Filtre à nettoyer ou changer)
+- 🆕 **Télécommande** — option
+
+### 🆕 Rafraîchisseur d’air de toit (12 V)
+_Marche sur la batterie (12 V), sans prise._
+
+- 🆕 **Télécommande** — option
+
+### 🆕 Lanterneaux (skydomes)
+_Tous en option : on coche ceux qui sont dans le véhicule._
+
+- **Lanterneau du salon** — option
+- **Lanterneau de la chambre** — option
+- **Lanterneau de la cuisine** — option
+- **Lanterneau de la salle d’eau** — option
+- **Lanterneau de la capucine** — option
+- **Lanterneau du lit de pavillon** — option
+- **Lanterneau panoramique (type Heki)** — option
 - **Ventilateur de toit motorisé** — option
-
-### Lanterneau de la chambre
-- (pas d’élément : l’ensemble suffit)
-
-### Lanterneau de la salle d’eau
-- (pas d’élément : l’ensemble suffit)
-
-### Lanterneau de la cuisine
-- (pas d’élément : l’ensemble suffit)
-
-### Lanterneau de la capucine
-- (pas d’élément : l’ensemble suffit)
-
-### Lanterneau du lit de pavillon
-- (pas d’élément : l’ensemble suffit)
-
-### Lanterneau panoramique (type Heki)
-- (pas d’élément : l’ensemble suffit)
 
 ## Extérieur
 
@@ -295,7 +300,6 @@ _Avec un Truma Combi ou un Alde, l’eau chaude est faite par le chauffage : rie
 ### 🆕 Pneus et roues
 - **Pneus renforcés pour camping-car** — toujours là — 📅 rappel 6 ans après la date marquée (Date de fabrication sur le flanc (4 chiffres : semaine et année))
 - **Roue de secours ou kit anti-crevaison** — toujours là : Roue de secours · Kit anti-crevaison
-- **Contrôle de pression des pneus (capteurs)** — option
 - **Pneus M+S ou 3PMSF (hiver)** — option
 
 ### 🆕 Mise à niveau et stabilisation
@@ -317,9 +321,21 @@ _Avec un Truma Combi ou un Alde, l’eau chaude est faite par le chauffage : rie
 
 ## Multimédia et connectivité
 
-### 🆕 Antenne TV
-- 🆕 **Type d’antenne** — un modèle parmi : Satellite manuelle · Satellite automatique · TNT (hertzienne)
-- **Télévision** — option
+### Antenne satellite manuelle 🔁
+- 🆕 **Pointeur satellite (le boîtier qui bipe)** — toujours là
+- 🆕 **Démodulateur satellite avec sa carte (TNTSAT ou FRANSAT)** — toujours là
+
+### Antenne satellite automatique 🔁
+- 🆕 **Boîtier de commande (fait tourner et pointer l’antenne)** — toujours là
+- 🆕 **Démodulateur satellite avec sa carte (TNTSAT ou FRANSAT)** — toujours là (Parfois intégré au boîtier de commande ou au téléviseur.)
+
+### Antenne TV hertzienne (TNT)
+- 🆕 **Amplificateur de signal** — toujours là
+
+### Télévision
+_Il peut y en avoir plusieurs : on indique combien._
+
+- (pas d’élément : l’ensemble suffit)
 
 ### Routeur 4G/5G ou antenne Wi-Fi
 - (pas d’élément : l’ensemble suffit)
@@ -344,6 +360,11 @@ _Avec un Truma Combi ou un Alde, l’eau chaude est faite par le chauffage : rie
 - **Gilet jaune et triangle de signalisation** — toujours là
 - **Trousse de premiers secours** — option — 📅 rappel à la date marquée (Dates de péremption des produits)
 
+## Retirés à votre demande
+- ~~Cuisine en L~~ : Cuisine en L : pas utile.
+- ~~Batterie cellule (plomb)~~ : Batterie au plomb : n’existe plus sur les camping-cars.
+- ~~Contrôle de pression des pneus (capteurs)~~ : Capteurs de pression des pneus : pas à suivre.
+
 ## À décider
-- **Vue arrière du véhicule** : C’est une vue du plan (l’arrière du fourgon), pas un équipement : à transformer en simple vue ?
-- **Sous la banquette : l'installation électrique** : C’est une vue du plan (l’installation électrique sous la banquette), pas un équipement : à transformer en simple vue ?
+- **Vue arrière du véhicule** : Ce n’est pas un équipement mais une photo de l’arrière du fourgon, rangée par erreur dans la liste des équipements. Je propose de l’enlever de la liste (la photo reste visible sur le plan).
+- **Sous la banquette : l'installation électrique** : Pareil : c’est une photo de l’installation électrique sous la banquette, pas un équipement à cocher. Je propose de l’enlever de la liste (la photo reste visible sur le plan).

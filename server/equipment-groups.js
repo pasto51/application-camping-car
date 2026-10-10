@@ -20,7 +20,7 @@ const N = (id, name, kind, extra = {}) => ({ id, name, kind, new: true, ...extra
 const GROUPS = [
   // ---------- Cabine et conduite ----------
   { cat: 'cab', id: 'sieges', elements: [E('ceint', 'always'), E('sieges_chauf', 'option'), E('isofix', 'option')] },
-  { cat: 'cab', id: 'occult', elements: [N('occult_type', 'Type d’occultation', 'choice', { choices: ['Stores plissés intégrés', 'Rideaux', 'Isolants à poser'] }), E('store_pb', 'option')] },
+  { cat: 'cab', id: 'occult', elements: [E('store_pb', 'option'), N('occult_rideaux', 'Rideaux de cabine', 'option'), N('occult_isolants', 'Isolants à poser (intérieurs ou extérieurs)', 'option')] },
   {
     cat: 'cab', id: 'g_conduite', new: true, name: 'Aides à la conduite', note: 'Pas de place précise sur le plan : la fiche s’ouvre depuis la cabine.',
     elements: [E('regul', 'option'), E('auto', 'option'), E('frein_elec', 'option'), E('start_stop', 'option'), E('aides_cond', 'option'), E('esp', 'option'), E('traction', 'option'), E('camera', 'option'), E('retro_elec', 'option'), E('pare_brise_ch', 'option'), E('airbags', 'option')],
@@ -53,8 +53,8 @@ const GROUPS = [
   // ---------- Cuisine ----------
   {
     cat: 'cui', id: 'g_cuisine', new: true, name: 'Meuble cuisine',
-    elements: [E('rechaud', 'always', { choices: ['Gaz', 'Induction', 'Mixte gaz et induction'] }), E('dessous_plaque', 'always'), E('evier', 'always'), E('siphon_cui', 'always'),
-      E('hotte', 'option'), E('four', 'option'), E('micro', 'option'), E('poche_cui', 'option'), E('cuis_l', 'option')],
+    elements: [E('rechaud', 'always', { choices: ['Gaz', 'Induction', 'Mixte gaz et induction'] }), E('dessous_plaque', 'option', { note: 'Seulement si on peut le photographier.' }), E('evier', 'always'), E('siphon_cui', 'always'),
+      E('hotte', 'option'), E('four', 'option'), E('micro', 'option'), E('poche_cui', 'option')],
   },
   {
     cat: 'cui', id: 'g_frigo', new: true, name: 'Réfrigérateur', note: 'Remplace « frigo » et « comp », qui faisaient doublon.',
@@ -96,19 +96,19 @@ const GROUPS = [
   },
   {
     cat: 'gaz', id: 'gaslow', alt: 'gaz', name: 'Coffre GPL (réservoir fixe ou bouteilles rechargeables)', note: 'Pas de date de validité à suivre.',
-    elements: [N('gpl_type', 'Type', 'choice', { choices: ['Réservoir fixe', 'Bouteilles rechargeables'] }), N('gpl_remplissage', 'Prise de remplissage extérieure', 'always'), N('gpl_adaptateurs', 'Adaptateurs de remplissage pour l’étranger', 'option'), E('gazext', 'option')],
+    elements: [N('gpl_type', 'Type', 'choice', { choices: ['Réservoir fixe', 'Bouteilles rechargeables'] }), N('gpl_remplissage', 'Coupelle de remplissage', 'always'), N('gpl_adaptateurs', 'Adaptateurs de remplissage pour l’étranger', 'option'), E('gazext', 'option')],
   },
 
   // ---------- Électricité et énergie ----------
   {
     cat: 'elec', id: 'g_batterie', new: true, name: 'Batterie cellule',
-    elements: [N('bat_type', 'Type de batterie', 'choice', { choices: ['Plomb', 'AGM', 'GEL', 'Lithium (LiFePO4)'], replaces: ['cell', 'agm', 'gel', 'lith'] }),
+    elements: [N('bat_type', 'Type de batterie', 'choice', { choices: ['AGM', 'GEL', 'Lithium (LiFePO4)'], replaces: ['agm', 'gel', 'lith'] }),
       E('coupe', 'always'), E('bat2', 'option'), E('moni', 'option'), E('b2b', 'option')],
   },
   { cat: 'elec', id: 'start', elements: [] },
-  { cat: 'elec', id: 'quai', name: 'Prise P17 et circuit 230 V', elements: [E('disj', 'always'), E('charg', 'always'), E('p230', 'option'), E('onduleur', 'option')] },
+  { cat: 'elec', id: 'quai', name: 'Prise P17 et circuit 230 V', elements: [E('disj', 'always'), E('charg', 'always'), N('prises230', 'Prises 230 V intérieures', 'always', { note: 'Elles ne marchent que si la prise P17 extérieure est branchée, sauf avec un convertisseur (onduleur) installé pour les alimenter.' }), E('onduleur', 'option'), E('p230', 'option')] },
   { cat: 'elec', id: 'panneau', elements: [E('gest_energie', 'option')] },
-  { cat: 'elec', id: 'solaire', elements: [E('mppt', 'always')] },
+  { cat: 'elec', id: 'solaire', elements: [N('regul_solaire', 'Régulateur solaire', 'always', { choices: ['MPPT', 'PWM'], replaces: ['mppt'] })] },
   { cat: 'elec', id: 'g_eclairage', new: true, name: 'Éclairage et prises', elements: [E('led', 'always'), E('prises', 'option')] },
   { cat: 'elec', id: 'pile_comb', elements: [] },
   { cat: 'elec', id: 'groupe', elements: [] },
@@ -124,14 +124,14 @@ const GROUPS = [
     cat: 'chauf', id: 'eauch', name: 'Eau chaude', note: 'Avec un Truma Combi ou un Alde, l’eau chaude est faite par le chauffage : rien à cocher ici.',
     elements: [N('eauch_type', 'Chauffe-eau', 'choice', { choices: ['Fait par le chauffage (Combi, Alde)', 'Chauffe-eau Truma (gaz / 230 V)', 'Chauffe-eau électrique 230 V'], replaces: ['trumae', 'eaue'] })],
   },
-  { cat: 'chauf', id: 'clim', elements: [] },
-  { cat: 'chauf', id: 'lant', elements: [E('maxx', 'option')] },
-  { cat: 'chauf', id: 'lant_lit', elements: [] },
-  { cat: 'chauf', id: 'lant_sdb', elements: [] },
-  { cat: 'chauf', id: 'lant_cui', elements: [] },
-  { cat: 'chauf', id: 'lant_cap', elements: [] },
-  { cat: 'chauf', id: 'lant_pav', elements: [] },
-  { cat: 'chauf', id: 'heki', elements: [] },
+  { cat: 'chauf', id: 'clim', note: 'Elle ne marche que branchée sur le 230 V (prise P17).', elements: [N('clim_telec', 'Télécommande', 'option')] },
+  { cat: 'chauf', id: 'clim_soute', new: true, name: 'Climatisation de soute ou de coffre', note: 'Sous une banquette ou dans un coffre ; elle ne marche que branchée sur le 230 V (prise P17).',
+    elements: [N('clim_soute_filtre', 'Filtre à air', 'always', { dated: { kind: 'every', months: 12, label: 'Filtre à nettoyer ou changer' } }), N('clim_soute_telec', 'Télécommande', 'option')] },
+  { cat: 'chauf', id: 'rafraich', new: true, name: 'Rafraîchisseur d’air de toit (12 V)', note: 'Marche sur la batterie (12 V), sans prise.', elements: [N('rafraich_telec', 'Télécommande', 'option')] },
+  {
+    cat: 'chauf', id: 'g_lanterneaux', new: true, name: 'Lanterneaux (skydomes)', note: 'Tous en option : on coche ceux qui sont dans le véhicule.',
+    elements: [E('lant', 'option'), E('lant_lit', 'option'), E('lant_cui', 'option'), E('lant_sdb', 'option'), E('lant_cap', 'option'), E('lant_pav', 'option'), E('heki', 'option'), E('maxx', 'option')],
+  },
 
   // ---------- Extérieur ----------
   {
@@ -155,7 +155,7 @@ const GROUPS = [
   // ---------- Châssis et suspension ----------
   {
     cat: 'chas', id: 'g_roues', new: true, name: 'Pneus et roues',
-    elements: [E('pneus', 'always', { dated: { kind: 'made', years: 6, label: 'Date de fabrication sur le flanc (4 chiffres : semaine et année)' } }), E('secours', 'always', { choices: ['Roue de secours', 'Kit anti-crevaison'] }), E('tpms', 'option'), E('pneus_hiver', 'option')],
+    elements: [E('pneus', 'always', { dated: { kind: 'made', years: 6, label: 'Date de fabrication sur le flanc (4 chiffres : semaine et année)' } }), E('secours', 'always', { choices: ['Roue de secours', 'Kit anti-crevaison'] }), E('pneus_hiver', 'option')],
   },
   { cat: 'chas', id: 'g_niveau', new: true, name: 'Mise à niveau et stabilisation', elements: [E('cales', 'option'), E('bequilles', 'option'), E('verins', 'option')] },
   { cat: 'chas', id: 'air', elements: [] },
@@ -164,7 +164,10 @@ const GROUPS = [
   { cat: 'chas', id: 'ptac_lourd', elements: [] },
 
   // ---------- Multimédia ----------
-  { cat: 'multi', id: 'g_antenne', new: true, name: 'Antenne TV', elements: [N('antenne_type', 'Type d’antenne', 'choice', { choices: ['Satellite manuelle', 'Satellite automatique', 'TNT (hertzienne)'], replaces: ['satman', 'sat', 'tnt'] }), E('tv', 'option')] },
+  { cat: 'multi', id: 'satman', alt: 'sat', elements: [N('pointeur_sat', 'Pointeur satellite (le boîtier qui bipe)', 'always'), N('demod_man', 'Démodulateur satellite avec sa carte (TNTSAT ou FRANSAT)', 'always')] },
+  { cat: 'multi', id: 'sat', alt: 'sat', elements: [N('sat_cmd', 'Boîtier de commande (fait tourner et pointer l’antenne)', 'always'), N('demod_auto', 'Démodulateur satellite avec sa carte (TNTSAT ou FRANSAT)', 'always', { note: 'Parfois intégré au boîtier de commande ou au téléviseur.' })] },
+  { cat: 'multi', id: 'tnt', elements: [N('tnt_ampli', 'Amplificateur de signal', 'always')] },
+  { cat: 'multi', id: 'tv', several: true, note: 'Il peut y en avoir plusieurs : on indique combien.', elements: [] },
   { cat: 'multi', id: 'wifi', elements: [] },
 
   // ---------- Sécurité ----------
@@ -178,9 +181,16 @@ const GROUPS = [
 ];
 
 // Equipment that does not fit anywhere yet: to decide with the user.
-const TO_REVIEW = {
-  vue_ar: 'C’est une vue du plan (l’arrière du fourgon), pas un équipement : à transformer en simple vue ?',
-  tech_vue: 'C’est une vue du plan (l’installation électrique sous la banquette), pas un équipement : à transformer en simple vue ?',
+// Equipment the user asked to drop (kept out of the new arrangement).
+const TO_REMOVE = {
+  cuis_l: 'Cuisine en L : pas utile.',
+  cell: 'Batterie au plomb : n’existe plus sur les camping-cars.',
+  tpms: 'Capteurs de pression des pneus : pas à suivre.',
 };
 
-module.exports = { GROUPS, TO_REVIEW };
+const TO_REVIEW = {
+  vue_ar: 'Ce n’est pas un équipement mais une photo de l’arrière du fourgon, rangée par erreur dans la liste des équipements. Je propose de l’enlever de la liste (la photo reste visible sur le plan).',
+  tech_vue: 'Pareil : c’est une photo de l’installation électrique sous la banquette, pas un équipement à cocher. Je propose de l’enlever de la liste (la photo reste visible sur le plan).',
+};
+
+module.exports = { GROUPS, TO_REVIEW, TO_REMOVE };
