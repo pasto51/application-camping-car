@@ -586,6 +586,22 @@ const PATCHES = [
       return changed;
     },
   },
+  {
+    // A tone of advice, not of sale: the gestures no longer repeat « vendu en magasin » (the « Ce qui peut vous
+    // aider » block and the « Demander conseil au magasin » button already say where to find it).
+    key: '2026-10-25-ton-conseil',
+    run(db) {
+      const scrub = (text) => text.replace(/ \(vendu[es]{0,2} en magasin\)/g, '').replace(/,? vendu[es]{0,2} en magasin(?: d[’']accessoires(?: de camping-car)?)?/g, '');
+      let changed = 0;
+      for (const row of db.prepare('SELECT id, data FROM diagnostics').all()) {
+        const data = scrub(row.data);
+        if (data === row.data) continue;
+        db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(data, row.id);
+        changed++;
+      }
+      return changed;
+    },
+  },
 ];
 
 function findLeaves(node, match, out = []) {

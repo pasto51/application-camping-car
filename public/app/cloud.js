@@ -984,7 +984,7 @@
     var c = (session && session.customer) || {};
     if (c.marketingOptin === 0 || c.marketingOptin === 1) return '';
     var d = (session && session.dealership && session.dealership.name) || 'votre concession';
-    return '<div class="cloud-ask"><p><b>Recevoir les conseils de ' + esc(d) + ' ?</b><br><span class="sub">Entretien de saison, nouveautés et offres du magasin. Vous pourrez changer d’avis dans votre espace client.</span></p>' +
+    return '<div class="cloud-ask"><p><b>Recevoir les conseils de ' + esc(d) + ' ?</b><br><span class="sub">Conseils d’entretien de saison, nouveautés et, de temps en temps, une offre. Vous pourrez changer d’avis dans votre espace client.</span></p>' +
       '<div class="cloud-ask-btns"><button class="btn" data-acc="mk-yes" type="button">Oui, volontiers</button><button class="btn alt" data-acc="mk-no" type="button">Non merci</button></div></div>';
   }
 
@@ -1058,7 +1058,7 @@
       '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" autocomplete="email" value="' + esc(c.email || '') + '">' +
       '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" autocomplete="tel" value="' + esc(c.phone || '') + '">' +
       '<button class="btn">Enregistrer</button></form>' +
-      '<section><h3>Conseils et offres</h3><label class="cloud-check"><input type="checkbox" data-sp="marketing"' + (c.marketingOptin === 1 ? ' checked' : '') + '> Recevoir les conseils de saison et les offres de ' + esc(d.name || 'ma concession') + '</label></section>' +
+      '<section><h3>Conseils de saison</h3><label class="cloud-check"><input type="checkbox" data-sp="marketing"' + (c.marketingOptin === 1 ? ' checked' : '') + '> Recevoir les conseils de saison et les offres de ' + esc(d.name || 'ma concession') + '</label></section>' +
       '<section><h3>Être prévenu des réponses</h3><div data-push></div>' +
       '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail ci-dessus)') + '</label></section>' +
       '<section><h3>Mon code d’accès</h3><p class="sub">À garder : avec votre nom, il permet de retrouver l’application sur un autre téléphone.</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +

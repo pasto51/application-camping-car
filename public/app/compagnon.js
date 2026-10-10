@@ -1005,9 +1005,9 @@ window.startCompagnon = function(DATA){
         '<div class="block"><b>Ce que vous pouvez faire</b><p>'+esc(r.geste)+'</p></div>' + vnote + autoTxt +
         (pro ? '<div class="safety"><b>À faire faire par un professionnel.</b> '+esc(SAFE_PRO)+'</div>' : '') +
         (r.sec ? '<div class="safety">'+esc(r.sec)+'</div>' : '') +
-        (none ? '' : '<div class="shop"><b>En rayon</b><p>'+esc(r.prod)+'</p></div>') + keepBlock(s,r) +
-        '<div class="btns">'+(none?'':'<button class="btn" data-act="shop">Demander au magasin</button>')+'<button class="btn'+(none?'':' alt')+'" data-act="rdv">Rendez-vous atelier</button></div>' +
-        (r.achat ? '<p class="sub">Le magasin vous conseille le modèle adapté à votre véhicule.</p></div>' : '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\'atelier.</p></div>') + back +
+        (none ? '' : '<div class="shop"><b>Ce qui peut vous aider</b><p>'+esc(r.prod)+'</p></div>') + keepBlock(s,r) +
+        '<div class="btns">'+(none?'':'<button class="btn" data-act="shop">Demander conseil au magasin</button>')+'<button class="btn'+(none?'':' alt')+'" data-act="rdv">Rendez-vous atelier</button></div>' +
+        (r.achat ? '<p class="sub">Le magasin peut vous aider à choisir le modèle adapté à votre véhicule.</p></div>' : '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\'atelier.</p></div>') + back +
         '<button class="btn alt" id="dagain" style="width:100%;margin-top:12px">Un autre souci</button>';
   }
   function renderDiagStep(){
@@ -1062,7 +1062,7 @@ window.startCompagnon = function(DATA){
     return '<article class="card tipcard'+(open?' open':'')+'" id="tip-'+t.id+'">' +
       '<button class="tiphead" type="button" data-tip="'+t.id+'" aria-expanded="'+open+'"><span class="tipt"><span class="tipcat">'+esc(catName(t.category))+'</span><b>'+esc(t.title)+'</b>'+(t.author?'<span class="tipby">L\'astuce de '+esc(t.author)+'</span>':'')+'</span><span class="tipgo" aria-hidden="true">'+(open?'−':'+')+'</span></button>' +
       (open ? tipMedia(t) + '<p class="tiptext">'+esc(t.body).replace(/\n/g,'<br>')+'</p>' +
-        (t.storeTip ? '<div class="tipstore"><p class="eyebrow">🛒 Le conseil du magasin</p><p>'+esc(t.storeTip)+'</p>'+(window.CDB_CLOUD && window.CDB_CLOUD.partRequest ? '<button class="btn alt" type="button" data-tipshop="'+t.id+'">Demander au magasin</button>' : '')+'</div>' : '') : '') +
+        (t.storeTip ? '<div class="tipstore"><p class="eyebrow">💡 Le conseil d’expert</p><p>'+esc(t.storeTip)+'</p>'+(window.CDB_CLOUD && window.CDB_CLOUD.partRequest ? '<button class="btn alt" type="button" data-tipshop="'+t.id+'">Demander conseil au magasin</button>' : '')+'</div>' : '') : '') +
       '</article>';
   }
   function shareBlock(){

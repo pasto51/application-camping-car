@@ -17,7 +17,7 @@ export function registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confi
             ${t.customer ? `<span class="status piece">Astuce de client</span>` : t.status === 'pending' ? '<span class="status">Proposition</span>' : ''}
             <h3>${esc(t.title)}</h3>
             <p>${multiline(t.body)}</p>
-            ${t.storeTip ? `<p class="tip-store">🛒 <strong>Le conseil du magasin :</strong> ${esc(t.storeTip)}</p>` : ''}
+            ${t.storeTip ? `<p class="tip-store">💡 <strong>Le conseil d’expert :</strong> ${esc(t.storeTip)}</p>` : ''}
             <p class="muted">${t.customer ? `Envoyée par ${esc(t.customer.name)} (${esc(t.customer.dealership)}) le ${formatDate(t.createdAt)}. Seul le prénom est affiché dans l’appli.` : t.publishedAt ? `Publiée le ${formatDate(t.publishedAt)}` : t.status === 'pending' ? 'Proposée avec la mise à jour de l’appli : relisez-la, corrigez si besoin, puis publiez-la ou refusez-la.' : ''}</p>
           </div>
         </div>
@@ -43,7 +43,7 @@ export function registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confi
       { name: 'videoUrl', label: 'Vidéo (lien YouTube ou Vimeo, facultatif)', hint: 'La vidéo reste chez YouTube ou Vimeo : elle s’affiche dans l’appli sans être copiée sur notre serveur.' },
       {
         name: 'storeTip',
-        label: 'Le conseil du magasin (facultatif)',
+        label: 'Le conseil d’expert (facultatif)',
         type: 'textarea',
         rows: 2,
         hint: 'Un produit spécialisé vendu en magasin d’accessoires de camping-car. Jamais de remède maison, pas de référence.',

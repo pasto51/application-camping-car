@@ -238,10 +238,11 @@ def main():
                      '  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name:it.name, userPhoto: UPH[id] || null, genericPhoto: PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null), model:m.name||"", ref:m.ref||""}};\n'
                      '  window.CDB_SETMOD = function(id,name,ref){if(!eqById(id)) return; var m = mods[id] = mods[id]||{}; m.name = String(name||"").slice(0,80); m.ref = String(ref||"").slice(0,80); modSave()};')
     s = replace_once(s, '$("#whatbody").addEventListener("click",function(e){\n', '$("#whatbody").addEventListener("click",function(e){\n    var pb = e.target.closest("[data-part]"); if(pb){window.CDB_CLOUD.partRequest(pb.dataset.part); return}\n')
-    s = replace_once(s, '<button class="btn" data-act="shop">Voir en magasin</button>', '<button class="btn" data-act="shop">Demander au magasin</button>')
+    s = replace_once(s, '<button class="btn" data-act="shop">Voir en magasin</button>', '<button class="btn" data-act="shop">Demander conseil au magasin</button>')
+    s = replace_once(s, '<b>En rayon</b>', '<b>Ce qui peut vous aider</b>')
     # Comfort problems (a product to buy): « Notre conseil » instead of a probable cause.
     s = replace_once(s, '(s.urgent?"Danger : agissez maintenant":"Cause probable")', '(s.urgent?"Danger : agissez maintenant":r.achat?"Notre conseil":"Cause probable")')
-    s = replace_once(s, '\'<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\\\'atelier.</p></div>\'', '(r.achat ? \'<p class="sub">Le magasin vous conseille le modèle adapté à votre véhicule.</p></div>\' : \'<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\\\'atelier.</p></div>\')')
+    s = replace_once(s, '\'<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\\\'atelier.</p></div>\'', '(r.achat ? \'<p class="sub">Le magasin peut vous aider à choisir le modèle adapté à votre véhicule.</p></div>\' : \'<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\\\'atelier.</p></div>\')')
     s = replace_once(s, 'else toast("Démo : la fiche produit s\'ouvrirait ici.");', 'else if(a.dataset.act==="shop"){window.CDB_CLOUD.partRequest(sj.eq||null, rr.prod.split(" (")[0], rr.achat ? "accessoire" : null)}')
     # The VIN is entered at the handover on the customer's phone and stays there (never saved on the server).
     s = replace_once(s, 'placeholder="17 caractères" value="\'+esc(hand.vin)+\'"></div></div>\';', 'placeholder="17 caractères" value="\'+esc(hand.vin)+\'"><small class="sub">Reste sur ce téléphone, jamais enregistré sur nos serveurs.</small></div></div>\';')
@@ -462,7 +463,7 @@ def main():
     return '<article class="card tipcard'+(open?' open':'')+'" id="tip-'+t.id+'">' +
       '<button class="tiphead" type="button" data-tip="'+t.id+'" aria-expanded="'+open+'"><span class="tipt"><span class="tipcat">'+esc(catName(t.category))+'</span><b>'+esc(t.title)+'</b>'+(t.author?'<span class="tipby">L\'astuce de '+esc(t.author)+'</span>':'')+'</span><span class="tipgo" aria-hidden="true">'+(open?'−':'+')+'</span></button>' +
       (open ? tipMedia(t) + '<p class="tiptext">'+esc(t.body).replace(/\n/g,'<br>')+'</p>' +
-        (t.storeTip ? '<div class="tipstore"><p class="eyebrow">🛒 Le conseil du magasin</p><p>'+esc(t.storeTip)+'</p>'+(window.CDB_CLOUD && window.CDB_CLOUD.partRequest ? '<button class="btn alt" type="button" data-tipshop="'+t.id+'">Demander au magasin</button>' : '')+'</div>' : '') : '') +
+        (t.storeTip ? '<div class="tipstore"><p class="eyebrow">💡 Le conseil d’expert</p><p>'+esc(t.storeTip)+'</p>'+(window.CDB_CLOUD && window.CDB_CLOUD.partRequest ? '<button class="btn alt" type="button" data-tipshop="'+t.id+'">Demander conseil au magasin</button>' : '')+'</div>' : '') : '') +
       '</article>';
   }
   function shareBlock(){
