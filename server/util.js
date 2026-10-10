@@ -35,6 +35,15 @@ function optStr(value, max = 500) {
   return s === '' ? null : s;
 }
 
+// Optional postal code: 5 digits in France; letters, digits, spaces and dashes for other countries.
+function optPostal(value) {
+  const s = optStr(value, 12);
+  if (s == null) return s;
+  const v = s.toUpperCase().replace(/\s+/g, ' ');
+  if (!/^[0-9A-Z][0-9A-Z -]{1,9}$/.test(v)) throw new HttpError(400, 'Code postal invalide');
+  return v;
+}
+
 function reqStr(value, label, max = 500) {
   const s = optStr(value, max);
   if (!s) throw new HttpError(400, `${label} obligatoire`);
@@ -91,4 +100,4 @@ function pick(next, current) {
   return next === undefined ? current : next;
 }
 
-module.exports = { camel, camelAll, safeJson, optStr, reqStr, optInt, reqInt, optEmail, optDate, bool01, normalizeSpecs, pick };
+module.exports = { camel, camelAll, safeJson, optStr, optPostal, reqStr, optInt, reqInt, optEmail, optDate, bool01, normalizeSpecs, pick };

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const { HttpError } = require('../http');
 const { bumpContentVersion, getSetting, setSetting } = require('../db');
 const { hashPassword, verifyPassword, signToken, verifyToken, normalizeCode, randomCode, sha256, createRateLimiter, sealText, openText } = require('../auth');
-const { camel, camelAll, optStr, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
+const { camel, camelAll, optStr, optPostal, reqStr, optInt, reqInt, optEmail, bool01, normalizeSpecs, pick, safeJson } = require('../util');
 const { deleteCustomer, formatAccessCode } = require('./public');
 const { readProfile, getCatalogValue, CATALOG_KEYS, carryOf } = require('../catalog');
 const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
@@ -1364,6 +1364,7 @@ function register(router) {
 
   const CUSTOMER_SELECT = `SELECT c.id, c.dealership_id, c.vehicle_id, c.first_name, c.last_name, c.email, c.phone, c.cell_number, c.vehicle_year, c.email_notify, c.marketing_optin, c.marketing_optin_at, v.model_year,
       c.handover_date, c.warranty_end, c.warranty_ext_end, c.cover_photo_url, c.access_code_at, c.access_expires_at, c.created_at, c.updated_at,
+      c.postal_code, c.last_seen_at, c.diag_consent_at,
       d.name AS dealership_name, v.name AS vehicle_name, b.name AS brand_name, c.salesperson_id, s.name AS salesperson_name, s.email AS salesperson_email,
       (SELECT COUNT(*) FROM reports r WHERE r.customer_id = c.id AND r.status != 'resolu') AS open_reports
     FROM customers c
@@ -1394,8 +1395,8 @@ function register(router) {
     const where = [s.sql];
     const args = [...s.args];
     if (q) {
-      where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.cell_number LIKE ?)");
-      args.push(...Array(4).fill(`%${q}%`));
+      where.push("(c.last_name LIKE ? OR c.first_name LIKE ? OR c.email LIKE ? OR c.cell_number LIKE ? OR c.postal_code LIKE ?)");
+      args.push(...Array(5).fill(`%${q}%`));
     }
     const dealershipId = user.role === 'admin' ? optInt(ctx.query.get('dealershipId')) : null;
     if (dealershipId) {
@@ -1439,6 +1440,7 @@ function register(router) {
     const email = optEmail(body.email);
     if (body.sendEmail && !email) throw new HttpError(400, 'Indiquez l’e-mail du client pour lui envoyer son accès');
     // A salesperson registers their own customers; the manager (or the administrator) picks who follows them.
+    const postalCode = optPostal(body.postalCode) ?? null;
     const salespersonId = user.role === 'sales' ? user.id : salespersonFor(db, body.salespersonId, dealershipId) ?? (user.role === 'manager' ? user.id : null);
     const core = randomCode(8);
     const now = new Date();
@@ -1464,11 +1466,12 @@ function register(router) {
         expires.toISOString()
       );
     const accessCode = formatAccessCode(readProfile(vehicle).codePrefix, core);
-    db.prepare('UPDATE customers SET access_code_enc = ?, salesperson_id = ?, warranty_end = ?, warranty_ext_end = ? WHERE id = ?').run(
+    db.prepare('UPDATE customers SET access_code_enc = ?, salesperson_id = ?, warranty_end = ?, warranty_ext_end = ?, postal_code = ? WHERE id = ?').run(
       sealText(accessCode, ctx.config.secret),
       salespersonId,
       optStr(body.warrantyEnd, 10),
       optStr(body.warrantyExtEnd, 10),
+      postalCode,
       lastInsertRowid
     );
     const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
@@ -1543,6 +1546,7 @@ function register(router) {
       customer.id
     );
     if (body.warrantyEnd !== undefined) db.prepare('UPDATE customers SET warranty_end = ? WHERE id = ?').run(optStr(body.warrantyEnd, 10), customer.id);
+    if (body.postalCode !== undefined) db.prepare('UPDATE customers SET postal_code = ? WHERE id = ?').run(optPostal(body.postalCode), customer.id);
     if (body.warrantyExtEnd !== undefined) db.prepare('UPDATE customers SET warranty_ext_end = ? WHERE id = ?').run(optStr(body.warrantyExtEnd, 10), customer.id);
     // Only the manager (or the administrator) moves a customer from one salesperson to another.
     if (body.salespersonId !== undefined && Number(body.salespersonId || 0) !== (customer.salesperson_id || 0)) {

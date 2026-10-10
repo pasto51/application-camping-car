@@ -10,7 +10,11 @@ const { kindsOf, labelOf, entretienOf, logOf } = require('../entretien');
 const { CATEGORY_IDS } = require('../tips');
 const { bannerFor } = require('../banners');
 const { routeRequest, warrantyOf, SERVICES } = require('../services');
-const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
+const { camel, camelAll, optStr, optPostal, reqStr, reqInt, optEmail, optDate } = require('../util');
+
+// Version of the text the customer ticks before the diagnostics (« they help, they do not replace a professional »):
+// raising it asks every customer again.
+const DIAG_CONSENT_VERSION = 1;
 
 // Storage keys of the Compagnon de bord app that are saved in the cloud.
 function cleanDates(text) {
@@ -88,6 +92,8 @@ function register(router) {
     if (!row) throw new HttpError(401, 'Session expirée, utilisez votre code d’accès');
     const today = new Date().toISOString().slice(0, 10);
     if (!row.session_used_at || row.session_used_at.slice(0, 10) < today) ctx.db.prepare("UPDATE customer_sessions SET last_used_at = datetime('now') WHERE token_hash = ?").run(hash);
+    // Last use of the app, whatever the phone: an account unused for 3 years is erased (see jobs.js).
+    if (!row.last_seen_at || row.last_seen_at.slice(0, 10) < today) ctx.db.prepare("UPDATE customers SET last_seen_at = datetime('now') WHERE id = ?").run(row.id);
     delete row.session_used_at;
     ctx.tokenHash = hash;
     return row;
@@ -109,6 +115,7 @@ function register(router) {
     return {
       warranty: warrantyOf(db, customer),
       contentVersion: Number(getSetting(db, 'content_version', '0')),
+      diagConsentVersion: DIAG_CONSENT_VERSION,
       customer: camel(publicCustomer),
       vehicle: camel(vehicle),
       dealership: camel(dealership),
@@ -180,6 +187,7 @@ function register(router) {
     findActiveVehicle(db, vehicleId);
     const c = body.customer || {};
     const lastName = reqStr(c.lastName, 'Nom du client', 100);
+    const postalCode = optPostal(c.postalCode) ?? null;
     const salesperson = body.salespersonId ? db.prepare("SELECT id FROM admins WHERE id = ? AND dealership_id = ? AND role IN ('manager', 'sales')").get(Number(body.salespersonId), dealership.id) : null;
     return transaction(db, () => {
       const { lastInsertRowid } = db
@@ -201,6 +209,7 @@ function register(router) {
           sha256(randomToken())
         );
       if (salesperson) db.prepare('UPDATE customers SET salesperson_id = ? WHERE id = ?').run(salesperson.id, lastInsertRowid);
+      db.prepare('UPDATE customers SET postal_code = ? WHERE id = ?').run(postalCode, lastInsertRowid);
       // Warranty entered by the salesperson at the handover (end date, extension): it decides SAV or store for parts.
       db.prepare('UPDATE customers SET warranty_end = ?, warranty_ext_end = ? WHERE id = ?').run(optDate(c.warrantyEnd), optDate(c.warrantyExtEnd), lastInsertRowid);
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(lastInsertRowid);
@@ -384,6 +393,10 @@ function register(router) {
     if (body.marketing !== undefined) db.prepare("UPDATE customers SET marketing_optin = ?, marketing_optin_at = datetime('now') WHERE id = ?").run(body.marketing ? 1 : 0, customer.id);
     if (body.cellNumber !== undefined) db.prepare('UPDATE customers SET cell_number = ? WHERE id = ?').run(optStr(body.cellNumber, 40), customer.id);
     if (body.vehicleYear !== undefined) db.prepare('UPDATE customers SET vehicle_year = ? WHERE id = ?').run(optStr(body.vehicleYear, 10), customer.id);
+    if (body.postalCode !== undefined) db.prepare('UPDATE customers SET postal_code = ? WHERE id = ?').run(optPostal(body.postalCode), customer.id);
+    // « The diagnostics help, they do not replace a professional », ticked by the customer: kept with its date and the
+    // version of the text, as proof.
+    if (body.diagConsent === true) db.prepare("UPDATE customers SET diag_consent_at = datetime('now'), diag_consent_v = ? WHERE id = ?").run(DIAG_CONSENT_VERSION, customer.id);
     return session(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id)).customer;
   });
 
@@ -651,4 +664,4 @@ function deleteCustomer(db, uploads, customerId) {
   return true;
 }
 
-module.exports = { register, deleteCustomer, statePhotoUrls, formatAccessCode };
+module.exports = { register, deleteCustomer, statePhotoUrls, formatAccessCode, DIAG_CONSENT_VERSION };

@@ -974,3 +974,30 @@ test('every link between the equipment and the diagnostics, lists, workshop reas
   const out = execFileSync(process.execPath, [require('node:path').join(__dirname, '..', 'tools', 'check-equipment-links.js')], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   assert.match(out, /Aucun problème/);
 });
+
+test('postal code, warning of the diagnostics ticked once (with its date), accounts unused for 3 years erased', async () => {
+  const h = await handover({ firstName: 'Jean', lastName: 'Postal', postalCode: '17300' });
+  assert.equal(h.customer.postalCode, '17300');
+  assert.equal(h.diagConsentVersion, 1);
+  assert.equal(h.customer.diagConsentV, null);
+  // The customer corrects it; a wrong one is refused.
+  assert.equal((await call('PUT', '/api/me/info', { body: { postalCode: ' 17000 ' }, token: h.token })).data.postalCode, '17000');
+  assert.equal((await call('PUT', '/api/me/info', { body: { postalCode: '<b>' }, token: h.token })).status, 400);
+  // The warning, ticked: kept with its date and version, and seen in the back-office.
+  const me = (await call('PUT', '/api/me/info', { body: { diagConsent: true }, token: h.token })).data;
+  assert.equal(me.diagConsentV, 1);
+  assert.ok(me.diagConsentAt);
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const rec = (await call('GET', `/api/admin/customers/${h.customer.id}`, { token: admin })).data;
+  assert.equal(rec.postalCode, '17000');
+  assert.ok(rec.diagConsentAt && rec.lastSeenAt);
+  assert.equal((await call('PUT', `/api/admin/customers/${h.customer.id}`, { body: { postalCode: '44000' }, token: admin })).status, 200);
+  assert.ok((await call('GET', '/api/admin/customers?q=44000', { token: admin })).data.some((c) => c.id === h.customer.id));
+  // 3 years without using the app: erased by the daily task; a recent one stays.
+  const old = await handover({ firstName: 'Ancien', lastName: 'Inactif' });
+  app.db.prepare("UPDATE customers SET last_seen_at = datetime('now', '-3 years', '-1 day') WHERE id = ?").run(old.customer.id);
+  const { runDue } = require('../server/jobs');
+  await runDue({ db: app.db, uploads: app.uploads, config: { dataDir }, log: () => {}, notify: { push: async () => 0 } }, { force: true });
+  assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM customers WHERE id = ?').get(old.customer.id).n, 0);
+  assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM customers WHERE id = ?').get(h.customer.id).n, 1);
+});

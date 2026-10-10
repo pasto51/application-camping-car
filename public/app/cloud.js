@@ -400,6 +400,7 @@
         '<label class="eyebrow" for="c_last">Nom *</label><input class="search" id="c_last" name="lastName" required autocomplete="off">' +
         '<label class="eyebrow" for="c_tel">Téléphone</label><input class="search" id="c_tel" name="phone" type="tel" autocomplete="off">' +
         '<label class="eyebrow" for="c_mail">E-mail</label><input class="search" id="c_mail" name="email" type="email" autocomplete="off">' +
+        '<label class="eyebrow" for="c_cp">Code postal</label><input class="search" id="c_cp" name="postalCode" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="Ex. 17300">' +
         ((f.dealership && f.dealership.salespeople && f.dealership.salespeople.length)
           ? '<label class="eyebrow" for="c_sales">Commercial qui a vendu le véhicule</label><select class="search" id="c_sales" name="salespersonId"><option value="">— Choisir —</option>' +
             f.dealership.salespeople.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('') + '</select>'
@@ -482,7 +483,7 @@
 
   function startSession(res) {
     clearLocal();
-    session = { token: res.token, customer: res.customer, vehicle: res.vehicle, dealership: res.dealership, warranty: res.warranty || null };
+    session = { token: res.token, customer: res.customer, vehicle: res.vehicle, dealership: res.dealership, warranty: res.warranty || null, diagVersion: res.diagConsentVersion || 1 };
     saveSession();
     applyState(res.state);
   }
@@ -502,7 +503,8 @@
     var online = Promise.all([api('GET', '/api/app/data'), api('GET', '/api/me')]).then(function (r) {
       DATA = r[0];
       lsSet(DATA_KEY, JSON.stringify(DATA));
-      session.customer = r[1].customer; session.vehicle = r[1].vehicle; session.dealership = r[1].dealership; session.warranty = r[1].warranty || null; saveSession();
+      session.customer = r[1].customer; session.vehicle = r[1].vehicle; session.dealership = r[1].dealership; session.warranty = r[1].warranty || null; session.diagVersion = r[1].diagConsentVersion || 1; saveSession();
+      sendDiagConsent();
       applyState(r[1].state);
     });
     return online
@@ -866,6 +868,41 @@
     m.querySelector('form').onsubmit = function (e) { e.preventDefault(); save(input.value); };
   }
 
+  // Customers registered before the postal code existed are asked once on the home screen (they can put it off a month).
+  var CP_LATER_KEY = 'cdb_cp_later';
+  function addPostalCard(home, after) {
+    var c = (session && session.customer) || {};
+    if (c.postalCode || Date.now() < Number(lsGet(CP_LATER_KEY) || 0)) return;
+    var card = document.createElement('form'); card.className = 'card cloud-cp';
+    card.innerHTML = '<b>Votre code postal</b><p class="sub">Il aide votre concession à vous proposer des conseils et des rendez-vous près de chez vous.</p>' +
+      '<div class="cloud-cp-row"><input class="search" name="cp" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="Ex. 17300" aria-label="Code postal" size="8"><button class="btn">Enregistrer</button></div>' +
+      '<button type="button" class="lnk" data-cp-later>Plus tard</button>';
+    home.insertBefore(card, after.nextSibling);
+    card.querySelector('[data-cp-later]').onclick = function () { lsSet(CP_LATER_KEY, String(Date.now() + 30 * 86400000)); card.remove(); };
+    card.onsubmit = function (e) {
+      e.preventDefault();
+      var v = card.elements.cp.value.trim(); if (!v) return;
+      api('PUT', '/api/me/info', { postalCode: v }).then(function (cust) { session.customer = cust; saveSession(); card.remove(); toast('Merci, c’est enregistré'); }).catch(function (err) { toast(err.message); });
+    };
+  }
+
+  // « The diagnostics help, they do not replace a professional »: ticked once (kept on the server with its date, as
+  // proof), asked again only if the text changes (diagConsentVersion). Offline, the tick waits and is sent later.
+  var DIAG_PENDING_KEY = 'cdb_diag_pending';
+  function diagAccepted() {
+    var c = (session && session.customer) || {}, need = (session && session.diagVersion) || 1;
+    return (c.diagConsentV || 0) >= need || Number(lsGet(DIAG_PENDING_KEY) || 0) >= need;
+  }
+  function sendDiagConsent() {
+    if (!lsGet(DIAG_PENDING_KEY) || !session || !session.token) return Promise.resolve();
+    return api('PUT', '/api/me/info', { diagConsent: true }).then(function (cust) { session.customer = cust; saveSession(); lsDel(DIAG_PENDING_KEY); }).catch(function () {});
+  }
+  window.CDB_CLOUD.diagAccepted = diagAccepted;
+  window.CDB_CLOUD.diagConsent = function () {
+    lsSet(DIAG_PENDING_KEY, String((session && session.diagVersion) || 1));
+    return sendDiagConsent();
+  };
+
   function addAccountCard() {
     var home = document.getElementById('home'); if (!home || document.getElementById('cloudacc')) return;
     var req = document.createElement('div'); req.id = 'cloudhome'; req.hidden = true;
@@ -876,6 +913,7 @@
       home.insertBefore(ann, home.firstChild);
     }
     home.insertBefore(req, home.firstChild); home.appendChild(acc);
+    addPostalCard(home, req);
     // The maintenance logbook, just under the weight of the vehicle, with a red dot when something is to be done.
     var ent = document.createElement('button'); ent.id = 'cloudent'; ent.type = 'button'; ent.className = 'cloud-carnet';
     var load = document.getElementById('loadcard');
@@ -1064,6 +1102,7 @@
       '<label class="eyebrow">Nom</label><input class="search" value="' + esc(c.lastName || '') + '" disabled><small class="sub">Pour changer de nom, demandez à votre concession.</small>' +
       '<label class="eyebrow">E-mail</label><input class="search" name="email" type="email" maxlength="200" autocomplete="email" value="' + esc(c.email || '') + '">' +
       '<label class="eyebrow">Téléphone</label><input class="search" name="phone" type="tel" maxlength="40" autocomplete="tel" value="' + esc(c.phone || '') + '">' +
+      '<label class="eyebrow">Code postal</label><input class="search" name="postalCode" inputmode="numeric" maxlength="10" autocomplete="postal-code" value="' + esc(c.postalCode || '') + '" placeholder="Ex. 17300">' +
       '<button class="btn">Enregistrer</button></form>' +
       '<section><h3>Conseils de saison</h3><label class="cloud-check"><input type="checkbox" data-sp="marketing"' + (c.marketingOptin === 1 ? ' checked' : '') + '> Recevoir les conseils de saison et les offres de ' + esc(d.name || 'ma concession') + '</label></section>' +
       '<section><h3>Être prévenu des réponses</h3><div data-push></div>' +
@@ -1087,7 +1126,7 @@
       var f = e.target.closest('[data-spf]'); if (!f) return;
       e.preventDefault();
       var val = function (n) { return f.elements[n] ? f.elements[n].value.trim() : undefined; }, body;
-      if (f.dataset.spf === 'me') body = { firstName: val('firstName'), email: val('email'), phone: val('phone') };
+      if (f.dataset.spf === 'me') body = { firstName: val('firstName'), email: val('email'), phone: val('phone'), postalCode: val('postalCode') };
       else {
         if (val('vin')) lsSet(VIN_KEY, val('vin')); else lsDel(VIN_KEY);
         body = { vehicleYear: val('vehicleYear'), cellNumber: val('cellNumber') };

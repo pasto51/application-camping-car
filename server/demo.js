@@ -333,6 +333,8 @@ async function main() {
     { key: 'vannes', via: 'bo', first: 'Anne', last: 'Moreau', sales: 'gwen', handover: day(6), note: 'sous garantie' },
   ];
   const C = {};
+  // Postal codes around each demo dealership (shown on the customer's card and searchable in the back-office).
+  const POSTAL = { Paul: '44000', Martine: '44300', Henri: '44100', Nadia: '44800', Isabelle: '35000', Bernard: '35200', Élodie: '35700', Yves: '56000', Anne: '56100' };
   for (const c of CUSTOMERS) {
     const d = D[c.key];
     const salesperson = c.sales ? d.staff[c.sales] : null;
@@ -346,7 +348,7 @@ async function main() {
         dealershipCode: d.code,
         vehicleId,
         salespersonId: salesperson?.id,
-        customer: { firstName: c.first, lastName: c.last, email, phone: '06 00 00 00 00', handoverDate: c.handover, warrantyEnd: '', warrantyExtEnd },
+        customer: { firstName: c.first, lastName: c.last, email, phone: '06 00 00 00 00', postalCode: POSTAL[c.first], handoverDate: c.handover, warrantyEnd: '', warrantyExtEnd },
       });
       id = h.customer.id;
       token = h.token;
@@ -360,6 +362,7 @@ async function main() {
         lastName: c.last,
         email,
         phone: '06 00 00 00 00',
+        postalCode: POSTAL[c.first],
         handoverDate: c.handover,
         warrantyExtEnd,
         salespersonId: salesperson?.id,
@@ -370,6 +373,8 @@ async function main() {
       const link = (await call('POST', `/api/admin/customers/${id}/resend`, { sendEmail: false })).appLink;
       token = (await call('POST', '/api/link', { token: new URL(link).searchParams.get('lien') })).token;
     }
+    // Customers who already opened the diagnostics have ticked their warning (date shown on their card).
+    if (c.via === 'app') await call('PUT', '/api/me/info', { diagConsent: true }, token);
     C[c.first] = { ...c, id, token, dealer: d };
   }
 

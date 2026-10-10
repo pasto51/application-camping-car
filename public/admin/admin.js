@@ -1023,6 +1023,7 @@ async function newCustomer(el) {
       { name: 'lastName', label: 'Nom', required: true, hint: 'Le client le saisit avec son code d’accès.' },
       { name: 'email', label: 'E-mail', type: 'email' },
       { name: 'phone', label: 'Téléphone', type: 'tel' },
+      { name: 'postalCode', label: 'Code postal', hint: 'Celui du domicile du client.' },
       { name: 'cellNumber', label: 'N° de cellule', hint: 'Plaque du constructeur de la cellule.' },
       { name: 'vehicleYear', label: 'Année du véhicule' },
       { name: 'warrantyEnd', label: 'Fin de garantie', type: 'date', hint: 'Vide : garantie habituelle de la concession à partir de la mise en main.' },
@@ -1313,6 +1314,7 @@ async function customerDetail(el, id) {
       <div class="card">
         <dl class="facts">
           <div><dt>Véhicule</dt><dd>${esc(c.brandName)} ${esc(c.vehicleName)}</dd></div>
+          <div><dt>Code postal</dt><dd>${esc(c.postalCode || '—')}</dd></div>
           <div><dt>N° de cellule</dt><dd>${esc(c.cellNumber || '—')}</dd></div>
           <div><dt>Année du véhicule</dt><dd>${esc(c.vehicleYear || (/\b(19|20)\d{2}\b/.exec(c.modelYear || '') || ['—'])[0])}</dd></div>
           <div><dt>VIN</dt><dd class="muted">Conservé seulement sur le téléphone du client</dd></div>
@@ -1343,6 +1345,8 @@ async function customerDetail(el, id) {
           ${c.nickname ? `<div><dt>Petit nom du véhicule</dt><dd>« ${esc(c.nickname)} »</dd></div>` : ''}
           <div><dt>Contrôle de mise en main</dt><dd>${c.handover.steps}/5 points${c.handover.validatedOn ? ` · validée le ${esc(c.handover.validatedOn)}` : ''}</dd></div>
           <div><dt>Dernière sauvegarde de l’appli</dt><dd>${c.stateUpdatedAt ? formatDate(c.stateUpdatedAt) : '—'}</dd></div>
+          <div><dt>Dernière utilisation de l’appli</dt><dd>${c.lastSeenAt ? `${formatDate(c.lastSeenAt.slice(0, 10))} <small class="muted">(compte effacé après 3 ans sans utilisation)</small>` : '—'}</dd></div>
+          <div><dt>Avertissement des diagnostics</dt><dd>${c.diagConsentAt ? `Accepté le ${formatDate(c.diagConsentAt.slice(0, 10))}` : 'Pas encore'}</dd></div>
         </dl>
       </div>
       <div class="card">
@@ -1429,6 +1433,7 @@ async function customerDetail(el, id) {
           { name: 'lastName', label: 'Nom', required: true },
           { name: 'email', label: 'E-mail', type: 'email' },
           { name: 'phone', label: 'Téléphone', type: 'tel' },
+          { name: 'postalCode', label: 'Code postal' },
               { name: 'cellNumber', label: 'N° de cellule' },
           { name: 'vehicleYear', label: 'Année du véhicule' },
           { name: 'warrantyEnd', label: 'Fin de garantie', type: 'date', hint: 'Vide : garantie habituelle de la concession.' },

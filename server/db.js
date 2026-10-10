@@ -359,6 +359,10 @@ const ADDED_COLUMNS = [
   ['customers', 'warranty_ext_end', 'TEXT'], // extended warranty, if taken
   ['reports', 'service', 'TEXT'], // 'sav' or 'magasin'
   ['reports', 'transfer_note', 'TEXT'],
+  ['customers', 'postal_code', 'TEXT'],
+  ['customers', 'last_seen_at', 'TEXT'], // last day the customer used the app: an account unused for 3 years is erased
+  ['customers', 'diag_consent_at', 'TEXT'], // the customer ticked « the diagnostics help, they do not replace a professional »
+  ['customers', 'diag_consent_v', 'INTEGER'], // version of that text
 ];
 
 // The VIN is never kept on the server: it stays on the customer's phone (see public/app/cloud.js).

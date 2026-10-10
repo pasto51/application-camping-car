@@ -1067,7 +1067,18 @@ window.startCompagnon = function(DATA){
     if(oth.length) h += '<details class="cat"><summary><span>Autres équipements (pas dans mon véhicule)</span><span class="cnt">'+oth.length+'</span></summary><div class="opts" style="margin-top:8px">'+oth.map(dBtn).join("")+'</div><p class="sub">Un équipement manque ? Cochez-le dans « Mes équipements ».</p></details>';
     el.innerHTML = h;
   }
+  function diagNeedsOk(){var C = window.CDB_CLOUD; if(C && C.diagAccepted) return !C.diagAccepted(); return !lsGet("cdb_diag_ok")}
+  function renderDiagGate(){
+    $("#diagbody").innerHTML = '<div class="card diaggate"><h3>Avant de commencer</h3>' +
+      '<p>Ces diagnostics vous aident à repérer d\'où peut venir un problème et ce que vous pouvez vérifier vous-même, sans démonter. Ils <b>ne remplacent en aucun cas l\'avis d\'un professionnel</b> : votre atelier ou votre magasin.</p>' +
+      '<p><b>En cas de doute, n\'hésitez pas : contactez directement votre atelier.</b></p>' +
+      '<div class="safety">Odeur de gaz, fumée, étincelles ou fil qui chauffe : coupez, aérez et appelez un professionnel. Ne cherchez pas la cause vous-même.</div>' +
+      '<label class="eqitem diagok"><input type="checkbox" id="dgok"><span>J\'ai compris : ces diagnostics sont une aide et ne remplacent pas l\'avis d\'un professionnel.</span></label>' +
+      '<button class="btn" id="dggo" disabled style="width:100%">Continuer</button>' +
+      '<button class="btn alt" data-act="rdvfree" style="width:100%;margin-top:8px">Contacter mon atelier</button></div>';
+  }
   function renderDiagList(){
+    if(diagNeedsOk()){renderDiagGate(); return}
     var b = $("#diagbody"); diag = {i:-1,ans:[],auto:[],h:[]};
     b.innerHTML = '<p class="sub">Dites-nous ce qui se passe. On pose quelques questions, comme au comptoir. Exemple : « mon frigo ne refroidit plus » ou « ça sent mauvais ».</p>' +
       '<input class="search" id="dsearch" type="search" placeholder="Décrivez votre problème en quelques mots" autocomplete="off" style="margin:12px 0">' +
@@ -1084,7 +1095,7 @@ window.startCompagnon = function(DATA){
         (r.sec ? '<div class="safety">'+esc(r.sec)+'</div>' : '') +
         (none ? '' : '<div class="shop"><b>Ce qui peut vous aider</b><p>'+esc(r.prod)+'</p></div>') + keepBlock(s,r) +
         '<div class="btns">'+(none?'':'<button class="btn" data-act="shop">Demander conseil au magasin</button>')+'<button class="btn'+(none?'':' alt')+'" data-act="rdv">Rendez-vous atelier</button></div>' +
-        (r.achat ? '<p class="sub">Le magasin peut vous aider à choisir le modèle adapté à votre véhicule.</p></div>' : '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\'atelier.</p></div>') + back +
+        (r.achat ? '<p class="sub">Le magasin peut vous aider à choisir le modèle adapté à votre véhicule.</p>' : '<p class="sub">Diagnostic probable, pas une certitude.</p>') + '<p class="sub diagnote">Ce diagnostic est une aide : il ne remplace pas l\'avis d\'un professionnel. En cas de doute, contactez votre atelier.</p></div>' + back +
         '<button class="btn alt" id="dagain" style="width:100%;margin-top:12px">Un autre souci</button>';
   }
   function renderDiagStep(){
@@ -1100,6 +1111,8 @@ window.startCompagnon = function(DATA){
       b.innerHTML = resultHTML(s,n,back,autoTxt,vnote); window.CDB_TRACK&&window.CDB_TRACK("result",{id:s.id,label:n.cause,prod:n.prod.indexOf("Aucun")===0?null:n.prod});
     }
   }
+  $("#diagbody").addEventListener("change",function(e){if(e.target.id==="dgok"){var g = $("#dggo"); if(g) g.disabled = !e.target.checked}});
+  $("#diagbody").addEventListener("click",function(e){if(e.target.id!=="dggo" || !$("#dgok") || !$("#dgok").checked) return; lsSet("cdb_diag_ok","1"); var C = window.CDB_CLOUD; if(C && C.diagConsent) C.diagConsent(); renderDiagList(); window.scrollTo(0,0)});
   $("#diagbody").addEventListener("input",function(e){if(e.target.id==="dsearch") drawDiagList(norm(e.target.value).trim())});
   $("#diagbody").addEventListener("click",function(e){
     var s = e.target.closest("[data-s]");

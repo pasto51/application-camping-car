@@ -770,6 +770,26 @@ def main():
   STOP = STOP.filter(function(w){return w!=="avant"}).concat(["camping","car","cc","campingcar","vehicule"]);
   function stem(w){return''')
 
+    # Before the diagnostics: the customer ticks once that they are a help and do not replace a professional (kept on the
+    # server with its date, see cloud.js diagConsent); every conclusion reminds it.
+    s = replace_once(s, "  function renderDiagList(){\n    var b = $(\"#diagbody\"); diag = {i:-1,ans:[],auto:[],h:[]};", """  function diagNeedsOk(){var C = window.CDB_CLOUD; if(C && C.diagAccepted) return !C.diagAccepted(); return !lsGet("cdb_diag_ok")}
+  function renderDiagGate(){
+    $("#diagbody").innerHTML = '<div class="card diaggate"><h3>Avant de commencer</h3>' +
+      '<p>Ces diagnostics vous aident à repérer d\\'où peut venir un problème et ce que vous pouvez vérifier vous-même, sans démonter. Ils <b>ne remplacent en aucun cas l\\'avis d\\'un professionnel</b> : votre atelier ou votre magasin.</p>' +
+      '<p><b>En cas de doute, n\\'hésitez pas : contactez directement votre atelier.</b></p>' +
+      '<div class="safety">Odeur de gaz, fumée, étincelles ou fil qui chauffe : coupez, aérez et appelez un professionnel. Ne cherchez pas la cause vous-même.</div>' +
+      '<label class="eqitem diagok"><input type="checkbox" id="dgok"><span>J\\'ai compris : ces diagnostics sont une aide et ne remplacent pas l\\'avis d\\'un professionnel.</span></label>' +
+      '<button class="btn" id="dggo" disabled style="width:100%">Continuer</button>' +
+      '<button class="btn alt" data-act="rdvfree" style="width:100%;margin-top:8px">Contacter mon atelier</button></div>';
+  }
+  function renderDiagList(){
+    if(diagNeedsOk()){renderDiagGate(); return}
+    var b = $("#diagbody"); diag = {i:-1,ans:[],auto:[],h:[]};""")
+    s = replace_once(s, """(r.achat ? '<p class="sub">Le magasin peut vous aider à choisir le modèle adapté à votre véhicule.</p></div>' : '<p class="sub">Diagnostic probable, pas une certitude. En cas de doute, passez à l\\'atelier.</p></div>')""", """(r.achat ? '<p class="sub">Le magasin peut vous aider à choisir le modèle adapté à votre véhicule.</p>' : '<p class="sub">Diagnostic probable, pas une certitude.</p>') + '<p class="sub diagnote">Ce diagnostic est une aide : il ne remplace pas l\\'avis d\\'un professionnel. En cas de doute, contactez votre atelier.</p></div>'""")
+    s = replace_once(s, '  $("#diagbody").addEventListener("input",function(e){', """  $("#diagbody").addEventListener("change",function(e){if(e.target.id==="dgok"){var g = $("#dggo"); if(g) g.disabled = !e.target.checked}});
+  $("#diagbody").addEventListener("click",function(e){if(e.target.id!=="dggo" || !$("#dgok") || !$("#dgok").checked) return; lsSet("cdb_diag_ok","1"); var C = window.CDB_CLOUD; if(C && C.diagConsent) C.diagConsent(); renderDiagList(); window.scrollTo(0,0)});
+  $("#diagbody").addEventListener("input",function(e){""")
+
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head

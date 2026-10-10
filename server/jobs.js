@@ -9,6 +9,7 @@ const { backupNow, fullBackupNow, listFullBackups } = require('./backup');
 const { dueFor, NOTIFY_DAYS } = require('./entretien');
 const { SERVICES, serviceEmail, OVERDUE_SQL, WAITING_SINCE } = require('./services');
 const { listReminders } = require('./lists');
+const { deleteCustomer } = require('./routes/public');
 
 const TASKS = [];
 
@@ -36,6 +37,13 @@ daily('sauvegarde-complete', (app) => {
 daily('menage', (app) => {
   const r = app.db.prepare("DELETE FROM usage_events WHERE month < strftime('%Y-%m', 'now', '-36 months')").run();
   return r.changes ? `statistiques anciennes supprimées : ${r.changes}` : null;
+});
+
+// Customer accounts unused for 3 years are erased, with their photos and requests (privacy page of the app).
+daily('comptes-inactifs', (app) => {
+  const ids = app.db.prepare("SELECT id FROM customers WHERE COALESCE(last_seen_at, created_at) < datetime('now', '-3 years')").all();
+  ids.forEach((c) => deleteCustomer(app.db, app.uploads, c.id));
+  return ids.length ? `comptes inactifs depuis 3 ans effacés : ${ids.length}` : null;
 });
 
 daily('rappels', async (app) => {

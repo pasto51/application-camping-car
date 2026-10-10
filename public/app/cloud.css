@@ -188,3 +188,12 @@ details.kid[open]{padding-bottom:12px}
 .kdue{color:var(--muted);font-size:13.5px}
 .klate{color:#b3261e}
 .kids[hidden],.varrow[hidden]{display:none}
+.cloud-cp{display:flex;flex-direction:column;gap:6px}
+.cloud-cp-row{display:flex;gap:8px;align-items:center}
+.cloud-cp-row .search{flex:1;min-width:0;margin:0}
+.cloud-cp .lnk{align-self:flex-start}
+.diaggate h3{margin-top:0}
+.diaggate .diagok{margin:12px 0;align-items:flex-start}
+.diagnote{margin-top:6px}
+.diaggate .btn,.cloud-cp .btn,.cloud-cp .lnk{flex:none}
+.cloud-cp-row .search{flex:1 1 auto}
