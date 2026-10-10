@@ -712,6 +712,40 @@ const PATCHES = [
       return changed;
     },
   },
+  {
+    // A customer who types « TV » must reach the expired card: the channels diagnostic speaks of the TV too (card
+    // inside the TV), and the big TV diagnostic gets the same branch.
+    key: '2026-11-03-tele-cartes',
+    run: (db) => {
+      let changed = 0;
+      const load = (id) => {
+        const r = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get(id);
+        return r ? JSON.parse(r.data) : null;
+      };
+      const save = (d) => db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), d.id);
+      const ch = load('p_chaines');
+      if (!ch) return 0;
+      if (ch.label === 'Mon démodulateur satellite n’a plus les chaînes ou affiche un message de carte (TNTSAT, Fransat)') {
+        ch.label = 'Ma télé ou mon démodulateur satellite n’a plus les chaînes ou affiche un message de carte (TNTSAT, FRANSAT)';
+        changed++;
+      }
+      if (!/\btv\b/.test(ch.kw || '')) {
+        ch.kw = `${ch.kw || ''} tv télé télévision écran noir carte télé carte expirée fin carte hd fransat hd uhd`.trim();
+        changed++;
+      }
+      save(ch);
+      const tv = load('h_tv');
+      if (tv && tv.tree && Array.isArray(tv.tree.o) && !tv.tree.o.some((o) => /carte/i.test(o))) {
+        const at = Math.min(2, tv.tree.o.length);
+        tv.tree.o.splice(at, 0, 'Plus de chaînes satellite, ou un message de carte (TNTSAT, FRANSAT)');
+        tv.tree.n.splice(at, 0, JSON.parse(JSON.stringify(ch.tree)));
+        tv.kw = `${tv.kw || ''} carte tntsat fransat expirée plus de chaînes`.trim();
+        save(tv);
+        changed++;
+      }
+      return changed;
+    },
+  },
 ];
 
 const CARD_EXPIRED = {
