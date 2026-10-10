@@ -1,10 +1,10 @@
-// « Idées à venir »: features thought through but not developed yet, kept in view in the back-office
-// (administrator only). Nothing here works yet: it is a written plan, to be discussed before any development.
+// « Chat »: customers talking to each other in the app. Not developed yet: the tab shows the detailed idea,
+// to be discussed before any development (administrator only, nothing visible to the customers).
 
 const IDEAS = [
   {
     icon: '💬',
-    title: 'Entraide entre camping-caristes',
+    title: 'Chat entre camping-caristes',
     status: 'Idée, pas encore développée',
     pitch:
       'Les clients de l’appli se posent des questions entre eux et y répondent : « Quelqu’un connaît une aire calme près d’Annecy ? », « Mon frigo fait un bruit de claquement, c’est normal ? ». Celui qui sait choisit de répondre, directement dans l’appli.',
@@ -12,7 +12,7 @@ const IDEAS = [
       {
         title: 'Côté client, dans l’appli',
         items: [
-          'Une nouvelle tuile « Entraide » sur l’accueil.',
+          'Une nouvelle tuile « Chat » sur l’accueil.',
           'Poser une question : un titre, un texte, une photo si besoin, et un thème (eau, électricité, gaz, chauffage, itinéraires et aires, astuces de rangement…).',
           'Voir les questions des autres, les plus récentes et celles sans réponse en premier, avec une recherche par mots.',
           'Répondre à une question, ou simplement dire « Merci, ça m’aide aussi ».',
@@ -42,7 +42,7 @@ const IDEAS = [
         title: 'Surveillance et sécurité (indispensable)',
         items: [
           'Bouton « Signaler » sur chaque message ; au-delà de quelques signalements, le message est masqué en attendant la relecture.',
-          'Relecture par l’administrateur ou l’éditeur de contenu, depuis un nouvel onglet du back-office « Entraide » : masquer, supprimer, bloquer un client.',
+          'Relecture par l’administrateur ou l’éditeur de contenu, depuis cet onglet « Chat » du back-office : masquer, supprimer, bloquer un client.',
           'Filtre automatique des numéros de téléphone, e-mails, liens et grossièretés.',
           'Règles affichées avant le premier message : politesse, pas de publicité, pas de données personnelles, pas de VIN ni d’immatriculation.',
           'Limite de messages par jour et par client pour éviter les abus.',
@@ -70,10 +70,10 @@ const IDEAS = [
   },
 ];
 
-export function registerIdeasView(VIEWS, { esc, pageHeader }) {
-  VIEWS.ideas = (el) => {
-    el.innerHTML = `${pageHeader('Idées à venir')}
-      <div class="card"><p class="muted">Des fonctionnalités réfléchies mais <strong>pas encore développées</strong>. Elles sont notées ici pour y penser et en discuter. Rien n’est visible des clients.</p></div>
+export function registerChatView(VIEWS, { esc, pageHeader }) {
+  VIEWS.chat = (el) => {
+    el.innerHTML = `${pageHeader('Chat')}
+      <div class="card"><p><span class="status">Bientôt</span> Cette fonctionnalité n’est <strong>pas encore développée</strong>. Voici l’idée détaillée, pour y penser et en discuter. Rien n’est visible des clients.</p></div>
       ${IDEAS.map(
         (idea) => `<div class="card idea">
           <h2>${esc(idea.icon)} ${esc(idea.title)} <span class="status">${esc(idea.status)}</span></h2>
