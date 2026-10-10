@@ -33,9 +33,10 @@ daily('sauvegarde-complete', (app) => {
   return `sauvegarde complète ${b.name} (${Math.round(b.size / 1024 / 1024)} Mo)`;
 });
 
-// Statistics of use older than 3 years are removed (the page shows 12 months at most).
+// Statistics of use are kept 25 months at most, as the CNIL asks for an audience measurement without consent (the
+// page shows 12 months at most).
 daily('menage', (app) => {
-  const r = app.db.prepare("DELETE FROM usage_events WHERE month < strftime('%Y-%m', 'now', '-36 months')").run();
+  const r = app.db.prepare("DELETE FROM usage_events WHERE month < strftime('%Y-%m', 'now', '-25 months')").run();
   return r.changes ? `statistiques anciennes supprimées : ${r.changes}` : null;
 });
 

@@ -396,6 +396,8 @@ function register(router) {
     if (body.postalCode !== undefined) db.prepare('UPDATE customers SET postal_code = ? WHERE id = ?').run(optPostal(body.postalCode), customer.id);
     // « The diagnostics help, they do not replace a professional », ticked by the customer: kept with its date and the
     // version of the text, as proof.
+    // The anonymous usage statistics (audience measurement): the customer can refuse them (CNIL).
+    if (body.statsOptout !== undefined) db.prepare('UPDATE customers SET stats_optout = ? WHERE id = ?').run(body.statsOptout ? 1 : 0, customer.id);
     if (body.diagConsent === true) db.prepare("UPDATE customers SET diag_consent_at = datetime('now'), diag_consent_v = ? WHERE id = ?").run(DIAG_CONSENT_VERSION, customer.id);
     return session(db, db.prepare('SELECT * FROM customers WHERE id = ?').get(customer.id)).customer;
   });
@@ -532,7 +534,7 @@ function register(router) {
   const eventLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 120 });
   router.post('/api/me/events', (ctx) => {
     const customer = requireCustomer(ctx);
-    if (eventLimiter(`c${customer.id}`)) return { saved: 0 };
+    if (customer.stats_optout === 1 || eventLimiter(`c${customer.id}`)) return { saved: 0 };
     const list = Array.isArray(ctx.body.events) ? ctx.body.events.slice(0, 50) : [];
     const vehicle = ctx.db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id);
     const type = vehicle ? readProfile(vehicle).type || null : null;

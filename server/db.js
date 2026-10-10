@@ -363,6 +363,7 @@ const ADDED_COLUMNS = [
   ['customers', 'last_seen_at', 'TEXT'], // last day the customer used the app: an account unused for 3 years is erased
   ['customers', 'diag_consent_at', 'TEXT'], // the customer ticked « the diagnostics help, they do not replace a professional »
   ['customers', 'diag_consent_v', 'INTEGER'], // version of that text
+  ['customers', 'stats_optout', 'INTEGER DEFAULT 0'], // 1 = the customer refused the anonymous usage statistics
 ];
 
 // The VIN is never kept on the server: it stays on the customer's phone (see public/app/cloud.js).

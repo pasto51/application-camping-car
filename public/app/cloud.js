@@ -170,6 +170,7 @@
   var events = [], lastSearch = null, searchTimer = null;
   function sendEvents(leaving) {
     if (lastSearch) { events.push(lastSearch); lastSearch = null; clearTimeout(searchTimer); }
+    if (statsRefused()) { events = []; return; }
     if (!events.length || !(session && session.token)) return;
     var batch = events.splice(0, 50);
     try {
@@ -177,7 +178,10 @@
     } catch (e) { /* statistics are never worth an error */ }
   }
   // A search is kept once the customer stops typing (only the last words count, not every letter).
+  // Refused in the customer area: nothing is counted on this account (CNIL: the customer can object).
+  function statsRefused() { return !!(session && session.customer && session.customer.statsOptout === 1); }
   window.CDB_TRACK = function (kind, data) {
+    if (statsRefused()) { events = []; lastSearch = null; return; }
     data = data || {}; data.kind = kind;
     if (kind === 'search') {
       lastSearch = data; clearTimeout(searchTimer);
@@ -1105,6 +1109,7 @@
       '<label class="eyebrow">Code postal</label><input class="search" name="postalCode" inputmode="numeric" maxlength="10" autocomplete="postal-code" value="' + esc(c.postalCode || '') + '" placeholder="Ex. 17300">' +
       '<button class="btn">Enregistrer</button></form>' +
       '<section><h3>Conseils de saison</h3><label class="cloud-check"><input type="checkbox" data-sp="marketing"' + (c.marketingOptin === 1 ? ' checked' : '') + '> Recevoir les conseils de saison et les offres de ' + esc(d.name || 'ma concession') + '</label></section>' +
+      '<section><h3>Statistiques anonymes</h3><label class="cloud-check"><input type="checkbox" data-sp="stats"' + (c.statsOptout === 1 ? '' : ' checked') + '> Aider à améliorer l’application : compter, sans savoir qui, ce qui est cherché et consulté</label><small class="sub">Décochez pour ne plus être compté. <a href="/app/legal.html#audience" target="_blank" rel="noopener">En savoir plus</a></small></section>' +
       '<section><h3>Être prévenu des réponses</h3><div data-push></div>' +
       '<label class="cloud-check"><input type="checkbox" data-sp="mailnotif"' + (c.emailNotify === 0 ? '' : ' checked') + (c.email ? '' : ' disabled') + '> Recevoir aussi les réponses par e-mail' + (c.email ? '' : ' (ajoutez votre e-mail ci-dessus)') + '</label></section>' +
       '<section><h3>Mon code d’accès</h3><p class="sub">À garder : avec votre nom, il permet de retrouver l’application sur un autre téléphone.</p><div data-code><button class="btn alt" type="button" data-sp="code">Afficher mon code</button></div></section>' +
@@ -1134,6 +1139,10 @@
       api('PUT', '/api/me/info', body).then(function (cust) { session.customer = cust; saveSession(); toast('Enregistré'); }).catch(function (err) { toast(err.message); });
     });
     m.addEventListener('change', function (e) {
+      if (e.target.dataset.sp === 'stats') {
+        api('PUT', '/api/me/info', { statsOptout: !e.target.checked }).then(function (cust) { session.customer = cust; saveSession(); toast(e.target.checked ? 'Merci, vous aidez à améliorer l’application' : 'Vous n’êtes plus compté dans les statistiques'); }).catch(function (err) { toast(err.message); });
+        return;
+      }
       if (e.target.dataset.sp === 'marketing') {
         api('PUT', '/api/me/info', { marketing: e.target.checked }).then(function (cust) { session.customer = cust; saveSession(); toast(e.target.checked ? 'Conseils et offres activés' : 'Plus de conseils ni d’offres'); }).catch(function (err) { toast(err.message); });
         return;

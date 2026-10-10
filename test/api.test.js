@@ -1001,3 +1001,17 @@ test('postal code, warning of the diagnostics ticked once (with its date), accou
   assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM customers WHERE id = ?').get(old.customer.id).n, 0);
   assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM customers WHERE id = ?').get(h.customer.id).n, 1);
 });
+
+test('anonymous usage statistics: counted without the customer, and nothing counted once refused', async () => {
+  const h = await handover({ firstName: 'Stat', lastName: 'Refus' });
+  const count = () => app.db.prepare('SELECT COUNT(*) AS n FROM usage_events').get().n;
+  const before = count();
+  assert.equal((await call('POST', '/api/me/events', { body: { events: [{ kind: 'search', q: 'frigo chaud' }] }, token: h.token })).data.saved, 1);
+  assert.equal(count(), before + 1);
+  const me = (await call('PUT', '/api/me/info', { body: { statsOptout: true }, token: h.token })).data;
+  assert.equal(me.statsOptout, 1);
+  assert.equal((await call('POST', '/api/me/events', { body: { events: [{ kind: 'search', q: 'pompe eau' }] }, token: h.token })).data.saved, 0);
+  assert.equal(count(), before + 1);
+  // No customer column in the statistics.
+  assert.ok(!app.db.prepare('PRAGMA table_info(usage_events)').all().some((c) => /customer/.test(c.name)));
+});
