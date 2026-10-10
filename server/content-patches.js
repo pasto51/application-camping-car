@@ -602,6 +602,42 @@ const PATCHES = [
       return changed;
     },
   },
+  {
+    // « Mon robinet marche mal »: for everyone, not only leaks — leak around the lever (cartridge nut, frost, cartridge
+    // or new mixer tap), one tap with a weak flow, the pump that does not start or does not stop with the taps, and
+    // the troubles after changing the pump.
+    key: '2026-10-26-robinet',
+    run: (db) => {
+      const d = CLIENTS_2026_10_B.find((x) => x.id === 'p_robinet');
+      if (!db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) return 0;
+      db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), d.id);
+      return 1;
+    },
+  },
+  {
+    // « Arrivée » rewritten with the rules checked again (asked by the user, whose site still had the first 6 lines):
+    // campsite or service area (reception, ticket, quiet hours) and free parking (on its wheels, no wedges, nothing
+    // out, no fire, nothing emptied, limited stay). The departure list is replaced only if it never got its two versions.
+    key: '2026-10-27-arrivee',
+    run: (db) => {
+      const row = db.prepare("SELECT value FROM catalog WHERE key = 'lists'").get();
+      if (!row) return 0;
+      const lists = JSON.parse(row.value);
+      let changed = 0;
+      if (lists.arrivee) {
+        lists.arrivee = { ...lists.arrivee, items: ROUTE.ARRIVEE, note: '', places: true };
+        for (const [f, v] of Object.entries(ROUTE.SETTINGS.arrivee)) if (lists.arrivee[f] === undefined || lists.arrivee[f] === '') lists.arrivee[f] = v;
+        changed++;
+      }
+      if (lists.depart && !(lists.depart.items || []).some((i) => i && i.where)) {
+        lists.depart = { ...lists.depart, items: ROUTE.DEPART, note: '', places: true };
+        for (const [f, v] of Object.entries(ROUTE.SETTINGS.depart)) if (lists.depart[f] === undefined || lists.depart[f] === '') lists.depart[f] = v;
+        changed++;
+      }
+      db.prepare("UPDATE catalog SET value = ?, updated_at = datetime('now') WHERE key = 'lists'").run(JSON.stringify(lists));
+      return changed;
+    },
+  },
 ];
 
 function findLeaves(node, match, out = []) {

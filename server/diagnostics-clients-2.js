@@ -98,9 +98,9 @@ const CLIENTS_2026_10_B = [
   {
     id: 'p_robinet',
     cat: 'eau',
-    label: 'Mon robinet ou ma douchette goutte, ou la pompe ne démarre pas avec un robinet',
+    label: 'Mon robinet marche mal : il fuit, goutte, coule faiblement, ou la pompe ne démarre pas ou ne s’arrête pas',
     eq: 'pompe',
-    kw: 'robinet mitigeur goutte fuit bec levier cartouche céramique douchette flexible pommeau fuite pompe démarre pas contacteur micro-contact clic robinet',
+    kw: 'robinet mitigeur goutte fuit fuite milieu levier cartouche céramique écrou douchette flexible pommeau pompe démarre pas arrête pas tourne contacteur micro-contact clic mousseur débit faible calcaire gel fendu changé pompe nouvelle pompe purge air',
     tree: ask('Qu’est-ce qui ne va pas ?', [
       ['Le robinet goutte par le bec, même fermé', funnel(
         ['Fermez le levier à fond, bien au centre, puis attendez une minute. Goutte-t-il encore ?', buy('La cartouche du mitigeur est usée.',
@@ -109,13 +109,26 @@ const CLIENTS_2026_10_B = [
         buy('Le levier du mitigeur n’était pas fermé à fond.',
           'Fermez-le toujours bien au centre et en bas. S’il recommence à goutter fermé à fond, la cartouche s’use : elle se change.', 'Cartouche céramique pour mitigeur de camping-car')
       )],
-      ['Ça fuit sous le levier ou au pied du robinet', funnel(
+      ['Ça fuit au milieu du robinet, autour du levier', funnel(
+        ['Coupez la pompe. Retirez le petit cache du levier et sa vis, enlevez le levier, puis resserrez à la main l’écrou qui tient la cartouche, sans forcer. Rallumez la pompe : est-ce réglé ?', buy('L’écrou de la cartouche s’était desserré.',
+          'Les vibrations de la route le desserrent : revérifiez-le de temps en temps, sans forcer. Si la fuite revient écrou serré, c’est la cartouche qui est usée.', 'Cartouche céramique pour mitigeur de camping-car')],
+        ['Le robinet a-t-il passé un hiver avec de l’eau dedans (circuit pas vidangé) ?', buy('Le corps du mitigeur a été fendu par le gel.',
+          'Une fissure ne se répare pas : changez le mitigeur par un modèle spécial camping-car. À l’hivernage, vidangez le circuit et laissez les robinets ouverts en position milieu.',
+          'Mitigeur pour camping-car'), ['Oui', 'Non, ou je ne sais pas']],
+        ['Le robinet est-il récent (moins de 5 ans) et le magasin trouve-t-il la même cartouche ? Apportez l’ancienne pour comparer.', buy('La cartouche céramique du mitigeur est usée.',
+          'La cartouche identique se change par le dessus du robinet, pompe coupée, sans passer sous l’évier : un quart d’heure. Le magasin vous montre comment.',
+          'Cartouche céramique pour mitigeur de camping-car'), ['Oui', 'Non, ancien ou cartouche introuvable']],
+        buy('Le mitigeur est usé.',
+          'Sur un mitigeur ancien ou quand la cartouche est introuvable, un mitigeur neuf règle tout d’un coup. Comptez 30 à 45 minutes sous l’évier. Avec une pompe dans le réservoir, prenez un modèle à contacteur.',
+          'Mitigeur pour camping-car')
+      )],
+      ['Ça fuit sous l’évier ou au pied du robinet', funnel(
         ['Coupez la pompe et resserrez à la main le raccord sous l’évier. Est-ce réglé ?', buy('Le raccord du robinet était desserré.',
           'Les vibrations de la route le desserrent : vérifiez-le de temps en temps.', 'Raccords rapides et flexibles pour robinet de camping-car')],
         ['Le flexible sous le robinet est-il mouillé ou fendu ?', buy('Le flexible du robinet est usé.',
           'Coupez la pompe et changez le flexible : il se vend à la longueur et au diamètre de votre robinet.', 'Raccords rapides et flexibles pour robinet de camping-car'), ['Oui', 'Non']],
-        buy('Le joint du corps du mitigeur est usé.',
-          'L’eau sort sous le levier : le joint ou la cartouche du mitigeur est usé. Un mitigeur neuf spécial camping-car se pose à la place.', 'Mitigeur pour camping-car')
+        buy('Le joint au pied du mitigeur est usé.',
+          'L’eau sort au pied du robinet : le joint du corps est usé. Un mitigeur neuf spécial camping-car se pose à la place.', 'Mitigeur pour camping-car')
       )],
       ['La douchette ou son flexible fuit', funnel(
         ['Resserrez à la main les deux bouts du flexible. Est-ce réglé ?', buy('Le flexible de la douchette était desserré.',
@@ -125,13 +138,54 @@ const CLIENTS_2026_10_B = [
         buy('Le joint de la douchette est usé.',
           'Changez la douchette et son flexible : il en existe avec un bouton d’arrêt qui économise l’eau.', 'Douchette avec flexible et bouton d’arrêt pour camping-car')
       )],
-      ['La pompe ne démarre pas avec un seul robinet', funnel(
-        ['Ouvrez ce robinet en grand, puis en position eau chaude et eau froide. La pompe démarre-t-elle d’un côté ?', buy('Le contacteur du robinet commence à s’user.',
-          'Il ne réagit plus que d’un côté : il va lâcher. Changez le mitigeur par un modèle à contacteur spécial camping-car.', 'Mitigeur à contacteur pour camping-car'), ['Oui, d’un côté seulement', 'Non, jamais']],
-        ['Entendez-vous un petit clic en ouvrant ce robinet ?', shop('Le courant du contacteur n’arrive plus à la pompe.',
-          'Le contacteur clique mais la pompe reste muette : un fil est sans doute débranché sous l’évier. L’atelier contrôle le câblage de la pompe.', 'Contrôle du câblage de la pompe à l’atelier'), ['Oui, il clique', 'Non, aucun clic']],
-        buy('Le contacteur du robinet ne commande plus la pompe.',
-          'Ces robinets ont un petit contacteur électrique qui démarre la pompe. Il est usé : changez le mitigeur par un modèle à contacteur spécial camping-car.', 'Mitigeur à contacteur pour camping-car')
+      ['Un seul robinet coule faiblement (les autres vont bien)', funnel(
+        ['Dévissez le petit embout au bout du bec (le mousseur). Est-il encrassé ou plein de calcaire ?', buy('Le mousseur du robinet est entartré.',
+          'Changez le mousseur. Pour éviter que ça revienne, détartrez le circuit avec un produit spécial circuit d’eau de camping-car, puis rincez bien le réservoir.',
+          'Mousseur de robinet et détartrant pour circuit d’eau de camping-car'), ['Oui, il est sale', 'Non, il est propre']],
+        buy('La cartouche du mitigeur est entartrée.',
+          'Le calcaire freine l’eau dans la cartouche : changez-la par la même, ou changez le mitigeur s’il est ancien.', 'Cartouche céramique pour mitigeur de camping-car')
+      )],
+      ['La pompe ne démarre pas quand j’ouvre le robinet', ask('Avec quels robinets ?', [
+        ['Avec un seul robinet', funnel(
+          ['Ouvrez ce robinet en grand, puis en position eau chaude et eau froide. La pompe démarre-t-elle d’un côté ?', buy('Le contacteur du robinet commence à s’user.',
+            'Il ne réagit plus que d’un côté : il va lâcher. Changez le mitigeur par un modèle à contacteur spécial camping-car.', 'Mitigeur à contacteur pour camping-car'), ['Oui, d’un côté seulement', 'Non, jamais']],
+          ['Entendez-vous un petit clic en ouvrant ce robinet ?', shop('Le courant du contacteur n’arrive plus à la pompe.',
+            'Le contacteur clique mais la pompe reste muette : un fil est sans doute débranché sous l’évier. L’atelier contrôle le câblage de la pompe.', 'Contrôle du câblage de la pompe à l’atelier'), ['Oui, il clique', 'Non, aucun clic']],
+          buy('Le contacteur du robinet ne commande plus la pompe.',
+            'Ces robinets ont un petit contacteur électrique qui démarre la pompe. Il est usé : changez le mitigeur par un modèle à contacteur spécial camping-car.', 'Mitigeur à contacteur pour camping-car')
+        )],
+        ['Avec aucun robinet', funnel(
+          ['Le bouton de la pompe est-il allumé au tableau de commande ? Allumez-le et ouvrez un robinet. Est-ce réglé ?', { cause: 'La pompe était coupée au tableau de commande.',
+            geste: 'Rallumez-la au tableau à chaque arrivée. Coupez-la en roulant et la nuit : une fuite ne videra pas le réservoir.', prod: 'Aucun produit nécessaire', sec: null }],
+          ['Regardez le fusible de la pompe (tableau ou boîte à fusibles de la cellule). Est-il grillé ?', buy('Le fusible de la pompe est grillé.',
+            'Remplacez-le par un fusible de même valeur. S’il regrille aussitôt, faites contrôler la pompe.', 'Fusibles plats assortis'), ['Oui, il est grillé', 'Non, il est bon']],
+          shop('La pompe ne fonctionne plus.',
+            'Le bouton et le fusible sont bons : la pompe elle-même est en cause. Voyez aussi « J’ai un souci avec ma pompe à eau » ; l’atelier la teste et la change si besoin.', 'Contrôle de la pompe à l’atelier')
+        )],
+      ])],
+      ['La pompe ne s’arrête pas quand je ferme le robinet', funnel(
+        ['Fermez tous les robinets bien au centre et en bas, douche comprise. Un filet d’eau coule-t-il encore quelque part ?', buy('Un robinet mal fermé fait tourner la pompe.',
+          'Si le filet continue levier fermé à fond, la cartouche de ce robinet est usée : elle se change.', 'Cartouche céramique pour mitigeur de camping-car'), ['Oui, un filet coule', 'Non, tout est fermé']],
+        ['Votre pompe est-elle dans le réservoir ? Si oui, bougez un peu le levier fermé de chaque robinet : la pompe s’arrête-t-elle ?', buy('Le contacteur du robinet reste collé.',
+          'Le petit contacteur qui démarre la pompe ne se relâche plus : il va lâcher. Changez le mitigeur par un modèle à contacteur spécial camping-car. En attendant, coupez la pompe au tableau quand vous n’utilisez pas l’eau.',
+          'Mitigeur à contacteur pour camping-car'), ['Oui, elle s’arrête', 'Non, ou ma pompe est à côté du réservoir']],
+        shop('Le pressostat de la pompe ne la coupe plus.',
+          'Avec une pompe à côté du réservoir, c’est son pressostat qui l’arrête quand la pression est atteinte. Voyez aussi « J’ai un souci avec ma pompe à eau » ; l’atelier le règle ou le change.',
+          'Réglage du pressostat à l’atelier')
+      )],
+      ['Ça marche mal depuis que j’ai changé la pompe', funnel(
+        ['Ouvrez tous les robinets, eau chaude et eau froide, douche comprise, jusqu’à ce que l’eau coule sans bulles ni à-coups. Est-ce réglé ?', { cause: 'De l’air restait dans le circuit après le changement de pompe.',
+          geste: 'Purgez ainsi après chaque changement de pompe, vidange ou hivernage, sans oublier l’eau chaude.', prod: 'Aucun produit nécessaire', sec: null }],
+        ['Coupez la pompe au tableau. Débranchez puis rebranchez les cosses de la nouvelle pompe : nettoyez-les et serrez-les bien. Est-ce réglé ?', buy('Les cosses de la pompe faisaient un mauvais contact.',
+          'Les vibrations et l’humidité les abîment : nettoyez-les et protégez-les.', 'Nettoyant et protecteur pour contacts électriques')],
+        ['La nouvelle pompe est-elle du même type que l’ancienne ? (dans le réservoir, ou à côté et qui démarre toute seule)', buy('La nouvelle pompe ne correspond pas au circuit.',
+          'Une pompe dans le réservoir a besoin de robinets à contacteur ; une pompe à côté du réservoir démarre seule quand la pression baisse. Le magasin vous aide à choisir la pompe adaptée à votre circuit.',
+          'Pompe à eau adaptée à votre circuit'), ['Non, un autre type', 'Oui, ou je ne sais pas']],
+        ['Les robinets gouttent-ils ou ferment-ils mal depuis la nouvelle pompe ?', buy('La nouvelle pompe est trop puissante pour vos robinets.',
+          'Une pression plus forte fatigue les cartouches des robinets. Un réducteur de pression, ou une pompe moins puissante, les protège.',
+          'Réducteur de pression pour circuit d’eau de camping-car'), ['Oui', 'Non']],
+        shop('Le montage de la nouvelle pompe est à contrôler.',
+          'Rien n’a suffi : l’atelier contrôle le branchement, le sens des tuyaux et le réglage de la pompe.', 'Contrôle du montage de la pompe à l’atelier')
       )],
     ]),
   },
