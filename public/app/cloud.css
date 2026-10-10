@@ -162,3 +162,7 @@
 .cloud-helpcard{width:min(720px,100%)}
 .cloud-video{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
 .cloud-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.cloud-pushcard{border:2px solid var(--accent)}
+.cloud-pushcard h3{margin:0 0 6px}
+.cloud-pushcard .btn{width:100%;margin:8px 0 4px;min-height:52px;height:auto;padding:12px 16px;flex:none}
+.cloud-pushcard .lnk{display:block;margin:4px auto 0}

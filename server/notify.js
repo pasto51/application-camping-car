@@ -69,20 +69,30 @@ ${sig || footer ? `<tr><td style="border-top:1px solid #d5e2e1;padding:16px 24px
 function createNotifier({ db, vapid, log = console.log, createLoginLink = () => null }) {
   const subject = () => `mailto:${(mailConfig(db).from || 'contact@compagnon-de-bord.fr').replace(/.*<|>.*/g, '')}`;
 
-  async function push(customerId, payload) {
+  // Sends to every phone of the customer; returns one result per phone (service, HTTP status, ok).
+  // The last answer of the push services is kept so the « Notifications » tab can show what went wrong.
+  async function pushResults(customerId, payload) {
     const subs = db.prepare('SELECT * FROM push_subscriptions WHERE customer_id = ?').all(customerId);
-    let sent = 0;
+    const results = [];
     for (const s of subs) {
+      const host = new URL(s.endpoint).host;
+      let r;
       try {
         const status = await sendPush({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, vapid, subject());
         if (status === 404 || status === 410) db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(s.endpoint);
-        else if (status < 300) sent++;
-        else log('[push]', status, new URL(s.endpoint).host);
+        r = { host, status, ok: status < 300 };
       } catch (err) {
-        log('[push]', err.message);
+        r = { host, status: 0, ok: false, error: err.message };
       }
+      if (!r.ok) log('[push]', r.status, host, r.error || '');
+      results.push(r);
+      setSetting(db, r.ok ? 'push_last_ok' : 'push_last_error', JSON.stringify({ ...r, at: new Date().toISOString() }));
     }
-    return sent;
+    return results;
+  }
+
+  async function push(customerId, payload) {
+    return (await pushResults(customerId, payload)).filter((r) => r.ok).length;
   }
 
   // A customer created a request or wrote in an existing one.
@@ -244,7 +254,7 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
     return mail(db, to, subject, text, log, { html, fromName: 'Compagnon de bord' });
   }
 
-  return { customerWrote, dealershipAnswered, welcome, push, overdueDigest, bugReported };
+  return { customerWrote, dealershipAnswered, welcome, push, pushResults, overdueDigest, bugReported };
 }
 
 module.exports = { createNotifier, mailConfig, mailReady, emailHtml };

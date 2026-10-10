@@ -3,7 +3,7 @@
 const VERSION = '__APP_VERSION__';
 const SHELL_CACHE = `shell-${VERSION}`;
 const PHOTO_CACHE = 'photos-v1';
-const SHELL = ['/app/', '/app/compagnon.js', '/app/cloud.js', '/app/cloud.css', '/app/manifest.webmanifest', '/app/icon.svg', '/app/plan-van.svg'];
+const SHELL = ['/app/', '/app/compagnon.js', '/app/cloud.js', '/app/cloud.css', '/app/manifest.webmanifest', '/app/icon.svg', '/app/icon-192.png', '/app/badge-96.png', '/app/plan-van.svg'];
 
 self.addEventListener('install', (event) => {
   // No waiting: an outdated app must never stay on screen (it may not understand the new server).
@@ -59,8 +59,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'Compagnon de bord', {
       body: data.body || 'Vous avez un nouveau message.',
-      icon: '/app/icon.svg',
-      badge: '/app/icon.svg',
+      icon: '/app/icon-192.png',
+      badge: '/app/badge-96.png',
       tag: data.tag,
       data: { url: data.url || '/app/' },
     })

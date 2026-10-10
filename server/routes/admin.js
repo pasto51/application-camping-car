@@ -584,6 +584,10 @@ function register(router) {
 
   // The e-mail server settings are for the administrator; the others see the announcement, and only whether the
   // e-mails are set up (for the warning of « Demandes clients »).
+  const phoneKind = (endpoint) => {
+    const host = new URL(endpoint).host;
+    return /apple\.com$/.test(host) ? 'iPhone' : /googleapis\.com$/.test(host) ? 'Android' : /mozilla/.test(host) ? 'Firefox' : /windows|microsoft/.test(host) ? 'Windows' : 'Autre';
+  };
   // « Notifications »: messages pushed to the customers' phones (administrator only for now).
   router.get('/api/admin/notifs', (ctx) => {
     adminOnly(ctx);
@@ -592,6 +596,9 @@ function register(router) {
       kinds: CAMPAIGNS.KINDS,
       campaigns: db.prepare("SELECT * FROM notif_campaigns WHERE status != 'cancelled' ORDER BY COALESCE(sent_at, send_at, created_at) DESC, id DESC LIMIT 200").all().map((r) => CAMPAIGNS.campaignOut(db, r)),
       subscribers: CAMPAIGNS.subscribers(db),
+      phones: db.prepare('SELECT endpoint FROM push_subscriptions').all().reduce((n, r) => ((n[phoneKind(r.endpoint)] = (n[phoneKind(r.endpoint)] || 0) + 1), n), {}),
+      pushLastOk: safeJson(getSetting(db, 'push_last_ok', 'null'), null),
+      pushLastError: safeJson(getSetting(db, 'push_last_error', 'null'), null),
       customers: db.prepare('SELECT COUNT(*) AS n FROM customers').get().n,
       dealerships: camelAll(db.prepare('SELECT id, name FROM dealerships ORDER BY name').all()),
       tips: db.prepare("SELECT id, title FROM tips WHERE status = 'published' ORDER BY sort DESC, id DESC").all(),
@@ -628,6 +635,16 @@ function register(router) {
     // Now: sent in the background (the answer does not wait for every phone).
     if (!c.sendAt) CAMPAIGNS.sendCampaign({ db: ctx.db, notify: ctx.notify }, id).catch(() => {});
     return CAMPAIGNS.campaignOut(ctx.db, ctx.db.prepare('SELECT * FROM notif_campaigns WHERE id = ?').get(id));
+  });
+  // A test notification to one customer's phones, to check that everything works end to end.
+  router.post('/api/admin/notifs/test', async (ctx) => {
+    adminOnly(ctx);
+    const email = String(ctx.body.email || '').trim().toLowerCase();
+    if (!email) throw new HttpError(400, 'Indiquez l’e-mail du client');
+    const customer = ctx.db.prepare('SELECT id FROM customers WHERE lower(email) = ?').get(email);
+    if (!customer) throw new HttpError(404, 'Aucun client avec cet e-mail');
+    const results = await ctx.notify.pushResults(customer.id, { title: 'Essai de notification', body: 'Bravo, les notifications de votre concession arrivent bien sur ce téléphone.', url: '/app/', tag: 'essai' });
+    return { results: results.map((r) => ({ ...r, phone: phoneKind(`https://${r.host}`) })) };
   });
   // A programmed one is cancelled; a sent one is only removed from the list.
   router.delete('/api/admin/notifs/:id', (ctx) => {

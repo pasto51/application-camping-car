@@ -676,7 +676,7 @@ def main():
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
         '<meta name="theme-color" content="#0a7c82">\n<meta name="apple-mobile-web-app-capable" content="yes">\n'
         '<link rel="manifest" href="/app/manifest.webmanifest">\n<link rel="icon" href="/app/icon.svg" type="image/svg+xml">\n'
-        '<link rel="apple-touch-icon" href="/app/icon.svg">\n'
+        '<link rel="apple-touch-icon" sizes="180x180" href="/app/apple-touch-icon.png">\n'
         + head_part +
         '\n<link rel="stylesheet" href="/app/cloud.css">\n</head>\n<body>'
         + body_part +

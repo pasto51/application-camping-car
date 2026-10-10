@@ -519,6 +519,7 @@
         renderNick();
         addAccountCard();
         addHelp();
+        syncPush().then(drawPushCard);
         loadRequests();
         setInterval(function () { if (document.visibilityState === 'visible') loadRequests(); }, 60000);
         flush();
@@ -671,14 +672,69 @@
     return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) { return sub ? 'on' : 'off'; });
   }
 
+  function sameKey(sub, key) {
+    var k = sub.options && sub.options.applicationServerKey;
+    if (!k) return true; // older browsers do not tell: keep the subscription
+    var a = new Uint8Array(k), b = keyBytes(key);
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
+  // Gives the server this phone's subscription (made again if it was made for another server key).
+  function subscribePush() {
+    return Promise.all([navigator.serviceWorker.ready, api('GET', '/api/push/key')]).then(function (r) {
+      var reg = r[0], key = r[1].publicKey;
+      return reg.pushManager.getSubscription().then(function (sub) {
+        if (sub && sameKey(sub, key)) return sub;
+        return (sub ? sub.unsubscribe() : Promise.resolve()).then(function () {
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) });
+        });
+      });
+    }).then(function (sub) {
+      return api('POST', '/api/me/push', { subscription: sub.toJSON() });
+    });
+  }
+
   function enablePush() {
     return Notification.requestPermission().then(function (perm) {
       if (perm !== 'granted') throw new Error('Notifications refusées : autorisez-les dans les réglages du téléphone.');
-      return Promise.all([navigator.serviceWorker.ready, api('GET', '/api/push/key')]);
-    }).then(function (r) {
-      return r[0].pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(r[1].publicKey) });
-    }).then(function (sub) {
-      return api('POST', '/api/me/push', { subscription: sub.toJSON() });
+      return subscribePush();
+    }).then(function (r) { drawPushCard(); return r; });
+  }
+
+  // At every start: a phone that already allows notifications is (re)registered on the server,
+  // even if the permission was given outside the app's button (installation, phone settings…).
+  function syncPush() {
+    if (!pushSupported() || Notification.permission !== 'granted') return Promise.resolve();
+    return subscribePush().catch(function () { /* offline: next start */ });
+  }
+
+  // On the home screen, as long as this phone does not receive the messages: a clear invitation.
+  var PUSH_LATER_KEY = 'cdb_push_later';
+  function drawPushCard() {
+    var home = document.getElementById('home'); if (!home) return;
+    pushState().then(function (st) {
+      var card = document.getElementById('cloudpush');
+      var later = Number(lsGet(PUSH_LATER_KEY) || 0) > Date.now();
+      if ((st !== 'off' && st !== 'ios-install') || later) { if (card) card.remove(); return; }
+      if (!card) {
+        card = document.createElement('div'); card.id = 'cloudpush'; card.className = 'card cloud-pushcard';
+        var top = document.getElementById('cloudhome');
+        home.insertBefore(card, top ? top.nextSibling : home.firstChild);
+        card.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-pc]'); if (!b) return;
+          if (b.dataset.pc === 'later') { lsSet(PUSH_LATER_KEY, String(Date.now() + 7 * 864e5)); card.remove(); return; }
+          b.disabled = true;
+          enablePush().then(function () { toast('C’est fait : ce téléphone recevra les messages de votre concession'); })
+            .catch(function (err) { b.disabled = false; toast(err.message); drawPushCard(); });
+        });
+      }
+      card.innerHTML = '<h3>🔔 Recevoir les messages de votre concession</h3>' +
+        (st === 'ios-install'
+          ? '<p class="sub">Sur iPhone, il faut d’abord installer l’appli : touchez <b>Partager</b> (le carré avec une flèche) puis « <b>Sur l’écran d’accueil</b> ». Ouvrez ensuite l’appli depuis sa nouvelle icône.</p>'
+          : '<p class="sub">Réponses à vos demandes, rappels d’entretien, informations de la concession.</p><button class="btn" type="button" data-pc="on">Activer sur ce téléphone</button>') +
+        '<button class="lnk" type="button" data-pc="later">Plus tard</button>';
     });
   }
 
@@ -1052,7 +1108,7 @@
         }).catch(function (err) { toast(err.message); });
       }
       if (a === 'push-on') enablePush().then(function () { toast('Notifications activées'); drawPush(); }).catch(function (err) { toast(err.message); drawPush(); });
-      if (a === 'push-off') disablePush().then(function () { toast('Notifications désactivées'); drawPush(); });
+      if (a === 'push-off') disablePush().then(function () { toast('Notifications désactivées'); drawPush(); drawPushCard(); });
       if (a === 'export') {
         api('GET', '/api/me/export').then(function (data) {
           var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

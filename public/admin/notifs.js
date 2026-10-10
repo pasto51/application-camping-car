@@ -50,8 +50,29 @@ export function registerNotifsView(VIEWS, { api, openForm, pageHeader, bind, con
     const planned = d.campaigns.filter((c) => c.status !== 'sent');
     const sent = d.campaigns.filter((c) => c.status === 'sent');
 
-    el.innerHTML = `${pageHeader('Notifications', '<button class="btn primary" data-act="add">+ Nouvelle notification</button>')}
+    const phones = Object.entries(d.phones || {}).map(([k, n]) => `${n} ${esc(k)}`).join(' · ');
+    const errWhy = (e) => (e.status === 403 || e.status === 401 ? 'clé refusée par le service' : e.status === 400 ? 'message refusé' : e.status === 413 ? 'message trop long' : e.status === 0 ? `pas de connexion au service (${esc(e.error || '')})` : `code ${e.status}`);
+    const lastErr = d.pushLastError && (!d.pushLastOk || d.pushLastError.at > d.pushLastOk.at) ? d.pushLastError : null;
+    const phonesLine = `<p class="muted">Téléphones inscrits : ${phones || 'aucun'}.${
+      lastErr ? ` <b>Dernier envoi en échec</b> le ${when(lastErr.at)} (${esc(lastErr.host)} : ${errWhy(lastErr)}).` : d.pushLastOk ? ` Dernier envoi réussi le ${when(d.pushLastOk.at)}.` : ''
+    }</p>`;
+    const testPush = () =>
+      openForm({
+        title: '🔔 Essayer sur un téléphone',
+        submitLabel: 'Envoyer l’essai',
+        fields: [{ name: 'email', label: 'E-mail du client (le vôtre si vous avez un compte client)', type: 'email', required: true, full: true, hint: 'Le client doit avoir ouvert l’appli et touché « Activer » sur son téléphone.' }],
+        onSubmit: async (data) => {
+          const r = await api('POST', '/api/admin/notifs/test', data);
+          if (!r.results.length) throw new Error('Ce client n’a aucun téléphone inscrit : il doit ouvrir l’appli et toucher « Activer sur ce téléphone ».');
+          const lines = r.results.map((x) => `${x.phone} : ${x.ok ? 'envoyée ✔' : x.status === 404 || x.status === 410 ? 'inscription périmée (rouvrir l’appli)' : `échec, ${errWhy(x)}`}`);
+          alert(`Résultat de l’essai :\n\n${lines.join('\n')}\n\nSi c’est « envoyée » mais que rien n’apparaît, vérifiez que les notifications de l’appli sont autorisées dans les réglages du téléphone.`);
+          VIEWS.notifs(el);
+        },
+      });
+
+    el.innerHTML = `${pageHeader('Notifications', '<button class="btn" data-act="test">Essayer sur un téléphone</button> <button class="btn primary" data-act="add">+ Nouvelle notification</button>')}
       <div class="card"><p><strong>${d.subscribers}</strong> client(s) sur ${d.customers} ont accepté les notifications sur leur téléphone. Les autres ne les reçoivent pas (ils voient toujours le bandeau « À la une »).</p>
+      ${phonesLine}
       <p class="muted">Conseil : une notification par semaine au plus, sinon les clients les coupent. Les offres et portes ouvertes ne partent qu’aux clients qui ont accepté les conseils et offres. Les rappels d’entretien et des listes (hivernage, chaque mois…) partent déjà tout seuls.</p></div>
       ${planned.length ? `<h2 class="section-title">Programmées (${planned.length})</h2>${planned.map(card).join('')}` : ''}
       <h2 class="section-title">Envoyées (${sent.length})</h2>
@@ -127,6 +148,7 @@ export function registerNotifsView(VIEWS, { api, openForm, pageHeader, bind, con
 
     bind(el, {
       add: pickKind,
+      test: testPush,
       again: (id) => {
         const c = d.campaigns.find((x) => x.id === id);
         compose(c.kind, { title: c.title, body: c.body, action: c.action, text: c.text, screen: c.screen, tipId: c.tipId, url: c.url, ...c.target });

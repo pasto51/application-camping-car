@@ -31,9 +31,10 @@ function privateKeyObject(keys) {
   });
 }
 
+// One hour of validity: Apple refuses longer tokens.
 function vapidHeader(endpoint, keys, subject) {
   const header = b64u(JSON.stringify({ typ: 'JWT', alg: 'ES256' }));
-  const claims = b64u(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: subject }));
+  const claims = b64u(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 3600, sub: subject }));
   const sig = crypto.sign('sha256', Buffer.from(`${header}.${claims}`), { key: privateKeyObject(keys), dsaEncoding: 'ieee-p1363' });
   return `vapid t=${header}.${claims}.${b64u(sig)}, k=${keys.publicKey}`;
 }

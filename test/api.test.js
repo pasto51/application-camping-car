@@ -904,6 +904,18 @@ test('« Notifications » pushed from the back-office: who (same targeting as th
   const d = (await call('GET', '/api/admin/notifs', { token: admin })).data;
   assert.ok(d.kinds.some((k) => k.id === 'portes' && k.commercial) && d.kinds.some((k) => k.id === 'hivernage' && k.screen === 'daily'));
   // Audience: an offer only reaches the customers who accepted the offers.
+  // Test on one customer's phones: says which phone and what the push service answered.
+  assert.equal((await call('POST', '/api/admin/notifs/test', { token: editor, body: { email: 'x@y.fr' } })).status, 403);
+  assert.equal((await call('POST', '/api/admin/notifs/test', { token: admin, body: { email: 'personne@nulle.part' } })).status, 404);
+  const t = await handover({ firstName: 'Notif', lastName: 'Essai', email: 'Essai.Push@test.fr' });
+  assert.deepEqual((await call('POST', '/api/admin/notifs/test', { token: admin, body: { email: 'essai.push@test.fr' } })).data.results, []);
+  const sub = { endpoint: 'https://127.0.0.1:1/push/abc', keys: { p256dh: Buffer.concat([Buffer.from([4]), Buffer.alloc(64, 1)]).toString('base64url'), auth: Buffer.alloc(16, 2).toString('base64url') } };
+  assert.equal((await call('POST', '/api/me/push', { token: t.token, body: { subscription: sub } })).status, 200);
+  const tr = (await call('POST', '/api/admin/notifs/test', { token: admin, body: { email: 'essai.push@test.fr' } })).data.results;
+  assert.equal(tr.length, 1);
+  assert.equal(tr[0].ok, false);
+  const after = (await call('GET', '/api/admin/notifs', { token: admin })).data;
+  assert.ok(after.phones.Autre >= 1 && after.pushLastError && after.pushLastError.host === '127.0.0.1:1');
   const all = (await call('POST', '/api/admin/notifs/audience', { token: admin, body: { kind: 'hivernage' } })).data;
   const promo = (await call('POST', '/api/admin/notifs/audience', { token: admin, body: { kind: 'promo' } })).data;
   assert.ok(all.targeted >= 2 && promo.targeted >= 1 && promo.targeted < all.targeted);
