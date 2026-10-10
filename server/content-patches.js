@@ -18,6 +18,7 @@ const { applyEnsembles, hideDropped, retargetDropped } = require('./ensembles');
 const { applyDiagTypes } = require('./diag-types');
 const { REELS } = require('./diagnostics-reels');
 const { CARD_DATE } = require('./equipment-groups');
+const { addSearchWords } = require('./search-words');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -745,6 +746,11 @@ const PATCHES = [
       }
       return changed;
     },
+  },
+  {
+    // Words customers really type (« plus de jus », « wc sec », « pas d’image »…) added to the diagnostics' keywords.
+    key: '2026-11-04-mots-recherche',
+    run: (db) => addSearchWords(db),
   },
 ];
 

@@ -764,6 +764,12 @@ def main():
     s = replace_once(s, '    var V = VARIANTS[q.id]; if(!V) return "";\n    var sel = vars[q.id]', '    var V = VARIANTS[q.id]; if(!V || V.pick) return "";\n    var sel = vars[q.id]')
     # A part asked for an element names its ensemble too (« Détendeur (Coffre à gaz) »).
     s = replace_once(s, 'return {id:id, name:it.name, userPhoto:', 'return {id:id, name: isKid(it) ? it.name+" ("+eqById(it.grp).name+")" : it.name, userPhoto:')
+    # Search words found missing by the search audit (October 2026): everyday words, units, brands; « camping-car »
+    # says nothing about the problem, « avant » does (front of the vehicle).
+    s = replace_once(s, "  function stem(w){return", '''  Object.assign(SYN,{crame:"brule fumee",cramé:"brule fumee",diesel:"gasoil",gazole:"gasoil",gasoil:"gasoil","12v":"12 v","12volts":"12 v","220":"230","220v":"230 v","230v":"230 v","240":"230",sat:"satellite",image:"tv tele",jus:"batterie courant decharge",sec:"seche seches",coincee:"bloquee",coince:"bloque",penche:"niveau droit",rentre:"rentre entre infiltration",fiamma:"store porte velo",thule:"store porte velo",victron:"batterie lithium chargeur convertisseur solaire",ecoflow:"station nomade",bluetti:"station nomade",jackery:"station nomade",truma:"truma chauffage eau chaude",webasto:"webasto chauffage diesel",eberspacher:"chauffage diesel",autoterm:"chauffage diesel",thetford:"thetford toilettes cassette",dometic:"dometic frigo clim store",clim:"clim climatisation chaud",climatisation:"clim climatisation"});
+  STOP = STOP.filter(function(w){return w!=="avant"}).concat(["camping","car","cc","campingcar","vehicule"]);
+  function stem(w){return''')
+
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head
