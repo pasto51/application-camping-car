@@ -169,3 +169,9 @@ textarea { font: inherit; color: var(--text); background: var(--card); border: 1
 .kids{margin:-2px 0 6px 18px;padding-left:10px;border-left:3px solid var(--accent, #0a7c82);display:grid;gap:6px}
 .item.kid{font-size:.95em}
 .item .kind{display:block;font-size:.78em;opacity:.7;font-weight:400}
+/* Model question of a ticked item */
+.vars{margin:-2px 0 8px 46px;display:grid;gap:6px;font-size:.9em}
+.vars>span{font-weight:600}
+.vars>div{display:flex;flex-wrap:wrap;gap:6px}
+.vars .vchip{border:1.5px solid #c9d6d5;background:#fff;border-radius:999px;padding:6px 12px;font:inherit;min-height:36px}
+.vars .vchip[aria-pressed="true"]{background:#0a7c82;border-color:#0a7c82;color:#fff}

@@ -149,11 +149,12 @@ async function openVehicle(id, skipWizard = false) {
     return;
   }
   root.innerHTML = '<p class="pad muted">Chargement…</p>';
-  const [vehicles, profile, equipment, cats] = await Promise.all([
+  const [vehicles, profile, equipment, cats, config] = await Promise.all([
     api('GET', '/api/admin/vehicles'),
     api('GET', `/api/admin/vehicles/${id}/profile`),
     api('GET', '/api/admin/equipment'),
     api('GET', '/api/admin/catalog/cats').then((r) => r.value || []),
+    api('GET', '/api/admin/catalog/config').then((r) => r.value || {}),
   ]);
   const v = vehicles.find((x) => x.id === id);
   if (!v) return renderVehicles();
@@ -171,6 +172,10 @@ async function openVehicle(id, skipWizard = false) {
     labels: { ...(profile.labels || {}) },
     models: { ...(profile.models || {}) },
     spotOverrides: { ...(profile.spotOverrides || {}) },
+    // Equipment dropped from the app (lead battery, duplicates…) and the model questions asked when an item is ticked.
+    hidden: config.HIDDEN_EQ || {},
+    variants: config.VARIANTS || {},
+    vars: { ...(profile.vars || {}) },
   });
   // A ticked element brings its ensemble (the AGM battery ticks « Batterie cellule »), and a ticked ensemble its
   // « always » elements, as in the customer's app.
@@ -216,6 +221,16 @@ async function openVehicle(id, skipWizard = false) {
   );
   const list = root.querySelector('#list');
   list.onclick = (e) => {
+    const vb = e.target.closest('[data-var]');
+    if (vb) {
+      const k = vb.dataset.var;
+      if (S.vars[k] === vb.dataset.val) delete S.vars[k];
+      else S.vars[k] = vb.dataset.val;
+      vb.parentElement.querySelectorAll('[data-var]').forEach((b) => b.setAttribute('aria-pressed', String(S.vars[k] === b.dataset.val)));
+      S.metaDirty = true;
+      schedule();
+      return;
+    }
     const t = e.target.closest('[data-tick],[data-shot],[data-add],[data-zone],[data-showall],[data-pick-type]');
     if (!t) return;
     if (t.dataset.zone) itemSheet(t.dataset.zone);
@@ -250,7 +265,7 @@ const spotById = (id) => S.plan.spots.find((s) => s.id === id);
 // among several with the same « pick »), not on its own.
 const byId = (id) => S.equipment.find((q) => q.id === id);
 const isKid = (q) => !!(q.grp && q.grp !== q.id && byId(q.grp));
-const kidsOf = (id) => S.equipment.filter((q) => q.grp === id && q.grp !== q.id);
+const kidsOf = (id) => S.equipment.filter((q) => q.grp === id && q.grp !== q.id && !S.hidden?.[q.id]);
 
 function visible(q) {
   const on = S.checked.has(q.id);
@@ -272,7 +287,7 @@ function itemHtml(q, kid = false) {
     <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(nameOf(q))}${tag}${S.models[q.id] ? `<small class="mdl">${esc(S.models[q.id])}</small>` : ''}</span></button>
     ${S.plan.spots.length ? `<button class="zone ${spotOf(q.id) ? '' : 'none'}" data-zone="${esc(q.id)}" aria-label="Zone et nom : ${esc(nameOf(q))}">${spotOf(q.id) ? `📍${spotById(spotOf(q.id)).n}` : '📍?'}</button>` : ''}
     <button class="shot ${url ? 'has' : ''} ${state}" data-shot="${esc(q.id)}" aria-label="${url ? 'Voir la photo' : 'Prendre une photo'} : ${esc(q.name)}">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : '📷'}</button>
-  </div>`;
+  </div>${on ? varsHtml(q) : ''}`;
 }
 
 function renderList() {
@@ -283,7 +298,7 @@ function renderList() {
   const cats = [...S.cats, ...(S.equipment.some((q) => !known.has(q.cat)) ? [['__other', 'Autres']] : [])];
   const html = cats
     .map(([cid, cname]) => {
-      const all = S.equipment.filter((q) => (cid === '__other' ? !known.has(q.cat) : q.cat === cid) && !isKid(q) && (S.showAll || applicable(q)));
+      const all = S.equipment.filter((q) => (cid === '__other' ? !known.has(q.cat) : q.cat === cid) && !isKid(q) && !S.hidden[q.id] && (S.showAll || applicable(q)));
       const shown = all.filter((q) => visible(q) || kidsOf(q.id).some(visible));
       if (searching && !shown.length) return '';
       const n = all.filter((q) => S.checked.has(q.id)).length;
@@ -298,6 +313,16 @@ function renderList() {
     : '<p class="type-note warn">Indiquez le type de véhicule (van, profilé, capucine…) : la liste ne montrera que ses équipements. <button class="linkbtn" data-pick-type>Choisir le type</button></p>';
   list.innerHTML = head + (html || '<p class="empty">Aucun équipement ne correspond.</p>');
   updateCount();
+}
+
+// The model question of a ticked item (type of fridge, model of gas regulator…), answered on the spot.
+function varsHtml(q) {
+  const V = S.variants[q.id];
+  if (!V) return '';
+  return `<div class="vars" data-varsof="${esc(q.id)}"><span>${esc(V.q)}</span><div>${V.o
+    .filter((o) => o[0] !== 'ns')
+    .map((o) => `<button type="button" class="vchip" data-var="${esc(q.id)}" data-val="${esc(o[0])}" aria-pressed="${S.vars[q.id] === o[0]}">${esc(o[1])}</button>`)
+    .join('')}</div></div>`;
 }
 
 function kidsHtml(q, searching) {
@@ -332,7 +357,7 @@ function toggle(id) {
   }
   if (q && on && q.role === 'pick') kidsOf(q.grp).forEach((k) => k.pick === q.pick && k.id !== id && S.checked.delete(k.id));
   if (q && on && isKid(q)) S.checked.add(q.grp);
-  if (q && (kidsOf(id).length || isKid(q))) {
+  if (q && (kidsOf(id).length || isKid(q) || S.variants[id])) {
     renderList();
     schedule();
     return;
@@ -801,6 +826,7 @@ const STEPS = [
     html: ({ profile, variants }) =>
       `<p class="muted" style="margin:0">L’appli adapte ses explications et ses dépannages à ces réponses. Le client peut les corriger ensuite.</p>` +
       Object.entries(variants)
+        .filter(([k]) => (profile.equipment || []).includes(k) || profile.vars[k])
         .map(
           ([k, V]) => `<fieldset class="choice"><legend>${esc(V.q)}</legend>${[...V.o.filter((o) => o[0] !== 'ns'), ['', 'Je ne sais pas / à préciser par le client']]
             .map((o) => `<label class="opt"><input type="radio" name="var_${esc(k)}" value="${esc(o[0])}" ${(profile.vars[k] || '') === o[0] ? 'checked' : ''}><span>${esc(o[1])}</span></label>`)
@@ -808,8 +834,8 @@ const STEPS = [
         )
         .join(''),
     save: async ({ v, profile, variants }, f) => {
-      const vars = {};
-      for (const k of Object.keys(variants)) if (f.get(`var_${k}`)) vars[k] = f.get(`var_${k}`);
+      const vars = { ...profile.vars };
+      for (const k of Object.keys(variants)) if (f.has(`var_${k}`)) f.get(`var_${k}`) ? (vars[k] = f.get(`var_${k}`)) : delete vars[k];
       profile.vars = vars;
       await api('PUT', `/api/admin/vehicles/${v.id}/profile`, { vars });
     },
@@ -913,7 +939,7 @@ async function flush() {
         S.metaDirty = false;
         renderPending();
         try {
-          await api('PUT', `/api/admin/vehicles/${vid}/profile`, { labels: S.labels, spotOverrides: S.spotOverrides, models: S.models });
+          await api('PUT', `/api/admin/vehicles/${vid}/profile`, { labels: S.labels, spotOverrides: S.spotOverrides, models: S.models, vars: S.vars });
         } catch (err) {
           S.metaDirty = true;
           throw err;

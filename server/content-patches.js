@@ -14,7 +14,7 @@ const FORUMS = require('./diagnostics-forums');
 const ELEC = require('./diagnostics-electricite');
 const STORES = require('./diagnostics-magasins');
 const TIP_PROPOSALS = require('./tips-propositions.json');
-const { applyEnsembles } = require('./ensembles');
+const { applyEnsembles, hideDropped } = require('./ensembles');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -644,6 +644,11 @@ const PATCHES = [
     // dates to follow (hose, regulator, detectors, extinguisher, tyres), as validated by the user.
     key: '2026-10-28-ensembles',
     run: (db) => applyEnsembles(db),
+  },
+  {
+    // The old general heating and hot water no longer listed beside the new ensembles (seen twice by the user).
+    key: '2026-10-29-ensembles-retouches',
+    run: (db) => hideDropped(db),
   },
 ];
 

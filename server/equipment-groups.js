@@ -194,6 +194,10 @@ const GROUPS = [
 ];
 
 // Dropped by the user: kept in the database for old data, never shown.
-const HIDE = ['cuis_l', 'cell', 'tpms', 'vue_ar', 'tech_vue'];
+// chauf and eauch: the old general « Chauffage de la cellule » and « Eau chaude », replaced by the ensembles (they stay
+// behind the scenes for the diagnostics).
+const HIDE = ['cuis_l', 'cell', 'tpms', 'vue_ar', 'tech_vue', 'chauf', 'eauch'];
+// Photos of the vehicle stored as equipment: hidden from the lists, still shown in their zone of the plan.
+const PHOTO_VIEWS = ['vue_ar', 'tech_vue'];
 
-module.exports = { GROUPS, HIDE };
+module.exports = { GROUPS, HIDE, PHOTO_VIEWS };

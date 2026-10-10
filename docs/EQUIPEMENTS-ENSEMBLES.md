@@ -296,3 +296,5 @@ _Il marche sur la batterie (12 V), sans prise._
 - ~~Contrôle de pression des pneus (capteurs)~~
 - ~~Vue arrière du véhicule~~
 - ~~Sous la banquette : l'installation électrique~~
+- ~~Chauffage de la cellule~~
+- ~~Eau chaude (chauffe-eau)~~

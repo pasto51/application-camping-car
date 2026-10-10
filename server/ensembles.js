@@ -7,7 +7,7 @@
 // noimpl (an « always » element brought by another element, not by the ensemble). The app ticks the « always » elements
 // with their ensemble. In the app configuration: VARIANTS (model questions), HIDDEN_EQ (dropped items).
 
-const { GROUPS, HIDE } = require('./equipment-groups');
+const { GROUPS, HIDE, PHOTO_VIEWS } = require('./equipment-groups');
 
 const variantOf = (v) => ({ q: v.q, o: [...v.o.map((label, i) => [`v${i + 1}`, label, '', '']), ['ns', 'Je ne sais pas', '', '']] });
 
@@ -81,4 +81,17 @@ function applyEnsembles(db) {
   return created.size + GROUPS.length;
 }
 
-module.exports = { applyEnsembles };
+// Second pass (« 2026-10-29-ensembles-retouches »): the old general heating and hot water hidden, the vehicle photos
+// stored as equipment kept on the plan.
+function hideDropped(db) {
+  const row = db.prepare("SELECT value FROM catalog WHERE key = 'config'").get();
+  if (!row) return 0;
+  const cfg = JSON.parse(row.value);
+  cfg.HIDDEN_EQ = cfg.HIDDEN_EQ || {};
+  for (const id of HIDE) cfg.HIDDEN_EQ[id] = 1;
+  cfg.PHOTO_VIEWS = PHOTO_VIEWS;
+  db.prepare("UPDATE catalog SET value = ?, updated_at = datetime('now') WHERE key = 'config'").run(JSON.stringify(cfg));
+  return HIDE.length;
+}
+
+module.exports = { applyEnsembles, hideDropped };

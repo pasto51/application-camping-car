@@ -722,7 +722,9 @@ def main():
     var b = e.target.closest("[data-vv]"); if(!b) return;''')
     # The plan: a zone shows the ensembles (and an ensemble whose element is there); the card lists its elements.
     s = replace_once(s, 'function ownedAt(id){return EQUIP.filter(function(q){return q.spot===id && own[q.id]})',
-                     'function ownedAt(id){return EQUIP.filter(function(q){return own[q.id] && !isKid(q) && (q.spot===id || kidsOf(q.id).some(function(k){return own[k.id] && k.spot===id}))})')
+                     'function ownedAt(id){return EQUIP.filter(function(q){return own[q.id] && !isKid(q) && (!DATA.config.HIDDEN_EQ[q.id] || (DATA.config.PHOTO_VIEWS||[]).indexOf(q.id)>=0) && (q.spot===id || kidsOf(q.id).some(function(k){return own[k.id] && k.spot===id}))})')
+    # An ensemble without its own photo shows the photo of one of its elements (« Détecteurs » → the smoke detector).
+    s = replace_once(s, '  function photoBox(it){\n', '  function photoBox(it){\n    if(KIDS[it.id] && !UPH[it.id] && PHOTOS[it.id]==null && !it.img){var pk = kidsOf(it.id).filter(function(k){return own[k.id] && (UPH[k.id] || PHOTOS[k.id]!=null || k.img)})[0]; if(pk) return photoBox(pk)}\n')
     s = replace_once(s, 'function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id]})}', 'function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id] && !isKid(q)})}')
     s = replace_once(s, 'var rest = EQUIP.filter(function(q){return q.spot===id && !own[q.id]});', 'var rest = EQUIP.filter(function(q){return q.spot===id && !own[q.id] && !isKid(q) && !isHidden(q.id)});')
     s = replace_once(s, "  function card(it){\n    return '<div class=\"card\">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class=\"tip\">'+esc(it.tip)+'</div>':'')+(varOpt(it.id) && varOpt(it.id)[0]!==\"ns\" ? '<p class=\"vline\">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+modBlock(it)+",

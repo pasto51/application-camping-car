@@ -568,7 +568,7 @@ window.startCompagnon = function(DATA){
   var FULL = {x:0,y:0,w:800,h:360}, vb = {x:0,y:0,w:800,h:360}, selSpot = null, anim = null;
   function spotById(id){return SPOTS.filter(function(z){return z.id===id})[0]}
   var PORD = {}; PIT.forEach(function(p,k){PORD[p.id]=k});
-  function ownedAt(id){return EQUIP.filter(function(q){return own[q.id] && !isKid(q) && (q.spot===id || kidsOf(q.id).some(function(k){return own[k.id] && k.spot===id}))}).sort(function(a,b){return (PORD[a.id]==null?999:PORD[a.id])-(PORD[b.id]==null?999:PORD[b.id])})}
+  function ownedAt(id){return EQUIP.filter(function(q){return own[q.id] && !isKid(q) && (!DATA.config.HIDDEN_EQ[q.id] || (DATA.config.PHOTO_VIEWS||[]).indexOf(q.id)>=0) && (q.spot===id || kidsOf(q.id).some(function(k){return own[k.id] && k.spot===id}))}).sort(function(a,b){return (PORD[a.id]==null?999:PORD[a.id])-(PORD[b.id]==null?999:PORD[b.id])})}
   function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id] && !isKid(q)})}
 
   function drawSpots(){
@@ -606,6 +606,7 @@ window.startCompagnon = function(DATA){
   }
   function photoExtra(it){return it.custom ? '<p class="phdel"><button type="button" class="linkbtn" data-eqdel="'+it.id+'">Supprimer cet équipement</button></p>' : ''}
   function photoBox(it){
+    if(KIDS[it.id] && !UPH[it.id] && PHOTOS[it.id]==null && !it.img){var pk = kidsOf(it.id).filter(function(k){return own[k.id] && (UPH[k.id] || PHOTOS[k.id]!=null || k.img)})[0]; if(pk) return photoBox(pk)}
     if(UPH[it.id]){return photoWrap(it,'<img class="pic" src="'+UPH[it.id]+'" alt="'+esc(it.name)+'">',true)+'<p class="picnote">Votre photo. Touchez-la pour l\'agrandir.</p>'+photoExtra(it)}
     if(PHOTOS[it.id]!=null){return photoWrap(it,'<img class="pic" src="'+PH[PHOTOS[it.id]]+'" alt="'+esc(it.name)+'">',false)+'<p class="picnote">Photo de votre '+esc(DATA.vehicle.fullName)+'. Touchez-la pour l\'agrandir.</p>'+photoExtra(it)}
     if(it.img) return photoWrap(it,'<img class="pic" src="'+it.img+'" alt="'+esc(it.name)+'" loading="lazy">',false)+'<p class="picnote">Touchez la photo pour l\'agrandir.</p>'+photoExtra(it);

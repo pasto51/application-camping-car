@@ -36,19 +36,23 @@ export function registerCatalogViews(VIEWS, h) {
   const typesLabel = (types) => (types?.length ? types.map((t) => (VEHICLE_TYPES.find((x) => x[0] === t) || [, t])[1]).join(', ') : 'Tous');
 
   VIEWS.equipment = async (el) => {
-    const [list, cats] = await Promise.all([api('GET', '/api/admin/equipment'), api('GET', '/api/admin/catalog/cats').then((r) => r.value)]);
+    const [list, cats, eqConfig] = await Promise.all([api('GET', '/api/admin/equipment'), api('GET', '/api/admin/catalog/cats').then((r) => r.value), api('GET', '/api/admin/catalog/config').then((r) => r.value || {})]);
+    // Equipment dropped from the app (lead battery, tyre pressure sensors, old general heating…): set apart.
+    const dropped = eqConfig.HIDDEN_EQ || {};
+    const droppedN = list.filter((x) => dropped[x.id]).length;
     const catName = Object.fromEntries(cats);
     const nameById = Object.fromEntries(list.map((x) => [x.id, x.name]));
     const kidsN = list.reduce((n, x) => (x.grp ? { ...n, [x.grp]: (n[x.grp] || 0) + 1 } : n), {});
     const ROLES = { always: 'toujours là', option: 'option', pick: 'un seul au choix' };
     const q = state.eqFilter.toLowerCase();
-    const shown = list.filter((x) => (!state.eqCat || x.cat === state.eqCat) && (!q || [x.name, x.text, x.kw, x.id].some((t) => (t || '').toLowerCase().includes(q))));
+    const shown = list.filter((x) => (state.eqDropped ? dropped[x.id] : !dropped[x.id]) && (!state.eqCat || x.cat === state.eqCat) && (!q || [x.name, x.text, x.kw, x.id].some((t) => (t || '').toLowerCase().includes(q))));
     el.innerHTML = `${pageHeader(`Équipements (${list.length})`, canEditContent() ? '<button class="btn primary" data-act="add">＋ Nouvel équipement</button>' : '')}
       <p class="muted">Le catalogue commun à tous les véhicules. Ce qui est pré-coché, et les photos, se règlent pour chaque véhicule (Véhicules → Profil appli et photos).</p>
       <form class="search-bar" id="eq-search"><input name="q" type="search" placeholder="Chercher : Truma, frigo, marchepied…" value="${esc(state.eqFilter)}"><button class="btn">Filtrer</button></form>
       <div class="filters"><button class="chip ${!state.eqCat ? 'active' : ''}" data-act="cat" data-value="">Toutes</button>${cats
         .map(([id, n]) => `<button class="chip ${state.eqCat === id ? 'active' : ''}" data-act="cat" data-value="${esc(id)}">${esc(n)}</button>`)
-        .join('')}</div>
+        .join('')}${droppedN ? `<button class="chip ${state.eqDropped ? 'active' : ''}" data-act="dropped">Retirés de l’appli (${droppedN})</button>` : ''}</div>
+      ${state.eqDropped ? '<p class="muted">Ces équipements ne s’affichent plus nulle part (appli, plan, relevé). Ils restent ici pour les anciennes données et les diagnostics.</p>' : ''}
       <div class="table-wrap"><table>
         <thead><tr><th>Équipement</th><th>Rubrique</th><th>Véhicules</th><th>Zone du plan</th><th></th></tr></thead>
         <tbody>${shown
@@ -73,7 +77,7 @@ export function registerCatalogViews(VIEWS, h) {
       { name: 'kw', label: 'Mots-clés de recherche', full: true },
       {
         name: 'grp', label: 'Fait partie de l’ensemble', type: 'select', full: true,
-        options: [['', '— Aucun : c’est un ensemble ou un équipement seul —'], ...list.filter((x) => !x.grp).map((x) => [x.id, x.name]).sort((a, b) => a[1].localeCompare(b[1], 'fr'))],
+        options: [['', '— Aucun : c’est un ensemble ou un équipement seul —'], ...list.filter((x) => !x.grp && !dropped[x.id]).map((x) => [x.id, x.name]).sort((a, b) => a[1].localeCompare(b[1], 'fr'))],
         hint: 'Un élément (lyre, détendeur…) s’affiche sous son ensemble (coffre à gaz) dans l’appli, sur le plan et dans le relevé.',
       },
       { name: 'role', label: 'Sorte d’élément', type: 'select', options: [['always', 'Toujours là avec l’ensemble'], ['option', 'Option (cochée si le véhicule l’a)'], ['pick', 'Un seul au choix parmi plusieurs']], hideIf: ['grp', ['']] },
@@ -108,6 +112,10 @@ export function registerCatalogViews(VIEWS, h) {
     bindKeys(el, {
       cat: (_, b) => {
         state.eqCat = b.dataset.value;
+        VIEWS.equipment(el);
+      },
+      dropped: () => {
+        state.eqDropped = !state.eqDropped;
         VIEWS.equipment(el);
       },
       add: () =>
@@ -415,11 +423,19 @@ export function registerCatalogViews(VIEWS, h) {
     const KIND = { always: 'compris', option: 'option', pick: 'un seul au choix' };
     const presetRow = (q, kid = false) =>
       `<label class="check${kid ? ' preset-kid' : ''}"><input type="checkbox" name="eq" value="${esc(q.id)}" ${has(q.id) || (!kid && ensOn(q.id)) ? 'checked' : ''}> ${esc(profile.labels?.[q.id] || q.name)}${kid ? ` <small class="muted">${KIND[q.role] || 'option'}</small>` : ''}</label>`;
+    const presetVar = (q) => {
+      const V = (config.VARIANTS || {})[q.id];
+      if (!V) return '';
+      return `<label class="preset-var" data-varof="${esc(q.id)}" ${has(q.id) || ensOn(q.id) ? '' : 'hidden'}>${esc(V.q)}<select name="var_${esc(q.id)}"><option value="">— Je ne sais pas —</option>${V.o
+        .filter((o) => o[0] !== 'ns')
+        .map((o) => `<option value="${esc(o[0])}" ${profile.vars[q.id] === o[0] ? 'selected' : ''}>${esc(o[1])}</option>`)
+        .join('')}</select></label>`;
+    };
     const presetKids = (q) => {
       const ks = kidsOf(q.id);
       if (!ks.length) return '';
       const on = ensOn(q.id);
-      return `<div class="preset-kids" data-kids="${esc(q.id)}" ${on ? '' : 'hidden'}>${ks.map((k) => presetRow(k, true)).join('')}</div>`;
+      return `<div class="preset-kids" data-kids="${esc(q.id)}" ${on ? '' : 'hidden'}>${ks.map((k) => presetRow(k, true) + presetVar(k)).join('')}</div>`;
     };
     const presetForm_wire = (form) =>
       form.addEventListener('change', (e) => {
@@ -442,6 +458,7 @@ export function registerCatalogViews(VIEWS, h) {
           const parent = input(q.grp);
           if (parent) parent.checked = true;
         }
+        form.querySelectorAll('[data-varof]').forEach((v) => (v.hidden = !input(v.dataset.varof)?.checked));
         el.querySelector('#preset-n').textContent = form.querySelectorAll('input[name=eq]:checked').length;
       });
     const photoOf = Object.fromEntries(profile.photos.map((p) => [p.id, p.url]));
@@ -482,7 +499,7 @@ export function registerCatalogViews(VIEWS, h) {
             ([cid, cname]) => `<fieldset><legend>${esc(cname)}</legend>${equipment
               .filter((q) => q.cat === cid && !isKid(q) && !hidden[q.id])
               .filter((q) => fits(q) || kidsOf(q.id).some((k) => has(k.id)))
-              .map((q) => presetRow(q) + presetKids(q))
+              .map((q) => presetRow(q) + presetVar(q) + presetKids(q))
               .join('')}</fieldset>`
           )
           .join('')}</div>
@@ -511,8 +528,15 @@ export function registerCatalogViews(VIEWS, h) {
     presetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const ids = [...presetForm.querySelectorAll('input[name=eq]:checked')].map((i) => i.value);
+      const vars = { ...profile.vars };
+      presetForm.querySelectorAll('select[name^="var_"]').forEach((sel) => {
+        const k = sel.name.slice(4);
+        if (sel.value && ids.includes(k)) vars[k] = sel.value;
+        else delete vars[k];
+      });
       try {
-        await api('PUT', `/api/admin/vehicles/${vehicleId}/profile`, { equipment: ids });
+        await api('PUT', `/api/admin/vehicles/${vehicleId}/profile`, { equipment: ids, vars });
+        profile.vars = vars;
         toast(`Liste enregistrée : ${ids.length} équipements pré-cochés`);
       } catch (err) {
         toast(err.message, 'error');
@@ -548,9 +572,11 @@ export function registerCatalogViews(VIEWS, h) {
         reload();
       },
       edit: () => {
-        const variantFields = Object.entries(config.VARIANTS || {}).map(([k, V]) => ({
+        // Only the questions of the equipment ticked for this vehicle, named after it.
+        const shownVars = Object.entries(config.VARIANTS || {}).filter(([k]) => profile.equipment.includes(k) || profile.vars[k]);
+        const variantFields = shownVars.map(([k, V]) => ({
           name: `var_${k}`,
-          label: V.q,
+          label: `${eqById[k]?.name || k} : ${V.q}`,
           type: 'select',
           options: [['', '— Non précisé —'], ...V.o.map((o) => [o[0], o[1]])],
         }));
@@ -582,8 +608,8 @@ export function registerCatalogViews(VIEWS, h) {
             ...variantFields,
           ],
           onSubmit: async (data) => {
-            const vars = {};
-            Object.keys(config.VARIANTS || {}).forEach((k) => data[`var_${k}`] && (vars[k] = data[`var_${k}`]));
+            const vars = { ...profile.vars };
+            shownVars.forEach(([k]) => (data[`var_${k}`] ? (vars[k] = data[`var_${k}`]) : delete vars[k]));
             await api('PUT', `/api/admin/vehicles/${vehicleId}/profile`, {
               type: data.layout ? undefined : data.type,
               layout: data.layout,

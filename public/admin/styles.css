@@ -319,3 +319,6 @@ tr.muted td { opacity: .6; }
 .preset-kids { margin: 0 0 .3rem 1.1rem; padding-left: .6rem; border-left: 3px solid var(--accent, #0a7c82); display: flex; flex-direction: column; gap: .15rem; }
 .preset-kids[hidden] { display: none; }
 .preset-kid { font-size: .93em; }
+.preset-var { display: flex; flex-direction: column; gap: .2rem; margin: 0 0 .35rem 1.6rem; font-size: .88em; color: var(--muted); }
+.preset-var[hidden] { display: none; }
+.preset-var select { font-size: 1em; }
