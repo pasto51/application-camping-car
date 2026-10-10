@@ -16,6 +16,7 @@ const STORES = require('./diagnostics-magasins');
 const TIP_PROPOSALS = require('./tips-propositions.json');
 const { applyEnsembles, hideDropped, retargetDropped } = require('./ensembles');
 const { applyDiagTypes } = require('./diag-types');
+const { REELS } = require('./diagnostics-reels');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -662,6 +663,21 @@ const PATCHES = [
     // battery…): known answers given by the app itself, diagnostics of another type set aside, list lines per type.
     key: '2026-10-31-types',
     run: (db) => applyDiagTypes(db),
+  },
+  {
+    // Problems that really happen (forums, manufacturers): Duocontrol / Monocontrol safety, AdBlue, mode dégradé,
+    // tingling on the 230 V, Starlink, puncture, GPL abroad, mice, soft floor… (server/diagnostics-reels.js).
+    key: '2026-11-01-diagnostics-reels',
+    run: (db) => {
+      let changed = 0;
+      let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
+      for (const d of REELS) {
+        if (db.prepare('SELECT 1 FROM diagnostics WHERE id = ?').get(d.id)) continue;
+        db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
+        changed++;
+      }
+      return changed;
+    },
   },
 ];
 
