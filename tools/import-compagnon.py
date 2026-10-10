@@ -659,7 +659,9 @@ def main():
   function kidsOf(id){return (KIDS[id]||[]).filter(function(k){return !DATA.config.HIDDEN_EQ[k.id]})}
   function ensOn(id){kidsOf(id).forEach(function(k){if(k.role==="always" && !k.noimpl) own[k.id] = true})}
   function ensOff(id){kidsOf(id).forEach(function(k){delete own[k.id]})}
-  function syncEnsembles(){Object.keys(KIDS).forEach(function(id){if(!own[id] && kidsOf(id).some(function(k){return own[k.id]})) own[id] = true; if(own[id]) ensOn(id)})}
+  function syncEnsembles(){Object.keys(KIDS).forEach(function(id){if(!own[id] && kidsOf(id).some(function(k){return own[k.id]})) own[id] = true; if(own[id]) ensOn(id);
+    // The choice made in an ensemble (AGM, gel or lithium battery) is also its type, for the diagnostics and the lists.
+    var V = DATA.config.VARIANTS[id]; if(V && V.pick){var p = kidsOf(id).filter(function(k){return k.role==="pick" && own[k.id]})[0]; var cur = (typeof vars==="object" && vars) ? vars[id] : null; if(p && cur!==p.id && typeof vars==="object"){vars[id] = p.id; varSave()}}})}
   function pickOn(k){kidsOf(k.grp).forEach(function(o){if(o.pick===k.pick && o.id!==k.id) delete own[o.id]})}
   var DATES = (function(){try{var o = JSON.parse(lsGet("cdb_dates")||"{}"); return o && typeof o==="object" ? o : {}}catch(e){return {}}})();
   function addMonths(ym,n){var p = String(ym).split("-"), y = +p[0], m = +p[1]-1+n; return new Date(y+Math.floor(m/12), ((m%12)+12)%12, 1)}
@@ -704,6 +706,7 @@ def main():
   function choosePick(id){
     var k = eqById(id); if(!k) return;
     own[id] = true; pickOn(k); implOn(id);
+    if(VARIANTS[k.grp] && VARIANTS[k.grp].pick){vars[k.grp] = id; varSave()}
     if(APP_VARS[id]){Object.keys(APP_VARS[id]).forEach(function(v){vars[v] = APP_VARS[id][v]}); varSave()}
     syncImplied(); saveOwn(); redrawKids(k.grp); refreshCats(); toast("Enregistré");
   }
@@ -755,6 +758,8 @@ def main():
     s = replace_once(s, "var z = q.spot ? 'Zone '+spotById(q.spot).n+' · '+spotById(q.spot).name : 'Emplacement variable';",
                      "var zq = isKid(q) ? eqById(q.grp) : q, zs = zq.spot && spotById(zq.spot); var z = (zs ? 'Zone '+zs.n+' · '+zs.name : 'Emplacement variable') + (isKid(q) ? ' · '+zq.name : '');")
     s = replace_once(s, "  function resetPlan(){", "  window.CDB_SHOW_EQ = function(id){go(\"what\"); showItem(id)};\n  function resetPlan(){")
+    # The type that comes from a choice of the ensemble (battery) is not asked twice.
+    s = replace_once(s, '    var V = VARIANTS[q.id]; if(!V) return "";\n    var sel = vars[q.id]', '    var V = VARIANTS[q.id]; if(!V || V.pick) return "";\n    var sel = vars[q.id]')
     # A part asked for an element names its ensemble too (« Détendeur (Coffre à gaz) »).
     s = replace_once(s, 'return {id:id, name:it.name, userPhoto:', 'return {id:id, name: isKid(it) ? it.name+" ("+eqById(it.grp).name+")" : it.name, userPhoto:')
     # ---- Page shell ----

@@ -71,7 +71,10 @@ for (const r of db.prepare('SELECT data FROM diagnostics').all()) {
   if (d.vonly) checkVar(at, d.vonly[0], d.vonly[1]);
   const walk = (n) => {
     if (!n || n.cause) return;
-    if (n.vk) checkVar(at, n.vk, (n.vv || []).flatMap((p) => String(p).split('|')).filter(Boolean));
+    if (n.vk) {
+      checkVar(at, n.vk, (n.vv || []).flatMap((p) => String(p).split('|')).filter(Boolean));
+      if (!Array.isArray(n.vv) || n.vv.length !== n.o.length) bad(at, `la question « ${n.t} » n'a pas une réponse par type pour chaque choix`);
+    }
     (n.n || []).forEach(walk);
   };
   walk(d.tree);

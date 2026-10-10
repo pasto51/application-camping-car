@@ -318,7 +318,7 @@ function renderList() {
 // The model question of a ticked item (type of fridge, model of gas regulator…), answered on the spot.
 function varsHtml(q) {
   const V = S.variants[q.id];
-  if (!V) return '';
+  if (!V || V.pick) return ''; // a type that comes from a choice of the ensemble (battery) is not asked twice
   return `<div class="vars" data-varsof="${esc(q.id)}"><span>${esc(V.q)}</span><div>${V.o
     .filter((o) => o[0] !== 'ns')
     .map((o) => `<button type="button" class="vchip" data-var="${esc(q.id)}" data-val="${esc(o[0])}" aria-pressed="${S.vars[q.id] === o[0]}">${esc(o[1])}</button>`)
@@ -357,7 +357,7 @@ function toggle(id) {
   }
   if (q && on && q.role === 'pick') kidsOf(q.grp).forEach((k) => k.pick === q.pick && k.id !== id && S.checked.delete(k.id));
   if (q && on && isKid(q)) S.checked.add(q.grp);
-  if (q && (kidsOf(id).length || isKid(q) || S.variants[id])) {
+  if (q && (kidsOf(id).length || isKid(q) || (S.variants[id] && !S.variants[id].pick))) {
     renderList();
     schedule();
     return;
@@ -826,7 +826,7 @@ const STEPS = [
     html: ({ profile, variants }) =>
       `<p class="muted" style="margin:0">L’appli adapte ses explications et ses dépannages à ces réponses. Le client peut les corriger ensuite.</p>` +
       Object.entries(variants)
-        .filter(([k]) => (profile.equipment || []).includes(k) || profile.vars[k])
+        .filter(([k, V]) => !V.pick && ((profile.equipment || []).includes(k) || profile.vars[k]))
         .map(
           ([k, V]) => `<fieldset class="choice"><legend>${esc(V.q)}</legend>${[...V.o.filter((o) => o[0] !== 'ns'), ['', 'Je ne sais pas / à préciser par le client']]
             .map((o) => `<label class="opt"><input type="radio" name="var_${esc(k)}" value="${esc(o[0])}" ${(profile.vars[k] || '') === o[0] ? 'checked' : ''}><span>${esc(o[1])}</span></label>`)

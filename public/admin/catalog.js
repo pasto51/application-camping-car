@@ -425,7 +425,7 @@ export function registerCatalogViews(VIEWS, h) {
       `<label class="check${kid ? ' preset-kid' : ''}"><input type="checkbox" name="eq" value="${esc(q.id)}" ${has(q.id) || (!kid && ensOn(q.id)) ? 'checked' : ''}> ${esc(profile.labels?.[q.id] || q.name)}${kid ? ` <small class="muted">${KIND[q.role] || 'option'}</small>` : ''}</label>`;
     const presetVar = (q) => {
       const V = (config.VARIANTS || {})[q.id];
-      if (!V) return '';
+      if (!V || V.pick) return '';
       return `<label class="preset-var" data-varof="${esc(q.id)}" ${has(q.id) || ensOn(q.id) ? '' : 'hidden'}>${esc(V.q)}<select name="var_${esc(q.id)}"><option value="">— Je ne sais pas —</option>${V.o
         .filter((o) => o[0] !== 'ns')
         .map((o) => `<option value="${esc(o[0])}" ${profile.vars[q.id] === o[0] ? 'selected' : ''}>${esc(o[1])}</option>`)
@@ -573,7 +573,7 @@ export function registerCatalogViews(VIEWS, h) {
       },
       edit: () => {
         // Only the questions of the equipment ticked for this vehicle, named after it.
-        const shownVars = Object.entries(config.VARIANTS || {}).filter(([k]) => profile.equipment.includes(k) || profile.vars[k]);
+        const shownVars = Object.entries(config.VARIANTS || {}).filter(([k, V]) => !V.pick && (profile.equipment.includes(k) || profile.vars[k]));
         const variantFields = shownVars.map(([k, V]) => ({
           name: `var_${k}`,
           label: `${eqById[k]?.name || k} : ${V.q}`,

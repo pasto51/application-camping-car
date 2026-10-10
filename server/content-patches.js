@@ -15,6 +15,7 @@ const ELEC = require('./diagnostics-electricite');
 const STORES = require('./diagnostics-magasins');
 const TIP_PROPOSALS = require('./tips-propositions.json');
 const { applyEnsembles, hideDropped, retargetDropped } = require('./ensembles');
+const { applyDiagTypes } = require('./diag-types');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -655,6 +656,12 @@ const PATCHES = [
     // battery, old general heating and hot water): they stay right now that nobody ticks it.
     key: '2026-10-30-diagnostics-ensembles',
     run: (db) => retargetDropped(db),
+  },
+  {
+    // Diagnostics and lists follow the type of each equipment (compression fridge, submerged pump, propane, lithium
+    // battery…): known answers given by the app itself, diagnostics of another type set aside, list lines per type.
+    key: '2026-10-31-types',
+    run: (db) => applyDiagTypes(db),
   },
 ];
 
