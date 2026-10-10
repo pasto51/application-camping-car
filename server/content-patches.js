@@ -19,6 +19,7 @@ const { applyDiagTypes } = require('./diag-types');
 const { REELS } = require('./diagnostics-reels');
 const { CARD_DATE } = require('./equipment-groups');
 const { addSearchWords } = require('./search-words');
+const { applyAudit } = require('./diagnostics-audit');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -751,6 +752,12 @@ const PATCHES = [
     // Words customers really type (« plus de jus », « wc sec », « pas d’image »…) added to the diagnostics' keywords.
     key: '2026-11-04-mots-recherche',
     run: (db) => addSearchWords(db),
+  },
+  {
+    // Audit against forums and makers' manuals: missing frequent causes, wrong facts (Truma codes, 6 bars, LNB at 0°),
+    // dead ends, home remedies removed, five new diagnostics (server/diagnostics-audit.js).
+    key: '2026-11-05-audit-diagnostics',
+    run: (db) => applyAudit(db),
   },
 ];
 
