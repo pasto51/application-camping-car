@@ -15,8 +15,8 @@ const DEFAULT_KINDS = [
   { id: 'hiv', label: 'Hivernage', season: '10-15', rdv: 'hiv', why: 'Vidange de l’eau et protection contre le gel avant l’hiver.' },
   { id: 'printemps', label: 'Remise en route (déshivernage)', season: '03-15', after: 4, rdv: 'revision', why: 'Avant la saison : eau, gaz, batteries et étanchéité.' },
   { id: 'frigo', label: 'Révision du réfrigérateur', season: '04-01', after: 10, rdv: 'frigo', equipmentAny: ['frigo', 'comp'], why: 'Avant la saison : brûleur et ventilation, pour qu’il refroidisse bien sur le gaz.' },
-  { id: 'eauch', label: 'Révision du chauffe-eau', every: 12, rdv: 'eauch', equipmentAny: ['eauch', 'trumae', 'eaue', 'trumac', 'trumad', 'combi'], why: 'Chaque année, avec la vidange : anode, soupape et joints.' },
-  { id: 'energie', label: 'Contrôle des batteries', season: '03-01', after: 4, rdv: 'energie', equipmentAny: ['cell', 'agm', 'gel', 'lith', 'solaire', 'b2b'], why: 'Après l’hiver : charge, cosses et chargeur, avant de repartir.' },
+  { id: 'eauch', label: 'Révision du chauffe-eau', every: 12, rdv: 'eauch', equipmentAny: ['eauch', 'g_eauchaude', 'trumae', 'eaue', 'trumac', 'trumad', 'combi'], why: 'Chaque année, avec la vidange : anode, soupape et joints.' },
+  { id: 'energie', label: 'Contrôle des batteries', season: '03-01', after: 4, rdv: 'energie', equipmentAny: ['g_batterie', 'agm', 'gel', 'lith', 'solaire', 'b2b'], why: 'Après l’hiver : charge, cosses et chargeur, avant de repartir.' },
   { id: 'pneus', label: 'Pneus (contrôle ou remplacement)' },
   { id: 'autre', label: 'Autre intervention' },
 ];

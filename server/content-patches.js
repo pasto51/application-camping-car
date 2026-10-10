@@ -14,7 +14,7 @@ const FORUMS = require('./diagnostics-forums');
 const ELEC = require('./diagnostics-electricite');
 const STORES = require('./diagnostics-magasins');
 const TIP_PROPOSALS = require('./tips-propositions.json');
-const { applyEnsembles, hideDropped } = require('./ensembles');
+const { applyEnsembles, hideDropped, retargetDropped } = require('./ensembles');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -649,6 +649,12 @@ const PATCHES = [
     // The old general heating and hot water no longer listed beside the new ensembles (seen twice by the user).
     key: '2026-10-29-ensembles-retouches',
     run: (db) => hideDropped(db),
+  },
+  {
+    // Diagnostics, lists, workshop reasons, logbook and banners no longer point to the dropped equipment (lead
+    // battery, old general heating and hot water): they stay right now that nobody ticks it.
+    key: '2026-10-30-diagnostics-ensembles',
+    run: (db) => retargetDropped(db),
   },
 ];
 

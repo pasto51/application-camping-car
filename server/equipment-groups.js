@@ -89,7 +89,6 @@ const GROUPS = [
         dated: { kind: 'made', years: 10, label: 'Date de fabrication marquée sur le détendeur' },
       })),
       A('bouteille', { name: 'Bouteilles de gaz' }),
-      O('duo'),
     ],
   },
   {
@@ -196,7 +195,8 @@ const GROUPS = [
 // Dropped by the user: kept in the database for old data, never shown.
 // chauf and eauch: the old general « Chauffage de la cellule » and « Eau chaude », replaced by the ensembles (they stay
 // behind the scenes for the diagnostics).
-const HIDE = ['cuis_l', 'cell', 'tpms', 'vue_ar', 'tech_vue', 'chauf', 'eauch'];
+// duo: the automatic changeover is a model of regulator (Duocontrol…), asked under « Détendeur ».
+const HIDE = ['cuis_l', 'cell', 'tpms', 'vue_ar', 'tech_vue', 'chauf', 'eauch', 'duo'];
 // Photos of the vehicle stored as equipment: hidden from the lists, still shown in their zone of the plan.
 const PHOTO_VIEWS = ['vue_ar', 'tech_vue'];
 

@@ -132,7 +132,6 @@ Les équipements qui ne sont dans aucun ensemble restent des équipements seuls 
 - 🆕 **Lyre** — toujours là — 📅 rappel à la date marquée (Date limite marquée sur la lyre)
 - 🆕 **Détendeur** — toujours là — modèle : Détendeur simple sur la bouteille · Truma Duocontrol · Truma Duocontrol CS · Truma Monocontrol CS · Autre inverseur automatique — 📅 rappel 10 ans après la date marquée (Date de fabrication marquée sur le détendeur)
 - **Bouteilles de gaz** — toujours là
-- **Inverseur automatique de bouteilles** — option
 
 ### Coffre GPL (réservoir fixe ou bouteilles rechargeables) 🔁 — modèle : Réservoir fixe · Bouteilles rechargeables
 _Pas de date de validité à suivre._
@@ -298,3 +297,4 @@ _Il marche sur la batterie (12 V), sans prise._
 - ~~Sous la banquette : l'installation électrique~~
 - ~~Chauffage de la cellule~~
 - ~~Eau chaude (chauffe-eau)~~
+- ~~Inverseur automatique de bouteilles~~
