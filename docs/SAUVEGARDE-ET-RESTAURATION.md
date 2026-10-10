@@ -11,13 +11,20 @@ Le site est fait de **deux choses** :
 
 Dans le back-office : **Paramètres → Sauvegardes** (compte administrateur).
 
-- **Sauvegarde complète** : un seul fichier `site-AAAA-MM-JJ.tar.gz` avec la base, les photos et les clés du site.
-  Elle se fait **toute seule chaque semaine** (les 4 dernières sont gardées sur le serveur), ou avec le bouton
-  « Faire une sauvegarde complète maintenant ».
+- **Sauvegarde complète** : un seul fichier `site-AAAA-MM-JJ.tar.gz` avec **tout le site** : la base, les photos, les
+  clés du site, **le code**, les réglages du serveur (`REGLAGES-SERVEUR.txt`) et un mode d'emploi (`LISEZ-MOI.txt`).
+  Ce fichier suffit, seul, pour remettre le site en ligne sur un nouveau serveur, même si l'ancien est piraté ou perdu
+  et même sans GitHub. Elle se fait **toute seule chaque jour** (les 7 dernières sont gardées sur le serveur), ou avec
+  le bouton « Faire une sauvegarde complète maintenant ».
 - **Base seule** : une copie de la base chaque jour (les 14 derniers jours), pour revenir à la veille après une erreur.
 
 👉 **Téléchargez une sauvegarde complète sur votre ordinateur une fois par mois** (et avant une grosse modification), et
-rangez-la aussi sur une clé USB ou un cloud. Si le serveur disparaît, c'est la seule copie qui reste.
+rangez-la aussi sur une clé USB. Si le serveur est piraté ou disparaît, les copies qui sont dessus partent avec lui :
+celle de votre ordinateur est la seule qui reste. Le tableau de bord du back-office affiche une **alerte** quand aucune
+sauvegarde complète n'a été téléchargée depuis 30 jours.
+
+🔒 Contre le piratage : activez la **double authentification** sur votre compte alwaysdata et sur GitHub, et utilisez
+des mots de passe différents et solides (alwaysdata, GitHub, back-office).
 Ce fichier est **confidentiel** (données des clients et clés du site) : ne l'envoyez à personne.
 
 ---
@@ -56,7 +63,19 @@ pourrez le supprimer quand tout va bien (`rm -rf ~/data-avant-restauration`).
 
 ## Cas 3 : le serveur est perdu → tout remettre sur un nouveau compte ou un nouvel hébergement
 
-Il faut : le code (GitHub) et **la sauvegarde complète téléchargée sur votre ordinateur**.
+Il faut seulement **la sauvegarde complète téléchargée sur votre ordinateur** : elle contient aussi le code.
+
+**Méthode simple (sans GitHub)** : suivez le fichier `LISEZ-MOI.txt` qui est dans la sauvegarde. En résumé :
+1. Créez le compte d'hébergement avec Node.js 22 ou plus récent.
+2. Envoyez le fichier `site-AAAA-MM-JJ.tar.gz` dans le dossier `~` du serveur avec FileZilla (connexion SFTP).
+3. Dans la console SSH (remplacez la date) :
+   ```
+   mkdir -p ~/application-camping-car/data && cd ~/application-camping-car && tar -xzf ~/site-AAAA-MM-JJ.tar.gz -C data && cp -r data/code/. . && rm -rf data/code && echo OK
+   ```
+4. Créez le site avec les réglages de `REGLAGES-SERVEUR.txt` (type Node.js, commande `node server/index.js`, dossier
+   `application-camping-car`), puis **Redémarrer**.
+
+**Méthode avec GitHub** (pour prendre le code d'une version précise) :
 
 1. Sur le nouveau serveur, dans la console SSH, récupérez le code à la version du 9 octobre 2026 :
    ```
@@ -67,7 +86,7 @@ Il faut : le code (GitHub) et **la sauvegarde complète téléchargée sur votre
    (connexion « SFTP » avec les identifiants SSH d'alwaysdata).
 3. Remettez les données :
    ```
-   cd ~/application-camping-car && mkdir -p data && tar -xzf ~/site-AAAA-MM-JJ.tar.gz -C data && echo OK
+   cd ~/application-camping-car && mkdir -p data && tar -xzf ~/site-AAAA-MM-JJ.tar.gz -C data && rm -rf data/code && echo OK
    ```
 4. Créez le site comme la première fois (voir « Mise en ligne (cloud) » dans le README : site de type
    **Node.js**, commande `node server/index.js`, dossier `application-camping-car`), puis **Redémarrer**.

@@ -419,7 +419,10 @@ const VIEWS = {
         ${(m.recentCustomers || []).length ? `<h3>Dernières mises en main</h3><p>${m.recentCustomers.map((c) => `${esc([c.firstName, c.lastName].filter(Boolean).join(' '))} <small class="muted">(${formatDate(c.handoverDate)})</small>`).join(' · ')}</p>` : ''}
         <p><a href="#customers">Voir mes clients</a></p></div>`
         : '';
+    // Administrator: a full backup must be taken off the server regularly (a hacked server takes its backups with it).
+    const backupWarn = isAdmin() ? backupWarning((await api('GET', '/api/admin/backups').catch(() => ({}))).lastDownload) : '';
     el.innerHTML = `${pageHeader('Tableau de bord')}
+      ${backupWarn}
       ${recap}
       <div class="tiles">${tiles.map(([label, n, link, filter]) => `<a class="tile${filter ? ' tile-alert' : ''}" href="#${link}" ${filter ? `data-report-filter="${filter}"` : ''}><strong>${n}</strong><span>${esc(label)}</span></a>`).join('')}</div>
       ${guide}
@@ -1253,17 +1256,26 @@ async function dealershipDetail(el, id) {
   });
 }
 
+// Warning when no full backup was downloaded for 30 days (or never): the copies on the server are lost with it.
+function backupWarning(lastDownload) {
+  const days = lastDownload ? Math.floor((Date.now() - new Date(lastDownload).getTime()) / 86400000) : null;
+  if (days !== null && days < 30) return '';
+  return `<div class="card warn-card backup-warn">💾 <strong>${days === null ? 'Aucune sauvegarde complète n’a encore été téléchargée.' : `Dernière sauvegarde complète téléchargée il y a ${days} jours.`}</strong> Si le serveur est piraté ou perdu, ses sauvegardes partent avec lui : téléchargez-en une sur votre ordinateur et une clé USB. <a href="#settings">Paramètres → Sauvegardes</a></div>`;
+}
+
 // Daily copies of the database (made by the server), to download and keep elsewhere.
 async function drawBackups(box) {
-  const { keep, fullKeep, backups, full = [] } = await api('GET', '/api/admin/backups');
+  const { keep, fullKeep, backups, full = [], lastDownload } = await api('GET', '/api/admin/backups');
   const size = (n) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} Mo` : `${Math.round(n / 1024)} Ko`);
   const rows = (list, from) =>
     `<div class="table-wrap"><table><thead><tr><th>Jour</th><th>Taille</th><th></th></tr></thead><tbody>${list
       .map((b) => `<tr><td>${formatDate(b.name.slice(from, from + 10))}</td><td>${size(b.size)}</td><td class="row-actions"><button class="btn small" data-dl="${esc(b.name)}">Télécharger</button></td></tr>`)
       .join('')}</tbody></table></div>`;
   box.innerHTML = `<h2>Sauvegardes</h2>
+    ${backupWarning(lastDownload)}
     <h3>Sauvegarde complète (pour remettre le site en ligne)</h3>
-    <p class="muted">Un seul fichier avec <strong>tout ce qui n’est pas le code</strong> : la base (clients, demandes, contenus, comptes), <strong>les photos</strong> et les clés du site. Faite chaque semaine (les ${fullKeep} dernières sont gardées). <strong>Téléchargez-la sur votre ordinateur</strong> de temps en temps : c’est la vraie sécurité si le serveur a un problème. Fichier confidentiel : gardez-le en lieu sûr.</p>
+    <p class="muted">Un seul fichier avec <strong>tout le site</strong> : la base (clients, demandes, contenus, comptes, réglages), <strong>les photos</strong>, les clés du site, <strong>le code</strong>, les réglages du serveur et un mode d’emploi (LISEZ-MOI) pour tout remettre en ligne sur un nouveau serveur, même sans l’ancien. Faite <strong>chaque jour</strong> (les ${fullKeep} dernières sont gardées sur le serveur).</p>
+    <p class="muted"><strong>Téléchargez-la sur votre ordinateur et sur une clé USB au moins une fois par mois</strong> : si le serveur est piraté ou perdu, les copies qui sont dessus disparaissent avec lui.${lastDownload ? ` Dernier téléchargement : ${formatDate(lastDownload.slice(0, 10))}.` : ''} Fichier confidentiel : gardez-le en lieu sûr.</p>
     ${full.length ? rows(full, 5) : '<p>Aucune sauvegarde complète pour l’instant.</p>'}
     <div class="actions"><button class="btn primary" data-now="full">Faire une sauvegarde complète maintenant</button></div>
     <h3>Base seule, chaque jour</h3>
@@ -1290,6 +1302,7 @@ async function drawBackups(box) {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
+      if (dl.dataset.dl.endsWith('.tar.gz')) setTimeout(() => drawBackups(box), 1500);
     } catch (err) {
       toast(err.message, 'error');
     }

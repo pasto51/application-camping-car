@@ -119,7 +119,7 @@ Tests : `npm test`
 
 - Chaque jour (à partir de 7 h), le serveur copie la base dans `data/sauvegardes/app-AAAA-MM-JJ.db` et garde les 14 derniers jours.
 - Back-office → **Paramètres → Sauvegardes** (administrateur) : liste, « Sauvegarder maintenant » et « Télécharger ». Téléchargez-en une régulièrement pour la garder chez vous.
-- **Sauvegarde complète** chaque semaine (et bouton « Faire une sauvegarde complète maintenant ») : `data/sauvegardes/site-AAAA-MM-JJ.tar.gz` avec la base, les photos (`data/uploads`) et les clés du site ; les 4 dernières sont gardées. **À télécharger sur votre ordinateur une fois par mois.**
+- **Sauvegarde complète** chaque jour (et bouton « Faire une sauvegarde complète maintenant ») : `data/sauvegardes/site-AAAA-MM-JJ.tar.gz` avec tout le site (base, photos `data/uploads`, clés, code, réglages du serveur, mode d'emploi `LISEZ-MOI.txt`) ; les 7 dernières sont gardées. **À télécharger sur votre ordinateur une fois par mois** (alerte dans le back-office après 30 jours sans).
 - **Remettre le site en ligne** (mise à jour ratée, données abîmées, serveur perdu) : voir **[docs/SAUVEGARDE-ET-RESTAURATION.md](docs/SAUVEGARDE-ET-RESTAURATION.md)**. Le code du 9 octobre 2026 a pour identifiant `43636a525d`.
 - **Restaurer** : sur alwaysdata, **Web → Sites → Arrêter** le site, puis dans le terminal :
   ```bash

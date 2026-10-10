@@ -221,13 +221,13 @@ function register(router) {
   // ---- Backups of the database (administrator) ----
   router.get('/api/admin/backups', (ctx) => {
     adminSignedIn(ctx);
-    return { keep: KEEP, fullKeep: FULL_KEEP, backups: listBackups(ctx.config.dataDir), full: listFullBackups(ctx.config.dataDir) };
+    return { keep: KEEP, fullKeep: FULL_KEEP, backups: listBackups(ctx.config.dataDir), full: listFullBackups(ctx.config.dataDir), lastDownload: getSetting(ctx.db, 'full_backup_downloaded_at') };
   });
   router.post('/api/admin/backups', (ctx) => {
     adminSignedIn(ctx);
     if (!ctx.body.full) return backupNow(ctx.db, ctx.config.dataDir);
     try {
-      return fullBackupNow(ctx.db, ctx.config.dataDir);
+      return fullBackupNow(ctx.db, ctx.config.dataDir, { secret: ctx.config.secret });
     } catch (err) {
       throw new HttpError(500, `Sauvegarde complète : ${err.message}`);
     }
@@ -236,6 +236,8 @@ function register(router) {
     adminSignedIn(ctx);
     const file = backupFile(ctx.config.dataDir, ctx.params.name);
     if (!file) throw new HttpError(404, 'Sauvegarde introuvable');
+    // A full backup taken off the server: the back-office stops warning for 30 days.
+    if (ctx.params.name.endsWith('.tar.gz')) setSetting(ctx.db, 'full_backup_downloaded_at', new Date().toISOString());
     ctx.res.writeHead(200, {
       'Content-Type': ctx.params.name.endsWith('.tar.gz') ? 'application/gzip' : 'application/octet-stream',
       'Content-Length': fs.statSync(file).size,

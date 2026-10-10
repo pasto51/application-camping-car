@@ -768,7 +768,7 @@ test('routine checklists: winter storage, spring start-up, every month, with lin
   assert.equal(listReminders(L, { _d: { hiver: oct - 200 * 86400000 } }, {}, oct).length, 1);
 });
 
-test('full backup: one archive (database, photos, keys) that puts the site back as it was', async () => {
+test('full backup: one archive (database, photos, keys, code, server settings) that puts the site back as it was', async () => {
   const admin = await login('admin@test.fr', 'motdepasse123');
   const h = await handover({ firstName: 'Sauve', lastName: 'Garde' });
   await call('PUT', '/api/me/state/cdb_photo', { token: h.token, body: { value: PNG } });
@@ -785,13 +785,18 @@ test('full backup: one archive (database, photos, keys) that puts the site back 
   const restored = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-restore-'));
   const { spawnSync } = require('node:child_process');
   assert.equal(spawnSync('tar', ['-xzf', archive, '-C', restored]).status, 0);
-  for (const f of ['app.db', 'LISEZ-MOI.txt', 'uploads']) assert.ok(fs.existsSync(path.join(restored, f)), f);
-  // The keys of the site, as in the original folder (this test site gets its secret from its settings, not from a file).
-  for (const f of ['secret.key', 'vapid.json']) assert.equal(fs.existsSync(path.join(restored, f)), fs.existsSync(path.join(dataDir, f)), f);
+  for (const f of ['app.db', 'LISEZ-MOI.txt', 'REGLAGES-SERVEUR.txt', 'uploads', 'code/server/index.js', 'code/public/app/index.html', 'code/package.json']) assert.ok(fs.existsSync(path.join(restored, f)), f);
+  assert.ok(!fs.existsSync(path.join(restored, 'code', 'data')), 'no data folder inside the code');
+  // The key the site really uses is always saved, even when it comes from the settings (as for this test site).
+  assert.equal(fs.readFileSync(path.join(restored, 'secret.key'), 'utf8').trim(), 'test-secret');
+  assert.equal(fs.existsSync(path.join(restored, 'vapid.json')), fs.existsSync(path.join(dataDir, 'vapid.json')));
+  // The download is remembered: the back-office stops warning.
+  assert.ok((await call('GET', '/api/admin/backups', { token: admin })).data.lastDownload);
   assert.ok(fs.readdirSync(path.join(restored, 'uploads'), { recursive: true }).some((f) => /\.(png|jpe?g|webp)$/i.test(f)), 'photos');
   const copy = createApp({ dataDir: restored, log: () => {} });
   try {
     assert.ok(copy.db.prepare("SELECT 1 FROM customers WHERE last_name = 'Garde'").get());
+    assert.equal(copy.config.secret, 'test-secret');
     if (fs.existsSync(path.join(dataDir, 'vapid.json'))) assert.equal(fs.readFileSync(path.join(restored, 'vapid.json'), 'utf8'), fs.readFileSync(path.join(dataDir, 'vapid.json'), 'utf8'));
   } finally {
     copy.db.close();
