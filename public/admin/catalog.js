@@ -87,20 +87,21 @@ export function registerCatalogViews(VIEWS, h) {
       { name: 'dyears', label: 'Se change combien d’années après sa fabrication ?', type: 'number', hideIf: ['dkind', ['', 'until', 'every']] },
       { name: 'dmonths', label: 'À changer tous les combien de mois ?', type: 'number', hideIf: ['dkind', ['', 'until', 'made']] },
       { name: 'dlabel', label: 'Où lire la date (texte affiché au client)', full: true, hideIf: ['dkind', ['']] },
+      { name: 'dwhat', label: 'Ce qui se remplace, si ce n’est pas l’équipement lui-même (ex. « carte TNTSAT ou FRANSAT du démodulateur »)', full: true, hideIf: ['dkind', ['']] },
     ];
     // No box ticked = the equipment exists on every type of vehicle.
     function withTypes(data) {
       const types = VEHICLE_TYPES.map(([t]) => t).filter((t) => data[`type_${t}`]);
       VEHICLE_TYPES.forEach(([t]) => delete data[`type_${t}`]);
-      const { dkind, dyears, dmonths, dlabel, ...rest } = data;
-      const dated = dkind ? { kind: dkind, years: Number(dyears) || undefined, months: Number(dmonths) || undefined, label: dlabel } : null;
+      const { dkind, dyears, dmonths, dlabel, dwhat, ...rest } = data;
+      const dated = dkind ? { kind: dkind, years: Number(dyears) || undefined, months: Number(dmonths) || undefined, label: dlabel, what: dwhat || undefined } : null;
       return { ...rest, grp: rest.grp || '', role: rest.grp ? rest.role : '', pick: rest.grp && rest.role === 'pick' ? rest.pick : '', dated, types: types.length === VEHICLE_TYPES.length ? [] : types };
     }
     function typeValues(x) {
       const all = !x.types?.length;
       return {
         ...x,
-        dkind: x.dated?.kind || '', dyears: x.dated?.years || 10, dmonths: x.dated?.months || 12, dlabel: x.dated?.label || '',
+        dkind: x.dated?.kind || '', dyears: x.dated?.years || 10, dmonths: x.dated?.months || 12, dlabel: x.dated?.label || '', dwhat: x.dated?.what || '',
         ...Object.fromEntries(VEHICLE_TYPES.map(([t]) => [`type_${t}`, all || x.types.includes(t)])),
       };
     }

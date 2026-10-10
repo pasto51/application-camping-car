@@ -17,6 +17,7 @@ const TIP_PROPOSALS = require('./tips-propositions.json');
 const { applyEnsembles, hideDropped, retargetDropped } = require('./ensembles');
 const { applyDiagTypes } = require('./diag-types');
 const { REELS } = require('./diagnostics-reels');
+const { CARD_DATE } = require('./equipment-groups');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -679,7 +680,49 @@ const PATCHES = [
       return changed;
     },
   },
+  {
+    // TNTSAT and FRANSAT cards last 4 years, and since 1 October 2026 FRANSAT no longer sells nor renews its HD cards:
+    // the card's end date is followed like the gas hose's, and an expired card leads to the right purchase.
+    key: '2026-11-02-cartes-satellite',
+    run: (db) => {
+      let changed = 0;
+      for (const id of ['demod_man', 'demod_auto']) {
+        const row = db.prepare('SELECT data FROM equipment WHERE id = ?').get(id);
+        if (!row) continue;
+        const q = JSON.parse(row.data);
+        if (q.dated) continue;
+        q.dated = CARD_DATE;
+        db.prepare('UPDATE equipment SET data = ? WHERE id = ?').run(JSON.stringify(q), id);
+        changed++;
+      }
+      const row = db.prepare('SELECT data FROM diagnostics WHERE id = ?').get('p_chaines');
+      if (!row) return changed;
+      const data = JSON.parse(row.data);
+      const walk = (n) => {
+        if (!n || n.cause) return;
+        n.t = String(n.t).replace('(une carte TNTSAT dure 4 ans après sa première utilisation)', '(une carte TNTSAT ou FRANSAT dure 4 ans après sa mise en service)');
+        n.n = n.n.map((k) => {
+          if (!k || k.cause !== 'La carte TNTSAT a expiré.') return walk(k), k;
+          changed++;
+          return JSON.parse(JSON.stringify(CARD_EXPIRED));
+        });
+      };
+      walk(data.tree);
+      db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(data), 'p_chaines');
+      return changed;
+    },
+  },
 ];
+
+const CARD_EXPIRED = {
+  t: 'Quelle carte avez-vous (le logo est sur la carte et sur le démodulateur) ?',
+  o: ['TNTSAT', 'FRANSAT, avec un démodulateur UHD (logo « UHD » ou « 4K »)', 'FRANSAT, avec un démodulateur HD'],
+  n: [
+    { cause: 'La carte TNTSAT a expiré.', geste: 'Elle dure 4 ans après sa première mise en service. Renouvelez-la sur le site de TNTSAT ou chez un revendeur, puis notez sa nouvelle date de fin dans l’appli (fiche du démodulateur) : elle vous la rappellera. Méfiez-vous des cartes d’occasion.', prod: 'Carte TNTSAT neuve', sec: null, achat: true },
+    { cause: 'La carte FRANSAT a expiré.', geste: 'Elle dure 4 ans après sa mise en service. Commandez-en une neuve sur le site de FRANSAT ou chez un revendeur, puis notez sa date de fin dans l’appli (fiche du démodulateur).', prod: 'Carte FRANSAT neuve pour démodulateur UHD', sec: null, achat: true },
+    { cause: 'La carte FRANSAT HD a expiré.', geste: 'Depuis le 1er octobre 2026, FRANSAT ne vend plus et ne renouvelle plus les cartes HD : il faut un démodulateur FRANSAT UHD, vendu avec sa carte. Il se branche sur la même antenne, à la place de l’ancien. Si la carte était dans la télé (lecteur ou module intégré), gardez la télé : le démodulateur s’y branche avec un câble HDMI et reçoit aussi toutes les chaînes HD.', prod: 'Démodulateur FRANSAT UHD avec sa carte', sec: null, achat: true },
+  ],
+};
 
 function findLeaves(node, match, out = []) {
   if (!node || typeof node !== 'object') return out;

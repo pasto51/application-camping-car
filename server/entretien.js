@@ -143,7 +143,7 @@ function datedOf(db, customer, today = iso(new Date()), own = ownOf(db, customer
     const start = `${v}-01`;
     const due = q.dated.kind === 'until' ? start : q.dated.kind === 'made' ? addMonths(start, 12 * (q.dated.years || 10)) : addMonths(start, q.dated.months || 12);
     const state = due < today ? 'late' : due <= addDays(today, SOON_DAYS) ? 'soon' : 'later';
-    items.push({ kind: `date-${q.id}`, eq: q.id, dated: true, label: `${q.dated.kind === 'every' ? 'À changer' : 'À remplacer'} : ${q.name}`, due, state, rdv: null, why: q.dated.label || '' });
+    items.push({ kind: `date-${q.id}`, eq: q.id, dated: true, label: q.dated.what ? `À renouveler : ${q.dated.what}` : `${q.dated.kind === 'every' ? 'À changer' : 'À remplacer'} : ${q.name}`, due, state, rdv: null, why: q.dated.label || '' });
   }
   return { items, missing };
 }

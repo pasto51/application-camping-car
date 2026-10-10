@@ -257,11 +257,11 @@ _Il marche sur la batterie (12 V), sans prise._
 
 ### Antenne satellite manuelle 🔁
 - 🆕 **Pointeur satellite** — toujours là
-- 🆕 **Démodulateur satellite** — toujours là
+- 🆕 **Démodulateur satellite** — toujours là — 📅 rappel à la date marquée (Date de fin de la carte TNTSAT ou FRANSAT (menu « Carte » du démodulateur))
 
 ### Antenne satellite automatique 🔁
 - 🆕 **Boîtier de commande de l’antenne** — toujours là
-- 🆕 **Démodulateur de l’antenne automatique** — toujours là (Parfois intégré au boîtier de commande ou au téléviseur.)
+- 🆕 **Démodulateur de l’antenne automatique** — toujours là — 📅 rappel à la date marquée (Date de fin de la carte TNTSAT ou FRANSAT (menu « Carte » du démodulateur)) (Parfois intégré au boîtier de commande ou au téléviseur.)
 
 ### Antenne TV hertzienne (TNT)
 - 🆕 **Amplificateur de signal TNT** — toujours là

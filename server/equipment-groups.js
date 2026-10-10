@@ -15,13 +15,16 @@
 //                 the element has no question yet.
 //   dated       : a date read on the part, reminded in the maintenance logbook:
 //                 until = end of validity written on it; made = manufacturing date, valid « years » after it;
-//                 every = to change every « months ».
+//                 every = to change every « months »; what = what is replaced when it is not the item itself
+//                 (the card of the satellite receiver).
 // Items the user dropped stay in the database (old data) but are hidden from the app: HIDE.
 
 const A = (id, extra = {}) => ({ id, role: 'always', ...extra });
 const O = (id, extra = {}) => ({ id, role: 'option', ...extra });
 const P = (id, pick, extra = {}) => ({ id, role: 'pick', pick, ...extra });
 const NEW = (name, text, extra = {}) => ({ new: true, name, text, ...extra });
+// The TNTSAT or FRANSAT card lasts 4 years after it is first used; its end date is shown in the receiver's menu.
+const CARD_DATE = { kind: 'until', what: 'carte TNTSAT ou FRANSAT du démodulateur', label: 'Date de fin de la carte TNTSAT ou FRANSAT (menu « Carte » du démodulateur)' };
 
 const GROUPS = [
   // ---------- Cabine et conduite ----------
@@ -169,12 +172,12 @@ const GROUPS = [
   {
     id: 'satman', cat: 'multi', alt: 'sat',
     kids: [A('pointeur_sat', NEW('Pointeur satellite', 'Le petit boîtier qui bipe quand l’antenne est bien tournée vers le satellite.')),
-      A('demod_man', NEW('Démodulateur satellite', 'Le boîtier qui reçoit les chaînes, avec sa carte TNTSAT ou FRANSAT.'))],
+      A('demod_man', NEW('Démodulateur satellite', 'Le boîtier qui reçoit les chaînes, avec sa carte TNTSAT ou FRANSAT.', { dated: CARD_DATE }))],
   },
   {
     id: 'sat', cat: 'multi', alt: 'sat',
     kids: [A('sat_cmd', NEW('Boîtier de commande de l’antenne', 'Il fait tourner et pointer l’antenne automatique vers le satellite.')),
-      A('demod_auto', NEW('Démodulateur de l’antenne automatique', 'Le boîtier qui reçoit les chaînes, avec sa carte TNTSAT ou FRANSAT.', { note: 'Parfois intégré au boîtier de commande ou au téléviseur.' }))],
+      A('demod_auto', NEW('Démodulateur de l’antenne automatique', 'Le boîtier qui reçoit les chaînes, avec sa carte TNTSAT ou FRANSAT.', { note: 'Parfois intégré au boîtier de commande ou au téléviseur.', dated: CARD_DATE }))],
   },
   { id: 'tnt', cat: 'multi', kids: [A('tnt_ampli', NEW('Amplificateur de signal TNT', 'Il renforce le signal de l’antenne hertzienne. Il a souvent un bouton ou un voyant à allumer.'))] },
   { id: 'tv', cat: 'multi', variant: { q: 'Combien de téléviseurs ?', o: ['Un', 'Deux', 'Trois ou plus'] }, kids: [] },
@@ -200,4 +203,4 @@ const HIDE = ['cuis_l', 'cell', 'tpms', 'vue_ar', 'tech_vue', 'chauf', 'eauch', 
 // Photos of the vehicle stored as equipment: hidden from the lists, still shown in their zone of the plan.
 const PHOTO_VIEWS = ['vue_ar', 'tech_vue'];
 
-module.exports = { GROUPS, HIDE, PHOTO_VIEWS };
+module.exports = { CARD_DATE, GROUPS, HIDE, PHOTO_VIEWS };

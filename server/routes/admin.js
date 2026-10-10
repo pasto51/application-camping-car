@@ -921,6 +921,7 @@ function register(router) {
             ...(kind === 'made' ? { years: Math.min(30, Math.max(1, Number(d.years) || 10)) } : {}),
             ...(kind === 'every' ? { months: Math.min(120, Math.max(1, Number(d.months) || 12)) } : {}),
             label: optStr(d.label, 160) || '',
+            ...(optStr(d.what, 120) ? { what: optStr(d.what, 120) } : {}),
           }
         : undefined;
     }

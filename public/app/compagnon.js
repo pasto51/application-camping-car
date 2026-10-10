@@ -211,8 +211,10 @@ window.startCompagnon = function(DATA){
     return addMonths(v,d.months||12);
   }
   function dueText(q){
-    var due = dueOf(q); if(!due) return q.dated.kind==="every" ? "Notez la date du dernier changement : l'appli vous le rappellera." : "Notez la date marquée dessus : l'appli vous rappellera de le changer.";
+    var w = q.dated.what, due = dueOf(q);
+    if(!due) return w ? "Notez cette date : l'appli vous rappellera de renouveler la "+esc(w)+"." : q.dated.kind==="every" ? "Notez la date du dernier changement : l'appli vous le rappellera." : "Notez la date marquée dessus : l'appli vous rappellera de le changer.";
     var label = due.toLocaleDateString("fr-FR",{month:"long",year:"numeric"}), late = due <= new Date();
+    if(w) return late ? '<b class="klate">⚠️ À renouveler : date dépassée ('+esc(label)+').</b>' : 'À renouveler avant <b>'+esc(label)+'</b>. Un rappel arrivera dans le carnet d\'entretien.';
     return late ? '<b class="klate">⚠️ À changer : date dépassée ('+esc(label)+').</b>' : 'À changer avant <b>'+esc(label)+'</b>. Un rappel arrivera dans le carnet d\'entretien.';
   }
   function dateBlock(q){
