@@ -145,11 +145,11 @@ _Pas de date de validité à suivre._
 ### 🆕 Batterie cellule
 - **Batterie cellule AGM** — un seul au choix (Type de batterie)
 - **Batterie cellule GEL** — un seul au choix (Type de batterie)
-- **Batterie cellule lithium (LiFePO4)** — un seul au choix (Type de batterie)
+- **Batterie cellule lithium (LiFePO4)** — un seul au choix (Type de batterie) (Elle demande un booster de charge (DC-DC) pour se recharger en roulant : il est posé par l’atelier ou le magasin.)
 - **Coupe-circuit de batterie** — option
 - **Deuxième batterie cellule** — option
 - **Moniteur de batterie** — option
-- **Charge de la batterie cellule en roulant** — option
+- **Charge de la batterie cellule en roulant** — option — modèle : Booster de charge (DC-DC) · Coupleur séparateur (relais)
 
 ### Prise P17 et circuit 230 V
 - **Disjoncteur différentiel 230 V** — toujours là

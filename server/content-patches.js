@@ -20,6 +20,7 @@ const { REELS } = require('./diagnostics-reels');
 const { CARD_DATE } = require('./equipment-groups');
 const { addSearchWords } = require('./search-words');
 const { applyAudit } = require('./diagnostics-audit');
+const { applyBooster } = require('./booster-lithium');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -758,6 +759,12 @@ const PATCHES = [
     // dead ends, home remedies removed, five new diagnostics (server/diagnostics-audit.js).
     key: '2026-11-05-audit-diagnostics',
     run: (db) => applyAudit(db),
+  },
+  {
+    // A lithium battery always comes with a charging booster (fitted by the workshop or store): ticked with it, typed
+    // « booster », and its own diagnostic when it no longer charges.
+    key: '2026-11-06-booster-lithium',
+    run: (db) => applyBooster(db),
   },
 ];
 

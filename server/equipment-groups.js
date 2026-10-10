@@ -106,7 +106,8 @@ const GROUPS = [
   {
     id: 'g_batterie', cat: 'elec', new: true, name: 'Batterie cellule', text: 'La batterie qui alimente la cellule (éclairage, pompe, chauffage…) quand vous n’êtes pas branché.',
     picks: { bat: 'Type de batterie' },
-    kids: [P('agm', 'bat'), P('gel', 'bat'), P('lith', 'bat'), O('coupe'), O('bat2'), O('moni'), O('b2b')],
+    kids: [P('agm', 'bat'), P('gel', 'bat'), P('lith', 'bat', { note: 'Elle demande un booster de charge (DC-DC) pour se recharger en roulant : il est posé par l’atelier ou le magasin.' }),
+      O('coupe'), O('bat2'), O('moni'), O('b2b', { variant: { q: 'Type de charge en roulant', o: ['Booster de charge (DC-DC)', 'Coupleur séparateur (relais)'] } })],
   },
   {
     id: 'quai', cat: 'elec', name: 'Prise P17 et circuit 230 V',

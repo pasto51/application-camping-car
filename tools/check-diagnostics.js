@@ -7,7 +7,7 @@ const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-
 const STOP = new Set('le la les un une des de du d l au aux et ou a est sont mon ma mes votre vos ce cet cette qui que qu dans sur sous avec sans pour par en y se s il elle on vous ne n pas plus ca bien si oui non tout tous toute est-ce reglé regle fois encore deja bien quand comme etait etaient a-t-il ont avez vous-meme meme'.split(' '));
 const stem = (w) => (w.length > 5 ? w.slice(0, 5) : w.replace(/[sx]$/, ''));
 const words = (s) => new Set(norm(s).replace(/[’']/g, ' ').split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w)).map(stem));
-const RDV = ['atelier', 'etanch', 'revision'];
+const RDV = ['atelier', 'etanch', 'revision', 'gaz', 'hiv', 'frigo', 'chauf', 'eauch', 'energie', 'sat', 'souci'];
 
 const issues = [];
 let leaves = 0;
