@@ -225,7 +225,26 @@ function createNotifier({ db, vapid, log = console.log, createLoginLink = () => 
     return mail(db, [to], subject, text, log, { html, fromName: `${dealer.name || 'Compagnon de bord'} via Compagnon de bord` });
   }
 
-  return { customerWrote, dealershipAnswered, welcome, push, overdueDigest };
+  // « Signaler un bug »: an e-mail to every administrator account.
+  async function bugReported({ bug, url }) {
+    const to = db.prepare("SELECT email FROM admins WHERE role = 'admin'").all().map((r) => r.email).filter((e) => /@/.test(e) && !/@demo\.test$|\.local$/.test(e));
+    if (!to.length) return false;
+    const from = bug.source === 'app' ? `un client (${bug.who || 'appli'})` : `le back-office (${bug.who || 'équipe'})`;
+    const subject = `Bug signalé depuis ${bug.source === 'app' ? 'l’appli' : 'le back-office'}${bug.page ? ` · ${bug.page}` : ''}`;
+    const html = emailHtml({
+      dealer: { name: 'Compagnon de bord · bug signalé' },
+      intro: `Un bug vient d’être signalé par ${escHtml(from)}${bug.page ? `, sur l’écran « ${escHtml(bug.page)} »` : ''}.`,
+      quote: bug.message,
+      button: 'Voir dans le back-office',
+      url,
+      note: `${bug.device ? `Appareil : ${escHtml(bug.device)}<br>` : ''}${bug.version ? `Version : ${escHtml(bug.version)}` : ''}`,
+      footer: 'E-mail envoyé par l’application Compagnon de bord.',
+    });
+    const text = [`Bug signalé par ${from}${bug.page ? `, écran « ${bug.page} »` : ''} :`, '', bug.message, '', bug.device ? `Appareil : ${bug.device}` : '', bug.version ? `Version : ${bug.version}` : '', '', `Voir : ${url}`].filter((l, i, a) => l || a[i - 1]).join('\n');
+    return mail(db, to, subject, text, log, { html, fromName: 'Compagnon de bord' });
+  }
+
+  return { customerWrote, dealershipAnswered, welcome, push, overdueDigest, bugReported };
 }
 
 module.exports = { createNotifier, mailConfig, mailReady, emailHtml };

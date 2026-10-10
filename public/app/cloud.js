@@ -518,6 +518,7 @@
         window.startCompagnon(DATA);
         renderNick();
         addAccountCard();
+        addHelp();
         loadRequests();
         setInterval(function () { if (document.visibilityState === 'visible') loadRequests(); }, 60000);
         flush();
@@ -685,6 +686,70 @@
       if (!sub) return;
       return api('DELETE', '/api/me/push', { endpoint: sub.endpoint }).catch(function () {}).then(function () { return sub.unsubscribe(); });
     });
+  }
+
+  // ---------- « Prendre en main » (the presentation video, « ? » at the top) and « Signaler un bug » (bottom of the home screen) ----------
+
+  function videoEmbed(url) {
+    var u; try { u = new URL(url); } catch (e) { return null; }
+    var host = u.hostname.replace(/^www\.|^m\./, ''), id = null, m;
+    if (host === 'youtu.be') id = u.pathname.slice(1);
+    else if (host === 'youtube.com' || host === 'youtube-nocookie.com') id = u.pathname === '/watch' ? u.searchParams.get('v') : ((u.pathname.match(/^\/(?:embed|shorts|live)\/([^/?#]+)/) || [])[1]);
+    if (id && /^[\w-]{6,20}$/.test(id)) return 'https://www.youtube-nocookie.com/embed/' + id;
+    if ((host === 'vimeo.com' || host === 'player.vimeo.com') && (m = u.pathname.match(/(\d{6,12})/))) return 'https://player.vimeo.com/video/' + m[1];
+    return null;
+  }
+  function openHelp() {
+    var url = DATA && DATA.helpVideo, embed = url && videoEmbed(url);
+    if (url && !embed) { window.open(url, '_blank', 'noopener'); return; }
+    var m = document.createElement('div');
+    m.className = 'cloud-modal';
+    m.innerHTML = '<div class="card cloud-helpcard"><p class="eyebrow">Prendre en main l’appli</p>' +
+      (embed
+        ? '<div class="cloud-video"><iframe src="' + esc(embed) + '" title="Présentation de l’appli" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>'
+        : '<h3>La vidéo arrive bientôt</h3><p class="sub">En attendant : <b>Gestes du quotidien</b> pour vos listes, <b>C’est quoi, ça ?</b> pour comprendre un équipement sur le plan, <b>J’ai un souci</b> pour trouver la cause d’une panne pas à pas, et le bouton de rendez-vous pour écrire à votre concession.</p>') +
+      '<div class="btns"><button type="button" class="btn" data-x>Fermer</button></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.closest('[data-x]')) m.remove(); });
+  }
+  function openBug() {
+    var m = document.createElement('div');
+    m.className = 'cloud-modal';
+    m.innerHTML = '<form class="card"><p class="eyebrow">Signaler un bug de l’appli</p><h3>Que s’est-il passé ?</h3>' +
+      '<p class="sub">Ce que vous faisiez et ce que vous avez vu (un écran blanc, un bouton qui ne marche pas…). Pour une panne de votre camping-car, utilisez plutôt « J’ai un souci ».</p>' +
+      '<textarea class="search" name="message" rows="5" maxlength="3000" required></textarea>' +
+      '<div class="btns"><button type="button" class="btn alt" data-x>Annuler</button><button class="btn">Envoyer</button></div></form>';
+    document.body.appendChild(m);
+    var form = m.querySelector('form'), ta = m.querySelector('textarea');
+    setTimeout(function () { ta.focus(); }, 50);
+    m.querySelector('[data-x]').onclick = function () { m.remove(); };
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var btn = form.querySelector('button:not([type=button])'); btn.disabled = true;
+      var title = document.getElementById('title');
+      api('POST', '/api/me/bugs', { message: ta.value, page: title ? title.textContent : '' })
+        .then(function () { m.remove(); toast('Merci ! Votre message est bien envoyé.'); })
+        .catch(function (err) { btn.disabled = false; toast(err.message); });
+    };
+  }
+  function addHelp() {
+    var top = document.querySelector('.top'), logo = top && top.querySelector('.dlogo');
+    if (top && !document.getElementById('cloudhelp')) {
+      var q = document.createElement('button');
+      q.id = 'cloudhelp'; q.type = 'button'; q.className = 'cloud-help'; q.textContent = '?';
+      q.setAttribute('aria-label', 'Prendre en main l’appli (vidéo)');
+      q.onclick = openHelp;
+      top.insertBefore(q, logo || null);
+    }
+    var home = document.getElementById('home');
+    if (home && !document.getElementById('cloudfoot')) {
+      var f = document.createElement('div');
+      f.id = 'cloudfoot'; f.className = 'cloud-foot';
+      f.innerHTML = '<button type="button" class="lnk" data-help>❓ Prendre en main l’appli</button><button type="button" class="lnk" data-bug>🐞 Signaler un bug</button>';
+      f.querySelector('[data-help]').onclick = openHelp;
+      f.querySelector('[data-bug]').onclick = openBug;
+      home.appendChild(f);
+    }
   }
 
   // ---------- Nickname of the vehicle (« Le Baroudeur »): shown big at the top, the model just below ----------

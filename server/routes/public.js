@@ -1,6 +1,7 @@
 'use strict';
 
 const { HttpError, PreparedJson } = require('../http');
+const { saveBug, helpVideos } = require('../bugs');
 const { transaction, getSetting, stripVin, bumpContentVersion } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
@@ -231,10 +232,12 @@ function register(router) {
     const featured = bannerFor(db, customer);
     const contentVersion = Number(getSetting(db, 'content_version', '0'));
     const announcement = getSetting(db, 'announcement', null);
+    const helpVideo = helpVideos(db).app;
     const key = sha256(
       JSON.stringify([
         contentVersion,
         announcement,
+        helpVideo,
         featured,
         db.prepare('SELECT * FROM vehicles WHERE id = ?').get(customer.vehicle_id),
         db.prepare('SELECT * FROM dealerships WHERE id = ?').get(customer.dealership_id),
@@ -242,11 +245,35 @@ function register(router) {
     );
     let prepared = appDataCache.get(key);
     if (!prepared) {
-      prepared = new PreparedJson({ contentVersion, announcement, ...appData(db, { vehicleId: customer.vehicle_id, dealershipId: customer.dealership_id }), featured });
+      prepared = new PreparedJson({ contentVersion, announcement, helpVideo, ...appData(db, { vehicleId: customer.vehicle_id, dealershipId: customer.dealership_id }), featured });
       if (appDataCache.size >= 100) appDataCache.delete(appDataCache.keys().next().value);
       appDataCache.set(key, prepared);
     }
     return prepared;
+  });
+
+  // « Signaler un bug » from the app: kept for the administrator, who is told by e-mail. A few a day per customer.
+  const bugLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 10 });
+  router.post('/api/me/bugs', (ctx) => {
+    const customer = requireCustomer(ctx);
+    if (bugLimiter(`c${customer.id}`)) throw new HttpError(429, 'Vous avez déjà signalé plusieurs bugs aujourd’hui : merci, nous les regardons.');
+    const d = ctx.db.prepare('SELECT name FROM dealerships WHERE id = ?').get(customer.dealership_id);
+    let bug;
+    try {
+      bug = saveBug(ctx.db, {
+        source: 'app',
+        customerId: customer.id,
+        who: [[customer.first_name, customer.last_name].filter(Boolean).join(' '), d?.name].filter(Boolean).join(' · '),
+        page: ctx.body.page,
+        message: ctx.body.message,
+        device: ctx.req.headers['user-agent'],
+        version: ctx.body.version,
+      });
+    } catch (err) {
+      throw new HttpError(400, err.message);
+    }
+    ctx.notify.bugReported?.({ bug, url: `${ctx.origin}/admin/#bugs` }).catch(() => {});
+    return { ok: true };
   });
 
   // The « À la une » banner for this customer today (asked at each start: dates and time since the handover change).

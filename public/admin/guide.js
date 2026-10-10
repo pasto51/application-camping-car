@@ -33,7 +33,8 @@ const MENUS = [
   ['brands', 'Marques', 'Les marques de véhicules et leur logo.', ['admin', 'editor']],
   ['dealerships', 'Concessions / Ma concession', 'Coordonnées, logo, téléphone et e-mail du SAV et du magasin (affichés dans l’appli du client), durée de garantie.', ['admin', 'manager', 'dealer', 'sales', 'sav', 'store']],
   ['users', 'Utilisateurs / Mon équipe', 'Les comptes : commerciaux, SAV, magasin, responsables. Créer, modifier, désactiver.', MANAGERS],
-  ['settings', 'Paramètres', 'Votre mot de passe. Pour l’administrateur : e-mails du site, annonce, sauvegardes.', ALL],
+  ['bugs', 'Bugs signalés', 'Les bugs envoyés par les clients (bas de l’appli) et par l’équipe (bas du menu), aussi reçus par e-mail : « Réglé » ou « Supprimer ».', ['admin']],
+  ['settings', 'Paramètres', 'Votre mot de passe. Pour l’administrateur : e-mails du site, annonce, vidéos de prise en main, sauvegardes.', ALL],
 ];
 
 // What the customer sees in the app, and where it is set: [where in the app, what, section, roles who care].
@@ -64,6 +65,7 @@ export function guideHtml(role, visibleSections) {
         <div>
           <h3>Dans le back-office</h3>
           <ul class="guide-list">${menus.map(([id, title, text]) => `<li><strong>${link(id, title)}</strong><span>${esc(text)}</span></li>`).join('')}</ul>
+          <p class="muted">En bas du menu, pour tous : ❓ <b>Prendre en main</b> (la vidéo de présentation du back-office) et 🐞 <b>Signaler un bug</b>.</p>
         </div>
         ${
           app.length

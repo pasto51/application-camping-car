@@ -833,7 +833,7 @@ test('security: malformed addresses, small anonymous bodies, sessions cut, roles
   const editor = await login('ed.secu@test.fr', 'edsecu12345');
   assert.deepEqual((await call('GET', '/api/admin/salespeople', { token: editor })).data, []);
   const seen = (await call('GET', '/api/admin/settings', { token: editor })).data;
-  assert.deepEqual(Object.keys(seen), ['announcement', 'mail']);
+  assert.deepEqual(Object.keys(seen), ['announcement', 'mail', 'help']); // the help video links are not secret
   assert.deepEqual(Object.keys(seen.mail), ['ready']);
 
   // 5. The site address of the e-mails is never taken from a failed login or a made-up host.
@@ -859,4 +859,34 @@ test('security: malformed addresses, small anonymous bodies, sessions cut, roles
   // 8. Lost phone: the dealership signs out the customer's devices.
   assert.equal((await call('POST', `/api/admin/customers/${h.customer.id}/signout`, { token: admin })).data.sessions, 1);
   assert.equal((await call('GET', '/api/me', { token: h.token })).status, 401);
+});
+
+test('« Signaler un bug » from the app and the back-office, read by the administrator; « Prendre en main » videos', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const h = await handover({ firstName: 'Bug', lastName: 'Client' });
+  // From the app: kept with who sent it, a too short message is refused, and the e-mail goes to the administrators.
+  assert.equal((await call('POST', '/api/me/bugs', { token: h.token, body: { message: 'x' } })).status, 400);
+  assert.equal((await call('POST', '/api/me/bugs', { token: h.token, body: { message: 'L’écran reste blanc <script>', page: 'Gestes du quotidien', version: 'abc123' } })).status, 200);
+  assert.equal((await call('POST', '/api/me/bugs', { body: { message: 'Sans compte' } })).status, 401);
+  // From the back-office: any role can report.
+  const ed = await call('POST', '/api/admin/users', { token: admin, body: { email: 'bug-editor@test.fr', name: 'Éd', password: 'motdepasse123', role: 'editor' } });
+  assert.equal(ed.status, 200);
+  const editor = await login('bug-editor@test.fr', 'motdepasse123');
+  assert.equal((await call('POST', '/api/admin/bugs', { token: editor, body: { message: 'Le bouton Enregistrer ne marche pas', page: 'Contenus de l’appli' } })).status, 200);
+  // Only the administrator reads, closes and removes them.
+  assert.equal((await call('GET', '/api/admin/bugs', { token: editor })).status, 403);
+  const list = (await call('GET', '/api/admin/bugs', { token: admin })).data.bugs;
+  const fromApp = list.find((b) => b.source === 'app' && b.who.includes('Bug Client'));
+  assert.ok(fromApp && fromApp.message.includes('<script>') && fromApp.page === 'Gestes du quotidien');
+  assert.ok(list.some((b) => b.source === 'admin' && b.who.includes('Éditeur de contenu')));
+  assert.ok((await call('GET', '/api/admin/stats', { token: admin })).data.newBugs >= 2);
+  assert.equal((await call('PUT', `/api/admin/bugs/${fromApp.id}`, { token: admin, body: { status: 'done' } })).status, 200);
+  assert.equal((await call('GET', '/api/admin/bugs', { token: admin })).data.bugs.find((b) => b.id === fromApp.id).status, 'done');
+  assert.equal((await call('DELETE', `/api/admin/bugs/${fromApp.id}`, { token: editor })).status, 403);
+  // Videos: set by the administrator only, a bad link is refused, the app receives its own.
+  assert.equal((await call('PUT', '/api/admin/settings', { token: editor, body: { help: { app: 'https://youtu.be/abcdefghijk' } } })).status, 403);
+  assert.equal((await call('PUT', '/api/admin/settings', { token: admin, body: { help: { app: 'javascript:alert(1)' } } })).status, 400);
+  assert.equal((await call('PUT', '/api/admin/settings', { token: admin, body: { help: { app: 'https://youtu.be/abcdefghijk', admin: 'https://vimeo.com/123456789' } } })).status, 200);
+  assert.deepEqual((await call('GET', '/api/admin/settings', { token: editor })).data.help, { app: 'https://youtu.be/abcdefghijk', admin: 'https://vimeo.com/123456789' });
+  assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.helpVideo, 'https://youtu.be/abcdefghijk');
 });

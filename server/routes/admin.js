@@ -14,6 +14,7 @@ const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../service
 const { backupNow, fullBackupNow, listBackups, listFullBackups, backupFile, KEEP, FULL_KEEP } = require('../backup');
 const { entretienOf, settingsOf, cleanSettings } = require('../entretien');
 const { cleanLists } = require('../lists');
+const { saveBug, bugOut, cleanVideoUrl, helpVideos } = require('../bugs');
 const { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut } = require('../tips');
 const { SCREENS, ICONS, AGES, WARRANTIES, allBanners, audience, cleanBanner, insertBanner, updateBanner, liveOn } = require('../banners');
 const { TYPES: VEHICLE_TYPES } = require('../vehicle-types');
@@ -127,6 +128,7 @@ function register(router) {
   // Roles: admin (everything) ; manager, « responsable de concession » (their dealership: customers, team, reassignments) ;
   // sales, « commercial » (sees their dealership, manages only their own customers).
   const ROLES = ['admin', 'editor', 'analytics', 'manager', 'sales', 'sav', 'store'];
+  const ROLE_NAMES = { admin: 'Administrateur', editor: 'Éditeur de contenu', analytics: 'Analyste', manager: 'Responsable de concession', sales: 'Commercial', sav: 'SAV', store: 'Magasin' };
 
   // Content editor: the app's contents (diagnostics, equipment, lists, vehicles and photos, announcement), not the business data.
   function contentOnly(ctx) {
@@ -394,6 +396,7 @@ function register(router) {
       contentVersion: Number(getSetting(db, 'content_version', '0')),
       // Tips shared by customers, waiting to be read (administrator and content editor).
       pendingTips: user.role === 'admin' || user.role === 'editor' ? count("SELECT COUNT(*) AS n FROM tips WHERE status = 'pending'") : null,
+      newBugs: user.role === 'admin' ? count("SELECT COUNT(*) AS n FROM bug_reports WHERE status = 'new'") : null,
       // « Mes clients » recap, for whoever follows customers (no e-mail is sent to salespeople).
       mine: {
         customers: count('SELECT COUNT(*) AS n FROM customers WHERE salesperson_id = ?', [user.id]),
@@ -574,15 +577,56 @@ function register(router) {
       announcement: getSetting(db, 'announcement', null),
       mail: { host: c.host, port: c.port, user: c.user, from: c.from, copy: c.copy, passwordSet: !!c.pass, ready: mailReady(db) },
       mailLast: safeJson(getSetting(db, 'mail_last', 'null'), null),
+      help: helpVideos(db),
     };
   }
 
   // The e-mail server settings are for the administrator; the others see the announcement, and only whether the
   // e-mails are set up (for the warning of « Demandes clients »).
+  // « Signaler un bug » from the back-office (every role); the list is for the administrator.
+  const bugLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 30 });
+  router.post('/api/admin/bugs', (ctx) => {
+    const user = auth(ctx);
+    if (bugLimiter(`a${user.id}`)) throw new HttpError(429, 'Beaucoup de bugs signalés aujourd’hui : merci, ils sont bien reçus.');
+    const d = user.dealership_id ? ctx.db.prepare('SELECT name FROM dealerships WHERE id = ?').get(user.dealership_id) : null;
+    let bug;
+    try {
+      bug = saveBug(ctx.db, {
+        source: 'admin',
+        adminId: user.id,
+        who: [user.name || user.email, ROLE_NAMES[user.role] || user.role, d?.name].filter(Boolean).join(' · '),
+        page: ctx.body.page,
+        message: ctx.body.message,
+        device: ctx.req.headers['user-agent'],
+        version: ctx.body.version,
+      });
+    } catch (err) {
+      throw new HttpError(400, err.message);
+    }
+    ctx.notify.bugReported?.({ bug, url: `${ctx.origin}/admin/#bugs` }).catch(() => {});
+    return { ok: true };
+  });
+  router.get('/api/admin/bugs', (ctx) => {
+    adminOnly(ctx);
+    return { bugs: ctx.db.prepare("SELECT * FROM bug_reports ORDER BY status = 'new' DESC, id DESC LIMIT 500").all().map(bugOut) };
+  });
+  router.put('/api/admin/bugs/:id', (ctx) => {
+    adminOnly(ctx);
+    const status = ctx.body.status === 'done' ? 'done' : 'new';
+    const r = ctx.db.prepare('UPDATE bug_reports SET status = ? WHERE id = ?').run(status, Number(ctx.params.id));
+    if (!r.changes) throw new HttpError(404, 'Bug introuvable');
+    return { ok: true };
+  });
+  router.delete('/api/admin/bugs/:id', (ctx) => {
+    adminOnly(ctx);
+    ctx.db.prepare('DELETE FROM bug_reports WHERE id = ?').run(Number(ctx.params.id));
+    return { ok: true };
+  });
+
   router.get('/api/admin/settings', (ctx) => {
     const user = auth(ctx);
     const view = settingsView(ctx.db);
-    return user.role === 'admin' ? view : { announcement: view.announcement, mail: { ready: view.mail.ready } };
+    return user.role === 'admin' ? view : { announcement: view.announcement, mail: { ready: view.mail.ready }, help: view.help };
   });
 
   router.put('/api/admin/settings', (ctx) => {
@@ -592,6 +636,16 @@ function register(router) {
     if (body.announcement !== undefined) {
       setSetting(db, 'announcement', optStr(body.announcement, 500));
       bumpContentVersion(db);
+    }
+    // « Prendre en main »: the links of the two videos (customers' app, team's back-office), set by the administrator.
+    if (body.help) {
+      if (user.role !== 'admin') throw new HttpError(403, 'Réservé aux administrateurs');
+      try {
+        setSetting(db, 'help_video_app', cleanVideoUrl(body.help.app));
+        setSetting(db, 'help_video_admin', cleanVideoUrl(body.help.admin));
+      } catch (err) {
+        throw new HttpError(400, err.message);
+      }
     }
     // Outgoing e-mail server (the password is only replaced when a new one is typed).
     if (body.mail) {

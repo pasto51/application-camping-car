@@ -143,6 +143,21 @@ CREATE TABLE IF NOT EXISTS catalog (
 -- The customer's maintenance logbook (« J'ai fait le test d'étanchéité le… ») and the reminders already notified.
 -- « Conseils & Astuces »: written in the back-office, or shared by a customer (pending until an administrator or a content
 -- editor publishes it).
+-- « Signaler un bug »: messages sent from the app (customers) or the back-office (team), read by the administrator.
+CREATE TABLE IF NOT EXISTS bug_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source TEXT NOT NULL CHECK (source IN ('app', 'admin')),
+  customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+  admin_id INTEGER REFERENCES admins(id) ON DELETE SET NULL,
+  who TEXT,
+  page TEXT,
+  message TEXT NOT NULL,
+  device TEXT,
+  version TEXT,
+  status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'done')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS bug_reports_status ON bug_reports (status);
 CREATE TABLE IF NOT EXISTS tips (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,

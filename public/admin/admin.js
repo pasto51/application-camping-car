@@ -10,6 +10,7 @@ import { registerTipsView } from '/admin/tips.js';
 import { registerBannersView } from '/admin/banners.js';
 import { registerContentView } from '/admin/content.js';
 import { guideHtml } from '/admin/guide.js';
+import { registerHelp } from '/admin/help.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -113,6 +114,7 @@ function sections() {
     ['brands', '🏷️', 'Marques', canEditContent()],
     ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor() && !isAnalyst()],
     ['users', '🔑', isAdmin() ? 'Utilisateurs' : 'Mon équipe', isManager()],
+    ['bugs', '🐞', 'Bugs signalés', isAdmin()],
     ['settings', '⚙️', 'Paramètres', true],
   ];
   return all.filter((s) => s[3]);
@@ -135,12 +137,19 @@ function renderShell() {
         }
         ${state.user.appVersion ? `<small class="version">Version ${esc(state.user.appVersion.slice(0, 6))}</small>` : ''}
       </div>
+      <div class="side-help">
+        <button class="btn small" id="helpbtn" type="button" title="Voir la vidéo de présentation du back-office">❓ Prendre en main</button>
+        <button class="btn small" id="bugbtn" type="button">🐞 Signaler un bug</button>
+      </div>
     </aside>
     <main class="content" id="content"></main>
   </div>`;
   root.querySelector('#logout')?.addEventListener('click', logout);
+  root.querySelector('#bugbtn').addEventListener('click', () => HELP.openBugForm());
+  root.querySelector('#helpbtn').addEventListener('click', () => HELP.openHelpVideo());
   showSection(state.section);
   refreshTipsBadge();
+  HELP.refreshBugsBadge(root);
 }
 
 // Tips shared by customers and waiting to be read: a badge on « Conseils & Astuces ».
@@ -866,6 +875,17 @@ const VIEWS = {
       </form>`
           : ''
       }
+      ${
+        isAdmin()
+          ? `<form class="card form" id="help-form">
+        <h2>Vidéos de prise en main</h2>
+        <p class="muted">Le bouton ❓ ouvre ces vidéos : celle de l’appli pour les clients, celle du back-office pour l’équipe. Mettez votre vidéo sur YouTube (en « non répertoriée » si vous ne voulez pas qu’on la trouve en cherchant) ou sur Vimeo, puis collez son lien ici. Un autre lien s’ouvre dans un nouvel onglet.</p>
+        <label>Vidéo de l’appli (clients)<input name="app" type="url" value="${esc(s.help?.app || '')}" placeholder="https://youtu.be/…"></label>
+        <label>Vidéo du back-office (équipe)<input name="admin" type="url" value="${esc(s.help?.admin || '')}" placeholder="https://youtu.be/…"></label>
+        <button class="btn primary">Enregistrer</button>
+      </form>`
+          : ''
+      }
       ${isAdmin() ? '<div class="card" id="backups"><h2>Sauvegardes</h2><p class="muted">Chargement…</p></div>' : ''}
       <form class="card form" id="password-form">
         <h2>Mon mot de passe</h2>
@@ -878,6 +898,16 @@ const VIEWS = {
       try {
         await api('PUT', '/api/admin/settings', { announcement: new FormData(e.target).get('announcement') });
         toast('Message publié dans les applications');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+    el.querySelector('#help-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      try {
+        await api('PUT', '/api/admin/settings', { help: { app: f.get('app'), admin: f.get('admin') } });
+        toast('Liens des vidéos enregistrés');
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -931,6 +961,7 @@ const VIEWS = {
 
 registerCatalogViews(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, thumb, isAdmin, canEditContent });
 registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, refreshTipsBadge });
+const HELP = registerHelp(VIEWS, { api, openForm, pageHeader, confirmDelete, state, isAdmin, sectionLabel: (id) => (sections().find((x) => x[0] === id) || [])[2] || id });
 registerBannersView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerContentView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
