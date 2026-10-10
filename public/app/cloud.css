@@ -166,3 +166,25 @@
 .cloud-pushcard h3{margin:0 0 6px}
 .cloud-pushcard .btn{width:100%;margin:8px 0 4px;min-height:52px;height:auto;padding:12px 16px;flex:none}
 .cloud-pushcard .lnk{display:block;margin:4px auto 0}
+/* Ensembles and their elements */
+.kids{margin:2px 0 12px 22px;padding:10px 12px;border-left:3px solid var(--accent);border-radius:0 12px 12px 0;background:var(--soft);display:grid;gap:6px}
+.kids .kitem{display:flex;align-items:center;gap:10px;min-height:40px;font-size:15px}
+.kids .kitem input{width:22px;height:22px;accent-color:var(--accent)}
+.kids .kalways{justify-content:space-between;color:var(--ink)}
+.kids .kalways small{color:var(--muted)}
+.kids .kpick{display:grid;gap:6px;margin:4px 0}
+.kids .kpick .vq{font-weight:700;font-size:14.5px}
+.kids .varrow{margin:0 0 4px 0;background:var(--panel)}
+.ensnote{margin:6px 0;padding:8px 10px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:14px}
+.kidshead{margin-top:14px}
+details.kid{border:1px solid var(--line);border-radius:12px;padding:0 12px;margin:8px 0;background:var(--panel)}
+details.kid>summary{min-height:48px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;cursor:pointer;list-style:none;padding:10px 0}
+details.kid>summary::after{content:"›";margin-left:auto;font-size:20px;color:var(--muted);transition:transform .2s}
+details.kid[open]>summary::after{transform:rotate(90deg)}
+details.kid>summary span{font-size:13.5px;color:var(--muted)}
+details.kid[open]{padding-bottom:12px}
+.kdate{display:grid;gap:4px;margin:10px 0;padding:10px;border-radius:10px;background:var(--soft)}
+.kdate label{display:grid;gap:6px;font-weight:700;font-size:14px}
+.kdue{color:var(--muted);font-size:13.5px}
+.klate{color:#b3261e}
+.kids[hidden],.varrow[hidden]{display:none}

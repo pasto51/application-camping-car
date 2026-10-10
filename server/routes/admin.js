@@ -897,7 +897,34 @@ function register(router) {
       kw: pick(optStr(body.kw, 500), current.kw ?? '') ?? '',
       // Vehicle types this equipment exists on (empty: all).
       types: body.types === undefined ? current.types || [] : (Array.isArray(body.types) ? body.types : []).map(String).filter((t) => TYPE_IDS.includes(t)),
+      ...ensembleFields(db, body, current),
     };
+  }
+  // « Ensembles » and « éléments »: the ensemble an element belongs to, its kind (always there, option, one among
+  // several), a note, and the date read on the part for the maintenance logbook. Rebuilt field by field.
+  function ensembleFields(db, body, current) {
+    const out = {};
+    if (body.grp !== undefined) {
+      const grp = slugId(body.grp);
+      if (grp && (grp === current.id || !db.prepare('SELECT 1 FROM equipment WHERE id = ?').get(grp))) throw new HttpError(400, 'Ensemble inconnu');
+      out.grp = grp || undefined;
+    }
+    if (body.role !== undefined) out.role = ['always', 'option', 'pick'].includes(body.role) ? body.role : undefined;
+    if (body.pick !== undefined) out.pick = slugId(body.pick) || undefined;
+    if (body.note !== undefined) out.note = optStr(body.note, 400) || undefined;
+    if (body.dated !== undefined) {
+      const d = body.dated || {};
+      const kind = ['until', 'made', 'every'].includes(d.kind) ? d.kind : null;
+      out.dated = kind
+        ? {
+            kind,
+            ...(kind === 'made' ? { years: Math.min(30, Math.max(1, Number(d.years) || 10)) } : {}),
+            ...(kind === 'every' ? { months: Math.min(120, Math.max(1, Number(d.months) || 12)) } : {}),
+            label: optStr(d.label, 160) || '',
+          }
+        : undefined;
+    }
+    return out;
   }
   router.get('/api/admin/equipment', (ctx) => {
     contentOnly(ctx);

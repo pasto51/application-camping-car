@@ -438,6 +438,10 @@ async function main() {
   // Nickname given to the vehicle by the customer (shown big at the top of their app).
   await call('PUT', '/api/me/state/cdb_nick', { value: 'Le Baroudeur' }, C.Isabelle.token);
   await call('PUT', '/api/me/state/cdb_nick', { value: 'Titine' }, C.Henri.token);
+  // Dates read on the parts (ensembles and elements): Isabelle's gas regulator is past its 10 years, her hose date is
+  // still to note; the logbook reminds her.
+  const ym = (monthsAgo) => { const d = new Date(); d.setMonth(d.getMonth() - monthsAgo); return d.toISOString().slice(0, 7); };
+  await call('PUT', '/api/me/state/cdb_dates', { value: JSON.stringify({ detendeur: ym(121), extinct: ym(-5) }) }, C.Isabelle.token);
   await carry('Henri', { pax: 1 }, [['Valises et vêtements', 30, true], ['Nourriture et boissons', 25, true], ['Câbles, cales et outils', 15, true], ['Vélo', 15, false]]);
   // « À la une »: banners for the demo dealerships only (a banner for everyone would show in the real customers' apps).
   const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);

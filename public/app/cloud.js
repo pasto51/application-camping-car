@@ -9,7 +9,7 @@
   var SESSION_KEY = 'cdb_cloud';
   var DATA_KEY = 'cdb_cloud_data';
   var PENDING_KEY = 'cdb_cloud_pending';
-  var STATE_KEYS = ['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand', 'cdb_nick'];
+  var STATE_KEYS = ['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand', 'cdb_nick', 'cdb_dates'];
   var root = document.getElementById('cloud');
   var device = document.getElementById('device');
 
@@ -920,7 +920,7 @@
       return '<div class="cloud-ent-item' + (i.state === 'late' ? ' late' : '') + '"><p><b>' + esc(i.label) + '</b><br><span class="sub">' +
         (i.state === 'late' ? 'Prévu le ' + esc(fmtDay(i.due)) + ' : à faire dès que possible' : 'À faire avant le ' + esc(fmtDay(i.due))) + (i.why ? '. ' + esc(i.why) : '') + '</span></p>' +
         '<div class="cloud-ent-btns"><button class="btn" type="button" data-rdv="' + esc(i.rdv || 'souci') + '" data-ctx="' + esc('Rappel : ' + i.label + ' à prévoir (le ' + fmtDay(i.due) + ').') + '">Prendre rendez-vous</button>' +
-        '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button></div></div>';
+        (i.dated ? '<button class="btn alt" type="button" data-eq-open="' + esc(i.eq) + '">J’ai changé la pièce : noter la date</button>' : '<button class="btn alt" type="button" data-ent-done="' + esc(i.kind) + '">C’est fait</button>') + '</div></div>';
     }).join('');
   }
   window.CDB_CLOUD.openCarnet = function () { openCarnet(); };
@@ -947,6 +947,8 @@
     m.addEventListener('click', function (e) {
       if (e.target === m) return close();
       if (e.target.closest('[data-rdv]')) return close(); // the appointment screen opens behind
+      var eo = e.target.closest('[data-eq-open]');
+      if (eo) { close(); if (window.CDB_SHOW_EQ) window.CDB_SHOW_EQ(eo.dataset.eqOpen); return; }
       var d = e.target.closest('[data-ent-done]');
       if (d) return addLog({ kind: d.dataset.entDone }).then(function () { draw(); toast('Noté dans votre carnet d’entretien'); });
       var b = e.target.closest('[data-cn],[data-sp="logdel"]'); if (!b) return;
@@ -964,7 +966,12 @@
         ' <button class="lnk cloud-del" type="button" data-sp="logdel" data-id="' + e.id + '" aria-label="Retirer">Retirer</button></li>';
     }).join('') : '<li class="sub">Rien de noté pour l’instant.</li>';
     var today = new Date().toISOString().slice(0, 10);
-    return (next ? '<p class="eyebrow">Plus tard</p><ul class="cloud-list">' + next + '</ul>' : '') +
+    // Parts with a date written on them (gas hose, regulator, detectors…) whose date is not noted yet.
+    var miss = (ENT.datesMissing || []).map(function (d) {
+      return '<li><b>' + esc(d.label) + '</b>' + (d.where ? '<br><span class="sub">' + esc(d.where) + '</span>' : '') + ' <button class="lnk" type="button" data-eq-open="' + esc(d.id) + '">Noter la date</button></li>';
+    }).join('');
+    return (miss ? '<p class="eyebrow">Dates à relever sur vos pièces</p><ul class="cloud-list">' + miss + '</ul>' : '') +
+      (next ? '<p class="eyebrow">Plus tard</p><ul class="cloud-list">' + next + '</ul>' : '') +
       '<p class="eyebrow">Ce qui a été fait</p><ul class="cloud-list">' + log + '</ul>' +
       '<details class="cloud-more"><summary>＋ Noter une intervention</summary>' +
       '<label class="eyebrow">Quoi</label><select class="search" name="kind">' + ENT.kinds.map(function (k) { return '<option value="' + esc(k[0]) + '">' + esc(k[1]) + '</option>'; }).join('') + '</select>' +

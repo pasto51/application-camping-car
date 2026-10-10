@@ -14,6 +14,7 @@ const FORUMS = require('./diagnostics-forums');
 const ELEC = require('./diagnostics-electricite');
 const STORES = require('./diagnostics-magasins');
 const TIP_PROPOSALS = require('./tips-propositions.json');
+const { applyEnsembles } = require('./ensembles');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -637,6 +638,12 @@ const PATCHES = [
       db.prepare("UPDATE catalog SET value = ?, updated_at = datetime('now') WHERE key = 'lists'").run(JSON.stringify(lists));
       return changed;
     },
+  },
+  {
+    // Equipment in « ensembles » (gas locker, awning, toilets…) and « éléments » (hose, regulator, cassette…), with the
+    // dates to follow (hose, regulator, detectors, extinguisher, tyres), as validated by the user.
+    key: '2026-10-28-ensembles',
+    run: (db) => applyEnsembles(db),
   },
 ];
 

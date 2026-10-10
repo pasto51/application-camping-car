@@ -172,6 +172,15 @@ async function openVehicle(id, skipWizard = false) {
     models: { ...(profile.models || {}) },
     spotOverrides: { ...(profile.spotOverrides || {}) },
   });
+  // A ticked element brings its ensemble (the AGM battery ticks « Batterie cellule »), and a ticked ensemble its
+  // « always » elements, as in the customer's app.
+  const before = S.checked.size;
+  equipment.forEach((q) => S.checked.has(q.id) && isKid(q) && S.checked.add(q.grp));
+  equipment.forEach((q) => isKid(q) && q.role === 'always' && !q.noimpl && S.checked.has(q.grp) && S.checked.add(q.id));
+  if (S.checked.size !== before) {
+    S.listDirty = true;
+    schedule();
+  }
   store.set(LAST_KEY, String(id));
   history.replaceState(null, '', `#v=${id}`);
   root.innerHTML = `<div class="bar">
@@ -237,6 +246,11 @@ const spotOf = (id) => {
   return S.defaultSpots[id] ?? null;
 };
 const spotById = (id) => S.plan.spots.find((s) => s.id === id);
+// Ensembles and their elements: an equipment with « grp » is listed under its ensemble (always there, option, or one
+// among several with the same « pick »), not on its own.
+const byId = (id) => S.equipment.find((q) => q.id === id);
+const isKid = (q) => !!(q.grp && q.grp !== q.id && byId(q.grp));
+const kidsOf = (id) => S.equipment.filter((q) => q.grp === id && q.grp !== q.id);
 
 function visible(q) {
   const on = S.checked.has(q.id);
@@ -249,12 +263,13 @@ function visible(q) {
   return words.every((w) => hay.includes(w));
 }
 
-function itemHtml(q) {
+function itemHtml(q, kid = false) {
   const on = S.checked.has(q.id);
   const url = S.photos[q.id];
   const state = S.busy === q.id ? 'busy' : S.photoQueue.has(q.id) ? 'wait' : '';
-  return `<div class="item ${on ? 'on' : ''}" data-item="${esc(q.id)}">
-    <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(nameOf(q))}${S.models[q.id] ? `<small class="mdl">${esc(S.models[q.id])}</small>` : ''}</span></button>
+  const tag = kid ? (q.role === 'always' ? '<small class="kind">compris</small>' : q.role === 'pick' ? '<small class="kind">un seul au choix</small>' : '<small class="kind">option</small>') : '';
+  return `<div class="item ${on ? 'on' : ''} ${kid ? 'kid' : ''}" data-item="${esc(q.id)}">
+    <button class="tick" data-tick="${esc(q.id)}" aria-pressed="${on}"><span class="box"></span><span>${esc(nameOf(q))}${tag}${S.models[q.id] ? `<small class="mdl">${esc(S.models[q.id])}</small>` : ''}</span></button>
     ${S.plan.spots.length ? `<button class="zone ${spotOf(q.id) ? '' : 'none'}" data-zone="${esc(q.id)}" aria-label="Zone et nom : ${esc(nameOf(q))}">${spotOf(q.id) ? `📍${spotById(spotOf(q.id)).n}` : '📍?'}</button>` : ''}
     <button class="shot ${url ? 'has' : ''} ${state}" data-shot="${esc(q.id)}" aria-label="${url ? 'Voir la photo' : 'Prendre une photo'} : ${esc(q.name)}">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : '📷'}</button>
   </div>`;
@@ -268,12 +283,12 @@ function renderList() {
   const cats = [...S.cats, ...(S.equipment.some((q) => !known.has(q.cat)) ? [['__other', 'Autres']] : [])];
   const html = cats
     .map(([cid, cname]) => {
-      const all = S.equipment.filter((q) => (cid === '__other' ? !known.has(q.cat) : q.cat === cid) && (S.showAll || applicable(q)));
-      const shown = all.filter(visible);
+      const all = S.equipment.filter((q) => (cid === '__other' ? !known.has(q.cat) : q.cat === cid) && !isKid(q) && (S.showAll || applicable(q)));
+      const shown = all.filter((q) => visible(q) || kidsOf(q.id).some(visible));
       if (searching && !shown.length) return '';
       const n = all.filter((q) => S.checked.has(q.id)).length;
       return `<section class="cat"><div class="cat-head"><h2>${esc(cname)}</h2><small>${n} / ${all.length}</small></div>
-        <div class="items">${shown.map(itemHtml).join('')}${cid === '__other' || searching ? '' : `<button class="add" data-add="${esc(cid)}">＋ Ajouter un équipement dans « ${esc(cname)} »</button>`}</div></section>`;
+        <div class="items">${shown.map((q) => itemHtml(q) + kidsHtml(q, searching)).join('')}${cid === '__other' || searching ? '' : `<button class="add" data-add="${esc(cid)}">＋ Ajouter un équipement dans « ${esc(cname)} »</button>`}</div></section>`;
     })
     .join('');
   const hiddenN = S.type ? S.equipment.filter((q) => !applicable(q)).length : 0;
@@ -283,6 +298,11 @@ function renderList() {
     : '<p class="type-note warn">Indiquez le type de véhicule (van, profilé, capucine…) : la liste ne montrera que ses équipements. <button class="linkbtn" data-pick-type>Choisir le type</button></p>';
   list.innerHTML = head + (html || '<p class="empty">Aucun équipement ne correspond.</p>');
   updateCount();
+}
+
+function kidsHtml(q, searching) {
+  const kids = kidsOf(q.id).filter((k) => (S.checked.has(q.id) ? !searching || visible(k) || visible(q) : searching && visible(k)));
+  return kids.length ? `<div class="kids">${kids.map((k) => itemHtml(k, true)).join('')}</div>` : '';
 }
 
 function refreshItem(id) {
@@ -304,6 +324,19 @@ function toggle(id) {
   if (S.checked.has(id)) S.checked.delete(id);
   else S.checked.add(id);
   S.listDirty = true;
+  const q = byId(id);
+  const on = S.checked.has(id);
+  // An ensemble brings its « always » elements and takes all its elements away; one choice unticks the others.
+  if (q && kidsOf(id).length) {
+    kidsOf(id).forEach((k) => (on ? k.role === 'always' && !k.noimpl && S.checked.add(k.id) : S.checked.delete(k.id)));
+  }
+  if (q && on && q.role === 'pick') kidsOf(q.grp).forEach((k) => k.pick === q.pick && k.id !== id && S.checked.delete(k.id));
+  if (q && on && isKid(q)) S.checked.add(q.grp);
+  if (q && (kidsOf(id).length || isKid(q))) {
+    renderList();
+    schedule();
+    return;
+  }
   if (S.filter === 'all' && !S.search.trim()) {
     refreshItem(id);
     updateCatCount(id);
@@ -347,6 +380,8 @@ async function setPhoto(id, image) {
   // A photographed equipment is obviously in the vehicle.
   if (image && !S.checked.has(id)) {
     S.checked.add(id);
+    const q = byId(id);
+    if (q && isKid(q)) S.checked.add(q.grp);
     S.listDirty = true;
   }
   refreshItem(id);

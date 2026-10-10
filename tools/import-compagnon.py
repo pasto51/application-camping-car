@@ -646,6 +646,115 @@ def main():
     # Zones of the plan: escaped like every other text (the server also checks them).
     s = replace_once(s, '\'" data-id="\'+s.id+\'" tabindex="0"', '\'" data-id="\'+esc(s.id)+\'" tabindex="0"')
     s = replace_once(s, '<circle class="dot" r="26"/><text>\'+s.n+\'</text></g>', '<circle class="dot" r="26"/><text>\'+esc(s.n)+\'</text></g>')
+    # ---- Ensembles and elements (« le gros truc » on the plan, then its detail) ----
+    # An equipment with « grp » is an element of that ensemble; role always (comes with it), option, pick (one among the
+    # elements of the same « pick » key). Elements are not listed on their own: they show under their ensemble, in
+    # « Mes équipements » and in the ensemble's card on the plan. « dated »: date read on the part (cdb_dates).
+    s = replace_once(s, 'UEQ.forEach(addCustom);\n', r'''UEQ.forEach(addCustom);
+  var KIDS = {};
+  EQUIP.forEach(function(q){if(q.grp && q.grp!==q.id && eqById0(q.grp)) (KIDS[q.grp] = KIDS[q.grp]||[]).push(q)});
+  EQUIP.forEach(function(q){if(KIDS[q.id]) q.idx += " "+norm(KIDS[q.id].map(function(k){return k.name+" "+(k.kw||"")}).join(" "))});
+  function isEns(id){return !!KIDS[id]}
+  function isKid(q){return !!(q && q.grp && KIDS[q.grp])}
+  function kidsOf(id){return (KIDS[id]||[]).filter(function(k){return !DATA.config.HIDDEN_EQ[k.id]})}
+  function ensOn(id){kidsOf(id).forEach(function(k){if(k.role==="always" && !k.noimpl) own[k.id] = true})}
+  function ensOff(id){kidsOf(id).forEach(function(k){delete own[k.id]})}
+  function syncEnsembles(){Object.keys(KIDS).forEach(function(id){if(!own[id] && kidsOf(id).some(function(k){return own[k.id]})) own[id] = true; if(own[id]) ensOn(id)})}
+  function pickOn(k){kidsOf(k.grp).forEach(function(o){if(o.pick===k.pick && o.id!==k.id) delete own[o.id]})}
+  var DATES = (function(){try{var o = JSON.parse(lsGet("cdb_dates")||"{}"); return o && typeof o==="object" ? o : {}}catch(e){return {}}})();
+  function addMonths(ym,n){var p = String(ym).split("-"), y = +p[0], m = +p[1]-1+n; return new Date(y+Math.floor(m/12), ((m%12)+12)%12, 1)}
+  function dueOf(q){
+    var d = q.dated, v = DATES[q.id]; if(!d || !v) return null;
+    if(d.kind==="until") return addMonths(v,0);
+    if(d.kind==="made") return addMonths(v,12*(d.years||10));
+    return addMonths(v,d.months||12);
+  }
+  function dueText(q){
+    var due = dueOf(q); if(!due) return q.dated.kind==="every" ? "Notez la date du dernier changement : l'appli vous le rappellera." : "Notez la date marquée dessus : l'appli vous rappellera de le changer.";
+    var label = due.toLocaleDateString("fr-FR",{month:"long",year:"numeric"}), late = due <= new Date();
+    return late ? '<b class="klate">⚠️ À changer : date dépassée ('+esc(label)+').</b>' : 'À changer avant <b>'+esc(label)+'</b>. Un rappel arrivera dans le carnet d\'entretien.';
+  }
+  function dateBlock(q){
+    if(!q.dated) return "";
+    return '<div class="kdate"><label>'+esc(q.dated.label || (q.dated.kind==="every" ? "Date du dernier changement" : "Date marquée dessus"))+'<input class="search" type="month" data-date="'+q.id+'" value="'+esc(DATES[q.id]||"")+'"></label><small class="kdue">'+dueText(q)+'</small></div>';
+  }
+''')
+    s = replace_once(s, 'function isHidden(id){return !!HIDDEN_EQ[id] || (!!IMPL_REV[id] && !IMPL_VISIBLE[id])}',
+                     'function isHidden(id){if(isKid(eqById0(id))) return true; if(KIDS[id]) return !!HIDDEN_EQ[id]; return !!HIDDEN_EQ[id] || (!!IMPL_REV[id] && !IMPL_VISIBLE[id])}')
+    # « Mes équipements »: under a ticked ensemble, its elements (always there, options to tick, one among several).
+    s = replace_once(s, "    if(!ch.length) return '';\n    return '<div class=\"implrow\"", "    if(!ch.length || KIDS[q.id]) return '';\n    return '<div class=\"implrow\"")
+    s = replace_once(s, '  function renderEquip(){', r'''  function kidsRow(q){
+    var ks = kidsOf(q.id); if(!ks.length) return '';
+    var picks = q.picks || {}, done = {}, h = q.note ? '<p class="ensnote">'+esc(q.note)+'</p>' : '';
+    ks.forEach(function(k){
+      if(k.role==="pick"){
+        if(done[k.pick]) return; done[k.pick] = 1;
+        h += '<div class="kpick"><span class="vq">'+esc(picks[k.pick]||"Lequel ?")+'</span><div class="vchips">'+ks.filter(function(o){return o.role==="pick" && o.pick===k.pick}).map(function(o){return '<button type="button" class="vchip" data-kp="'+o.id+'" aria-pressed="'+(!!own[o.id])+'">'+esc(o.name)+'</button>'}).join("")+'</div></div>'+
+          ks.filter(function(o){return o.role==="pick" && o.pick===k.pick && own[o.id]}).map(varRow).join("");
+      } else if(k.role==="always"){
+        if(k.noimpl && !own[k.id]) return;
+        h += '<div class="kitem kalways"><span>✓ '+esc(k.name)+'</span><small>compris</small></div>'+varRow(k);
+      } else {
+        h += '<label class="kitem"><input type="checkbox" data-k="'+k.id+'"'+(own[k.id]?' checked':'')+'><span>'+esc(k.name)+'</span></label>'+varRow(k);
+      }
+    });
+    return '<div class="kids" data-kids="'+q.id+'"'+(own[q.id]?'':' hidden')+'>'+h+'</div>';
+  }
+  function redrawKids(id){var b = $('[data-kids="'+id+'"]'); if(b && eqById(id)) b.outerHTML = kidsRow(eqById(id))}
+  function choosePick(id){
+    var k = eqById(id); if(!k) return;
+    own[id] = true; pickOn(k); implOn(id);
+    if(APP_VARS[id]){Object.keys(APP_VARS[id]).forEach(function(v){vars[v] = APP_VARS[id][v]}); varSave()}
+    syncImplied(); saveOwn(); redrawKids(k.grp); refreshCats(); toast("Enregistré");
+  }
+  function renderEquip(){''')
+    s = replace_once(s, "'</span></label>'+row+varRow(q)+implRow(q);", "'</span></label>'+row+varRow(q)+implRow(q)+kidsRow(q);")
+    s = replace_once(s, '''  $("#eqlist").addEventListener("change",function(e){
+    var id = e.target.dataset.e; if(!id) return;''', '''  $("#eqlist").addEventListener("change",function(e){
+    var kk = e.target.dataset.k;
+    if(kk){if(e.target.checked){own[kk] = true; implOn(kk)} else delete own[kk]; syncImplied(); var kv = $('[data-vr="'+kk+'"]'); if(kv) kv.hidden = !e.target.checked; saveOwn(); refreshCats(); return}
+    var id = e.target.dataset.e; if(!id) return;''')
+    s = replace_once(s, "varSave()}} else delete own[id];\n    syncImplied();", "varSave()}} else delete own[id];\n    if(isEns(id)){if(e.target.checked) ensOn(id); else ensOff(id)}\n    syncImplied();")
+    s = replace_once(s, "    var vr = $('[data-vr=\"'+id+'\"]'); if(vr) vr.hidden = !e.target.checked;\n    saveOwn(); refreshCats();", "    var vr = $('[data-vr=\"'+id+'\"]'); if(vr) vr.hidden = !e.target.checked;\n    saveOwn(); refreshCats(); redrawKids(id);")
+    s = replace_once(s, '''  $("#eqlist").addEventListener("click",function(e){
+    var b = e.target.closest("[data-vv]"); if(!b) return;''', '''  $("#eqlist").addEventListener("click",function(e){
+    var kp = e.target.closest("[data-kp]"); if(kp){choosePick(kp.dataset.kp); return}
+    var b = e.target.closest("[data-vv]"); if(!b) return;''')
+    # The plan: a zone shows the ensembles (and an ensemble whose element is there); the card lists its elements.
+    s = replace_once(s, 'function ownedAt(id){return EQUIP.filter(function(q){return q.spot===id && own[q.id]})',
+                     'function ownedAt(id){return EQUIP.filter(function(q){return own[q.id] && !isKid(q) && (q.spot===id || kidsOf(q.id).some(function(k){return own[k.id] && k.spot===id}))})')
+    s = replace_once(s, 'function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id]})}', 'function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id] && !isKid(q)})}')
+    s = replace_once(s, 'var rest = EQUIP.filter(function(q){return q.spot===id && !own[q.id]});', 'var rest = EQUIP.filter(function(q){return q.spot===id && !own[q.id] && !isKid(q) && !isHidden(q.id)});')
+    s = replace_once(s, "  function card(it){\n    return '<div class=\"card\">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class=\"tip\">'+esc(it.tip)+'</div>':'')+(varOpt(it.id) && varOpt(it.id)[0]!==\"ns\" ? '<p class=\"vline\">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+modBlock(it)+",
+                     r'''  function kidsCard(it){
+    var ks = kidsOf(it.id).filter(function(k){return own[k.id]}); if(!ks.length) return "";
+    return '<p class="eyebrow kidshead">Ses éléments ('+ks.length+')</p>'+ks.map(function(k){
+      var o = varOpt(k.id), vl = o && o[0]!=="ns" ? o[1] : "";
+      return '<details class="kid" data-kid="'+k.id+'"><summary><b>'+esc(k.name)+'</b>'+(vl?'<span>'+esc(vl)+'</span>':'')+(k.dated && dueOf(k) && dueOf(k)<=new Date()?'<span class="klate">⚠️ date dépassée</span>':'')+'</summary>'+
+        photoBox(k)+'<p>'+esc(k.text||"")+'</p>'+(k.tip?'<div class="tip">'+esc(k.tip)+'</div>':'')+(k.note?'<p class="ensnote">'+esc(k.note)+'</p>':'')+varRow(k)+dateBlock(k)+modBlock(k)+
+        '<button class="btn alt partbtn" type="button" data-part="'+k.id+'">🛒 Pièce ou remplacement</button></details>';
+    }).join("");
+  }
+  function card(it){
+    return '<div class="card">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class="tip">'+esc(it.tip)+'</div>':'')+(it.note?'<p class="ensnote">'+esc(it.note)+'</p>':'')+(varOpt(it.id) && varOpt(it.id)[0]!=="ns" ? '<p class="vline">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+dateBlock(it)+kidsCard(it)+modBlock(it)+''')
+    s = replace_once(s, '    window.CDB_TRACK&&window.CDB_TRACK("equip",{id:id,label:it.name});\n    if(it.spot){selectSpot(it.spot); return}',
+                     '    window.CDB_TRACK&&window.CDB_TRACK("equip",{id:id,label:it.name});\n    if(isKid(it) && own[it.grp] && own[id]){showItem(it.grp); var kd = $(\'[data-kid="\'+id+\'"]\'); if(kd){kd.open = true; if(kd.scrollIntoView) kd.scrollIntoView({block:"center"})} return}\n    if(it.spot){selectSpot(it.spot); return}')
+    s = replace_once(s, '''  $("#whatbody").addEventListener("change",function(e){
+    var t = e.target; if(!t.dataset || !t.dataset.ph || !t.files || !t.files[0]) return;''', '''  $("#whatbody").addEventListener("change",function(e){
+    var dt = e.target.dataset && e.target.dataset.date;
+    if(dt){if(e.target.value) DATES[dt] = e.target.value.slice(0,7); else delete DATES[dt]; lsSet("cdb_dates",JSON.stringify(DATES)); var due = e.target.closest(".kdate").querySelector(".kdue"); if(due) due.innerHTML = dueText(eqById(dt)); toast("Date enregistrée"); return}
+    var t = e.target; if(!t.dataset || !t.dataset.ph || !t.files || !t.files[0]) return;''')
+    # Model questions of an element answered from its card on the plan.
+    s = replace_once(s, '''  $("#whatbody").addEventListener("click",function(e){
+    var pb = e.target.closest("[data-part]");''', '''  $("#whatbody").addEventListener("click",function(e){
+    var vb = e.target.closest("[data-vv]"); if(vb){vars[vb.dataset.vv] = vb.dataset.v; varSave(); vb.closest(".vchips").querySelectorAll(".vchip").forEach(function(c){c.setAttribute("aria-pressed", c===vb ? "true":"false")}); toast("Enregistré"); return}
+    var pb = e.target.closest("[data-part]");''')
+    s = replace_once(s, "  syncImplied(); updateCount();\n\n  /* ---------- Rendez-vous atelier", "  syncEnsembles(); syncImplied(); updateCount();\n\n  /* ---------- Rendez-vous atelier")
+    s = replace_once(s, "var z = q.spot ? 'Zone '+spotById(q.spot).n+' · '+spotById(q.spot).name : 'Emplacement variable';",
+                     "var zq = isKid(q) ? eqById(q.grp) : q, zs = zq.spot && spotById(zq.spot); var z = (zs ? 'Zone '+zs.n+' · '+zs.name : 'Emplacement variable') + (isKid(q) ? ' · '+zq.name : '');")
+    s = replace_once(s, "  function resetPlan(){", "  window.CDB_SHOW_EQ = function(id){go(\"what\"); showItem(id)};\n  function resetPlan(){")
+    # A part asked for an element names its ensemble too (« Détendeur (Coffre à gaz) »).
+    s = replace_once(s, 'return {id:id, name:it.name, userPhoto:', 'return {id:id, name: isKid(it) ? it.name+" ("+eqById(it.grp).name+")" : it.name, userPhoto:')
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.
     page = head

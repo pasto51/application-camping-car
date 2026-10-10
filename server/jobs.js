@@ -51,7 +51,7 @@ daily('rappels', async (app) => {
     if (!item) continue;
     const date = new Date(`${item.due}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     const n = await notify.push(c.id, {
-      title: item.state === 'late' ? `À faire : ${item.label}` : `À prévoir : ${item.label}`,
+      title: item.dated ? item.label : item.state === 'late' ? `À faire : ${item.label}` : `À prévoir : ${item.label}`,
       body: `${item.state === 'late' ? 'C’était prévu' : 'À faire'} pour le ${date}. Prenez rendez-vous en un geste dans l’application.`,
       url: '/app/',
       tag: `rappel-${item.kind}`,

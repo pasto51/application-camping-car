@@ -13,7 +13,20 @@ const { routeRequest, warrantyOf, SERVICES } = require('../services');
 const { camel, camelAll, optStr, reqStr, reqInt, optEmail, optDate } = require('../util');
 
 // Storage keys of the Compagnon de bord app that are saved in the cloud.
-const STATE_KEYS = new Set(['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand', 'cdb_nick']);
+function cleanDates(text) {
+  let o;
+  try {
+    o = JSON.parse(text);
+  } catch {
+    throw new HttpError(400, 'Dates illisibles');
+  }
+  const out = {};
+  if (o && typeof o === 'object' && !Array.isArray(o)) {
+    for (const [k, v] of Object.entries(o).slice(0, 200)) if (/^[a-z0-9_-]{1,40}$/.test(k) && /^(19|20)\d\d-(0[1-9]|1[0-2])$/.test(String(v))) out[k] = String(v);
+  }
+  return Object.keys(out).length ? JSON.stringify(out) : null;
+}
+const STATE_KEYS = new Set(['cdb_chk', 'cdb_own', 'cdb_ueq', 'cdb_uph', 'cdb_var', 'cdb_mod', 'cdb_dim', 'cdb_wt', 'cdb_photo', 'cdb_hand', 'cdb_nick', 'cdb_dates']);
 const PHOTO_KEYS = new Set(['cdb_uph', 'cdb_photo']);
 const MAX_STATE_BYTES = 30 * 1024 * 1024; // photo keys: the photos arrive here, then become files
 const MAX_TEXT_STATE_BYTES = 512 * 1024; // other keys (equipment ticked, weights…)
@@ -297,6 +310,8 @@ function register(router) {
     if (params.key === 'cdb_hand' && value) value = stripVin(value);
     // The vehicle's nickname, shown at the top of the app: one line of plain text.
     if (params.key === 'cdb_nick' && value) value = value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40) || null;
+    // Dates read on the parts (gas hose, regulator, detectors…): { equipment id: 'YYYY-MM' }, rebuilt entry by entry.
+    if (params.key === 'cdb_dates' && value) value = cleanDates(value);
     if (value && value.length > (PHOTO_KEYS.has(params.key) ? MAX_STATE_BYTES : MAX_TEXT_STATE_BYTES)) throw new HttpError(413, 'Données trop volumineuses');
     const previous = db.prepare('SELECT value FROM customer_state WHERE customer_id = ? AND key = ?').get(customer.id, params.key)?.value ?? null;
     const stored = PHOTO_KEYS.has(params.key) ? storePhotos(uploads, params.key, value, previous) : value;

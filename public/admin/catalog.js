@@ -38,6 +38,9 @@ export function registerCatalogViews(VIEWS, h) {
   VIEWS.equipment = async (el) => {
     const [list, cats] = await Promise.all([api('GET', '/api/admin/equipment'), api('GET', '/api/admin/catalog/cats').then((r) => r.value)]);
     const catName = Object.fromEntries(cats);
+    const nameById = Object.fromEntries(list.map((x) => [x.id, x.name]));
+    const kidsN = list.reduce((n, x) => (x.grp ? { ...n, [x.grp]: (n[x.grp] || 0) + 1 } : n), {});
+    const ROLES = { always: 'toujours là', option: 'option', pick: 'un seul au choix' };
     const q = state.eqFilter.toLowerCase();
     const shown = list.filter((x) => (!state.eqCat || x.cat === state.eqCat) && (!q || [x.name, x.text, x.kw, x.id].some((t) => (t || '').toLowerCase().includes(q))));
     el.innerHTML = `${pageHeader(`Équipements (${list.length})`, canEditContent() ? '<button class="btn primary" data-act="add">＋ Nouvel équipement</button>' : '')}
@@ -51,7 +54,7 @@ export function registerCatalogViews(VIEWS, h) {
         <tbody>${shown
           .map(
             (x) => `<tr>
-          <td><strong>${esc(x.name)}</strong><br><small class="muted">${esc(x.text || '').slice(0, 110)}${(x.text || '').length > 110 ? '…' : ''}</small></td>
+          <td><strong>${esc(x.name)}</strong>${x.grp && nameById[x.grp] ? `<br><small>↳ élément de « ${esc(nameById[x.grp])} » · ${esc(ROLES[x.role] || 'option')}</small>` : kidsN[x.id] ? `<br><small>Ensemble : ${kidsN[x.id]} élément(s)</small>` : ''}${x.dated ? ' <small>📅</small>' : ''}<br><small class="muted">${esc(x.text || '').slice(0, 110)}${(x.text || '').length > 110 ? '…' : ''}</small></td>
           <td>${esc(catName[x.cat] || x.cat)}</td>
           <td><small>${esc(typesLabel(x.types))}</small></td>
           <td>${esc(x.spot || '')}</td>
@@ -68,16 +71,34 @@ export function registerCatalogViews(VIEWS, h) {
       { name: 'text', label: 'Explication (« C’est quoi, ça ? »)', type: 'textarea', rows: 4 },
       { name: 'tip', label: 'Conseil', type: 'textarea', rows: 2 },
       { name: 'kw', label: 'Mots-clés de recherche', full: true },
+      {
+        name: 'grp', label: 'Fait partie de l’ensemble', type: 'select', full: true,
+        options: [['', '— Aucun : c’est un ensemble ou un équipement seul —'], ...list.filter((x) => !x.grp).map((x) => [x.id, x.name]).sort((a, b) => a[1].localeCompare(b[1], 'fr'))],
+        hint: 'Un élément (lyre, détendeur…) s’affiche sous son ensemble (coffre à gaz) dans l’appli, sur le plan et dans le relevé.',
+      },
+      { name: 'role', label: 'Sorte d’élément', type: 'select', options: [['always', 'Toujours là avec l’ensemble'], ['option', 'Option (cochée si le véhicule l’a)'], ['pick', 'Un seul au choix parmi plusieurs']], hideIf: ['grp', ['']] },
+      { name: 'pick', label: 'Groupe du choix (même mot pour les éléments entre lesquels on choisit, ex. « batterie »)', hideIf: ['grp', ['']] },
+      { name: 'note', label: 'Remarque importante (encadré)', full: true, hint: 'Ex. « Ne marche que branchée sur le 230 V ».' },
+      { name: 'dkind', label: 'Date à suivre (rappel dans le carnet d’entretien)', type: 'select', options: [['', 'Aucune'], ['until', 'Date limite marquée dessus'], ['made', 'Date de fabrication marquée dessus'], ['every', 'À changer régulièrement (date du dernier changement)']] },
+      { name: 'dyears', label: 'Se change combien d’années après sa fabrication ?', type: 'number', hideIf: ['dkind', ['', 'until', 'every']] },
+      { name: 'dmonths', label: 'À changer tous les combien de mois ?', type: 'number', hideIf: ['dkind', ['', 'until', 'made']] },
+      { name: 'dlabel', label: 'Où lire la date (texte affiché au client)', full: true, hideIf: ['dkind', ['']] },
     ];
     // No box ticked = the equipment exists on every type of vehicle.
     function withTypes(data) {
       const types = VEHICLE_TYPES.map(([t]) => t).filter((t) => data[`type_${t}`]);
       VEHICLE_TYPES.forEach(([t]) => delete data[`type_${t}`]);
-      return { ...data, types: types.length === VEHICLE_TYPES.length ? [] : types };
+      const { dkind, dyears, dmonths, dlabel, ...rest } = data;
+      const dated = dkind ? { kind: dkind, years: Number(dyears) || undefined, months: Number(dmonths) || undefined, label: dlabel } : null;
+      return { ...rest, grp: rest.grp || '', role: rest.grp ? rest.role : '', pick: rest.grp && rest.role === 'pick' ? rest.pick : '', dated, types: types.length === VEHICLE_TYPES.length ? [] : types };
     }
     function typeValues(x) {
       const all = !x.types?.length;
-      return { ...x, ...Object.fromEntries(VEHICLE_TYPES.map(([t]) => [`type_${t}`, all || x.types.includes(t)])) };
+      return {
+        ...x,
+        dkind: x.dated?.kind || '', dyears: x.dated?.years || 10, dmonths: x.dated?.months || 12, dlabel: x.dated?.label || '',
+        ...Object.fromEntries(VEHICLE_TYPES.map(([t]) => [`type_${t}`, all || x.types.includes(t)])),
+      };
     }
     el.querySelector('#eq-search').onsubmit = (e) => {
       e.preventDefault();

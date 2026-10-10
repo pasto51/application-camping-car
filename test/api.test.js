@@ -54,7 +54,7 @@ test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async
   const diags = (await call('GET', '/api/admin/diagnostics', { token: admin })).data;
   assert.equal(diags.length, 153);
   assert.ok(diags.reduce((a, d) => a + d.leaves, 0) > 2000, 'about 2 000 end points');
-  assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 188);
+  assert.equal((await call('GET', '/api/admin/equipment', { token: admin })).data.length, 230);
 
   // Content corrections from the simulations are applied
   const truma = (await call('GET', '/api/admin/diagnostics/g_truma', { token: admin })).data;
@@ -74,7 +74,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
 
   // Data the app runs on
   const { data } = await call('GET', '/api/app/data', { token });
-  assert.equal(data.equipment.length, 188);
+  assert.equal(data.equipment.length, 230);
   assert.equal(data.diagnostics.length, 153);
   // Written from the spare-parts catalogue: bike rack and the store parts that wear (no generator)
   assert.ok(data.diagnostics.some((x) => x.id === 'h_portevelos') && !data.diagnostics.some((x) => x.id === 'g_groupe'));
@@ -139,7 +139,7 @@ test('handover, app data, cloud save of the app storage and restore on another p
 
   // Back-office sees the saved data
   const detail = (await call('GET', `/api/admin/customers/${h.customer.id}`, { token: admin })).data;
-  assert.deepEqual(detail.equipmentOwned, ['Réfrigérateur à compression (sous la plaque de cuisson)']);
+  assert.deepEqual(detail.equipmentOwned, ['Réfrigérateur']);
   assert.equal(detail.photos.length, 1);
   assert.equal(detail.nickname, 'Titine');
   assert.ok(detail.accessExpiresAt);
@@ -943,4 +943,28 @@ test('« Notifications » pushed from the back-office: who (same targeting as th
   assert.equal((await call('GET', `/api/me/notifs/${later.data.id}`, { token: a.token })).status, 404);
   assert.equal((await call('DELETE', `/api/admin/notifs/${later.data.id}`, { token: admin })).status, 200);
   assert.ok(!(await call('GET', '/api/admin/notifs', { token: admin })).data.campaigns.some((c) => c.id === later.data.id));
+});
+
+test('ensembles and elements: elements under their ensemble, dates read on the parts reminded in the logbook', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const eq = (await call('GET', '/api/admin/equipment', { token: admin })).data;
+  const by = Object.fromEntries(eq.map((q) => [q.id, q]));
+  assert.equal(by.detendeur.grp, 'coffre_gaz');
+  assert.equal(by.detendeur.dated.kind, 'made');
+  assert.equal(by.lyre.role, 'always');
+  assert.equal(by.agm.role, 'pick');
+  assert.ok(by.g_batterie && by.g_batterie.ens);
+  // The back-office sets the ensemble, the kind and the date of an element (an unknown ensemble is refused).
+  assert.equal((await call('PUT', '/api/admin/equipment/filtre', { token: admin, body: { grp: 'nimporte' } })).status, 400);
+  const f = (await call('PUT', '/api/admin/equipment/filtre', { token: admin, body: { grp: 'propre', role: 'option', dated: { kind: 'every', months: 3, label: 'Cartouche' } } })).data;
+  assert.deepEqual([f.grp, f.role, f.dated.months], ['propre', 'option', 3]);
+  // The customer notes the dates read on the parts: rebuilt entry by entry, reminders in the logbook.
+  const h = await handover({ firstName: 'Gaz', lastName: 'Dates' });
+  await call('PUT', '/api/me/state/cdb_own', { token: h.token, body: { value: JSON.stringify({ coffre_gaz: true, lyre: true, detendeur: true }) } });
+  const saved = await call('PUT', '/api/me/state/cdb_dates', { token: h.token, body: { value: JSON.stringify({ detendeur: '2012-03', lyre: 'demain', '<x>': '2030-01' }) } });
+  assert.equal(saved.data.value, JSON.stringify({ detendeur: '2012-03' }));
+  const ent = (await call('GET', '/api/me/entretien', { token: h.token })).data;
+  const it = ent.items.find((i) => i.kind === 'date-detendeur');
+  assert.ok(it && it.state === 'late' && it.due === '2022-03-01');
+  assert.ok(ent.datesMissing.some((d) => d.id === 'lyre'));
 });

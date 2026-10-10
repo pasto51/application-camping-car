@@ -101,13 +101,16 @@ function logOf(db, customerId) {
 }
 
 // Equipment checked by the customer (cdb_own), to know whether he has a fridge, a water heater, batteries…
+// Without any change by the customer, the list ticked for the vehicle by the dealership (as the app does).
 function ownOf(db, customerId) {
   const row = db.prepare("SELECT value FROM customer_state WHERE customer_id = ? AND key = 'cdb_own'").get(customerId);
   try {
-    return (row && JSON.parse(row.value)) || {};
+    if (row) return JSON.parse(row.value) || {};
   } catch {
     return {};
   }
+  const vehicle = db.prepare('SELECT v.* FROM vehicles v JOIN customers c ON c.vehicle_id = v.id WHERE c.id = ?').get(customerId);
+  return vehicle ? Object.fromEntries((readProfile(vehicle).equipment || []).map((id) => [id, true])) : {};
 }
 
 function vehicleTypeOf(db, customer) {
@@ -115,9 +118,41 @@ function vehicleTypeOf(db, customer) {
   return vehicle ? readProfile(vehicle).type || '' : '';
 }
 
-// What is due for one customer, with the kinds set in the back-office.
+// Dates read on the parts (gas hose, regulator, detectors, extinguisher, tyres…: « dated » equipment) and entered by the
+// customer in the app (cdb_dates, 'YYYY-MM'). until = end of validity; made = manufacturing date + years; every =
+// last change + months. Returns the dated items (kind « date-<id> ») and the equipment whose date is still missing.
+function datedOf(db, customer, today = iso(new Date()), own = ownOf(db, customer.id)) {
+  let dates = {};
+  try {
+    dates = JSON.parse(db.prepare("SELECT value FROM customer_state WHERE customer_id = ? AND key = 'cdb_dates'").get(customer.id)?.value || '{}') || {};
+  } catch {
+    dates = {};
+  }
+  const items = [];
+  const missing = [];
+  for (const r of db.prepare('SELECT data FROM equipment').all()) {
+    const q = JSON.parse(r.data);
+    // An « always » element comes with its ensemble (the hose with the gas locker), as in the app.
+    const has = own[q.id] || (q.grp && own[q.grp] && q.role === 'always' && !q.noimpl);
+    if (!q.dated || !has) continue;
+    const v = dates[q.id];
+    if (!/^\d{4}-\d{2}$/.test(v || '')) {
+      missing.push({ id: q.id, label: q.name, where: q.dated.label || '' });
+      continue;
+    }
+    const start = `${v}-01`;
+    const due = q.dated.kind === 'until' ? start : q.dated.kind === 'made' ? addMonths(start, 12 * (q.dated.years || 10)) : addMonths(start, q.dated.months || 12);
+    const state = due < today ? 'late' : due <= addDays(today, SOON_DAYS) ? 'soon' : 'later';
+    items.push({ kind: `date-${q.id}`, eq: q.id, dated: true, label: `${q.dated.kind === 'every' ? 'À changer' : 'À remplacer'} : ${q.name}`, due, state, rdv: null, why: q.dated.label || '' });
+  }
+  return { items, missing };
+}
+
+// What is due for one customer, with the kinds set in the back-office, and the dates read on the parts.
 function dueFor(db, customer, today) {
-  return dueItems(customer, logOf(db, customer.id), today, ownOf(db, customer.id), kindsOf(db), { vehicleType: vehicleTypeOf(db, customer) });
+  const own = ownOf(db, customer.id);
+  const items = dueItems(customer, logOf(db, customer.id), today, own, kindsOf(db), { vehicleType: vehicleTypeOf(db, customer) });
+  return [...items, ...datedOf(db, customer, today, own).items].sort((a, b) => a.due.localeCompare(b.due));
 }
 
 function entretienOf(db, customer, today) {
@@ -125,8 +160,10 @@ function entretienOf(db, customer, today) {
   const log = logOf(db, customer.id);
   const own = ownOf(db, customer.id);
   const ctx = { vehicleType: vehicleTypeOf(db, customer) };
+  const dated = datedOf(db, customer, today || iso(new Date()), own);
   return {
-    items: dueItems(customer, log, today, own, kinds, ctx),
+    items: [...dueItems(customer, log, today, own, kinds, ctx), ...dated.items].sort((a, b) => a.due.localeCompare(b.due)),
+    datesMissing: dated.missing,
     tips,
     log: log.map((e) => ({ id: e.id, doneOn: e.done_on, kind: e.kind, label: labelOf(kinds, e.kind), note: e.note })),
     // What the customer may note: the kinds for them (and « Autre intervention » kinds without a date).

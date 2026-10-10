@@ -190,6 +190,33 @@ window.startCompagnon = function(DATA){
   function ueqSave(){lsSet("cdb_ueq",JSON.stringify(UEQ))}
   function addCustom(c){var q = {id:c.id,cat:c.cat,name:c.name,base:false,spot:null,text:c.text||"Équipement ajouté par vous. Notez son modèle et ajoutez une photo pour le retrouver facilement.",tip:"",img:"",kw:"",custom:true}; q.idx = norm(q.name+" "+q.text); EQUIP.push(q); return q}
   UEQ.forEach(addCustom);
+  var KIDS = {};
+  EQUIP.forEach(function(q){if(q.grp && q.grp!==q.id && eqById0(q.grp)) (KIDS[q.grp] = KIDS[q.grp]||[]).push(q)});
+  EQUIP.forEach(function(q){if(KIDS[q.id]) q.idx += " "+norm(KIDS[q.id].map(function(k){return k.name+" "+(k.kw||"")}).join(" "))});
+  function isEns(id){return !!KIDS[id]}
+  function isKid(q){return !!(q && q.grp && KIDS[q.grp])}
+  function kidsOf(id){return (KIDS[id]||[]).filter(function(k){return !DATA.config.HIDDEN_EQ[k.id]})}
+  function ensOn(id){kidsOf(id).forEach(function(k){if(k.role==="always" && !k.noimpl) own[k.id] = true})}
+  function ensOff(id){kidsOf(id).forEach(function(k){delete own[k.id]})}
+  function syncEnsembles(){Object.keys(KIDS).forEach(function(id){if(!own[id] && kidsOf(id).some(function(k){return own[k.id]})) own[id] = true; if(own[id]) ensOn(id)})}
+  function pickOn(k){kidsOf(k.grp).forEach(function(o){if(o.pick===k.pick && o.id!==k.id) delete own[o.id]})}
+  var DATES = (function(){try{var o = JSON.parse(lsGet("cdb_dates")||"{}"); return o && typeof o==="object" ? o : {}}catch(e){return {}}})();
+  function addMonths(ym,n){var p = String(ym).split("-"), y = +p[0], m = +p[1]-1+n; return new Date(y+Math.floor(m/12), ((m%12)+12)%12, 1)}
+  function dueOf(q){
+    var d = q.dated, v = DATES[q.id]; if(!d || !v) return null;
+    if(d.kind==="until") return addMonths(v,0);
+    if(d.kind==="made") return addMonths(v,12*(d.years||10));
+    return addMonths(v,d.months||12);
+  }
+  function dueText(q){
+    var due = dueOf(q); if(!due) return q.dated.kind==="every" ? "Notez la date du dernier changement : l'appli vous le rappellera." : "Notez la date marquée dessus : l'appli vous rappellera de le changer.";
+    var label = due.toLocaleDateString("fr-FR",{month:"long",year:"numeric"}), late = due <= new Date();
+    return late ? '<b class="klate">⚠️ À changer : date dépassée ('+esc(label)+').</b>' : 'À changer avant <b>'+esc(label)+'</b>. Un rappel arrivera dans le carnet d\'entretien.';
+  }
+  function dateBlock(q){
+    if(!q.dated) return "";
+    return '<div class="kdate"><label>'+esc(q.dated.label || (q.dated.kind==="every" ? "Date du dernier changement" : "Date marquée dessus"))+'<input class="search" type="month" data-date="'+q.id+'" value="'+esc(DATES[q.id]||"")+'"></label><small class="kdue">'+dueText(q)+'</small></div>';
+  }
 
   function baseOwn(){var o = {}; (DATA.vehicle.equipment||[]).forEach(function(i){if(eqById0(i)) o[i]=true}); return o}
   var own = (function(){
@@ -204,7 +231,7 @@ window.startCompagnon = function(DATA){
   var HIDDEN_EQ = DATA.config.HIDDEN_EQ;
   var IMPL_REV = {};
   Object.keys(IMPL).forEach(function(p){IMPL[p].forEach(function(c){(IMPL_REV[c] = IMPL_REV[c]||[]).indexOf(p)<0 && IMPL_REV[c].push(p)})});
-  function isHidden(id){return !!HIDDEN_EQ[id] || (!!IMPL_REV[id] && !IMPL_VISIBLE[id])}
+  function isHidden(id){if(isKid(eqById0(id))) return true; if(KIDS[id]) return !!HIDDEN_EQ[id]; return !!HIDDEN_EQ[id] || (!!IMPL_REV[id] && !IMPL_VISIBLE[id])}
   function syncImplied(){
     delete own.comp;
     Object.keys(IMPL_REV).forEach(function(c){
@@ -419,8 +446,32 @@ window.startCompagnon = function(DATA){
   }
   function implRow(q){
     var ch = (IMPL[q.id]||[]).filter(function(c){return eqById(c)}).map(function(c){return eqById(c).name});
-    if(!ch.length) return '';
+    if(!ch.length || KIDS[q.id]) return '';
     return '<div class="implrow" data-impl="'+q.id+'"'+(own[q.id]?'':' hidden')+'><b>Compris d\'office :</b> '+esc(ch.join(", "))+'.</div>';
+  }
+  function kidsRow(q){
+    var ks = kidsOf(q.id); if(!ks.length) return '';
+    var picks = q.picks || {}, done = {}, h = q.note ? '<p class="ensnote">'+esc(q.note)+'</p>' : '';
+    ks.forEach(function(k){
+      if(k.role==="pick"){
+        if(done[k.pick]) return; done[k.pick] = 1;
+        h += '<div class="kpick"><span class="vq">'+esc(picks[k.pick]||"Lequel ?")+'</span><div class="vchips">'+ks.filter(function(o){return o.role==="pick" && o.pick===k.pick}).map(function(o){return '<button type="button" class="vchip" data-kp="'+o.id+'" aria-pressed="'+(!!own[o.id])+'">'+esc(o.name)+'</button>'}).join("")+'</div></div>'+
+          ks.filter(function(o){return o.role==="pick" && o.pick===k.pick && own[o.id]}).map(varRow).join("");
+      } else if(k.role==="always"){
+        if(k.noimpl && !own[k.id]) return;
+        h += '<div class="kitem kalways"><span>✓ '+esc(k.name)+'</span><small>compris</small></div>'+varRow(k);
+      } else {
+        h += '<label class="kitem"><input type="checkbox" data-k="'+k.id+'"'+(own[k.id]?' checked':'')+'><span>'+esc(k.name)+'</span></label>'+varRow(k);
+      }
+    });
+    return '<div class="kids" data-kids="'+q.id+'"'+(own[q.id]?'':' hidden')+'>'+h+'</div>';
+  }
+  function redrawKids(id){var b = $('[data-kids="'+id+'"]'); if(b && eqById(id)) b.outerHTML = kidsRow(eqById(id))}
+  function choosePick(id){
+    var k = eqById(id); if(!k) return;
+    own[id] = true; pickOn(k); implOn(id);
+    if(APP_VARS[id]){Object.keys(APP_VARS[id]).forEach(function(v){vars[v] = APP_VARS[id][v]}); varSave()}
+    syncImplied(); saveOwn(); redrawKids(k.grp); refreshCats(); toast("Enregistré");
   }
   function renderEquip(){
     var query = norm($("#esearch").value).trim(), html = "", total = 0;
@@ -437,7 +488,7 @@ window.startCompagnon = function(DATA){
             var lab = DIMS[q.id].t==="l" ? "Dépassement à l'arrière" : "Hauteur au-dessus du toit";
             row = '<div class="dimrow" data-dr="'+q.id+'"'+(own[q.id]?'':' hidden')+'><label for="di_'+q.id+'">'+lab+'</label><span class="dimin"><input id="di_'+q.id+'" type="number" inputmode="numeric" min="0" max="300" step="1" data-di="'+q.id+'" value="'+dimVal(q.id)+'"> cm</span><small>Mesurez sur votre véhicule. La plus grande valeur est retenue pour la '+(DIMS[q.id].t==="l"?'longueur':'hauteur')+' totale.</small></div>';
           }
-          return '<label class="eqitem"><input type="checkbox" data-e="'+q.id+'"'+(own[q.id]?' checked':'')+'><span><b>'+esc(q.name)+'</b>'+'</span></label>'+row+varRow(q)+implRow(q);
+          return '<label class="eqitem"><input type="checkbox" data-e="'+q.id+'"'+(own[q.id]?' checked':'')+'><span><b>'+esc(q.name)+'</b>'+'</span></label>'+row+varRow(q)+implRow(q)+kidsRow(q);
         }).join("") + '</details>';
     });
     if(!total) html = '<div class="empty"><p>'+(eqMode==="mine" && !query ? "Aucun équipement coché pour le moment." : "Aucun équipement ne correspond. Essayez un autre mot, par exemple « chauffage », « batterie » ou « antenne ».")+'</p></div>';
@@ -453,13 +504,16 @@ window.startCompagnon = function(DATA){
     updateCount();
   }
   $("#eqlist").addEventListener("change",function(e){
+    var kk = e.target.dataset.k;
+    if(kk){if(e.target.checked){own[kk] = true; implOn(kk)} else delete own[kk]; syncImplied(); var kv = $('[data-vr="'+kk+'"]'); if(kv) kv.hidden = !e.target.checked; saveOwn(); refreshCats(); return}
     var id = e.target.dataset.e; if(!id) return;
     if(e.target.checked){own[id] = true; implOn(id); if(APP_VARS[id]){Object.keys(APP_VARS[id]).forEach(function(k){vars[k] = APP_VARS[id][k]}); varSave()}} else delete own[id];
+    if(isEns(id)){if(e.target.checked) ensOn(id); else ensOff(id)}
     syncImplied();
     var ir = $('[data-impl="'+id+'"]'); if(ir) ir.hidden = !e.target.checked;
     var dr = $('[data-dr="'+id+'"]'); if(dr) dr.hidden = !e.target.checked;
     var vr = $('[data-vr="'+id+'"]'); if(vr) vr.hidden = !e.target.checked;
-    saveOwn(); refreshCats();
+    saveOwn(); refreshCats(); redrawKids(id);
   });
   $("#eqlist").addEventListener("input",function(e){
     var id = e.target.dataset.di; if(!id) return;
@@ -468,6 +522,7 @@ window.startCompagnon = function(DATA){
     lsSet("cdb_dim",JSON.stringify(dimv)); renderDims(); renderDimPanel();
   });
   $("#eqlist").addEventListener("click",function(e){
+    var kp = e.target.closest("[data-kp]"); if(kp){choosePick(kp.dataset.kp); return}
     var b = e.target.closest("[data-vv]"); if(!b) return;
     var id = b.dataset.vv; vars[id] = b.dataset.v; varSave();
     var row = b.closest(".varrow");
@@ -513,8 +568,8 @@ window.startCompagnon = function(DATA){
   var FULL = {x:0,y:0,w:800,h:360}, vb = {x:0,y:0,w:800,h:360}, selSpot = null, anim = null;
   function spotById(id){return SPOTS.filter(function(z){return z.id===id})[0]}
   var PORD = {}; PIT.forEach(function(p,k){PORD[p.id]=k});
-  function ownedAt(id){return EQUIP.filter(function(q){return q.spot===id && own[q.id]}).sort(function(a,b){return (PORD[a.id]==null?999:PORD[a.id])-(PORD[b.id]==null?999:PORD[b.id])})}
-  function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id]})}
+  function ownedAt(id){return EQUIP.filter(function(q){return own[q.id] && !isKid(q) && (q.spot===id || kidsOf(q.id).some(function(k){return own[k.id] && k.spot===id}))}).sort(function(a,b){return (PORD[a.id]==null?999:PORD[a.id])-(PORD[b.id]==null?999:PORD[b.id])})}
+  function ownedNoSpot(){return EQUIP.filter(function(q){return !q.spot && own[q.id] && !isKid(q)})}
 
   function drawSpots(){
     $("#planSpots").innerHTML = SPOTS.map(function(s){
@@ -583,7 +638,7 @@ window.startCompagnon = function(DATA){
   }
   var mods = (function(){var o = {}; try{o = JSON.parse(lsGet("cdb_mod")||"{}")||{}}catch(e){} var vm = DATA.vehicle.models||{}; Object.keys(vm).forEach(function(k){var m = o[k] = o[k]||{}; if(!m.name && vm[k]) m.name = vm[k]}); return o})();
   function modSave(){lsSet("cdb_mod",JSON.stringify(mods))}
-  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name:it.name, userPhoto: UPH[id] || null, genericPhoto: PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null), model:m.name||"", ref:m.ref||""}};
+  window.CDB_PARTINFO = function(id){var it = eqById(id); if(!it) return null; var m = mods[id]||{}; return {id:id, name: isKid(it) ? it.name+" ("+eqById(it.grp).name+")" : it.name, userPhoto: UPH[id] || null, genericPhoto: PHOTOS[id]!=null ? PH[PHOTOS[id]] : (it.img||null), model:m.name||"", ref:m.ref||""}};
   window.CDB_SETMOD = function(id,name,ref){if(!eqById(id)) return; var m = mods[id] = mods[id]||{}; m.name = String(name||"").slice(0,80); m.ref = String(ref||"").slice(0,80); modSave()};
   var PLATE = DATA.config.PLATE;
   var VARIANTS = DATA.config.VARIANTS;
@@ -606,8 +661,17 @@ window.startCompagnon = function(DATA){
       '<label>Numéro de série ou référence (si l\'équipement en a un)<input class="search" type="text" data-mod="'+it.id+'" data-f="ref" autocomplete="off" placeholder="Facultatif" value="'+esc(m.ref||"")+'"></label>'+
       '<small>À relever '+esc(PLATE[it.id]||"sur l'étiquette ou la plaque de l'équipement, ou dans la notice")+'. Beaucoup de pièces (bonde, joint…) n\'ont pas de numéro : notez alors seulement la marque, ou prenez-les en photo. Tout s\'enregistre tout seul sur ce téléphone, vous n\'avez rien à valider.</small><p class="saved" aria-live="polite" hidden>✓ Enregistré</p></details>';
   }
+  function kidsCard(it){
+    var ks = kidsOf(it.id).filter(function(k){return own[k.id]}); if(!ks.length) return "";
+    return '<p class="eyebrow kidshead">Ses éléments ('+ks.length+')</p>'+ks.map(function(k){
+      var o = varOpt(k.id), vl = o && o[0]!=="ns" ? o[1] : "";
+      return '<details class="kid" data-kid="'+k.id+'"><summary><b>'+esc(k.name)+'</b>'+(vl?'<span>'+esc(vl)+'</span>':'')+(k.dated && dueOf(k) && dueOf(k)<=new Date()?'<span class="klate">⚠️ date dépassée</span>':'')+'</summary>'+
+        photoBox(k)+'<p>'+esc(k.text||"")+'</p>'+(k.tip?'<div class="tip">'+esc(k.tip)+'</div>':'')+(k.note?'<p class="ensnote">'+esc(k.note)+'</p>':'')+varRow(k)+dateBlock(k)+modBlock(k)+
+        '<button class="btn alt partbtn" type="button" data-part="'+k.id+'">🛒 Pièce ou remplacement</button></details>';
+    }).join("");
+  }
   function card(it){
-    return '<div class="card">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class="tip">'+esc(it.tip)+'</div>':'')+(varOpt(it.id) && varOpt(it.id)[0]!=="ns" ? '<p class="vline">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+modBlock(it)+'<button class="btn alt partbtn" type="button" data-part="'+it.id+'">🛒 Pièce ou remplacement</button></div>';
+    return '<div class="card">'+photoBox(it)+'<h3>'+esc(it.name)+'</h3><p>'+esc(it.text)+'</p>'+(it.tip?'<div class="tip">'+esc(it.tip)+'</div>':'')+(it.note?'<p class="ensnote">'+esc(it.note)+'</p>':'')+(varOpt(it.id) && varOpt(it.id)[0]!=="ns" ? '<p class="vline">Votre type : '+esc(varOpt(it.id)[1])+'</p>' : '')+dateBlock(it)+kidsCard(it)+modBlock(it)+'<button class="btn alt partbtn" type="button" data-part="'+it.id+'">🛒 Pièce ou remplacement</button></div>';
   }
   function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
   function zoomTo(s){
@@ -617,7 +681,7 @@ window.startCompagnon = function(DATA){
   function selectSpot(id){
     selSpot = id;
     var s = spotById(id), mine = ownedAt(id);
-    var rest = EQUIP.filter(function(q){return q.spot===id && !own[q.id]});
+    var rest = EQUIP.filter(function(q){return q.spot===id && !own[q.id] && !isKid(q) && !isHidden(q.id)});
     $$("#planSpots .spot").forEach(function(g){g.classList.toggle("sel", g.dataset.id===id)});
     zoomTo(s);
     var h = '<div class="detail"><button class="btn alt" id="zback" style="width:100%">← Revenir au plan</button><p class="eyebrow">Zone '+s.n+'</p><h2>'+esc(s.name)+'</h2>';
@@ -631,11 +695,13 @@ window.startCompagnon = function(DATA){
   function showItem(id){
     var it = eqById(id); if(!it) return;
     window.CDB_TRACK&&window.CDB_TRACK("equip",{id:id,label:it.name});
+    if(isKid(it) && own[it.grp] && own[id]){showItem(it.grp); var kd = $('[data-kid="'+id+'"]'); if(kd){kd.open = true; if(kd.scrollIntoView) kd.scrollIntoView({block:"center"})} return}
     if(it.spot){selectSpot(it.spot); return}
     selSpot = null; $$("#planSpots .spot").forEach(function(g){g.classList.remove("sel")});
     $("#whatbody").innerHTML = '<div class="detail"><button class="btn alt" id="zback" style="width:100%">← Retour à la liste</button><p class="eyebrow">Emplacement variable selon le modèle</p>'+card(it)+'</div>';
     window.scrollTo(0,0);
   }
+  window.CDB_SHOW_EQ = function(id){go("what"); showItem(id)};
   function resetPlan(){
     selSpot = null;
     $("#whint").hidden = false;
@@ -650,7 +716,7 @@ window.startCompagnon = function(DATA){
       h = '<p class="eyebrow">'+res.length+' résultat'+(res.length>1?'s':'')+' dans vos équipements</p>';
       if(res.length){
         h += '<div class="list" style="margin-top:8px">'+res.map(function(q){
-          var z = q.spot ? 'Zone '+spotById(q.spot).n+' · '+spotById(q.spot).name : 'Emplacement variable';
+          var zq = isKid(q) ? eqById(q.grp) : q, zs = zq.spot && spotById(zq.spot); var z = (zs ? 'Zone '+zs.n+' · '+zs.name : 'Emplacement variable') + (isKid(q) ? ' · '+zq.name : '');
           return '<button class="row" data-e="'+q.id+'"><span>'+esc(q.name)+'<small>'+esc(z)+'</small></span><span aria-hidden="true">›</span></button>';
         }).join("")+'</div>';
       } else {
@@ -694,11 +760,14 @@ window.startCompagnon = function(DATA){
     d._t = setTimeout(function(){sv.hidden = false}, 700);
   });
   $("#whatbody").addEventListener("change",function(e){
+    var dt = e.target.dataset && e.target.dataset.date;
+    if(dt){if(e.target.value) DATES[dt] = e.target.value.slice(0,7); else delete DATES[dt]; lsSet("cdb_dates",JSON.stringify(DATES)); var due = e.target.closest(".kdate").querySelector(".kdue"); if(due) due.innerHTML = dueText(eqById(dt)); toast("Date enregistrée"); return}
     var t = e.target; if(!t.dataset || !t.dataset.ph || !t.files || !t.files[0]) return;
     var id = t.dataset.ph;
     setUserPhoto(id,t.files[0],function(){showItem(id)});
   });
   $("#whatbody").addEventListener("click",function(e){
+    var vb = e.target.closest("[data-vv]"); if(vb){vars[vb.dataset.vv] = vb.dataset.v; varSave(); vb.closest(".vchips").querySelectorAll(".vchip").forEach(function(c){c.setAttribute("aria-pressed", c===vb ? "true":"false")}); toast("Enregistré"); return}
     var pb = e.target.closest("[data-part]"); if(pb){window.CDB_CLOUD.partRequest(pb.dataset.part); return}
     var im = e.target.closest("img.pic"); if(im){im.classList.toggle("full"); if(im.parentNode.tagName==="FIGURE") im.parentNode.classList.toggle("full"); return}
     var pd = e.target.closest("[data-phdel]"); if(pd){delete UPH[pd.dataset.phdel]; uphSave(); toast("Photo retirée"); showItem(pd.dataset.phdel); return}
@@ -712,7 +781,7 @@ window.startCompagnon = function(DATA){
     var q = e.target.closest("[data-e]"); if(q){showItem(q.dataset.e); return}
     var r = e.target.closest("[data-id]"); if(r){selectSpot(r.dataset.id)}
   });
-  syncImplied(); updateCount();
+  syncEnsembles(); syncImplied(); updateCount();
 
   /* ---------- Rendez-vous atelier ---------- */
   var DEALER = DATA.dealer;
