@@ -11,7 +11,7 @@ const { readProfile, getCatalogValue, CATALOG_KEYS, carryOf } = require('../cata
 const { TYPES, TYPE_IDS, vehiclePlan, effectiveSpot, isApplicable, layoutList, PLANS } = require('../vehicle-types');
 const { matchLayouts } = require('../layouts');
 const { warrantyOf, SERVICES, OVERDUE_SQL, WAITING_SINCE } = require('../services');
-const { backupNow, fullBackupNow, listBackups, listFullBackups, backupFile, KEEP, FULL_KEEP } = require('../backup');
+const { backupNow, fullBackupStream, listBackups, backupFile, KEEP } = require('../backup');
 const { entretienOf, settingsOf, cleanSettings } = require('../entretien');
 const { cleanLists } = require('../lists');
 const { saveBug, bugOut, cleanVideoUrl, helpVideos } = require('../bugs');
@@ -221,25 +221,42 @@ function register(router) {
   // ---- Backups of the database (administrator) ----
   router.get('/api/admin/backups', (ctx) => {
     adminSignedIn(ctx);
-    return { keep: KEEP, fullKeep: FULL_KEEP, backups: listBackups(ctx.config.dataDir), full: listFullBackups(ctx.config.dataDir), lastDownload: getSetting(ctx.db, 'full_backup_downloaded_at') };
+    return { keep: KEEP, backups: listBackups(ctx.config.dataDir), lastDownload: getSetting(ctx.db, 'full_backup_downloaded_at') };
   });
   router.post('/api/admin/backups', (ctx) => {
     adminSignedIn(ctx);
-    if (!ctx.body.full) return backupNow(ctx.db, ctx.config.dataDir);
+    return backupNow(ctx.db, ctx.config.dataDir);
+  });
+  // Full backup: built now and sent straight to the administrator's computer, never kept on the server.
+  router.get('/api/admin/full-backup', (ctx) => {
+    adminSignedIn(ctx);
+    let job;
     try {
-      return fullBackupNow(ctx.db, ctx.config.dataDir, { secret: ctx.config.secret });
+      job = fullBackupStream(ctx.db, ctx.config.dataDir, { secret: ctx.config.secret });
     } catch (err) {
       throw new HttpError(500, `Sauvegarde complète : ${err.message}`);
     }
+    const { name, child } = job;
+    let errText = '';
+    child.stderr.on('data', (d) => (errText += d));
+    ctx.res.writeHead(200, { 'Content-Type': 'application/gzip', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store' });
+    child.stdout.pipe(ctx.res);
+    // Remembered only when the whole archive went out: the back-office stops warning for 30 days.
+    child.on('close', (code) => {
+      if (code === 0) setSetting(ctx.db, 'full_backup_downloaded_at', new Date().toISOString());
+      else {
+        ctx.log?.(`Sauvegarde complète interrompue : ${errText.trim()}`);
+        ctx.res.destroy();
+      }
+    });
+    ctx.res.on('close', () => { if (child.exitCode === null) child.kill(); });
   });
   router.get('/api/admin/backups/:name', (ctx) => {
     adminSignedIn(ctx);
     const file = backupFile(ctx.config.dataDir, ctx.params.name);
     if (!file) throw new HttpError(404, 'Sauvegarde introuvable');
-    // A full backup taken off the server: the back-office stops warning for 30 days.
-    if (ctx.params.name.endsWith('.tar.gz')) setSetting(ctx.db, 'full_backup_downloaded_at', new Date().toISOString());
     ctx.res.writeHead(200, {
-      'Content-Type': ctx.params.name.endsWith('.tar.gz') ? 'application/gzip' : 'application/octet-stream',
+      'Content-Type': 'application/octet-stream',
       'Content-Length': fs.statSync(file).size,
       'Content-Disposition': `attachment; filename="compagnon-${ctx.params.name}"`,
       'Cache-Control': 'no-store',

@@ -11,11 +11,12 @@ Le site est fait de **deux choses** :
 
 Dans le back-office : **Paramètres → Sauvegardes** (compte administrateur).
 
-- **Sauvegarde complète** : un seul fichier `site-AAAA-MM-JJ.tar.gz` avec **tout le site** : la base, les photos, les
-  clés du site, **le code**, les réglages du serveur (`REGLAGES-SERVEUR.txt`) et un mode d'emploi (`LISEZ-MOI.txt`).
-  Ce fichier suffit, seul, pour remettre le site en ligne sur un nouveau serveur, même si l'ancien est piraté ou perdu
-  et même sans GitHub. Elle se fait **toute seule chaque jour** (les 7 dernières sont gardées sur le serveur), ou avec
-  le bouton « Faire une sauvegarde complète maintenant ».
+- **Sauvegarde complète** : bouton « Télécharger la sauvegarde complète ». Un seul fichier
+  `compagnon-site-AAAA-MM-JJ.tar.gz` avec **tout le site** : la base, les photos, les clés du site, **le code**, les
+  réglages du serveur (`REGLAGES-SERVEUR.txt`) et un mode d'emploi (`LISEZ-MOI.txt`). Ce fichier suffit, seul, pour
+  remettre le site en ligne sur un nouveau serveur, même si l'ancien est piraté ou perdu et même sans GitHub. Il est
+  fabriqué au moment du clic et arrive directement sur votre ordinateur : **rien n'est gardé sur le serveur**. La page
+  affiche la date du dernier téléchargement.
 - **Base seule** : une copie de la base chaque jour (les 14 derniers jours), pour revenir à la veille après une erreur.
 
 👉 **Téléchargez une sauvegarde complète sur votre ordinateur une fois par mois** (et avant une grosse modification), et
@@ -49,11 +50,12 @@ Puis **Redémarrer**.
 
 ## Cas 2 : des données abîmées ou supprimées par erreur → remettre une sauvegarde complète
 
-Choisissez la date dans **Paramètres → Sauvegardes** (ex. `site-2026-10-09.tar.gz`). Sur alwaysdata, **Web → Sites →
-Arrêter** le site, puis copiez-collez en remplaçant `AAAA-MM-JJ` par cette date :
+Prenez la sauvegarde complète que vous avez téléchargée sur votre ordinateur (ex. `compagnon-site-2026-10-09.tar.gz`)
+et envoyez-la dans le dossier `~` du serveur avec FileZilla (connexion SFTP). Sur alwaysdata, **Web → Sites → Arrêter**
+le site, puis copiez-collez en remplaçant `AAAA-MM-JJ` par la date du fichier :
 
 ```
-cd ~/application-camping-car && mkdir -p ~/restauration && tar -xzf data/sauvegardes/site-AAAA-MM-JJ.tar.gz -C ~/restauration && mv data ~/data-avant-restauration && mkdir data && cp -a ~/restauration/. data/ && cp -a ~/data-avant-restauration/sauvegardes data/ && rm -rf ~/restauration && echo OK
+cd ~/application-camping-car && mkdir -p ~/restauration && tar -xzf ~/compagnon-site-AAAA-MM-JJ.tar.gz -C ~/restauration && rm -rf ~/restauration/code && mv data ~/data-avant-restauration && mkdir data && cp -a ~/restauration/. data/ && cp -a ~/data-avant-restauration/sauvegardes data/ && rm -rf ~/restauration && echo OK
 ```
 
 Puis **Web → Sites → Redémarrer** (ou Démarrer). L'ancien dossier est gardé dans `~/data-avant-restauration` (au cas où) : vous
@@ -67,10 +69,10 @@ Il faut seulement **la sauvegarde complète téléchargée sur votre ordinateur*
 
 **Méthode simple (sans GitHub)** : suivez le fichier `LISEZ-MOI.txt` qui est dans la sauvegarde. En résumé :
 1. Créez le compte d'hébergement avec Node.js 22 ou plus récent.
-2. Envoyez le fichier `site-AAAA-MM-JJ.tar.gz` dans le dossier `~` du serveur avec FileZilla (connexion SFTP).
+2. Envoyez le fichier `compagnon-site-AAAA-MM-JJ.tar.gz` dans le dossier `~` du serveur avec FileZilla (connexion SFTP).
 3. Dans la console SSH (remplacez la date) :
    ```
-   mkdir -p ~/application-camping-car/data && cd ~/application-camping-car && tar -xzf ~/site-AAAA-MM-JJ.tar.gz -C data && cp -r data/code/. . && rm -rf data/code && echo OK
+   mkdir -p ~/application-camping-car/data && cd ~/application-camping-car && tar -xzf ~/compagnon-site-AAAA-MM-JJ.tar.gz -C data && cp -r data/code/. . && rm -rf data/code && echo OK
    ```
 4. Créez le site avec les réglages de `REGLAGES-SERVEUR.txt` (type Node.js, commande `node server/index.js`, dossier
    `application-camping-car`), puis **Redémarrer**.
@@ -82,11 +84,11 @@ Il faut seulement **la sauvegarde complète téléchargée sur votre ordinateur*
    cd ~ && git clone https://github.com/pasto51/application-camping-car.git && cd application-camping-car && git checkout 43636a525d && echo OK
    ```
    (Pour la dernière version à la place : `git checkout claude/app-vehicles-cloud-backoffice-gaifle`.)
-2. Envoyez le fichier `site-AAAA-MM-JJ.tar.gz` de votre ordinateur vers le dossier `~` du serveur, avec FileZilla
+2. Envoyez le fichier `compagnon-site-AAAA-MM-JJ.tar.gz` de votre ordinateur vers le dossier `~` du serveur, avec FileZilla
    (connexion « SFTP » avec les identifiants SSH d'alwaysdata).
 3. Remettez les données :
    ```
-   cd ~/application-camping-car && mkdir -p data && tar -xzf ~/site-AAAA-MM-JJ.tar.gz -C data && rm -rf data/code && echo OK
+   cd ~/application-camping-car && mkdir -p data && tar -xzf ~/compagnon-site-AAAA-MM-JJ.tar.gz -C data && rm -rf data/code && echo OK
    ```
 4. Créez le site comme la première fois (voir « Mise en ligne (cloud) » dans le README : site de type
    **Node.js**, commande `node server/index.js`, dossier `application-camping-car`), puis **Redémarrer**.

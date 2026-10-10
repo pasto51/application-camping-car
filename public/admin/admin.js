@@ -1263,48 +1263,56 @@ function backupWarning(lastDownload) {
   return `<div class="card warn-card backup-warn">💾 <strong>${days === null ? 'Aucune sauvegarde complète n’a encore été téléchargée.' : `Dernière sauvegarde complète téléchargée il y a ${days} jours.`}</strong> Si le serveur est piraté ou perdu, ses sauvegardes partent avec lui : téléchargez-en une sur votre ordinateur et une clé USB. <a href="#settings">Paramètres → Sauvegardes</a></div>`;
 }
 
-// Daily copies of the database (made by the server), to download and keep elsewhere.
+// Full backup downloaded straight to the computer (never kept on the server), and daily copies of the database.
 async function drawBackups(box) {
-  const { keep, fullKeep, backups, full = [], lastDownload } = await api('GET', '/api/admin/backups');
+  const { keep, backups, lastDownload } = await api('GET', '/api/admin/backups');
   const size = (n) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} Mo` : `${Math.round(n / 1024)} Ko`);
-  const rows = (list, from) =>
-    `<div class="table-wrap"><table><thead><tr><th>Jour</th><th>Taille</th><th></th></tr></thead><tbody>${list
-      .map((b) => `<tr><td>${formatDate(b.name.slice(from, from + 10))}</td><td>${size(b.size)}</td><td class="row-actions"><button class="btn small" data-dl="${esc(b.name)}">Télécharger</button></td></tr>`)
-      .join('')}</tbody></table></div>`;
   box.innerHTML = `<h2>Sauvegardes</h2>
     ${backupWarning(lastDownload)}
     <h3>Sauvegarde complète (pour remettre le site en ligne)</h3>
-    <p class="muted">Un seul fichier avec <strong>tout le site</strong> : la base (clients, demandes, contenus, comptes, réglages), <strong>les photos</strong>, les clés du site, <strong>le code</strong>, les réglages du serveur et un mode d’emploi (LISEZ-MOI) pour tout remettre en ligne sur un nouveau serveur, même sans l’ancien. Faite <strong>chaque jour</strong> (les ${fullKeep} dernières sont gardées sur le serveur).</p>
-    <p class="muted"><strong>Téléchargez-la sur votre ordinateur et sur une clé USB au moins une fois par mois</strong> : si le serveur est piraté ou perdu, les copies qui sont dessus disparaissent avec lui.${lastDownload ? ` Dernier téléchargement : ${formatDate(lastDownload.slice(0, 10))}.` : ''} Fichier confidentiel : gardez-le en lieu sûr.</p>
-    ${full.length ? rows(full, 5) : '<p>Aucune sauvegarde complète pour l’instant.</p>'}
-    <div class="actions"><button class="btn primary" data-now="full">Faire une sauvegarde complète maintenant</button></div>
+    <p class="muted">Un seul fichier avec <strong>tout le site</strong> : la base (clients, demandes, contenus, comptes, réglages), <strong>les photos</strong>, les clés du site, <strong>le code</strong>, les réglages du serveur et un mode d’emploi (LISEZ-MOI) pour tout remettre en ligne sur un nouveau serveur, même sans l’ancien. Il est fabriqué au moment où vous cliquez et arrive directement sur votre ordinateur : rien n’est gardé sur le serveur.</p>
+    <p><strong>Dernier téléchargement :</strong> ${lastDownload ? formatDate(lastDownload.slice(0, 10)) : 'jamais'}</p>
+    <div class="actions"><button class="btn primary" data-full>Télécharger la sauvegarde complète</button></div>
+    <p class="muted">À faire <strong>au moins une fois par mois</strong>, et à ranger sur votre ordinateur <strong>et</strong> sur une clé USB : si le serveur est piraté ou perdu, c’est la copie qui reste. Fichier confidentiel : gardez-le en lieu sûr.</p>
     <h3>Base seule, chaque jour</h3>
-    <p class="muted">La base est aussi copiée chaque jour (les ${keep} derniers jours), pour revenir à la veille en cas d’erreur.</p>
-    ${backups.length ? rows(backups, 4) : '<p>Aucune sauvegarde pour l’instant : la première se fait dans l’heure qui suit le démarrage du site.</p>'}
-    <div class="actions"><button class="btn" data-now="db">Sauvegarder la base maintenant</button></div>`;
+    <p class="muted">La base est aussi copiée chaque jour sur le serveur (les ${keep} derniers jours, quelques Mo), pour revenir à la veille en cas d’erreur.</p>
+    ${backups.length ? `<div class="table-wrap"><table><thead><tr><th>Jour</th><th>Taille</th><th></th></tr></thead><tbody>${backups
+      .map((b) => `<tr><td>${formatDate(b.name.slice(4, 14))}</td><td>${size(b.size)}</td><td class="row-actions"><button class="btn small" data-dl="${esc(b.name)}">Télécharger</button></td></tr>`)
+      .join('')}</tbody></table></div>` : '<p>Aucune sauvegarde pour l’instant : la première se fait dans l’heure qui suit le démarrage du site.</p>'}
+    <div class="actions"><button class="btn" data-now>Sauvegarder la base maintenant</button></div>`;
+  const save = async (url, name) => {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${state.token}` } });
+    if (!res.ok) throw new Error('Téléchargement impossible');
+    const link = URL.createObjectURL(await res.blob());
+    const a = Object.assign(document.createElement('a'), { href: link, download: name });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(link), 5000);
+  };
   box.onclick = async (e) => {
+    const full = e.target.closest('[data-full]');
+    const now = e.target.closest('[data-now]');
     const dl = e.target.closest('[data-dl]');
     try {
-      const now = e.target.closest('[data-now]');
+      if (full) {
+        full.disabled = true;
+        full.textContent = 'Préparation du fichier…';
+        await save('/api/admin/full-backup', `compagnon-site-${new Date().toISOString().slice(0, 10)}.tar.gz`);
+        toast('Sauvegarde complète téléchargée : rangez-la aussi sur une clé USB');
+        return drawBackups(box);
+      }
       if (now) {
         now.disabled = true;
         now.textContent = 'Sauvegarde en cours…';
-        await api('POST', '/api/admin/backups', { full: now.dataset.now === 'full' });
-        toast(now.dataset.now === 'full' ? 'Sauvegarde complète faite : téléchargez-la' : 'Sauvegarde faite');
+        await api('POST', '/api/admin/backups', {});
+        toast('Sauvegarde faite');
         return drawBackups(box);
       }
-      if (!dl) return;
-      const res = await fetch(`/api/admin/backups/${encodeURIComponent(dl.dataset.dl)}`, { headers: { Authorization: `Bearer ${state.token}` } });
-      if (!res.ok) throw new Error('Téléchargement impossible');
-      const url = URL.createObjectURL(await res.blob());
-      const a = Object.assign(document.createElement('a'), { href: url, download: `compagnon-${dl.dataset.dl}` });
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      if (dl.dataset.dl.endsWith('.tar.gz')) setTimeout(() => drawBackups(box), 1500);
+      if (dl) await save(`/api/admin/backups/${encodeURIComponent(dl.dataset.dl)}`, `compagnon-${dl.dataset.dl}`);
     } catch (err) {
       toast(err.message, 'error');
+      drawBackups(box);
     }
   };
 }

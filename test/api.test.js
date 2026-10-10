@@ -772,12 +772,12 @@ test('full backup: one archive (database, photos, keys, code, server settings) t
   const admin = await login('admin@test.fr', 'motdepasse123');
   const h = await handover({ firstName: 'Sauve', lastName: 'Garde' });
   await call('PUT', '/api/me/state/cdb_photo', { token: h.token, body: { value: PNG } });
-  const b = await call('POST', '/api/admin/backups', { token: admin, body: { full: true } });
-  assert.equal(b.status, 200);
-  assert.match(b.data.name, /^site-\d{4}-\d{2}-\d{2}\.tar\.gz$/);
-  assert.equal((await call('GET', '/api/admin/backups', { token: admin })).data.full[0].name, b.data.name);
-  const res = await fetch(`${base}/api/admin/backups/${b.data.name}`, { headers: { Authorization: `Bearer ${admin}` } });
+  // Built on the click and sent straight to the computer: nothing is kept on the server.
+  assert.equal((await call('GET', '/api/admin/backups', { token: admin })).data.lastDownload, null);
+  assert.equal((await fetch(`${base}/api/admin/full-backup`)).status, 401);
+  const res = await fetch(`${base}/api/admin/full-backup`, { headers: { Authorization: `Bearer ${admin}` } });
   assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-disposition'), /compagnon-site-\d{4}-\d{2}-\d{2}\.tar\.gz/);
   const archive = path.join(os.tmpdir(), `cc-full-${Date.now()}.tar.gz`);
   fs.writeFileSync(archive, Buffer.from(await res.arrayBuffer()));
 
@@ -790,8 +790,10 @@ test('full backup: one archive (database, photos, keys, code, server settings) t
   // The key the site really uses is always saved, even when it comes from the settings (as for this test site).
   assert.equal(fs.readFileSync(path.join(restored, 'secret.key'), 'utf8').trim(), 'test-secret');
   assert.equal(fs.existsSync(path.join(restored, 'vapid.json')), fs.existsSync(path.join(dataDir, 'vapid.json')));
-  // The download is remembered: the back-office stops warning.
+  // The download is remembered (the back-office stops warning), and no archive nor temporary folder stays on the server.
   assert.ok((await call('GET', '/api/admin/backups', { token: admin })).data.lastDownload);
+  assert.ok(!fs.readdirSync(path.join(dataDir, 'sauvegardes')).some((f) => f.endsWith('.tar.gz')));
+  assert.ok(!fs.readdirSync(dataDir).some((f) => f.startsWith('.sauvegarde-en-cours-')));
   assert.ok(fs.readdirSync(path.join(restored, 'uploads'), { recursive: true }).some((f) => /\.(png|jpe?g|webp)$/i.test(f)), 'photos');
   const copy = createApp({ dataDir: restored, log: () => {} });
   try {

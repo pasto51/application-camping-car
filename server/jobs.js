@@ -5,7 +5,7 @@
 // restart does not run it twice.
 
 const { getSetting, setSetting } = require('./db');
-const { backupNow, fullBackupNow, listFullBackups } = require('./backup');
+const { backupNow, removeStoredFullBackups } = require('./backup');
 const { dueFor, NOTIFY_DAYS } = require('./entretien');
 const { SERVICES, serviceEmail, OVERDUE_SQL, WAITING_SINCE } = require('./services');
 const { listReminders } = require('./lists');
@@ -25,13 +25,10 @@ daily('sauvegarde', (app) => {
 
 // Maintenance reminders: one notification on the phone for each date coming within 15 days (or already passed),
 // at most one per customer and per day. Only customers who allowed notifications receive them.
-// Full backup (database, photos, keys, code, server settings) every day: the 7 last are kept on the server, and the
-// administrator downloads one regularly (the back-office warns after 30 days without).
-daily('sauvegarde-complete', (app) => {
-  const last = listFullBackups(app.config.dataDir)[0];
-  if (last && last.name === `site-${new Date().toISOString().slice(0, 10)}.tar.gz`) return null;
-  const b = fullBackupNow(app.db, app.config.dataDir, { secret: app.config.secret });
-  return `sauvegarde complète ${b.name} (${Math.round(b.size / 1024 / 1024)} Mo)`;
+// The full backup is downloaded by the administrator, never kept on the server: archives left by earlier versions go.
+daily('ancienne-sauvegarde-complete', (app) => {
+  const n = removeStoredFullBackups(app.config.dataDir);
+  return n ? `anciennes sauvegardes complètes supprimées du serveur : ${n}` : null;
 });
 
 // Statistics of use are kept 25 months at most, as the CNIL asks for an audience measurement without consent (the

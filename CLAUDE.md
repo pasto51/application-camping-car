@@ -40,7 +40,7 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 
 ## Sauvegardes
 
-- Sauvegarde complète **quotidienne** de tout le site (base + photos + clés + code + réglages du serveur + LISEZ-MOI) dans Paramètres → Sauvegardes : elle suffit seule à remonter le site sur un nouveau serveur, même sans GitHub. Il veut pouvoir tout relancer si un pirate bloque le serveur : alerte au tableau de bord si aucune n'a été téléchargée depuis 30 jours. Mode d'emploi : `docs/SAUVEGARDE-ET-RESTAURATION.md`.
+- Sauvegarde complète de tout le site (base + photos + clés + code + réglages du serveur + LISEZ-MOI), **téléchargée directement** depuis Paramètres → Sauvegardes : fabriquée au clic, **jamais stockée sur le serveur** (il ne veut pas de fichiers de sauvegarde qui encombrent) ; seule la date du dernier téléchargement est gardée. Elle suffit seule à remonter le site sur un nouveau serveur, même sans GitHub. Il veut pouvoir tout relancer si un pirate bloque le serveur : alerte au tableau de bord si aucune n'a été téléchargée depuis 30 jours. Mode d'emploi : `docs/SAUVEGARDE-ET-RESTAURATION.md`.
 - Versions figées du code (identifiants de commit, la session ne peut pas pousser de tag) : 9 octobre 2026 = `43636a525d`. En noter une nouvelle quand l'utilisateur demande de figer une version.
 
 ## Sécurité (audit du 9 octobre 2026 : `docs/AUDIT-SECURITE.md`)

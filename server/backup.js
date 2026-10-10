@@ -2,20 +2,19 @@
 
 // Daily copy of the database in data/sauvegardes (the last 14 days are kept). « VACUUM INTO » writes a consistent copy
 // even while the site is in use. To restore: stop the site, replace data/app.db by the copy, restart.
-// Full backup (every day, or on demand): one archive site-AAAA-MM-JJ.tar.gz with EVERYTHING needed to put the site back
-// online on a new server, even if this one is lost or locked and without GitHub: the database, the photos, the keys of
-// the site, its code (folder code/), the settings of the server and a step-by-step guide (LISEZ-MOI.txt). It must be
-// downloaded off the server (see docs/SAUVEGARDE-ET-RESTAURATION.md): the back-office warns after 30 days without.
+// Full backup (downloaded by the administrator, never kept on the server): one archive compagnon-site-AAAA-MM-JJ.tar.gz
+// with EVERYTHING needed to put the site back online on a new server, even if this one is lost or locked and without
+// GitHub: the database, the photos, the keys of the site, its code (folder code/), the settings of the server and a
+// step-by-step guide (LISEZ-MOI.txt). See docs/SAUVEGARDE-ET-RESTAURATION.md; the back-office warns after 30 days
+// without a download.
 
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { spawnSync } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 const KEEP = 14;
-const FULL_KEEP = 7;
 const NAME = /^app-\d{4}-\d{2}-\d{2}\.db$/;
-const FULL_NAME = /^site-\d{4}-\d{2}-\d{2}\.tar\.gz$/;
 
 function backupDir(dataDir) {
   const dir = path.join(dataDir, 'sauvegardes');
@@ -46,8 +45,6 @@ function backupNow(db, dataDir) {
   return listBackups(dataDir).find((b) => b.name === name);
 }
 
-const listFullBackups = (dataDir) => listBackups(dataDir, FULL_NAME);
-
 // The code of the site as it runs on the server (the data folder is saved apart, just above).
 const APP_ROOT = path.join(__dirname, '..');
 const CODE = ['server', 'public', 'tools', 'docs', 'test', 'package.json', 'README.md', 'CLAUDE.md', 'Dockerfile', 'docker-compose.yml', 'render.yaml'];
@@ -77,7 +74,7 @@ REMETTRE LE SITE EN LIGNE SUR UN NOUVEAU SERVEUR (alwaysdata ou autre)
   2. Envoyez ce fichier dans le dossier de base du serveur (~), avec FileZilla
      (connexion SFTP, identifiants SSH de l'hébergeur).
   3. Dans la console SSH, copiez-collez cette ligne (remplacez le nom du fichier) :
-       mkdir -p ~/application-camping-car/data && cd ~/application-camping-car && tar -xzf ~/site-${date}.tar.gz -C data && cp -r data/code/. . && rm -rf data/code && echo OK
+       mkdir -p ~/application-camping-car/data && cd ~/application-camping-car && tar -xzf ~/compagnon-site-${date}.tar.gz -C data && cp -r data/code/. . && rm -rf data/code && echo OK
   4. Créez le site comme décrit dans REGLAGES-SERVEUR.txt (type Node.js, commande, dossier),
      puis Redémarrer.
   5. Ouvrez /admin/ : connectez-vous avec vos comptes habituels (ils sont dans la base).
@@ -116,44 +113,59 @@ E-mails : si l'adresse d'envoi était une adresse alwaysdata, recréez la même 
 hébergeur (ou changez-la dans le back-office : Paramètres → E-mails).
 `;
 
-// One archive with everything the site needs: data, keys, code, settings. Uses the « tar » command of the server.
+// The full backup is never kept on the server: it is built when the administrator clicks « Télécharger » and sent
+// straight to their computer (the « tar » command writes the archive into the download). Only a consistent copy of
+// the database and a few small files are staged, in a folder removed as soon as the download ends; the code and the
+// photos are read in place (the code through links, followed by tar -h).
 // secret: the key the site really uses (it may come from the SECRET variable rather than from secret.key).
-function fullBackupNow(db, dataDir, { secret } = {}) {
-  const dir = backupDir(dataDir);
+// Returns { name, child, cleanup }: child.stdout is the archive.
+function fullBackupStream(db, dataDir, { secret } = {}) {
   const day = new Date().toISOString().slice(0, 10);
-  const name = `site-${day}.tar.gz`;
-  const out = path.join(dir, name);
-  const tmp = path.join(dir, '.complete-en-cours');
-  fs.rmSync(tmp, { recursive: true, force: true });
-  fs.mkdirSync(tmp, { recursive: true });
-  fs.mkdirSync(path.join(dataDir, 'uploads'), { recursive: true });
+  const name = `compagnon-site-${day}.tar.gz`;
+  fs.mkdirSync(dataDir, { recursive: true });
+  const tmp = fs.mkdtempSync(path.join(dataDir, '.sauvegarde-en-cours-'));
+  const cleanup = () => fs.rmSync(tmp, { recursive: true, force: true });
   try {
+    fs.mkdirSync(path.join(dataDir, 'uploads'), { recursive: true });
     db.exec(`VACUUM INTO '${path.join(tmp, 'app.db').replace(/'/g, "''")}'`);
     for (const f of ['secret.key', 'vapid.json']) if (fs.existsSync(path.join(dataDir, f))) fs.copyFileSync(path.join(dataDir, f), path.join(tmp, f));
     if (secret) fs.writeFileSync(path.join(tmp, 'secret.key'), secret, { mode: 0o600 });
     const version = codeVersion();
+    fs.mkdirSync(path.join(tmp, 'code'));
     for (const f of CODE) {
       const src = path.join(APP_ROOT, f);
-      if (fs.existsSync(src)) fs.cpSync(src, path.join(tmp, 'code', f), { recursive: true });
+      if (fs.existsSync(src)) fs.symlinkSync(src, path.join(tmp, 'code', f));
     }
     if (version) fs.writeFileSync(path.join(tmp, 'code', 'VERSION.txt'), `${version}\n`);
     fs.writeFileSync(path.join(tmp, 'LISEZ-MOI.txt'), README(day, version));
     fs.writeFileSync(path.join(tmp, 'REGLAGES-SERVEUR.txt'), SETTINGS(process.env));
-    fs.rmSync(out, { force: true });
-    const r = spawnSync('tar', ['-czf', out, '-C', tmp, '.', '-C', dataDir, 'uploads'], { stdio: 'pipe' });
-    if (r.error || r.status !== 0) throw new Error(`archive impossible (${r.error ? r.error.message : String(r.stderr).trim()})`);
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    const child = spawn('tar', ['-czhf', '-', '-C', tmp, '.', '-C', dataDir, 'uploads'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    child.on('close', cleanup);
+    child.on('error', cleanup);
+    return { name, child, cleanup };
+  } catch (err) {
+    cleanup();
+    throw err;
   }
-  for (const old of listFullBackups(dataDir).slice(FULL_KEEP)) fs.rmSync(path.join(dir, old.name), { force: true });
-  return listFullBackups(dataDir).find((b) => b.name === name);
 }
 
-// Path of a backup, only for one of our own file names.
+// Full archives kept by earlier versions (site-AAAA-MM-JJ.tar.gz) and folders left by an interrupted download: removed.
+function removeStoredFullBackups(dataDir) {
+  const dir = backupDir(dataDir);
+  let n = 0;
+  for (const f of fs.readdirSync(dir)) if (/^site-\d{4}-\d{2}-\d{2}\.tar\.gz$/.test(f) || f === '.complete-en-cours') (fs.rmSync(path.join(dir, f), { recursive: true, force: true }), n++);
+  for (const f of fs.readdirSync(dataDir)) {
+    const p = path.join(dataDir, f);
+    if (f.startsWith('.sauvegarde-en-cours-') && Date.now() - fs.statSync(p).mtimeMs > 3600000) (fs.rmSync(p, { recursive: true, force: true }), n++);
+  }
+  return n;
+}
+
+// Path of a daily database copy, only for one of our own file names.
 function backupFile(dataDir, name) {
-  if (!NAME.test(String(name)) && !FULL_NAME.test(String(name))) return null;
+  if (!NAME.test(String(name))) return null;
   const file = path.join(backupDir(dataDir), name);
   return fs.existsSync(file) ? file : null;
 }
 
-module.exports = { backupNow, fullBackupNow, listBackups, listFullBackups, backupFile, KEEP, FULL_KEEP };
+module.exports = { backupNow, fullBackupStream, removeStoredFullBackups, listBackups, backupFile, KEEP };
