@@ -404,6 +404,46 @@ export function registerCatalogViews(VIEWS, h) {
       api('GET', '/api/admin/layouts'),
     ]);
     const v = vehicles.find((x) => x.id === vehicleId);
+    const eqById = Object.fromEntries(equipment.map((q) => [q.id, q]));
+    const isKid = (q) => !!(q.grp && q.grp !== q.id && eqById[q.grp]);
+    const hidden = (config && config.HIDDEN_EQ) || {};
+    const kidsOf = (id) => equipment.filter((q) => q.grp === id && q.grp !== q.id && !hidden[q.id]);
+    const ensOn = (id) => profile.equipment.includes(id) || equipment.some((q) => q.grp === id && profile.equipment.includes(q.id));
+    // An « always » element of a ticked ensemble shows ticked (the app counts it in anyway).
+    const has = (id) => profile.equipment.includes(id) || (eqById[id]?.role === 'always' && !eqById[id].noimpl && eqById[id].grp && profile.equipment.includes(eqById[id].grp));
+    const fits = (q) => !profile.type || !q.types?.length || q.types.includes(profile.type) || has(q.id);
+    const KIND = { always: 'compris', option: 'option', pick: 'un seul au choix' };
+    const presetRow = (q, kid = false) =>
+      `<label class="check${kid ? ' preset-kid' : ''}"><input type="checkbox" name="eq" value="${esc(q.id)}" ${has(q.id) || (!kid && ensOn(q.id)) ? 'checked' : ''}> ${esc(profile.labels?.[q.id] || q.name)}${kid ? ` <small class="muted">${KIND[q.role] || 'option'}</small>` : ''}</label>`;
+    const presetKids = (q) => {
+      const ks = kidsOf(q.id);
+      if (!ks.length) return '';
+      const on = ensOn(q.id);
+      return `<div class="preset-kids" data-kids="${esc(q.id)}" ${on ? '' : 'hidden'}>${ks.map((k) => presetRow(k, true)).join('')}</div>`;
+    };
+    const presetForm_wire = (form) =>
+      form.addEventListener('change', (e) => {
+        const box = e.target;
+        if (box.name !== 'eq') return;
+        const q = eqById[box.value];
+        if (!q) return;
+        const input = (id) => form.querySelector(`input[name=eq][value="${CSS.escape(id)}"]`);
+        const kids = kidsOf(q.id);
+        if (kids.length) {
+          kids.forEach((k) => {
+            const i = input(k.id);
+            if (i) i.checked = box.checked ? i.checked || (k.role === 'always' && !k.noimpl) : false;
+          });
+          const wrap = form.querySelector(`[data-kids="${CSS.escape(q.id)}"]`);
+          if (wrap) wrap.hidden = !box.checked;
+        }
+        if (isKid(q) && box.checked) {
+          if (q.role === 'pick') kidsOf(q.grp).forEach((k) => k.pick === q.pick && k.id !== q.id && input(k.id) && (input(k.id).checked = false));
+          const parent = input(q.grp);
+          if (parent) parent.checked = true;
+        }
+        el.querySelector('#preset-n').textContent = form.querySelectorAll('input[name=eq]:checked').length;
+      });
     const photoOf = Object.fromEntries(profile.photos.map((p) => [p.id, p.url]));
     const eqName = Object.fromEntries(equipment.map((q) => [q.id, q.name]));
     const W = { ptac: 'PTAC (kg)', mom: 'Masse en ordre de marche (kg)', pax: 'Passagers', eau: 'Eau propre (L)', gaz: 'Gaz (kg)', bag: 'Bagages (kg)' };
@@ -440,9 +480,9 @@ export function registerCatalogViews(VIEWS, h) {
         <div class="preset-cats">${cats
           .map(
             ([cid, cname]) => `<fieldset><legend>${esc(cname)}</legend>${equipment
-              .filter((q) => q.cat === cid)
-              .filter((q) => !profile.type || !q.types?.length || q.types.includes(profile.type) || profile.equipment.includes(q.id))
-              .map((q) => `<label class="check"><input type="checkbox" name="eq" value="${esc(q.id)}" ${profile.equipment.includes(q.id) ? 'checked' : ''}> ${esc(profile.labels?.[q.id] || q.name)}</label>`)
+              .filter((q) => q.cat === cid && !isKid(q) && !hidden[q.id])
+              .filter((q) => fits(q) || kidsOf(q.id).some((k) => has(k.id)))
+              .map((q) => presetRow(q) + presetKids(q))
               .join('')}</fieldset>`
           )
           .join('')}</div>
@@ -462,6 +502,9 @@ export function registerCatalogViews(VIEWS, h) {
       </div>`;
 
     const reload = () => VIEWS.vehicleProfile(el, vehicleId, back);
+    // Ensembles and elements, as in the relevé: an ensemble brings its « always » elements and takes them all away
+    // when unticked; « un seul au choix » unticks the others; ticking an element ticks its ensemble.
+    presetForm_wire(el.querySelector('#preset-form'));
     const presetForm = el.querySelector('#preset-form');
     const count = () => (el.querySelector('#preset-n').textContent = presetForm.querySelectorAll('input[name=eq]:checked').length);
     presetForm.addEventListener('change', count);

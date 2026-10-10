@@ -315,3 +315,7 @@ tr.muted td { opacity: .6; }
 .idea h2{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 8px}
 .idea h3{margin:16px 0 6px}
 .idea ul{margin:0;padding-left:20px;line-height:1.5}
+/* Elements of an ensemble, under it (vehicle profile) */
+.preset-kids { margin: 0 0 .3rem 1.1rem; padding-left: .6rem; border-left: 3px solid var(--accent, #0a7c82); display: flex; flex-direction: column; gap: .15rem; }
+.preset-kids[hidden] { display: none; }
+.preset-kid { font-size: .93em; }
