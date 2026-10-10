@@ -33,7 +33,7 @@ const MENUS = [
   ['brands', 'Marques', 'Les marques de véhicules et leur logo.', ['admin', 'editor']],
   ['dealerships', 'Concessions / Ma concession', 'Coordonnées, logo, téléphone et e-mail du SAV et du magasin (affichés dans l’appli du client), durée de garantie.', ['admin', 'manager', 'dealer', 'sales', 'sav', 'store']],
   ['users', 'Utilisateurs / Mon équipe', 'Les comptes : commerciaux, SAV, magasin, responsables. Créer, modifier, désactiver.', MANAGERS],
-  ['bugs', 'Bugs signalés', 'Les bugs envoyés par les clients (bas de l’appli) et par l’équipe (bas du menu), aussi reçus par e-mail : « Réglé » ou « Supprimer ».', ['admin']],
+  ['bugs', 'Bugs signalés', 'Les bugs envoyés par les clients (« Signaler un problème », en bas de l’appli) et par l’équipe (bas du menu), aussi reçus par e-mail : « Réglé » ou « Supprimer ».', ['admin']],
   ['settings', 'Paramètres', 'Votre mot de passe. Pour l’administrateur : e-mails du site, annonce, vidéos de prise en main, sauvegardes.', ALL],
 ];
 

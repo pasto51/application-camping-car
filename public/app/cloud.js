@@ -688,7 +688,7 @@
     });
   }
 
-  // ---------- « Prendre en main » (the presentation video, « ? » at the top) and « Signaler un bug » (bottom of the home screen) ----------
+  // ---------- « Prendre en main » (the presentation video, « ? » at the top) and « Signaler un problème » (a bug of the app, bottom of the home screen) ----------
 
   function videoEmbed(url) {
     var u; try { u = new URL(url); } catch (e) { return null; }
@@ -715,7 +715,7 @@
   function openBug() {
     var m = document.createElement('div');
     m.className = 'cloud-modal';
-    m.innerHTML = '<form class="card"><p class="eyebrow">Signaler un bug de l’appli</p><h3>Que s’est-il passé ?</h3>' +
+    m.innerHTML = '<form class="card"><p class="eyebrow">Signaler un problème avec l’appli</p><h3>Que s’est-il passé ?</h3>' +
       '<p class="sub">Ce que vous faisiez et ce que vous avez vu (un écran blanc, un bouton qui ne marche pas…). Pour une panne de votre camping-car, utilisez plutôt « J’ai un souci ».</p>' +
       '<textarea class="search" name="message" rows="5" maxlength="3000" required></textarea>' +
       '<div class="btns"><button type="button" class="btn alt" data-x>Annuler</button><button class="btn">Envoyer</button></div></form>';
@@ -745,7 +745,7 @@
     if (home && !document.getElementById('cloudfoot')) {
       var f = document.createElement('div');
       f.id = 'cloudfoot'; f.className = 'cloud-foot';
-      f.innerHTML = '<button type="button" class="lnk" data-help>❓ Prendre en main l’appli</button><button type="button" class="lnk" data-bug>🐞 Signaler un bug</button>';
+      f.innerHTML = '<button type="button" class="lnk" data-help>❓ Prendre en main l’appli</button><button type="button" class="lnk" data-bug>⚠️ Signaler un problème</button>';
       f.querySelector('[data-help]').onclick = openHelp;
       f.querySelector('[data-bug]').onclick = openBug;
       home.appendChild(f);

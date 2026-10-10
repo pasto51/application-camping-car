@@ -256,7 +256,7 @@ function register(router) {
   const bugLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 10 });
   router.post('/api/me/bugs', (ctx) => {
     const customer = requireCustomer(ctx);
-    if (bugLimiter(`c${customer.id}`)) throw new HttpError(429, 'Vous avez déjà signalé plusieurs bugs aujourd’hui : merci, nous les regardons.');
+    if (bugLimiter(`c${customer.id}`)) throw new HttpError(429, 'Vous avez déjà signalé plusieurs problèmes aujourd’hui : merci, nous les regardons.');
     const d = ctx.db.prepare('SELECT name FROM dealerships WHERE id = ?').get(customer.dealership_id);
     let bug;
     try {

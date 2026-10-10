@@ -91,7 +91,7 @@ export function registerHelp(VIEWS, { api, openForm, pageHeader, confirmDelete, 
         <p class="muted"><small>${esc([b.device, b.version && `version ${b.version}`].filter(Boolean).join(' · '))}</small></p>
       </div>`;
     el.innerHTML = `${pageHeader('Bugs signalés')}
-      <p class="muted">Envoyés par les clients (bouton en bas de l’appli) et par l’équipe (bouton en bas du menu). Vous recevez aussi chaque bug par e-mail si les e-mails sont configurés.</p>
+      <p class="muted">Envoyés par les clients (bouton « Signaler un problème » en bas de l’appli) et par l’équipe (bouton en bas du menu). Vous recevez aussi chaque bug par e-mail si les e-mails sont configurés.</p>
       <h2 class="section-title">À regarder (${fresh.length})</h2>
       ${fresh.length ? fresh.map(card).join('') : '<p class="muted">Aucun bug en attente.</p>'}
       ${done.length ? `<h2 class="section-title">Réglés (${done.length})</h2>${done.map(card).join('')}` : ''}`;
