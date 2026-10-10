@@ -12,6 +12,7 @@ import { registerContentView } from '/admin/content.js';
 import { guideHtml } from '/admin/guide.js';
 import { registerHelp } from '/admin/help.js';
 import { registerNotifsView } from '/admin/notifs.js';
+import { registerIdeasView } from '/admin/ideas.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -117,6 +118,7 @@ function sections() {
     ['dealerships', '🏢', isAdmin() ? 'Concessions' : 'Ma concession', !isEditor() && !isAnalyst()],
     ['users', '🔑', isAdmin() ? 'Utilisateurs' : 'Mon équipe', isManager()],
     ['bugs', '🐞', 'Bugs signalés', isAdmin()],
+    ['ideas', '🧭', 'Idées à venir', isAdmin()],
     ['settings', '⚙️', 'Paramètres', true],
   ];
   return all.filter((s) => s[3]);
@@ -967,6 +969,7 @@ const HELP = registerHelp(VIEWS, { api, openForm, pageHeader, confirmDelete, sta
 registerBannersView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerContentView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerNotifsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
+registerIdeasView(VIEWS, { esc, pageHeader });
 registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.

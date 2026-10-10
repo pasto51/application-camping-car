@@ -18,6 +18,7 @@ Application pour camping-cars : appli client (PWA, `public/app`), back-office we
 - **Pas de diagnostic groupe électrogène** (ne l'intéresse pas).
 - **Conseils & Astuces** (ancien mini-jeu « Missions ») : astuces publiées depuis le back-office ou partagées par les clients, jamais publiées sans relecture (administrateur ou éditeur de contenu). « Le conseil d’expert » (ancien « conseil du magasin ») suit la règle solution magasin, sur un ton de conseil, jamais vendeur. La démo ne publie jamais d'astuce (elle serait visible des vrais clients).
 - **Bandeaux « À la une »** : ciblés (concessions, type de véhicule, ancienneté, garantie, équipement, accord offres, dates). Ceux de la démo visent seulement les concessions de démo, jamais « toutes ».
+- **Idées à venir** (`public/admin/ideas.js`, onglet administrateur) : les idées notées mais pas développées (ex. entraide entre camping-caristes). Y ajouter celles qu'il demande de « garder pour plus tard ».
 - Demandes : sous garantie ou extension → SAV ; hors garantie ou accessoire → magasin ; atelier (étanchéité, gaz…) → SAV. Un e-mail par service, pas d'e-mail aux commerciaux ni au responsable.
 
 ## Démo commerciale — à garder à jour

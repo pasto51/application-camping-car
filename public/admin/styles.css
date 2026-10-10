@@ -312,3 +312,6 @@ tr.muted td { opacity: .6; }
 .kind-btn span { font-size: 1.5rem; }
 .kind-btn small { font-weight: 400; color: #6b6b6b; font-size: .75rem; }
 .kind-btn:hover { border-color: #0a7c82; }
+.idea h2{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 8px}
+.idea h3{margin:16px 0 6px}
+.idea ul{margin:0;padding-left:20px;line-height:1.5}
