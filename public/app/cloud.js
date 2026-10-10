@@ -523,6 +523,7 @@
         setInterval(function () { if (document.visibilityState === 'visible') loadRequests(); }, 60000);
         flush();
         if (openScreen) { var b = document.querySelector('[data-go="' + openScreen + '"]'); if (b) b.click(); }
+        openNotifFromHash();
         if (location.hash === '#demandes') { history.replaceState(null, '', location.pathname); var t = document.querySelector('.tile[data-go="rdv"]'); if (t) t.click(); }
       })
       .catch(function (err) {
@@ -687,6 +688,18 @@
       return api('DELETE', '/api/me/push', { endpoint: sub.endpoint }).catch(function () {}).then(function () { return sub.unsubscribe(); });
     });
   }
+
+  // ---------- A notification touched on the phone: the app opens on what it announces ----------
+
+  function openNotifFromHash() {
+    var id = (location.hash.match(/^#notif-(\d+)/) || [])[1];
+    if (!id) return;
+    history.replaceState(null, '', location.pathname);
+    api('GET', '/api/me/notifs/' + id)
+      .then(function (n) { if (window.CDB_OPEN_ACTION) window.CDB_OPEN_ACTION(n); })
+      .catch(function () { /* a message removed in the meantime: the app simply opens */ });
+  }
+  window.addEventListener('hashchange', function () { if (/^#notif-\d+/.test(location.hash) && DATA) openNotifFromHash(); });
 
   // ---------- « Prendre en main » (the presentation video, « ? » at the top) and « Signaler un problème » (a bug of the app, bottom of the home screen) ----------
 

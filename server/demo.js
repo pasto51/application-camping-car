@@ -56,6 +56,11 @@ function removeDemo(db) {
     const targets = JSON.parse(b.dealership_ids || '[]');
     if (targets.length && targets.every((t) => ids.includes(t))) db.prepare('DELETE FROM banners WHERE id = ?').run(b.id);
   }
+  // Notifications of the demo: only those for demo dealerships.
+  for (const c of db.prepare('SELECT id, target FROM notif_campaigns').all()) {
+    const targets = JSON.parse(c.target || '{}').dealershipIds || [];
+    if (targets.length && targets.every((t) => ids.includes(t))) db.prepare('DELETE FROM notif_campaigns WHERE id = ?').run(c.id);
+  }
   const accounts = db.prepare("DELETE FROM admins WHERE email LIKE '%@demo.test'").run().changes;
   for (const id of ids) db.prepare('DELETE FROM dealerships WHERE id = ?').run(id);
   return { dealerships: ids.length, customers, accounts };
@@ -443,6 +448,10 @@ async function main() {
   await call('POST', '/api/admin/banners', { title: 'Bienvenue à bord', subtitle: 'Les bons gestes des premières semaines', icon: '🚐', action: 'screen', screen: 'tips', dealershipIds: [D.nantes.id, D.rennes.id, D.vannes.id], age: 'm3', priority: 30 });
   await call('POST', '/api/admin/banners', { title: 'Votre garantie se termine', subtitle: 'Pensez à l’extension de garantie', icon: '🛡️', action: 'screen', screen: 'rdv', dealershipIds: [D.nantes.id, D.rennes.id, D.vannes.id], warranty: 'out', priority: 10 });
 
+  // « Notifications »: one sent (open days) and one programmed (winter storage), for the demo dealerships only.
+  const demoIds = [D.nantes.id, D.rennes.id, D.vannes.id];
+  await call('POST', '/api/admin/notifs', { kind: 'portes', title: 'Portes ouvertes samedi', body: 'Nouveautés, essais et café offert de 9 h à 18 h. Touchez pour les détails.', action: 'popup', text: 'Samedi de 9 h à 18 h : portes ouvertes à la concession. Essais des nouveautés, café offert et -10 % au magasin.', dealershipIds: [D.nantes.id] });
+  await call('POST', '/api/admin/notifs', { kind: 'hivernage', title: 'Avant l’hiver : l’hivernage', body: 'Le froid arrive : suivez la liste d’hivernage pour protéger votre camping-car.', action: 'screen', screen: 'daily', dealershipIds: demoIds, sendAt: new Date(Date.now() + 7 * 86400000).toISOString() });
   // « Partager mon astuce »: two tips from customers, waiting in « Conseils & Astuces » (never published by the demo:
   // a published tip would show in the real customers' apps too).
   await call('POST', '/api/me/tips', { title: 'Des cales qu’on n’oublie plus', category: 'route', body: 'J’ai accroché un petit sac à l’intérieur de la porte : les cales y vont dès que je les ramasse, et je vois tout de suite si elles manquent avant de partir.' }, C.Martine.token);

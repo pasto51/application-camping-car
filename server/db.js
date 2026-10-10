@@ -143,6 +143,32 @@ CREATE TABLE IF NOT EXISTS catalog (
 -- The customer's maintenance logbook (« J'ai fait le test d'étanchéité le… ») and the reminders already notified.
 -- « Conseils & Astuces »: written in the back-office, or shared by a customer (pending until an administrator or a content
 -- editor publishes it).
+-- « Notifications »: messages pushed to the customers' phones from the back-office (administrator), each for its own
+-- customers (same targeting as the banners), sent at once or at a set time; who opened each one.
+CREATE TABLE IF NOT EXISTS notif_campaigns (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL DEFAULT 'autre',
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  icon TEXT,
+  action TEXT NOT NULL DEFAULT 'popup',
+  payload TEXT NOT NULL DEFAULT '{}',
+  target TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'sending', 'sent', 'cancelled')),
+  send_at TEXT,
+  sent_at TEXT,
+  targeted INTEGER NOT NULL DEFAULT 0,
+  reachable INTEGER NOT NULL DEFAULT 0,
+  delivered INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER REFERENCES admins(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS notif_opens (
+  campaign_id INTEGER NOT NULL REFERENCES notif_campaigns(id) ON DELETE CASCADE,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  opened_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (campaign_id, customer_id)
+);
 -- « Signaler un bug »: messages sent from the app (customers) or the back-office (team), read by the administrator.
 CREATE TABLE IF NOT EXISTS bug_reports (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

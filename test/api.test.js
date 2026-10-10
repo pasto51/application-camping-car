@@ -890,3 +890,45 @@ test('« Signaler un bug » from the app and the back-office, read by the admini
   assert.deepEqual((await call('GET', '/api/admin/settings', { token: editor })).data.help, { app: 'https://youtu.be/abcdefghijk', admin: 'https://vimeo.com/123456789' });
   assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.helpVideo, 'https://youtu.be/abcdefghijk');
 });
+
+test('« Notifications » pushed from the back-office: who (same targeting as the banners), what opens, now or later', async () => {
+  const admin = await login('admin@test.fr', 'motdepasse123');
+  const a = await handover({ firstName: 'Notif', lastName: 'Un' });
+  const b = await handover({ firstName: 'Notif', lastName: 'Deux' });
+  await call('PUT', '/api/me/info', { token: b.token, body: { marketing: true } });
+  // Administrator only.
+  const ed = await call('POST', '/api/admin/users', { token: admin, body: { email: 'notif-editor@test.fr', name: 'Éd', password: 'motdepasse123', role: 'editor' } });
+  assert.equal(ed.status, 200);
+  const editor = await login('notif-editor@test.fr', 'motdepasse123');
+  assert.equal((await call('GET', '/api/admin/notifs', { token: editor })).status, 403);
+  const d = (await call('GET', '/api/admin/notifs', { token: admin })).data;
+  assert.ok(d.kinds.some((k) => k.id === 'portes' && k.commercial) && d.kinds.some((k) => k.id === 'hivernage' && k.screen === 'daily'));
+  // Audience: an offer only reaches the customers who accepted the offers.
+  const all = (await call('POST', '/api/admin/notifs/audience', { token: admin, body: { kind: 'hivernage' } })).data;
+  const promo = (await call('POST', '/api/admin/notifs/audience', { token: admin, body: { kind: 'promo' } })).data;
+  assert.ok(all.targeted >= 2 && promo.targeted >= 1 && promo.targeted < all.targeted);
+  // Checks: title and text, a page that exists, a link in https, a date to come.
+  assert.equal((await call('POST', '/api/admin/notifs', { token: admin, body: { kind: 'autre', title: '', body: 'x' } })).status, 400);
+  assert.equal((await call('POST', '/api/admin/notifs', { token: admin, body: { kind: 'autre', title: 'T', body: 'B', action: 'link', url: 'http://x.fr' } })).status, 400);
+  assert.equal((await call('POST', '/api/admin/notifs', { token: admin, body: { kind: 'autre', title: 'T', body: 'B', action: 'popup', text: 'Détails', sendAt: '2020-01-01T10:00:00Z' } })).status, 400);
+  // Sent now, targeted at the dealership of the demo customers: opening it in the app gives what to show, counted once.
+  const sent = await call('POST', '/api/admin/notifs', { token: admin, body: { kind: 'portes', title: 'Portes ouvertes samedi', body: 'Café offert', action: 'popup', text: 'Samedi de 9 h à 18 h <b>gras</b>' } });
+  assert.equal(sent.status, 200);
+  assert.equal(sent.data.target.optinOnly, true);
+  await new Promise((r) => setTimeout(r, 300));
+  const list = (await call('GET', '/api/admin/notifs', { token: admin })).data.campaigns;
+  const mine = list.find((c) => c.id === sent.data.id);
+  assert.equal(mine.status, 'sent');
+  assert.ok(mine.targeted >= 1);
+  const opened = await call('GET', `/api/me/notifs/${mine.id}`, { token: b.token });
+  assert.equal(opened.data.action, 'popup');
+  assert.equal(opened.data.text, 'Samedi de 9 h à 18 h <b>gras</b>'); // shown escaped by the app
+  await call('GET', `/api/me/notifs/${mine.id}`, { token: b.token });
+  assert.equal((await call('GET', '/api/admin/notifs', { token: admin })).data.campaigns.find((c) => c.id === mine.id).opened, 1);
+  // Programmed for later, then cancelled: never sent, and the app cannot open it.
+  const later = await call('POST', '/api/admin/notifs', { token: admin, body: { kind: 'entretien', title: 'Pensez à l’entretien', body: 'Votre carnet', action: 'screen', screen: 'carnet', sendAt: new Date(Date.now() + 86400000).toISOString() } });
+  assert.equal(later.data.status, 'scheduled');
+  assert.equal((await call('GET', `/api/me/notifs/${later.data.id}`, { token: a.token })).status, 404);
+  assert.equal((await call('DELETE', `/api/admin/notifs/${later.data.id}`, { token: admin })).status, 200);
+  assert.ok(!(await call('GET', '/api/admin/notifs', { token: admin })).data.campaigns.some((c) => c.id === later.data.id));
+});

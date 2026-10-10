@@ -25,6 +25,7 @@ const MENUS = [
   ['reports', 'Demandes clients', 'Les demandes à traiter : rendez-vous atelier, pièces, accessoires. Répondre, changer l’état, transférer au SAV ou au magasin. ⏰ = sans réponse depuis plus de 48 h.', ['admin', 'manager', 'dealer', 'sav', 'store']],
   ['customers', 'Clients', 'La fiche de chaque client : véhicule, garantie (modifiable), carnet d’entretien, accord pour les offres, code d’accès à renvoyer, commercial.', ['admin', 'manager', 'dealer', 'sales', 'sav', 'store']],
   ['banners', 'À la une', 'Le bandeau en haut de l’accueil de l’appli, ciblé : concessions, type de véhicule, ancienneté, garantie, équipements, dates. Ex. : portes ouvertes, opération clim.', ['admin', 'editor', 'manager', 'dealer']],
+  ['notifs', 'Notifications', 'Envoyer une notification sur le téléphone des clients choisis (portes ouvertes, atelier, offre, entretien, hivernage…), tout de suite ou à une date ; voir combien l’ont reçue et ouverte.', ['admin']],
   ['tips', 'Conseils & Astuces', 'Les fiches astuces de l’appli, et celles envoyées par les clients à relire (pastille rouge) : Publier, Corriger ou Refuser.', ['admin', 'editor']],
   ['vehicles', 'Véhicules', 'Les modèles, leur photo, leur plan et leurs équipements (relevé sur téléphone).', ['admin', 'editor']],
   ['diagnostics', 'Diagnostics (pannes)', 'Les parcours « J’ai un souci » : questions, causes, gestes, et le produit conseillé par le magasin.', ['admin', 'editor']],

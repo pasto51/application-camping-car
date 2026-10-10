@@ -11,6 +11,7 @@ import { registerBannersView } from '/admin/banners.js';
 import { registerContentView } from '/admin/content.js';
 import { guideHtml } from '/admin/guide.js';
 import { registerHelp } from '/admin/help.js';
+import { registerNotifsView } from '/admin/notifs.js';
 
 const TOKEN_KEY = 'cc-admin-token';
 const SEVERITY = { info: 'Info', attention: 'Attention', urgent: 'Urgent' };
@@ -109,6 +110,7 @@ function sections() {
     ['diagnostics', '🛠️', 'Diagnostics (pannes)', canEditContent()],
     ['equipment', '🧰', 'Équipements', canEditContent()],
     ['banners', '📣', 'À la une', canEditContent() || ['manager', 'dealer'].includes(state.user?.role)],
+    ['notifs', '🔔', 'Notifications', isAdmin()],
     ['tips', '💡', 'Conseils & Astuces', canEditContent()],
     ['content', '📋', 'Contenus de l’appli', canEditContent()],
     ['brands', '🏷️', 'Marques', canEditContent()],
@@ -964,6 +966,7 @@ registerTipsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete, refres
 const HELP = registerHelp(VIEWS, { api, openForm, pageHeader, confirmDelete, state, isAdmin, sectionLabel: (id) => (sections().find((x) => x[0] === id) || [])[2] || id });
 registerBannersView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerContentView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
+registerNotifsView(VIEWS, { api, openForm, pageHeader, bind, confirmDelete });
 registerAnalyticsView(VIEWS, { api, pageHeader, state, canSeeAll: () => isAdmin() || isAnalyst() });
 
 // Registers a customer from the back-office (instead of the handover in the app) and hands over their access.

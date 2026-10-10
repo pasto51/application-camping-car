@@ -525,17 +525,23 @@ def main():
   }
   function featPopup(f){
     var m = document.createElement("div"); m.className = "featpop";
-    m.innerHTML = '<div class="card" role="dialog" aria-modal="true" aria-label="'+esc(f.title)+'"><p class="eyebrow">'+esc(f.icon||"📣")+' À la une</p><h2>'+esc(f.title)+'</h2><p>'+esc(f.text||"").replace(/\n/g,'<br>')+'</p><button class="btn" type="button" data-featclose="1">Fermer</button></div>';
+    m.innerHTML = '<div class="card" role="dialog" aria-modal="true" aria-label="'+esc(f.title)+'"><p class="eyebrow">'+esc(f.icon||"📣")+' '+esc(f.eyebrow||"À la une")+'</p><h2>'+esc(f.title)+'</h2><p>'+esc(f.text||"").replace(/\n/g,'<br>')+'</p><button class="btn" type="button" data-featclose="1">Fermer</button></div>';
     m.addEventListener("click",function(e){if(e.target === m || e.target.closest("[data-featclose]")) m.remove()});
     document.body.appendChild(m);
   }
-  document.addEventListener("click",function(e){
-    if(!e.target.closest("#featbtn")) return;
-    var f = DATA.featured; if(!f) return;
+  // What a banner (or a notification touched on the phone) opens: a tip, a screen of the app, a web page or a message.
+  function openAction(f){
+    if(!f) return;
     if(f.action==="tip") openTip(f.tipId);
     else if(f.action==="screen"){ if(f.screen==="tips") go("game"); else if(f.screen==="carnet"){ if(window.CDB_CLOUD && window.CDB_CLOUD.openCarnet) window.CDB_CLOUD.openCarnet() } else if(titles[f.screen]) go(f.screen) }
     else if(f.action==="link" && f.url) window.open(f.url, "_blank", "noopener");
+    else if(f.action==="home") go("home");
     else featPopup(f);
+  }
+  window.CDB_OPEN_ACTION = openAction;
+  document.addEventListener("click",function(e){
+    if(!e.target.closest("#featbtn")) return;
+    openAction(DATA.featured);
   });
   renderFeatured();
   // The banner for this customer today, asked again at each start (dates, time since the handover).

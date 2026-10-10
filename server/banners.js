@@ -216,4 +216,4 @@ function migrateFeatured(db) {
   db.prepare("DELETE FROM settings WHERE key = 'featured'").run();
 }
 
-module.exports = { SCREENS, ICONS, AGES, WARRANTIES, allBanners, bannerOut, bannerFor, audience, cleanBanner, insertBanner, updateBanner, migrateFeatured, liveOn };
+module.exports = { SCREENS, ICONS, AGES, WARRANTIES, allBanners, bannerOut, bannerFor, audience, cleanBanner, insertBanner, updateBanner, migrateFeatured, liveOn, matches, customerContext };

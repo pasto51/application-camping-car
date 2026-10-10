@@ -15,6 +15,7 @@ const { backupNow, fullBackupNow, listBackups, listFullBackups, backupFile, KEEP
 const { entretienOf, settingsOf, cleanSettings } = require('../entretien');
 const { cleanLists } = require('../lists');
 const { saveBug, bugOut, cleanVideoUrl, helpVideos } = require('../bugs');
+const CAMPAIGNS = require('../campaigns');
 const { CATEGORIES, CATEGORY_IDS, videoEmbed, tipOut } = require('../tips');
 const { SCREENS, ICONS, AGES, WARRANTIES, allBanners, audience, cleanBanner, insertBanner, updateBanner, liveOn } = require('../banners');
 const { TYPES: VEHICLE_TYPES } = require('../vehicle-types');
@@ -583,6 +584,63 @@ function register(router) {
 
   // The e-mail server settings are for the administrator; the others see the announcement, and only whether the
   // e-mails are set up (for the warning of « Demandes clients »).
+  // « Notifications »: messages pushed to the customers' phones (administrator only for now).
+  router.get('/api/admin/notifs', (ctx) => {
+    adminOnly(ctx);
+    const { db } = ctx;
+    return {
+      kinds: CAMPAIGNS.KINDS,
+      campaigns: db.prepare("SELECT * FROM notif_campaigns WHERE status != 'cancelled' ORDER BY COALESCE(sent_at, send_at, created_at) DESC, id DESC LIMIT 200").all().map((r) => CAMPAIGNS.campaignOut(db, r)),
+      subscribers: CAMPAIGNS.subscribers(db),
+      customers: db.prepare('SELECT COUNT(*) AS n FROM customers').get().n,
+      dealerships: camelAll(db.prepare('SELECT id, name FROM dealerships ORDER BY name').all()),
+      tips: db.prepare("SELECT id, title FROM tips WHERE status = 'published' ORDER BY sort DESC, id DESC").all(),
+      equipment: db.prepare('SELECT id, data FROM equipment ORDER BY sort, id').all().map((r) => [r.id, JSON.parse(r.data).name]).sort((a, b) => a[1].localeCompare(b[1], 'fr')),
+      vehicleTypes: VEHICLE_TYPES.map((t) => [t.id, t.name]),
+      ages: CAMPAIGNS.AGES.map((a) => [a[0], a[1]]),
+      warranties: CAMPAIGNS.WARRANTIES,
+      screens: CAMPAIGNS.SCREENS,
+    };
+  });
+  const campaignFrom = (ctx) => {
+    try {
+      return CAMPAIGNS.cleanCampaign(ctx.db, ctx.body);
+    } catch (err) {
+      throw new HttpError(400, err.message);
+    }
+  };
+  // How many customers it reaches, and how many of them allowed notifications on their phone.
+  router.post('/api/admin/notifs/audience', (ctx) => {
+    adminOnly(ctx);
+    const c = campaignFrom({ ...ctx, body: { ...ctx.body, title: 'x', body: 'x', action: 'home', sendAt: null } });
+    const { targeted, reachable } = CAMPAIGNS.audienceOf(ctx.db, JSON.parse(c.target));
+    return { targeted, reachable };
+  });
+  router.post('/api/admin/notifs', async (ctx) => {
+    const user = adminOnly(ctx);
+    const c = campaignFrom(ctx);
+    const r = ctx.db
+      .prepare('INSERT INTO notif_campaigns (kind, title, body, icon, action, payload, target, status, send_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, \'scheduled\', ?, ?)')
+      .run(c.kind, c.title, c.body, c.icon, c.action, c.payload, c.target, c.sendAt, user.id);
+    const id = Number(r.lastInsertRowid);
+    const { targeted, reachable } = CAMPAIGNS.audienceOf(ctx.db, JSON.parse(c.target));
+    ctx.db.prepare('UPDATE notif_campaigns SET targeted = ?, reachable = ? WHERE id = ?').run(targeted, reachable, id);
+    // Now: sent in the background (the answer does not wait for every phone).
+    if (!c.sendAt) CAMPAIGNS.sendCampaign({ db: ctx.db, notify: ctx.notify }, id).catch(() => {});
+    return CAMPAIGNS.campaignOut(ctx.db, ctx.db.prepare('SELECT * FROM notif_campaigns WHERE id = ?').get(id));
+  });
+  // A programmed one is cancelled; a sent one is only removed from the list.
+  router.delete('/api/admin/notifs/:id', (ctx) => {
+    adminOnly(ctx);
+    const id = Number(ctx.params.id);
+    const r = ctx.db.prepare('SELECT status FROM notif_campaigns WHERE id = ?').get(id);
+    if (!r) throw new HttpError(404, 'Notification introuvable');
+    if (r.status === 'sending') throw new HttpError(409, 'Envoi en cours : réessayez dans un instant');
+    if (r.status === 'scheduled') ctx.db.prepare("UPDATE notif_campaigns SET status = 'cancelled' WHERE id = ?").run(id);
+    else ctx.db.prepare('DELETE FROM notif_campaigns WHERE id = ?').run(id);
+    return { ok: true };
+  });
+
   // « Signaler un bug » from the back-office (every role); the list is for the administrator.
   const bugLimiter = createRateLimiter({ windowMs: 24 * 60 * 60 * 1000, max: 30 });
   router.post('/api/admin/bugs', (ctx) => {

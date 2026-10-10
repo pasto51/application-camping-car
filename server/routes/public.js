@@ -2,6 +2,7 @@
 
 const { HttpError, PreparedJson } = require('../http');
 const { saveBug, helpVideos } = require('../bugs');
+const { openCampaign } = require('../campaigns');
 const { transaction, getSetting, stripVin, bumpContentVersion } = require('../db');
 const { sha256, randomToken, randomCode, normalizeCode, createRateLimiter, sealText, openText } = require('../auth');
 const { appData, readProfile } = require('../catalog');
@@ -250,6 +251,14 @@ function register(router) {
       appDataCache.set(key, prepared);
     }
     return prepared;
+  });
+
+  // A notification touched on the phone: what to open in the app (the open is counted once).
+  router.get('/api/me/notifs/:id', (ctx) => {
+    const customer = requireCustomer(ctx);
+    const n = openCampaign(ctx.db, Number(ctx.params.id), customer.id);
+    if (!n) throw new HttpError(404, 'Message introuvable');
+    return n;
   });
 
   // « Signaler un bug » from the app: kept for the administrator, who is told by e-mail. A few a day per customer.

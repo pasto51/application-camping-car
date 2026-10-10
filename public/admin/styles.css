@@ -302,3 +302,13 @@ tr.muted td { opacity: .6; }
 .help-video { position: relative; aspect-ratio: 16 / 9; background: #000; }
 .help-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .bug-row .card-head { align-items: flex-start; }
+
+/* « Notifications »: what the phone shows, and the choice of the theme */
+.notif-preview { display: flex; flex-direction: column; gap: .15rem; background: #1f2a30; color: #fff; border-radius: 14px; padding: .7rem .9rem; min-width: 240px; max-width: 320px; font-size: .9rem; }
+.notif-preview .notif-app { font-size: .72rem; opacity: .75; }
+.notif-preview span:last-child { opacity: .9; }
+.kind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .6rem; padding: 1rem; }
+.kind-btn { display: flex; flex-direction: column; align-items: flex-start; gap: .2rem; text-align: left; padding: .8rem; border: 1px solid var(--line, #ddd); border-radius: 12px; background: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.kind-btn span { font-size: 1.5rem; }
+.kind-btn small { font-weight: 400; color: #6b6b6b; font-size: .75rem; }
+.kind-btn:hover { border-color: #0a7c82; }
