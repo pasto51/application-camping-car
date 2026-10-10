@@ -153,7 +153,6 @@ _Remplace « frigo » et « comp », qui faisaient doublon._
 - **Détendeur** — toujours là : Détendeur simple sur la bouteille · Truma Duocontrol · Truma Duocontrol CS · Truma Monocontrol CS · Autre inverseur automatique — 📅 rappel 10 ans après la date marquée (Date de fabrication marquée sur le détendeur)
 - 🆕 **Bouteilles** — un modèle parmi : Butane · Propane
 - **Inverseur automatique de bouteilles** — option
-- **Prise de gaz extérieure** — option
 
 ### Coffre GPL (réservoir fixe ou bouteilles rechargeables) 🔁
 _Pas de date de validité à suivre._

@@ -91,7 +91,7 @@ const GROUPS = [
       N('lyre', 'Lyre (tuyau entre bouteille et détendeur)', 'always', { dated: { kind: 'until', label: 'Date limite marquée sur la lyre' } }),
       E('bouteille', 'always', { name: 'Détendeur', choices: ['Détendeur simple sur la bouteille', 'Truma Duocontrol', 'Truma Duocontrol CS', 'Truma Monocontrol CS', 'Autre inverseur automatique'], dated: { kind: 'made', years: 10, label: 'Date de fabrication marquée sur le détendeur' } }),
       N('bouteilles_type', 'Bouteilles', 'choice', { choices: ['Butane', 'Propane'] }),
-      E('duo', 'option'), E('gazext', 'option'),
+      E('duo', 'option'),
     ],
   },
   {
