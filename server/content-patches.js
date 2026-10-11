@@ -22,6 +22,7 @@ const { addSearchWords } = require('./search-words');
 const { applyAudit } = require('./diagnostics-audit');
 const { applyBooster } = require('./booster-lithium');
 const { applyDixPannes } = require('./diagnostics-pannes');
+const { applyBlogNuls } = require('./diagnostics-blog');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -772,6 +773,14 @@ const PATCHES = [
     // alarm, reset of the electrics and of the bed, TV update to accept, diesel in the water tank.
     key: '2026-11-07-dix-pannes',
     run: (db) => applyDixPannes(db),
+  },
+  {
+    // « Le camping-car pour les nuls » (blog read from end to end): air in the gas pipe, battery terminals, fridge relay,
+    // alarm fuse, water in a light, yellowed polyester, door stop, vent opening while driving, deformed dome, overflow,
+    // grey tank half emptied, noisy Truma D, camera hidden by the bike rack, bed light, blind, drawer runners; rust,
+    // furniture, speed bumps and whistling.
+    key: '2026-11-08-blog-nuls',
+    run: (db) => applyBlogNuls(db),
   },
 ];
 
