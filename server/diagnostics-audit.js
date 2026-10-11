@@ -336,7 +336,8 @@ function applyOp(tree, op) {
   return { tree: visit(tree), hits };
 }
 
-function applyAudit(db) {
+// Applies a set of changes (ops on paths, causes of « list » diagnostics, new diagnostics); also used by later batches.
+function applyChanges(db, { ops = [], elim = {}, news = [] }) {
   let changed = 0;
   const missed = [];
   const load = (id) => {
@@ -344,7 +345,7 @@ function applyAudit(db) {
     return r ? JSON.parse(r.data) : null;
   };
   const save = (d) => db.prepare("UPDATE diagnostics SET data = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(d), d.id);
-  for (const op of OPS) {
+  for (const op of ops) {
     const d = load(op.id);
     if (!d) { missed.push(`${op.id} (absent)`); continue; }
     if (op.op === 'text') {
@@ -369,7 +370,7 @@ function applyAudit(db) {
     }
     changed++;
   }
-  for (const [id, causes] of Object.entries(ELIM)) {
+  for (const [id, causes] of Object.entries(elim)) {
     const d = load(id);
     if (!d || !d.elim) continue;
     for (const c of d.elim.causes || []) {
@@ -384,13 +385,19 @@ function applyAudit(db) {
     save(d);
   }
   let sort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS n FROM diagnostics').get().n;
-  for (const d of NEW) {
+  for (const d of news) {
     if (load(d.id)) continue;
     db.prepare('INSERT INTO diagnostics (id, sort, data) VALUES (?, ?, ?)').run(d.id, ++sort, JSON.stringify(d));
     changed++;
   }
-  applyAudit.missed = missed;
+  applyChanges.missed = missed;
   return changed;
 }
 
-module.exports = { applyAudit, OPS, ELIM, NEW };
+function applyAudit(db) {
+  const n = applyChanges(db, { ops: OPS, elim: ELIM, news: NEW });
+  applyAudit.missed = applyChanges.missed;
+  return n;
+}
+
+module.exports = { applyAudit, applyChanges, OPS, ELIM, NEW };

@@ -21,6 +21,7 @@ const { CARD_DATE } = require('./equipment-groups');
 const { addSearchWords } = require('./search-words');
 const { applyAudit } = require('./diagnostics-audit');
 const { applyBooster } = require('./booster-lithium');
+const { applyDixPannes } = require('./diagnostics-pannes');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -765,6 +766,12 @@ const PATCHES = [
     // « booster », and its own diagnostic when it no longer charges.
     key: '2026-11-06-booster-lithium',
     run: (db) => applyBooster(db),
+  },
+  {
+    // « Les 10 pannes les plus courantes » (Esprit Camping-Car / Star Mobil Services): fuel cut-off after a shock, step
+    // alarm, reset of the electrics and of the bed, TV update to accept, diesel in the water tank.
+    key: '2026-11-07-dix-pannes',
+    run: (db) => applyDixPannes(db),
   },
 ];
 
