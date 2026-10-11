@@ -11,5 +11,6 @@
  ["Rimor", "Kilig 55 Plus", "pr_trans"], ["Rimor", "Kilig 56 Plus", "cp_cuisine_ar"], ["Rimor", "Kilig 66 Plus", "pr_central"], ["Rimor", "Kilig 67 Plus", "cp_sdb_ar"], ["Rimor", "Kilig 69 Plus", "pr_central"],
  ["Rimor", "Kilig 73 Plus", "pr_superp"], ["Rimor", "Kilig 77 Plus", "cp_salon_ar"], ["Rimor", "Kilig 78 Plus", "pr_trans"], ["Rimor", "Kilig 79 Plus", "pr_superp"], ["Rimor", "Kilig 95 Plus", "pr_jumeaux"],
  ["Rimor", "Kilig 99 Plus", "pr_jumeaux"], ["Rimor", "Sarus 50", "ca_superp_long"], ["Rimor", "Sarus 695", "ca_jumeaux"], ["Rimor", "Sarus 66 Plus", "pr_central"], ["Rimor", "Sarus 69 Plus", "pr_central"],
- ["Rimor", "Sarus 95 Plus", "pr_jumeaux"], ["Rimor", "Sarus 96 Plus", "pr_jumeaux"]
+ ["Rimor", "Sarus 95 Plus", "pr_jumeaux"], ["Rimor", "Sarus 96 Plus", "pr_jumeaux"],
+ ["Font Vendôme", "Mondea", "fg_sdb_pav"]
 ]

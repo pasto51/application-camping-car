@@ -23,6 +23,7 @@ const { applyAudit } = require('./diagnostics-audit');
 const { applyBooster } = require('./booster-lithium');
 const { applyDixPannes } = require('./diagnostics-pannes');
 const { applyBlogNuls } = require('./diagnostics-blog');
+const { addMondea } = require('./vehicle-mondea');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -781,6 +782,11 @@ const PATCHES = [
     // furniture, speed bumps and whistling.
     key: '2026-11-08-blog-nuls',
     run: (db) => applyBlogNuls(db),
+  },
+  {
+    // Font Vendôme Mondea (catalogue 2019): the brand and the vehicle, with its own plan (salle d'eau arrière, lit de pavillon).
+    key: '2026-11-09-font-vendome-mondea',
+    run: (db) => addMondea(db),
   },
 ];
 

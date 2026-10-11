@@ -47,7 +47,8 @@ async function handover(customer = { firstName: 'Marie', lastName: 'Durand', vin
 
 test('the Compagnon de bord catalogue and the Challenger V114 are loaded', async () => {
   const { data } = await call('GET', '/api/catalog');
-  assert.deepEqual(data.brands.map((b) => b.name), ['Challenger', 'Randger']);
+  assert.deepEqual(data.brands.map((b) => b.name), ['Challenger', 'Randger', 'Font Vendôme']);
+
   const v114 = data.vehicles.find((v) => v.name === 'V114');
   assert.ok(v114 && v114.photoUrl, 'V114 with its photo');
   const admin = await login('admin@test.fr', 'motdepasse123');
@@ -330,6 +331,14 @@ test('a catalogue model name finds its layout', async () => {
   assert.equal((await find('Kilig 669', 'profile')).results[0].id, 'ca_central', 'the model wins over a wrong type');
   assert.equal((await find('Randger R635')).model.model, 'R635');
   assert.equal((await find('lit 140')).model, null);
+  // Font Vendôme Mondea: created with its own plan, nothing ticked (the owner ticks the equipment on the vehicle).
+  assert.equal((await find('Font Vendôme Mondea')).results[0].id, 'fg_sdb_pav');
+  const mondea = (await call('GET', '/api/admin/vehicles', { token: admin })).data.find((v) => v.name === 'Mondea');
+  const profile = (await call('GET', `/api/admin/vehicles/${mondea.id}/profile`, { token: admin })).data;
+  assert.equal(profile.layout, 'fg_sdb_pav');
+  assert.equal(profile.type, 'fourgon');
+  assert.deepEqual(profile.equipment, []);
+  assert.equal(profile.plan.planUrl, '/app/plans/fg_sdb_pav.svg');
 });
 
 test('brand and model noted for the vehicle are pre-filled in the app', async () => {

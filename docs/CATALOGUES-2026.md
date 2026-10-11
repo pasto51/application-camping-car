@@ -79,3 +79,7 @@ Sources : catalogues Challenger 2027, Randger 2026 et Rimor 2026-27 fournis par 
 - Randger : puissance des panneaux solaires non indiquée ; R550 (5,48 m) classé Van, R560 (5,98 m) classé Fourgon.
 - Rimor : le chauffage « Combi C4 » est supposé être un Truma Combi 4 ; le Kilig 67 Plus (grand rangement arrière, sans lit fixe) est rapproché du plan « salle d’eau et penderie arrière ».
 - Les profilés slim Challenger (S217, S194, S294) ont un lit fixe : ils sont classés Profilé, pas Profilé compact.
+
+## Autres marques
+
+- **Font Vendôme Mondea** (catalogue gamme 2019) : marque et véhicule créés automatiquement (`server/vehicle-mondea.js`), fourgon de 5,99 m sur Fiat Ducato, plan « Salle d’eau arrière et lit de pavillon » (`fg_sdb_pav`, dessiné dans notre style). Aucun équipement coché : ils se cochent au relevé. Les modèles des appareils (Truma Combi D 4, Thetford C 223, frigo à compression 150 L, lit de pavillon électrique) s’affichent une fois l’équipement coché.

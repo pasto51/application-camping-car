@@ -860,6 +860,109 @@
     }
    ]
   },
+  "fg_sdb_pav": {
+   "type": "fourgon",
+   "name": "Salle d’eau arrière et lit de pavillon",
+   "desc": "Pas de lit fixe à l’arrière : salle d’eau toute largeur au fond (douche séparée), cuisine au milieu, banquette et sièges pivotants sous un lit de pavillon électrique (fourgon 5,99 m).",
+   "features": [
+    "pavillon",
+    "sdb_ar",
+    "sdb",
+    "douche_sep",
+    "cuisine",
+    "dinette",
+    "penderie"
+   ],
+   "spotDefaults": {
+    "penderie": "pend"
+   },
+   "spots": [
+    {
+     "id": "cab",
+     "x": 712,
+     "y": 180,
+     "name": "Cabine",
+     "n": 1
+    },
+    {
+     "id": "pav",
+     "x": 590,
+     "y": 206,
+     "name": "Lit de pavillon",
+     "n": 2
+    },
+    {
+     "id": "din",
+     "x": 598,
+     "y": 116,
+     "name": "Salon, banquette et table",
+     "n": 3
+    },
+    {
+     "id": "cui",
+     "x": 300,
+     "y": 82,
+     "name": "Cuisine",
+     "n": 4
+    },
+    {
+     "id": "sdb",
+     "x": 146,
+     "y": 116,
+     "name": "Salle d'eau arrière (douche séparée)",
+     "n": 5
+    },
+    {
+     "id": "toit",
+     "x": 340,
+     "y": 196,
+     "name": "Toit et aération",
+     "n": 6
+    },
+    {
+     "id": "ent",
+     "x": 504,
+     "y": 288,
+     "name": "Entrée",
+     "n": 7
+    },
+    {
+     "id": "pend",
+     "x": 292,
+     "y": 277,
+     "name": "Penderie et placards",
+     "n": 8
+    },
+    {
+     "id": "tech",
+     "x": 519,
+     "y": 150,
+     "name": "Sous la banquette (technique)",
+     "n": 9
+    },
+    {
+     "id": "ext",
+     "x": 593,
+     "y": 340,
+     "name": "Extérieur, côté porte",
+     "n": 10
+    },
+    {
+     "id": "extb",
+     "x": 495,
+     "y": 20,
+     "name": "Extérieur, côté opposé",
+     "n": 11
+    },
+    {
+     "id": "arr",
+     "x": 36,
+     "y": 180,
+     "name": "Arrière du véhicule (extérieur)",
+     "n": 12
+    }
+   ]
+  },
   "cp_salon_ar": {
    "type": "compact",
    "name": "Salon arrière et lit de pavillon",
