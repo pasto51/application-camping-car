@@ -335,7 +335,7 @@ window.startCompagnon = function(DATA){
       {n:"Passagers en plus du conducteur ("+wv("pax")+" × 75 kg)",kg:wv("pax")*75},
       {n:"Eau en plus des 20 L d'origine ("+wv("eau")+" L)",kg:wv("eau")},
       {n:"Gaz en plus de la dotation d'origine",kg:wv("gaz")},
-      (waff().length ? {n:"Ce que j'emporte ("+waff().filter(function(a){return a.on}).length+" coché"+(waff().filter(function(a){return a.on}).length>1?"s":"")+")",kg:waff().reduce(function(t,a){return t+(a.on?a.kg:0)},0)} : {n:"Bagages, vélos, matériel",kg:wv("bag")})
+      (function(){var on = waff().filter(function(a){return a.on}); return {n:"Ce que j'emporte ("+(on.length ? on.length+" coché"+(on.length>1?"s":"") : "rien de coché")+")",kg:on.reduce(function(t,a){return t+a.kg},0)}})()
     ];
     var total = lines.reduce(function(a,l){return a+l.kg},0), ptac = wv("ptac"), rest = ptac - total;
     var st = rest < 0 ? "bad" : (rest < 100 ? "warn" : "ok");
@@ -370,7 +370,7 @@ window.startCompagnon = function(DATA){
       fld("w_pax","Passagers en plus du conducteur",wv("pax"),"pers.","75 kg par personne. Chaque passager réduit la charge utile, même si le véhicule a 4 places homologuées.") +
       fld("w_eau","Eau propre en plus des 20 L d'origine",wv("eau"),"L","La plupart des véhicules sont homologués avec 20 L seulement. 1 litre = 1 kg. Réservoir plein de 50 L : mettez 30.") +
       fld("w_gaz","Gaz en plus de la dotation d'origine",wv("gaz"),"kg","Bouteilles supplémentaires ou plus grosses que celles prévues d'origine (gaz plus bouteille vide). Sinon laissez 0.") +
-      (waff().length ? '' : fld("w_bag","Bagages, vélos, matériel",wv("bag"),"kg","Estimation globale. Pour être plus précis, détaillez ci-dessous ce que vous emportez.")) + '</div>' +
+      '</div>' +
       '<h3 class="sech">Ce que j\'emporte</h3><div class="card" id="waff"></div>' +
       '<h3 class="sech">Équipements ajoutés</h3>';
     if(c.opts.length){
@@ -435,7 +435,7 @@ window.startCompagnon = function(DATA){
     var n = parseFloat(e.target.value); if(isNaN(n)) n = 0;
     n = Math.max(0,Math.min(9999,Math.round(n)));
     if(id==="w_drv"){wt.drv = e.target.checked; wtSave(); renderWeightSummary(); return}
-    var map = {w_ptac:"ptac",w_mom:"mom",w_pax:"pax",w_eau:"eau",w_gaz:"gaz",w_bag:"bag"};
+    var map = {w_ptac:"ptac",w_mom:"mom",w_pax:"pax",w_eau:"eau",w_gaz:"gaz"};
     if(map[id]) wt[map[id]] = n;
     else if(id.indexOf("wo_")===0) wt.opt[id.slice(3)] = Math.round(parseFloat(e.target.value)||0);
     else return;

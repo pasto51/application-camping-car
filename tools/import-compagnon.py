@@ -316,7 +316,7 @@ def main():
   function waff(){return Array.isArray(wt.aff) ? wt.aff : []}
   // Set in the back-office (« Contenus de l'appli » → « Ce que j'emporte »).
   var AFF_IDEAS = (DATA.carry || []).map(function(x){return [x.n, x.kg]});''')
-    s = replace_once(s, '{n:"Bagages, vélos, matériel",kg:wv("bag")}', r'''(waff().length ? {n:"Ce que j'emporte ("+waff().filter(function(a){return a.on}).length+" coché"+(waff().filter(function(a){return a.on}).length>1?"s":"")+")",kg:waff().reduce(function(t,a){return t+(a.on?a.kg:0)},0)} : {n:"Bagages, vélos, matériel",kg:wv("bag")})''')
+    s = replace_once(s, '{n:"Bagages, vélos, matériel",kg:wv("bag")}', r'''(function(){var on = waff().filter(function(a){return a.on}); return {n:"Ce que j'emporte ("+(on.length ? on.length+" coché"+(on.length>1?"s":"") : "rien de coché")+")",kg:on.reduce(function(t,a){return t+a.kg},0)}})()''')
     s = replace_once(s, r'''    el.innerHTML = '<span class="lc-top"><span class="k2">Charge restante</span><span class="lc-v '+c.st+'">'+(c.rest<0?"−":"")+kg(Math.abs(c.rest))+'</span></span><span class="gauge" aria-hidden="true"><i class="'+c.st+'" style="width:'+c.pct.toFixed(0)+'%"></i></span><span class="lc-sub">Estimé '+kg(c.total)+' sur '+kg(c.ptac)+' autorisés. Modifier ›</span>';''',
     r'''    el.className = "loadcard is-"+c.st;
     el.innerHTML = '<span class="lc-top"><span class="lc-h">⚖️ Poids du véhicule</span><span class="lc-badge is-'+c.st+'">'+(c.st==="bad"?"Trop lourd":(c.st==="warn"?"Peu de marge":"Dans la limite"))+'</span></span>' +
@@ -324,7 +324,7 @@ def main():
       '<span class="gauge" aria-hidden="true"><i class="'+c.st+'" style="width:'+c.pct.toFixed(0)+'%"></i></span>' +
       '<span class="lc-sub">Estimé '+kg(c.total)+' sur '+kg(c.ptac)+' autorisés.</span><span class="lc-more">Avant de partir : cochez ce que vous emportez ›</span>';''')
     s = replace_once(s, r'''      fld("w_bag","Bagages, vélos, matériel",wv("bag"),"kg","Pesez ou estimez : ça monte vite.") + '</div>' +''',
-    r'''      (waff().length ? '' : fld("w_bag","Bagages, vélos, matériel",wv("bag"),"kg","Estimation globale. Pour être plus précis, détaillez ci-dessous ce que vous emportez.")) + '</div>' +
+    r'''      '</div>' +
       '<h3 class="sech">Ce que j\'emporte</h3><div class="card" id="waff"></div>' +''')
     s = replace_once(s, "Estimation seulement. Seule une pesée fait foi. Dépasser le PTAC est interdit.", "Estimation à partir de ce que vous avez noté. Dépasser le PTAC est interdit.")
     s = replace_once(s, "Pesée : un pèse-caravane électronique (une mesure par essieu, moins de 150 € environ) ou un pont-bascule.<br><br>", "")
@@ -789,6 +789,9 @@ def main():
     s = replace_once(s, '  $("#diagbody").addEventListener("input",function(e){', """  $("#diagbody").addEventListener("change",function(e){if(e.target.id==="dgok"){var g = $("#dggo"); if(g) g.disabled = !e.target.checked}});
   $("#diagbody").addEventListener("click",function(e){if(e.target.id!=="dggo" || !$("#dgok") || !$("#dgok").checked) return; lsSet("cdb_diag_ok","1"); var C = window.CDB_CLOUD; if(C && C.diagConsent) C.diagConsent(); renderDiagList(); window.scrollTo(0,0)});
   $("#diagbody").addEventListener("input",function(e){""")
+
+    # No flat « luggage » weight any more: only what the customer ticks in « Ce que j'emporte » counts.
+    s = replace_once(s, 'w_gaz:"gaz",w_bag:"bag"};', 'w_gaz:"gaz"};')
 
     # ---- Page shell ----
     # The original file is a fragment (no doctype, no viewport): give it a full mobile page.

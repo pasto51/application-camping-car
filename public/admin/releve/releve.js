@@ -595,7 +595,6 @@ const WEIGHTS = [
   ['pax', 'Nombre de passagers habituel', 'Valeur de départ du calcul de charge.', 2],
   ['eau', 'Eau propre au départ (L)', 'Litres d’eau propre que le client emporte en général.', 30],
   ['gaz', 'Gaz au départ (kg)', 'Laissez 0 si la masse en ordre de marche inclut déjà le gaz.', 0],
-  ['bag', 'Bagages (kg)', 'Valeur de départ du calcul de charge.', 100],
 ];
 
 // Accepts "2,90", "2.9" or "290" (cm) and returns metres.
