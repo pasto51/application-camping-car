@@ -79,6 +79,9 @@ function leavesOf(d) {
 
       // The customer describes the problem in their own words
       await page.click('.nav [data-go="diag"]');
+      // The warning ticked once before the first diagnostic (« ces diagnostics sont une aide… »).
+      await page.waitForSelector('#dsearch, #dgok');
+      if (await page.$('#dgok')) { await page.check('#dgok'); await page.click('#dggo'); }
       await page.waitForSelector('#dsearch');
       const words = sc.path && sc.path.length && /constatez|précisez/i.test(sc.path[0].t) ? sc.path[0].o[sc.path[0].a] : d.label.replace(/\(.*?\)/g, '');
       r.query = words;
