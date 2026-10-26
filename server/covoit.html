@@ -5,96 +5,192 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#f6f1ea">
+<meta name="theme-color" content="#fbf4ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nos sujets">
 <title>On parle de quoi ?</title>
 <style>
-  :root { --bg:#f6f1ea; --card:#fff; --ink:#2b2622; --soft:#7a7068; --line:#e7dfd5; --me:#e86a3a; --them:#3a7be8; --ok:#2f9e6b; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#1c1917; --card:#292522; --ink:#f3eee8; --soft:#a89f96; --line:#3a3430; } }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width:560px; margin:0 auto; padding:16px 16px 60px; }
-  h1 { font-size:26px; margin:8px 0 2px; }
-  .sub { color:var(--soft); margin:0 0 16px; font-size:14px; }
-  .sub button { font-size:14px; padding:0; border:0; background:none; color:var(--soft); text-decoration:underline; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin:0 0 14px; }
-  .card h2 { font-size:18px; margin:0 0 10px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
-  h3 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); margin:14px 0 6px; }
-  button { font:inherit; cursor:pointer; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:8px 12px; }
-  .primary { background:var(--me); border-color:var(--me); color:#fff; font-weight:600; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .kinds button[aria-pressed=true] { background:var(--ink); color:var(--bg); border-color:var(--ink); }
-  input[type=text], input[type=date], textarea { font:inherit; width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); }
-  input[type=date] { width:auto; }
-  .inputs { display:grid; gap:6px; }
-  .inputs .picked { border-color:var(--them); box-shadow:0 0 0 2px color-mix(in srgb, var(--them) 30%, transparent); }
-  .choice { display:block; width:100%; text-align:left; margin:0 0 6px; padding:10px 12px; }
-  .choice.on { background:var(--them); border-color:var(--them); color:#fff; font-weight:600; }
-  .choice.on::before { content:"✓ "; }
-  .chips { display:flex; gap:6px; flex-wrap:wrap; }
-  .chip { font-size:14px; padding:5px 10px; border-radius:999px; background:var(--bg); }
-  .result { background:color-mix(in srgb, var(--ok) 12%, var(--card)); border:1px solid color-mix(in srgb, var(--ok) 40%, var(--line)); border-radius:12px; padding:10px 12px; margin-bottom:6px; }
-  .result b { display:block; font-size:17px; }
-  .result small { color:var(--soft); }
-  .result .row { margin-top:6px; }
-  .result button { font-size:13px; padding:4px 9px; }
-  .result.st-done b { text-decoration:line-through; opacity:.6; }
-  .muted { color:var(--soft); font-size:14px; }
-  .del { border:0; background:none; color:var(--soft); font-size:13px; padding:4px; }
-  details > summary { cursor:pointer; color:var(--soft); margin:6px 0 12px; }
-  .toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:8px 14px; border-radius:999px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; }
-  .toast.show { opacity:1; }
+  :root {
+    --bg:#fbf4ec; --bg2:#f3e7da; --card:#ffffff; --ink:#2a2420; --soft:#8a7f75; --line:#efe4d8;
+    --a:#e8743b; --b:#7b5cd6; --ok:#2f9e6b;
+    --covoit:#e8743b; --bar:#c2417a; --midi:#2f9e6b;
+    --shadow:0 1px 2px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#191614; --bg2:#221e1b; --card:#26211e; --ink:#f5efe8; --soft:#a89d92; --line:#36302b; --shadow:0 1px 2px rgba(0,0,0,.3); }
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:max(18px, env(safe-area-inset-top)) 16px 80px; }
+  button { font:inherit; color:inherit; cursor:pointer; border:0; background:none; padding:0; }
+
+  /* En-tête */
+  .top { display:flex; align-items:center; gap:14px; margin:6px 0 20px; }
+  .duo { display:flex; flex:none; }
+  .av { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:700; font-size:18px; border:3px solid var(--bg); }
+  .av.sm { width:26px; height:26px; font-size:12px; border-width:2px; }
+  .duo .av + .av { margin-left:-12px; }
+  .av.a { background:var(--a); } .av.b { background:var(--b); }
+  .top h1 { font-size:24px; line-height:1.15; margin:0; letter-spacing:-.01em; }
+  .top p { margin:2px 0 0; color:var(--soft); font-size:14px; }
+  .top p button { text-decoration:underline; color:var(--soft); font-size:14px; }
+
+  /* Cartes */
+  .card { background:var(--card); border-radius:22px; box-shadow:var(--shadow); margin:0 0 16px; overflow:hidden; }
+  .pad { padding:16px; }
+  .card-title { font-size:17px; font-weight:700; margin:0 0 10px; }
+  .muted { color:var(--soft); font-size:14px; margin:0; }
+
+  /* Nouveau rendez-vous */
+  .seg { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; background:var(--bg2); padding:4px; border-radius:14px; }
+  .seg button { padding:10px 4px; border-radius:11px; font-weight:600; font-size:15px; color:var(--soft); }
+  .seg button[aria-pressed=true] { background:var(--card); color:var(--ink); box-shadow:var(--shadow); }
+  .new-row { display:flex; gap:8px; margin-top:10px; }
+  input[type=date] { flex:1; font:inherit; padding:11px 12px; border-radius:14px; border:1px solid var(--line); background:var(--bg); color:var(--ink); min-width:0; }
+  .btn { padding:11px 18px; border-radius:14px; font-weight:700; background:var(--ink); color:var(--bg); }
+  .btn.me { background:var(--me); color:#fff; }
+  .btn.ghost { background:var(--bg2); color:var(--ink); }
+
+  /* Rendez-vous */
+  .meet-head { display:flex; align-items:center; gap:12px; padding:16px 16px 12px; background:linear-gradient(135deg, color-mix(in srgb, var(--k) 16%, var(--card)), var(--card) 70%); }
+  .meet-icon { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:24px; background:color-mix(in srgb, var(--k) 20%, var(--card)); flex:none; }
+  .meet-head h2 { font-size:18px; margin:0; line-height:1.2; }
+  .meet-head .when { color:var(--soft); font-size:14px; text-transform:capitalize; }
+  .meet-head .del { margin-left:auto; color:var(--soft); font-size:18px; padding:6px; opacity:.6; }
+  .tabs { display:flex; gap:6px; padding:0 16px; border-bottom:1px solid var(--line); }
+  .tabs button { padding:10px 12px 11px; font-weight:700; color:var(--soft); border-bottom:3px solid transparent; margin-bottom:-1px; }
+  .tabs button[aria-selected=true] { color:var(--ink); border-color:var(--k); }
+  .tabs .tick { color:var(--ok); }
+
+  .sec { padding:14px 16px 4px; }
+  .label { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--soft); margin:0 0 10px; }
+  .num { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:var(--bg2); color:var(--ink); font-size:12px; letter-spacing:0; }
+
+  /* « On parle de » */
+  .tiles { display:grid; gap:8px; }
+  .tile { border-radius:16px; padding:12px 14px; background:color-mix(in srgb, var(--who) 10%, var(--card)); border:1px solid color-mix(in srgb, var(--who) 30%, transparent); }
+  .tile .by { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--soft); }
+  .tile .by .av { border:0; }
+  .tile b { display:block; font-size:18px; line-height:1.25; margin:6px 0 8px; }
+  .tile.st-done b { text-decoration:line-through; opacity:.55; }
+  .tile .acts { display:flex; gap:6px; flex-wrap:wrap; }
+  .pill { font-size:13px; padding:5px 10px; border-radius:999px; background:var(--card); border:1px solid var(--line); }
+  .pill.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .tile.wait { background:transparent; border:1.5px dashed var(--line); color:var(--soft); font-size:14px; }
+
+  /* Débrief */
+  .debrief { display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; border-radius:16px; background:var(--bg2); }
+  .debrief .box { width:24px; height:24px; border-radius:8px; border:2px solid var(--soft); display:grid; place-items:center; flex:none; color:#fff; font-size:15px; }
+  .debrief.on { background:color-mix(in srgb, var(--ok) 14%, var(--card)); }
+  .debrief.on .box { background:var(--ok); border-color:var(--ok); }
+  .debrief small { display:block; color:var(--soft); font-size:13px; }
+
+  /* Choisir parmi ses sujets */
+  .choice { display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; margin:0 0 8px; border-radius:16px; background:var(--bg); border:1.5px solid var(--line); font-size:16px; }
+  .choice .dot { width:22px; height:22px; border-radius:50%; border:2px solid var(--line); flex:none; display:grid; place-items:center; }
+  .choice.on { border-color:var(--them); background:color-mix(in srgb, var(--them) 10%, var(--card)); font-weight:700; }
+  .choice.on .dot { background:var(--them); border-color:var(--them); }
+  .choice.on .dot::after { content:""; width:8px; height:8px; border-radius:50%; background:#fff; }
+
+  /* Mes 4 sujets */
+  .inputs { display:grid; gap:8px; }
+  .field { position:relative; }
+  .field span { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; background:var(--bg2); display:grid; place-items:center; font-size:12px; font-weight:700; color:var(--soft); }
+  .field input { width:100%; font:inherit; padding:12px 12px 12px 44px; border-radius:14px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); }
+  .field input:focus { outline:none; border-color:var(--me); }
+  .field.picked input { border-color:var(--me); background:color-mix(in srgb, var(--me) 8%, var(--card)); font-weight:600; }
+  .field.picked span { background:var(--me); color:#fff; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .chip { font-size:13px; padding:6px 11px; border-radius:999px; background:var(--bg2); }
+  .send { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 16px 16px; }
+  .send .muted { font-size:13px; }
+  .empty { padding:10px 14px; border-radius:14px; border:1.5px dashed var(--line); color:var(--soft); font-size:14px; margin:0 0 8px; }
+
+  .later { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .later .chip { display:inline-flex; gap:6px; align-items:center; background:color-mix(in srgb, var(--a) 12%, var(--card)); }
+  .later .chip button { color:var(--soft); }
+  textarea { width:100%; font:inherit; padding:12px; border-radius:14px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); margin:10px 0; resize:vertical; }
+
+  details.old > summary { list-style:none; cursor:pointer; color:var(--soft); text-align:center; padding:10px; font-weight:600; }
+  details.old > summary::-webkit-details-marker { display:none; }
+  .nothing { text-align:center; color:var(--soft); padding:24px 10px; }
+  .nothing div { font-size:38px; }
+
+  .toast { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translate(-50%, 10px); background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:999px; font-size:14px; font-weight:600; opacity:0; transition:.2s; pointer-events:none; }
+  .toast.show { opacity:1; transform:translate(-50%, 0); }
 </style>
 </head>
 <body>
 <main>
-  <h1>On parle de quoi&nbsp;?</h1>
-  <p class="sub" id="hello"></p>
+  <header class="top">
+    <div class="duo" id="duo"></div>
+    <div><h1>On parle de quoi&nbsp;?</h1><p id="hello"></p></div>
+  </header>
 
   <div class="card" id="later-card" hidden>
-    <h2>🔁 On en reparle</h2>
-    <p class="muted">Sujets pas finis : touche-en un dans tes propositions pour le reprendre.</p>
-    <div class="chips" id="later"></div>
-  </div>
-
-  <div class="card">
-    <h2>Nouveau rendez-vous</h2>
-    <div class="row kinds" id="kinds">
-      <button data-k="covoit" aria-pressed="true">🚗 Covoit</button>
-      <button data-k="bar" aria-pressed="false">🍻 Bar</button>
-      <button data-k="midi" aria-pressed="false">🍽️ Midi</button>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <input type="date" id="date">
-      <button class="primary" id="create">Créer</button>
+    <div class="pad">
+      <div class="card-title">🔁 On en reparle</div>
+      <p class="muted">Pas fini la dernière fois : touche un sujet sous tes propositions pour le reprendre.</p>
+      <div class="later" id="later"></div>
     </div>
   </div>
 
   <div id="meets"></div>
-  <details id="old-wrap" hidden><summary>Rendez-vous passés</summary><div id="old"></div></details>
 
   <div class="card">
-    <h2>💡 Ma réserve d'idées</h2>
-    <p class="muted">Une idée par ligne, rien que pour toi. Touche une idée sous tes propositions pour l'utiliser.</p>
-    <textarea id="ideas" rows="5"></textarea>
-    <div class="row" style="margin-top:8px"><button id="save-ideas">Enregistrer</button></div>
+    <div class="pad">
+      <div class="card-title">＋ Nouveau rendez-vous</div>
+      <div class="seg" id="kinds">
+        <button data-k="covoit" aria-pressed="true">🚗 Covoit</button>
+        <button data-k="bar" aria-pressed="false">🍻 Bar</button>
+        <button data-k="midi" aria-pressed="false">🍽️ Midi</button>
+      </div>
+      <div class="new-row">
+        <input type="date" id="date">
+        <button class="btn" id="create">Créer</button>
+      </div>
+    </div>
+  </div>
+
+  <details class="old" id="old-wrap" hidden><summary>Voir les rendez-vous passés</summary><div id="old"></div></details>
+
+  <div class="card">
+    <div class="pad">
+      <div class="card-title">💡 Ma réserve d'idées</div>
+      <p class="muted">Une idée par ligne. Rien que pour toi : l'autre ne la voit pas.</p>
+      <textarea id="ideas" rows="4" placeholder="Ex. : le plus beau voyage de ta vie"></textarea>
+      <button class="btn ghost" id="save-ideas">Enregistrer mes idées</button>
+    </div>
   </div>
 </main>
 <div class="toast" id="toast"></div>
 
 <script>
 const API = location.pathname.replace(/\/?$/, '/') + 'api';
-const KIND = { covoit: { icon: '🚗', label: 'Covoit', note: 'le matin, et on continue le soir' }, bar: { icon: '🍻', label: 'Bar' }, midi: { icon: '🍽️', label: 'Repas du midi' } };
+const KIND = {
+  covoit: { icon: '🚗', label: 'Covoit' },
+  bar: { icon: '🍻', label: 'Bar' },
+  midi: { icon: '🍽️', label: 'Repas du midi' },
+};
+const SLOT = { matin: '☀️ Matin', soir: '🌙 Soir', main: '' };
 let S = null;
 let kind = 'covoit';
 let dirty = false; // un champ en cours d'écriture : on ne redessine pas sous les doigts
+const tab = {}; // onglet ouvert par rendez-vous (matin / soir)
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-const tomorrow = () => { const d = new Date(Date.now() + 864e5); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-const fmt = (iso) => new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+const isoDay = (d) => { d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const today = () => isoDay(new Date());
+const tomorrow = () => isoDay(new Date(Date.now() + 864e5));
+const fmt = (iso) => {
+  const t = iso === today() ? "aujourd'hui · " : iso === tomorrow() ? 'demain · ' : '';
+  return t + new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+};
+const meKey = () => S.me, themKey = () => (S.me === 'a' ? 'b' : 'a');
+const av = (who, name, cls = '') => `<span class="av ${who} ${cls}">${esc((name || '?').trim()[0] || '?').toUpperCase()}</span>`;
 
-function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1600); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1700); }
 
 async function call(body) {
   try {
@@ -106,95 +202,138 @@ async function call(body) {
   } catch (e) { toast('⚠️ ' + e.message); return false; }
 }
 
-function resultBlock(m, topic, by) {
+function tile(m, topic, who, by) {
   const st = m.done[topic] || '';
-  return `<div class="result st-${st}">
-    <small>${by}</small><b>${esc(topic)}</b>
-    <div class="row">
-      <button data-done="${m.id}" data-t="${esc(topic)}" data-s="${st === 'done' ? '' : 'done'}">${st === 'done' ? '↩︎ pas fini' : '✓ fini'}</button>
-      <button data-done="${m.id}" data-t="${esc(topic)}" data-s="${st === 'later' ? '' : 'later'}">${st === 'later' ? '✗ ne plus reprendre' : '🔁 à reprendre'}</button>
+  return `<div class="tile st-${st}" style="--who:var(--${who})">
+    <div class="by">${av(who, who === meKey() ? S.names.me : S.names.them, 'sm')} ${by}</div>
+    <b>${esc(topic)}</b>
+    <div class="acts">
+      <button class="pill ${st === 'done' ? 'on' : ''}" data-done="${m.id}" data-t="${esc(topic)}" data-s="${st === 'done' ? '' : 'done'}">✓ Fini</button>
+      <button class="pill ${st === 'later' ? 'on' : ''}" data-done="${m.id}" data-t="${esc(topic)}" data-s="${st === 'later' ? '' : 'later'}">🔁 À reprendre</button>
     </div></div>`;
+}
+
+const slotReady = (sl) => sl.myPick != null && sl.theirPick != null;
+
+function slotBody(m, sl) {
+  const them = S.names.them;
+  const key = `${m.id}:${sl.name}`;
+  const mineChosen = sl.theirPick != null ? sl.mine[sl.theirPick] : null;
+  const theirsChosen = sl.myPick != null ? sl.theirs[sl.myPick] : null;
+
+  let tiles = '';
+  if (sl.name === 'soir') {
+    tiles += `<button class="debrief ${m.debrief ? 'on' : ''}" data-debrief="${m.id}" data-on="${m.debrief ? '' : '1'}">
+      <span class="box">${m.debrief ? '✓' : ''}</span>
+      <span><b>🗣️ Débrief de la journée</b><small>${m.debrief ? 'On commence par raconter nos journées' : 'À cocher si on commence par là'}</small></span></button>`;
+  }
+  tiles += mineChosen ? tile(m, mineChosen, meKey(), `ton sujet, choisi par ${esc(them)}`) : `<div class="tile wait">⏳ ${esc(them)} n'a pas encore choisi parmi tes sujets</div>`;
+  tiles += theirsChosen ? tile(m, theirsChosen, themKey(), `son sujet, choisi par toi`) : `<div class="tile wait">👇 Choisis un de ses sujets juste en dessous</div>`;
+
+  const choices = sl.theirs.length
+    ? sl.theirs.map((t, i) => `<button class="choice ${sl.myPick === i ? 'on' : ''}" data-pick="${m.id}" data-slot="${sl.name}" data-i="${sl.myPick === i ? '' : i}"><span class="dot"></span>${esc(t)}</button>`).join('')
+    : `<div class="empty">${esc(them)} n'a pas encore proposé ses sujets.</div>`;
+
+  const inputs = [0, 1, 2, 3].map((i) => `<label class="field ${sl.theirPick === i && sl.mine[i] ? 'picked' : ''}"><span>${i + 1}</span><input type="text" maxlength="160" data-in="${key}" value="${esc(sl.mine[i] || '')}" placeholder="Un sujet pour ${esc(them)}…"></label>`).join('');
+  const sugg = [...S.later, ...S.ideas].filter((t, i, a) => a.indexOf(t) === i && !sl.mine.includes(t)).slice(0, 12);
+
+  return `
+    <div class="sec"><div class="label">On parle de</div><div class="tiles">${tiles}</div></div>
+    <div class="sec"><div class="label"><span class="num">1</span>Choisis un sujet de ${esc(them)}</div>${choices}</div>
+    <div class="sec"><div class="label"><span class="num">2</span>Tes 4 sujets pour ${esc(them)}</div>
+      <div class="inputs">${inputs}</div>
+      ${sugg.length ? `<div class="chips">${sugg.map((t) => `<button class="chip" data-use="${key}" data-t="${esc(t)}">＋ ${esc(t)}</button>`).join('')}</div>` : ''}
+    </div>
+    <div class="send"><button class="btn me" data-save="${m.id}" data-slot="${sl.name}">Envoyer mes sujets</button>
+      ${sl.mine.length ? `<span class="muted">${sl.mine.length} envoyé${sl.mine.length > 1 ? 's' : ''}</span>` : ''}</div>`;
 }
 
 function meetCard(m) {
   const k = KIND[m.kind] || KIND.covoit;
-  const me = S.names.me, them = S.names.them;
-  const mineChosen = m.theirPick != null ? m.mine[m.theirPick] : null;
-  const theirsChosen = m.myPick != null ? m.theirs[m.myPick] : null;
-  let res = '';
-  if (mineChosen || theirsChosen) {
-    res = `<h3>On parle de</h3>` +
-      (mineChosen ? resultBlock(m, mineChosen, `ton sujet, choisi par ${esc(them)}`) : '') +
-      (theirsChosen ? resultBlock(m, theirsChosen, `son sujet, choisi par toi`) : '');
-    if (!mineChosen) res += `<p class="muted">⏳ ${esc(them)} n'a pas encore choisi parmi tes sujets.</p>`;
+  let cur = tab[m.id];
+  if (!m.slots.some((s) => s.name === cur)) {
+    // Par défaut : le soir si c'est aujourd'hui après midi ou si le matin est déjà réglé.
+    const late = m.date === today() && new Date().getHours() >= 13;
+    cur = m.slots.length > 1 && (late || slotReady(m.slots[0])) ? m.slots[1].name : m.slots[0].name;
   }
-  const inputs = [0, 1, 2, 3].map((i) => `<input type="text" maxlength="160" data-in="${m.id}" value="${esc(m.mine[i] || '')}" placeholder="Sujet ${i + 1}" class="${m.theirPick === i ? 'picked' : ''}">`).join('');
-  const sugg = [...S.later, ...S.ideas].filter((t, i, a) => a.indexOf(t) === i && !m.mine.includes(t));
-  const choices = m.theirs.length
-    ? m.theirs.map((t, i) => `<button class="choice ${m.myPick === i ? 'on' : ''}" data-pick="${m.id}" data-i="${m.myPick === i ? '' : i}">${esc(t)}</button>`).join('')
-    : `<p class="muted">${esc(them)} n'a pas encore proposé ses sujets.</p>`;
-  return `<div class="card" data-meet="${m.id}">
-    <h2><span>${k.icon} ${k.label} · ${fmt(m.date)}</span><button class="del" data-del="${m.id}" title="Supprimer">🗑</button></h2>
-    ${k.note ? `<p class="muted" style="margin:-6px 0 4px">${k.note}</p>` : ''}
-    ${res}
-    <h3>Ses sujets — choisis-en un</h3>
-    ${choices}
-    <h3>Tes 4 sujets pour ${esc(them)}</h3>
-    <div class="inputs">${inputs}</div>
-    ${sugg.length ? `<div class="chips" style="margin-top:8px">${sugg.slice(0, 12).map((t) => `<button class="chip" data-use="${m.id}" data-t="${esc(t)}">+ ${esc(t)}</button>`).join('')}</div>` : ''}
-    <div class="row" style="margin-top:8px"><button class="primary" data-save="${m.id}">Envoyer mes sujets</button>
-    ${m.theirPick != null ? `<span class="muted">✓ ${esc(them)} a choisi « ${esc(mineChosen)} »</span>` : ''}</div>
+  const sl = m.slots.find((s) => s.name === cur);
+  const tabs = m.slots.length > 1
+    ? `<div class="tabs" role="tablist">${m.slots.map((s) => `<button role="tab" aria-selected="${s.name === cur}" data-tab="${m.id}" data-slot="${s.name}">${SLOT[s.name]} ${slotReady(s) ? '<span class="tick">✓</span>' : ''}</button>`).join('')}</div>`
+    : '';
+  return `<div class="card" style="--k:var(--${m.kind})">
+    <div class="meet-head">
+      <div class="meet-icon">${k.icon}</div>
+      <div><h2>${k.label}</h2><div class="when">${fmt(m.date)}</div></div>
+      <button class="del" data-del="${m.id}" title="Supprimer" aria-label="Supprimer">🗑</button>
+    </div>
+    ${tabs}
+    ${slotBody(m, sl)}
   </div>`;
 }
 
 function render() {
   if (!S || dirty) return;
-  $('hello').innerHTML = `Toi : <b>${esc(S.names.me)}</b> · avec ${esc(S.names.them)} — <button id="rename">changer mon prénom</button>`;
+  const me = meKey(), them = themKey();
+  document.documentElement.style.setProperty('--me', `var(--${me})`);
+  document.documentElement.style.setProperty('--them', `var(--${them})`);
+  $('duo').innerHTML = av(me, S.names.me) + av(them, S.names.them);
+  $('hello').innerHTML = `${esc(S.names.me)} & ${esc(S.names.them)} · <button id="rename">mon prénom</button>`;
   $('later-card').hidden = !S.later.length;
-  $('later').innerHTML = S.later.map((t) => `<span class="chip">${esc(t)} <button class="del" data-unlater="${esc(t)}" title="Retirer">✕</button></span>`).join('');
+  $('later').innerHTML = S.later.map((t) => `<span class="chip">${esc(t)} <button data-unlater="${esc(t)}" aria-label="Retirer">✕</button></span>`).join('');
   const now = today();
   const up = S.meets.filter((m) => m.date >= now).reverse(); // le plus proche d'abord
   const old = S.meets.filter((m) => m.date < now);
-  $('meets').innerHTML = up.length ? up.map(meetCard).join('') : '<p class="muted" style="text-align:center">Aucun rendez-vous prévu : crée le prochain juste au-dessus.</p>';
+  $('meets').innerHTML = up.length ? up.map(meetCard).join('') : '<div class="nothing"><div>☕️</div>Aucun rendez-vous prévu.<br>Crée le prochain juste en dessous.</div>';
   $('old-wrap').hidden = !old.length;
   $('old').innerHTML = old.map(meetCard).join('');
   if (document.activeElement !== $('ideas')) $('ideas').value = S.ideas.join('\n');
 }
 
-function readInputs(id) { return [...document.querySelectorAll(`[data-in="${id}"]`)].map((i) => i.value.trim()).filter(Boolean); }
+function inputsOf(key) { return [...document.querySelectorAll('[data-in]')].filter((i) => i.dataset.in === key); }
 
 document.addEventListener('input', (e) => { if (e.target.matches('[data-in]')) dirty = true; });
 
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.k) {
-    kind = b.dataset.k;
+  const d = b.dataset;
+  if (d.k) {
+    kind = d.k;
     document.querySelectorAll('#kinds button').forEach((x) => x.setAttribute('aria-pressed', x === b));
   } else if (b.id === 'create') {
-    if (await call({ action: 'create', kind, date: $('date').value })) toast('Rendez-vous créé');
+    if (await call({ action: 'create', kind, date: $('date').value })) toast('Rendez-vous créé ✨');
   } else if (b.id === 'rename') {
     const n = prompt('Ton prénom ?', S.names.me);
     if (n != null) call({ action: 'name', name: n });
   } else if (b.id === 'save-ideas') {
     if (await call({ action: 'ideas', ideas: $('ideas').value.split('\n') })) toast('Idées enregistrées');
-  } else if (b.dataset.save) {
+  } else if (d.tab) {
+    if (dirty) return toast('Envoie d’abord tes sujets');
+    tab[d.tab] = d.slot; render();
+  } else if (d.save) {
+    const topics = inputsOf(`${d.save}:${d.slot}`).map((i) => i.value.trim()).filter(Boolean);
     dirty = false;
-    if (await call({ action: 'topics', id: b.dataset.save, topics: readInputs(b.dataset.save) })) toast('Sujets envoyés 📨');
-  } else if (b.dataset.use) {
-    const empty = [...document.querySelectorAll(`[data-in="${b.dataset.use}"]`)].find((i) => !i.value.trim());
+    tab[d.save] = d.slot;
+    if (await call({ action: 'topics', id: d.save, slot: d.slot, topics })) toast('Sujets envoyés 📨');
+  } else if (d.use) {
+    const empty = inputsOf(d.use).find((i) => !i.value.trim());
     if (!empty) return toast('Tes 4 cases sont pleines');
-    empty.value = b.dataset.t; dirty = true; b.remove();
-  } else if (b.dataset.pick) {
+    empty.value = d.t; dirty = true; b.remove();
+  } else if (d.pick) {
     if (dirty) return toast('Envoie d’abord tes sujets');
-    call({ action: 'pick', id: b.dataset.pick, index: b.dataset.i === '' ? null : Number(b.dataset.i) });
-  } else if (b.dataset.done) {
+    tab[d.pick] = d.slot;
+    call({ action: 'pick', id: d.pick, slot: d.slot, index: d.i === '' ? null : Number(d.i) });
+  } else if (d.debrief) {
     if (dirty) return toast('Envoie d’abord tes sujets');
-    call({ action: 'done', id: b.dataset.done, topic: b.dataset.t, state: b.dataset.s });
-  } else if (b.dataset.del) {
-    if (confirm('Supprimer ce rendez-vous pour vous deux ?')) { dirty = false; call({ action: 'remove', id: b.dataset.del }); }
-  } else if (b.dataset.unlater) {
-    call({ action: 'unlater', topic: b.dataset.unlater });
+    tab[d.debrief] = 'soir';
+    call({ action: 'debrief', id: d.debrief, on: d.on === '1' });
+  } else if (d.done) {
+    if (dirty) return toast('Envoie d’abord tes sujets');
+    call({ action: 'done', id: d.done, topic: d.t, state: d.s });
+  } else if (d.del) {
+    if (confirm('Supprimer ce rendez-vous pour vous deux ?')) { dirty = false; call({ action: 'remove', id: d.del }); }
+  } else if (d.unlater) {
+    call({ action: 'unlater', topic: d.unlater });
   }
 });
 

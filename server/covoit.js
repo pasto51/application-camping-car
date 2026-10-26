@@ -27,6 +27,12 @@ function createCovoit(dataDir) {
     if (state) return state;
     try {
       state = JSON.parse(fs.readFileSync(file, 'utf8'));
+      for (const m of state.meets) {
+        if (m.slots) continue;
+        m.slots = { [slotNames(m.kind)[0]]: { topics: m.topics, pick: m.pick } };
+        delete m.topics;
+        delete m.pick;
+      }
     } catch {
       fs.mkdirSync(dataDir, { recursive: true });
       const key = () => crypto.randomBytes(16).toString('hex');
@@ -61,6 +67,14 @@ function createCovoit(dataDir) {
     return m;
   };
 
+  // Un covoit a deux moments (matin, soir), chacun avec ses sujets ; le bar et le midi en ont un seul.
+  const slotNames = (kind) => (kind === 'covoit' ? ['matin', 'soir'] : ['main']);
+  const emptySlot = () => ({ topics: { a: [], b: [] }, pick: { a: null, b: null } });
+  function slotOf(m, name) {
+    if (!slotNames(m.kind).includes(name)) throw new HttpError(400, 'Moment inconnu');
+    return (m.slots[name] ||= emptySlot());
+  }
+
   // Ce que voit une personne : tout, sauf qu'elle voit « moi » / « l'autre » plutôt que a / b.
   function view(w) {
     const s = load();
@@ -72,10 +86,17 @@ function createCovoit(dataDir) {
         id: m.id,
         kind: m.kind,
         date: m.date,
-        mine: m.topics[w],
-        theirs: m.topics[o],
-        myPick: m.pick[w], // sujet de l'autre que j'ai choisi
-        theirPick: m.pick[o], // mon sujet que l'autre a choisi
+        debrief: !!m.debrief,
+        slots: slotNames(m.kind).map((name) => {
+          const sl = m.slots[name] || emptySlot();
+          return {
+            name,
+            mine: sl.topics[w],
+            theirs: sl.topics[o],
+            myPick: sl.pick[w], // sujet de l'autre que j'ai choisi
+            theirPick: sl.pick[o], // mon sujet que l'autre a choisi
+          };
+        }),
         done: m.done || {},
       }));
     return { me: w, names: { me: s.names[w], them: s.names[o] }, meets, ideas: s.ideas[w], later: s.later || [] };
@@ -89,14 +110,15 @@ function createCovoit(dataDir) {
       const s = load();
       const kind = KINDS.includes(b.kind) ? b.kind : 'covoit';
       const date = /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : new Date().toISOString().slice(0, 10);
-      s.meets.push({ id: ++s.seq, kind, date, topics: { a: [], b: [] }, pick: { a: null, b: null }, done: {} });
+      const slots = Object.fromEntries(slotNames(kind).map((n) => [n, emptySlot()]));
+      s.meets.push({ id: ++s.seq, kind, date, slots, debrief: false, done: {} });
     },
     remove(w, b) {
       const s = load();
       s.meets = s.meets.filter((m) => m.id !== Number(b.id));
     },
     topics(w, b) {
-      const m = findMeet(b.id);
+      const m = slotOf(findMeet(b.id), b.slot);
       const list = (Array.isArray(b.topics) ? b.topics : []).map((t) => clean(t)).filter(Boolean).slice(0, MAX);
       // Mon choix chez l'autre ne bouge pas ; le choix de l'autre chez moi saute si son sujet a disparu.
       const picked = m.pick[other(w)] != null ? m.topics[w][m.pick[other(w)]] : null;
@@ -107,7 +129,7 @@ function createCovoit(dataDir) {
       s.ideas[w] = s.ideas[w].filter((i) => !list.includes(i));
     },
     pick(w, b) {
-      const m = findMeet(b.id);
+      const m = slotOf(findMeet(b.id), b.slot);
       const i = b.index == null ? null : Number(b.index);
       m.pick[w] = i != null && i >= 0 && i < m.topics[other(w)].length ? i : null;
     },
@@ -120,6 +142,10 @@ function createCovoit(dataDir) {
       m.done[t] = b.state === 'later' ? 'later' : b.state === 'done' ? 'done' : undefined;
       s.later = (s.later || []).filter((x) => x !== t);
       if (b.state === 'later') s.later.push(t);
+    },
+    debrief(w, b) {
+      const m = findMeet(b.id);
+      if (m.kind === 'covoit') m.debrief = !!b.on;
     },
     unlater(w, b) {
       const s = load();
