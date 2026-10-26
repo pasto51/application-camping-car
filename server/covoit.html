@@ -232,7 +232,7 @@ function slotBody(m, sl) {
 
   const choices = sl.theirs.length
     ? sl.theirs.map((t, i) => `<button class="choice ${sl.myPick === i ? 'on' : ''}" data-pick="${m.id}" data-slot="${sl.name}" data-i="${sl.myPick === i ? '' : i}"><span class="dot"></span>${esc(t)}</button>`).join('')
-    : `<div class="empty">${esc(them)} n'a pas encore proposé ses sujets.</div>`;
+    : `<div class="empty">${esc(them)} n'a pas encore proposé ses sujets${sl.name === 'soir' ? ' (ses sujets du matin pas choisis arriveront ici)' : ''}.</div>`;
 
   const inputs = [0, 1, 2, 3].map((i) => `<label class="field ${sl.theirPick === i && sl.mine[i] ? 'picked' : ''}"><span>${i + 1}</span><input type="text" maxlength="160" data-in="${key}" value="${esc(sl.mine[i] || '')}" placeholder="Un sujet pour ${esc(them)}…"></label>`).join('');
   const sugg = [...S.later, ...S.ideas].filter((t, i, a) => a.indexOf(t) === i && !sl.mine.includes(t)).slice(0, 12);
@@ -241,6 +241,7 @@ function slotBody(m, sl) {
     <div class="sec"><div class="label">On parle de</div><div class="tiles">${tiles}</div></div>
     <div class="sec"><div class="label"><span class="num">1</span>Choisis un sujet de ${esc(them)}</div>${choices}</div>
     <div class="sec"><div class="label"><span class="num">2</span>Tes 4 sujets pour ${esc(them)}</div>
+      ${sl.fromMorning ? `<p class="muted" style="margin:-4px 0 10px">↪︎ Repris du matin : tes sujets que ${esc(them)} n’a pas choisis. Tu peux les changer ou en ajouter.</p>` : ''}
       <div class="inputs">${inputs}</div>
       ${sugg.length ? `<div class="chips">${sugg.map((t) => `<button class="chip" data-use="${key}" data-t="${esc(t)}">＋ ${esc(t)}</button>`).join('')}</div>` : ''}
     </div>

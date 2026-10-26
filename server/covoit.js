@@ -75,6 +75,21 @@ function createCovoit(dataDir) {
     return (m.slots[name] ||= emptySlot());
   }
 
+  // Mon choix chez l'autre ne bouge pas ; le choix de l'autre chez moi saute si son sujet a disparu.
+  function setTopics(sl, w, list) {
+    const picked = sl.pick[other(w)] != null ? sl.topics[w][sl.pick[other(w)]] : null;
+    sl.topics[w] = list;
+    sl.pick[other(w)] = picked != null && list.includes(picked) ? list.indexOf(picked) : null;
+  }
+
+  // Le soir reprend les sujets du matin que l'autre n'a pas choisis, tant que la personne n'a pas écrit ceux du soir.
+  function syncSoir(m, w) {
+    if (m.kind !== 'covoit' || (m.soirOwn && m.soirOwn[w])) return;
+    const matin = slotOf(m, 'matin');
+    const chosen = matin.pick[other(w)];
+    setTopics(slotOf(m, 'soir'), w, matin.topics[w].filter((_, i) => i !== chosen));
+  }
+
   // Ce que voit une personne : tout, sauf qu'elle voit « moi » / « l'autre » plutôt que a / b.
   function view(w) {
     const s = load();
@@ -95,6 +110,7 @@ function createCovoit(dataDir) {
             theirs: sl.topics[o],
             myPick: sl.pick[w], // sujet de l'autre que j'ai choisi
             theirPick: sl.pick[o], // mon sujet que l'autre a choisi
+            fromMorning: name === 'soir' && !(m.soirOwn && m.soirOwn[w]) && sl.topics[w].length > 0,
           };
         }),
         done: m.done || {},
@@ -118,20 +134,21 @@ function createCovoit(dataDir) {
       s.meets = s.meets.filter((m) => m.id !== Number(b.id));
     },
     topics(w, b) {
-      const m = slotOf(findMeet(b.id), b.slot);
+      const meet = findMeet(b.id);
       const list = (Array.isArray(b.topics) ? b.topics : []).map((t) => clean(t)).filter(Boolean).slice(0, MAX);
-      // Mon choix chez l'autre ne bouge pas ; le choix de l'autre chez moi saute si son sujet a disparu.
-      const picked = m.pick[other(w)] != null ? m.topics[w][m.pick[other(w)]] : null;
-      m.topics[w] = list;
-      m.pick[other(w)] = picked != null && list.includes(picked) ? list.indexOf(picked) : null;
+      setTopics(slotOf(meet, b.slot), w, list);
+      if (b.slot === 'soir') (meet.soirOwn ||= {})[w] = true;
+      if (b.slot === 'matin') syncSoir(meet, w);
       // Les idées utilisées quittent la réserve.
       const s = load();
       s.ideas[w] = s.ideas[w].filter((i) => !list.includes(i));
     },
     pick(w, b) {
-      const m = slotOf(findMeet(b.id), b.slot);
+      const meet = findMeet(b.id);
+      const m = slotOf(meet, b.slot);
       const i = b.index == null ? null : Number(b.index);
       m.pick[w] = i != null && i >= 0 && i < m.topics[other(w)].length ? i : null;
+      if (b.slot === 'matin') syncSoir(meet, other(w));
     },
     done(w, b) {
       // Sujet terminé ou « à reprendre » : un sujet à reprendre va dans la liste commune « On en reparle ».
