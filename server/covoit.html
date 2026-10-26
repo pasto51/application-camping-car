@@ -9,6 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nos sujets">
 <title>On parle de quoi ?</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root {
     --bg:#fbf4ec; --bg2:#f3e7da; --card:#ffffff; --ink:#2a2420; --soft:#8a7f75; --line:#efe4d8;
@@ -339,6 +342,7 @@ document.addEventListener('click', async (e) => {
 });
 
 $('date').value = tomorrow();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 call();
 // Les choix de l'autre arrivent tout seuls.
 setInterval(() => { if (!dirty && document.visibilityState === 'visible') call(); }, 5000);

@@ -173,18 +173,46 @@ function createCovoit(dataDir) {
     },
   };
 
+  // La page et ce qui en fait une appli à part sur le téléphone (nom, icône, périmètre limité à ce lien) :
+  // sans sa propre fiche, Android l'ouvrait dans l'appli Compagnon de bord du même site.
+  function asset(name, base, myName) {
+    if (!name) return ['text/html; charset=utf-8', fs.readFileSync(PAGE)];
+    if (name === 'sw.js') return ['text/javascript; charset=utf-8', "self.addEventListener('install', () => self.skipWaiting());\nself.addEventListener('fetch', () => {});\n"];
+    if (name.endsWith('.png')) return ['image/png', fs.readFileSync(path.join(__dirname, `covoit-${name}`))];
+    const manifest = {
+      id: base,
+      name: `Nos sujets — ${myName}`,
+      short_name: 'Nos sujets',
+      lang: 'fr',
+      start_url: base,
+      scope: base,
+      display: 'standalone',
+      background_color: '#fbf4ec',
+      theme_color: '#fbf4ec',
+      icons: [192, 512].map((n) => ({ src: `${base}icon-${n}.png`, sizes: `${n}x${n}`, type: 'image/png' })),
+    };
+    return ['application/manifest+json; charset=utf-8', JSON.stringify(manifest)];
+  }
+
   async function handle(req, res, url) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    const m = /^\/cv\/([0-9a-f]{32})\/(api)?$/.exec(url.pathname);
+    // Lien recopié sans le « / » final : on le rajoute (la page charge ses fichiers à côté d'elle).
+    const bare = /^\/cv\/([0-9a-f]{32})$/.exec(url.pathname);
+    if (bare && who(bare[1])) {
+      res.writeHead(302, { Location: url.pathname + '/' });
+      return res.end();
+    }
+    const m = /^\/cv\/([0-9a-f]{32})\/(api|manifest\.webmanifest|sw\.js|icon-(?:192|512)\.png)?$/.exec(url.pathname);
     const w = m && who(m[1]);
     if (!w) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       return res.end('Introuvable');
     }
-    if (!m[2]) {
+    if (m[2] !== 'api') {
       if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'Méthode non autorisée');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-      return res.end(req.method === 'HEAD' ? undefined : fs.readFileSync(PAGE));
+      const [type, body] = asset(m[2], `/cv/${m[1]}/`, load().names[w]);
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
+      return res.end(req.method === 'HEAD' ? undefined : body);
     }
     if (req.method === 'POST') {
       const body = await readJsonBody(req, 32 * 1024);
