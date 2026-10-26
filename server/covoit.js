@@ -30,13 +30,13 @@ function createCovoit(dataDir) {
     } catch {
       fs.mkdirSync(dataDir, { recursive: true });
       const key = () => crypto.randomBytes(16).toString('hex');
-      state = { keys: { a: key(), b: key() }, names: { a: 'Moi', b: 'Elle' }, meets: [], ideas: { a: [], b: [] }, seq: 0 };
+      state = { keys: { a: key(), b: key() }, names: { a: 'Flo', b: 'Marlène' }, meets: [], ideas: { a: [], b: [] }, seq: 0 };
       save();
       fs.writeFileSync(
         path.join(dataDir, 'covoit-liens.txt'),
         'Appli sujets de covoit — adresses secrètes (à ajouter après l\'adresse du site) :\n' +
-          `  Ton lien  : /cv/${state.keys.a}/\n` +
-          `  Son lien  : /cv/${state.keys.b}/\n`,
+          `  Lien de Flo     : /cv/${state.keys.a}/\n` +
+          `  Lien de Marlène : /cv/${state.keys.b}/\n`,
         { mode: 0o600 }
       );
     }
@@ -83,7 +83,7 @@ function createCovoit(dataDir) {
 
   const actions = {
     name(w, b) {
-      load().names[w] = clean(b.name, 30) || (w === 'a' ? 'Moi' : 'Elle');
+      load().names[w] = clean(b.name, 30) || (w === 'a' ? 'Flo' : 'Marlène');
     },
     create(w, b) {
       const s = load();
