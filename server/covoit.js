@@ -63,7 +63,7 @@ function createCovoit(dataDir) {
   const clean = (v, n = 160) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, n);
   const findMeet = (id) => {
     const m = load().meets.find((x) => x.id === Number(id));
-    if (!m) throw new HttpError(404, 'Rendez-vous introuvable');
+    if (!m) throw new HttpError(404, 'Introuvable (déjà supprimé ?)');
     return m;
   };
 

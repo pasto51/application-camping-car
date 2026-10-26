@@ -41,7 +41,7 @@
   .card-title { font-size:17px; font-weight:700; margin:0 0 10px; }
   .muted { color:var(--soft); font-size:14px; margin:0; }
 
-  /* Nouveau rendez-vous */
+  /* Ajouter un covoit, un bar ou un midi */
   .seg { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; background:var(--bg2); padding:4px; border-radius:14px; }
   .seg button { padding:10px 4px; border-radius:11px; font-weight:600; font-size:15px; color:var(--soft); }
   .seg button[aria-pressed=true] { background:var(--card); color:var(--ink); box-shadow:var(--shadow); }
@@ -51,7 +51,7 @@
   .btn.me { background:var(--me); color:#fff; }
   .btn.ghost { background:var(--bg2); color:var(--ink); }
 
-  /* Rendez-vous */
+  /* Covoits, bars, midis */
   .meet-head { display:flex; align-items:center; gap:12px; padding:16px 16px 12px; background:linear-gradient(135deg, color-mix(in srgb, var(--k) 16%, var(--card)), var(--card) 70%); }
   .meet-icon { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:24px; background:color-mix(in srgb, var(--k) 20%, var(--card)); flex:none; }
   .meet-head h2 { font-size:18px; margin:0; line-height:1.2; }
@@ -139,7 +139,7 @@
 
   <div class="card">
     <div class="pad">
-      <div class="card-title">＋ Nouveau rendez-vous</div>
+      <div class="card-title">＋ Ajouter un covoit, un bar ou un midi</div>
       <div class="seg" id="kinds">
         <button data-k="covoit" aria-pressed="true">🚗 Covoit</button>
         <button data-k="bar" aria-pressed="false">🍻 Bar</button>
@@ -152,7 +152,7 @@
     </div>
   </div>
 
-  <details class="old" id="old-wrap" hidden><summary>Voir les rendez-vous passés</summary><div id="old"></div></details>
+  <details class="old" id="old-wrap" hidden><summary>Voir les précédents</summary><div id="old"></div></details>
 
   <div class="card">
     <div class="pad">
@@ -176,7 +176,7 @@ const SLOT = { matin: '☀️ Matin', soir: '🌙 Soir', main: '' };
 let S = null;
 let kind = 'covoit';
 let dirty = false; // un champ en cours d'écriture : on ne redessine pas sous les doigts
-const tab = {}; // onglet ouvert par rendez-vous (matin / soir)
+const tab = {}; // onglet ouvert pour chaque covoit (matin / soir)
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -283,7 +283,7 @@ function render() {
   const now = today();
   const up = S.meets.filter((m) => m.date >= now).reverse(); // le plus proche d'abord
   const old = S.meets.filter((m) => m.date < now);
-  $('meets').innerHTML = up.length ? up.map(meetCard).join('') : '<div class="nothing"><div>☕️</div>Aucun rendez-vous prévu.<br>Crée le prochain juste en dessous.</div>';
+  $('meets').innerHTML = up.length ? up.map(meetCard).join('') : '<div class="nothing"><div>☕️</div>Rien de prévu pour l’instant.<br>Ajoute le prochain covoit juste en dessous.</div>';
   $('old-wrap').hidden = !old.length;
   $('old').innerHTML = old.map(meetCard).join('');
   if (document.activeElement !== $('ideas')) $('ideas').value = S.ideas.join('\n');
@@ -301,7 +301,7 @@ document.addEventListener('click', async (e) => {
     kind = d.k;
     document.querySelectorAll('#kinds button').forEach((x) => x.setAttribute('aria-pressed', x === b));
   } else if (b.id === 'create') {
-    if (await call({ action: 'create', kind, date: $('date').value })) toast('Rendez-vous créé ✨');
+    if (await call({ action: 'create', kind, date: $('date').value })) toast('Ajouté ✨');
   } else if (b.id === 'rename') {
     const n = prompt('Ton prénom ?', S.names.me);
     if (n != null) call({ action: 'name', name: n });
@@ -331,7 +331,7 @@ document.addEventListener('click', async (e) => {
     if (dirty) return toast('Envoie d’abord tes sujets');
     call({ action: 'done', id: d.done, topic: d.t, state: d.s });
   } else if (d.del) {
-    if (confirm('Supprimer ce rendez-vous pour vous deux ?')) { dirty = false; call({ action: 'remove', id: d.del }); }
+    if (confirm('Supprimer pour vous deux ?')) { dirty = false; call({ action: 'remove', id: d.del }); }
   } else if (d.unlater) {
     call({ action: 'unlater', topic: d.unlater });
   }
