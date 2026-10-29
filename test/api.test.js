@@ -617,10 +617,12 @@ test('« Conseils & Astuces »: starter tips and banner, a tip shared by a custo
   assert.equal((await call('POST', '/api/me/tips', { token: h.token, body: { title: 'Ok', body: '' } })).status, 400);
   assert.equal((await call('POST', '/api/me/tips', { token: h.token, body: { title: 'Ranger les cales', category: 'route', body: 'Je range les cales dans un sac accroché à la porte.', photo: PNG } })).status, 200);
   assert.equal((await call('GET', '/api/app/data', { token: h.token })).data.tips.length, before);
-  // The 35 tips proposed with the update wait « À valider », like the customer's one: none is in the app.
-  assert.equal((await call('GET', '/api/admin/stats', { token: admin })).data.pendingTips, 36);
+  // The 43 tips proposed with the updates (35, then 8 from the store's training days) wait « À valider », like the
+  // customer's one: none is in the app.
+  assert.equal((await call('GET', '/api/admin/stats', { token: admin })).data.pendingTips, 44);
   const all = (await call('GET', '/api/admin/tips', { token: admin })).data.tips;
-  assert.equal(all.filter((t) => t.status === 'pending' && !t.customer).length, 35);
+  assert.equal(all.filter((t) => t.status === 'pending' && !t.customer).length, 43);
+  assert.ok(all.some((t) => t.title === 'Votre batterie est un seau d’eau' && t.status === 'pending'));
   const pending = all.find((t) => t.status === 'pending' && t.customer);
   assert.equal(pending.customer.name, 'Jean Astuce');
   assert.ok(pending.imageUrl);
@@ -741,6 +743,10 @@ test('routine checklists: winter storage, spring start-up, every month, with lin
   const lists = (await call('GET', '/api/admin/catalog/lists', { token: admin })).data.value;
   assert.deepEqual(Object.keys(lists), ['arrivee', 'depart', 'mensuel', 'hiver', 'printemps']);
   assert.equal(lists.hiver.title, 'Hivernage');
+  // Lines from the store's training days: the gas « lyre » for everyone, the toilet cassette only where it is ticked.
+  assert.ok(lists.hiver.items.some((i) => (i.t || i).startsWith('Gaz : je ferme les bouteilles et je dévisse la lyre')));
+  assert.ok(lists.hiver.items.some((i) => i.eq?.includes('wc') && i.t.startsWith('Cassette WC')));
+  assert.ok(lists.printemps.items.some((i) => (i.t || i).startsWith('Gaz : je revisse la lyre')));
   const lith = lists.hiver.items.find((i) => i.eq?.includes('lith'));
   assert.equal(lith.group, 'batterie');
   assert.ok(lists.printemps.items.some((i) => i.variant?.[0] === 'frigo'));

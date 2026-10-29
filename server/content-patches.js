@@ -24,6 +24,7 @@ const { applyBooster } = require('./booster-lithium');
 const { applyDixPannes } = require('./diagnostics-pannes');
 const { applyBlogNuls } = require('./diagnostics-blog');
 const { addMondea } = require('./vehicle-mondea');
+const { applyFormations } = require('./formations');
 
 const BATTERY_CLASSIC = ['cell', 'agm', 'gel'];
 const ROUTINE_LISTS = {
@@ -787,6 +788,12 @@ const PATCHES = [
     // Font Vendôme Mondea (catalogue 2019): the brand and the vehicle, with its own plan (salle d'eau arrière, lit de pavillon).
     key: '2026-11-09-font-vendome-mondea',
     run: (db) => addMondea(db),
+  },
+  {
+    // The store's training days (hivernage, énergie, suspensions, vérins): lines for the winter and spring lists, tips to
+    // proofread, the suspension and solar diagnostics completed.
+    key: '2026-11-10-formations',
+    run: (db) => applyFormations(db),
   },
 ];
 
