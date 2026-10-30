@@ -16,6 +16,7 @@ const { createNotifier } = require('./notify');
 const { randomToken, sha256, verifyToken } = require('./auth');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
+const { createCovoit } = require('./covoit');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const BODY_LIMIT = 40 * 1024 * 1024; // report with several photos as data URLs (signed-in users only)
@@ -62,6 +63,10 @@ function createApp(options = {}) {
     return token;
   };
   const notify = options.notify || createNotifier({ db, vapid: config.vapid, log, createLoginLink });
+
+  // Petite appli privée cachée (sujets de covoit), sans lien avec le reste : voir server/covoit.js.
+  const covoit = createCovoit(dataDir);
+  covoit.load();
 
   const router = createRouter();
   publicRoutes.register(router);
@@ -146,7 +151,8 @@ function createApp(options = {}) {
       return res.end('Adresse invalide');
     }
     try {
-      if (url.pathname.startsWith('/api/')) await handleApi(req, res, url);
+      if (url.pathname.startsWith('/cv/')) await covoit.handle(req, res, url);
+      else if (url.pathname.startsWith('/api/')) await handleApi(req, res, url);
       else if (req.method === 'GET' || req.method === 'HEAD') handleStatic(req, res, url);
       else throw new HttpError(405, 'Méthode non autorisée');
     } catch (err) {
